@@ -1,0 +1,14 @@
+{
+  "version": "3.0",
+  "defaultProvider": "cdnjs",
+  "libraries": [
+    {
+      "library": "qrcodejs@1.0.0",
+      "destination": "wwwroot/lib/qrcodejs/"
+    },
+    {
+      "library": "bootstrap-icons@1.11.3",
+      "destination": "wwwroot/lib/bootstrap-icons/"
+    }
+  ]
+}
