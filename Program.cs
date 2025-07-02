@@ -14,6 +14,16 @@ using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Enhanced logging configuration
+builder.Logging.ClearProviders();
+builder.Logging.AddConsole();
+builder.Logging.AddDebug();
+builder.Logging.SetMinimumLevel(LogLevel.Debug);
+
+// Add global exception handling
+builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
+builder.Services.AddProblemDetails();
+
 // Add services to the container.
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
@@ -35,17 +45,25 @@ var app = builder.Build();
 // Ensure database is created and apply any pending migrations
 using (var scope = app.Services.CreateScope())
 {
+    var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
     var context = scope.ServiceProvider.GetRequiredService<AuthDbContext>();
     try
     {
+        logger.LogInformation("Attempting to initialize database...");
         context.Database.EnsureCreated();
+        logger.LogInformation("Database initialization completed successfully.");
         // Optionally run migrations if you prefer that approach
         // context.Database.Migrate();
     }
     catch (Exception ex)
     {
-        // Log the error - in production, you'd want proper logging
-        Console.WriteLine($"Database initialization error: {ex.Message}");
+        logger.LogError(ex, "Database initialization failed: {Message}", ex.Message);
+        logger.LogError("Stack trace: {StackTrace}", ex.StackTrace);
+        // In development, you might want to throw to see the error immediately
+        if (app.Environment.IsDevelopment())
+        {
+            throw;
+        }
     }
 }
 
@@ -55,6 +73,12 @@ if (!app.Environment.IsDevelopment())
     app.UseExceptionHandler("/Error", createScopeForErrors: true);
     // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
+}
+else
+{
+    // In development, use the exception handler but also log to console
+    app.UseExceptionHandler("/Error", createScopeForErrors: true);
+    app.UseDeveloperExceptionPage();
 }
 
 app.UseHttpsRedirection();
@@ -71,10 +95,4 @@ app.MapRazorComponents<App>()
 app.MapAccountApi();
 
 app.Run();
-public class TwoFactorLoginRequest
-{
-    public string TwoFactorCode { get; set; } = string.Empty;
-    public bool RememberMe { get; set; }
-    public bool RememberMachine { get; set; }
-    public string? ReturnUrl { get; set; }
-}
+
