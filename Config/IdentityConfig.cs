@@ -17,11 +17,19 @@ namespace LMS.Config
                 throw new InvalidOperationException("DefaultConnection string is not configured. Please check your appsettings.json file.");
             }
 
-            services.AddDbContext<AuthDbContext>(options =>
+            //services.AddDbContext<AuthDbContext>(options =>
+            //{
+            //    options.UseNpgsql(connectionString);
+            //    options.EnableSensitiveDataLogging(true); // Enable for development
+            //    options.EnableDetailedErrors(true); // Enable for development
+            //    options.LogTo(Console.WriteLine, LogLevel.Information);
+            //});
+
+            services.AddDbContextFactory<AuthDbContext>(options =>
             {
                 options.UseNpgsql(connectionString);
-                options.EnableSensitiveDataLogging(true); // Enable for development
-                options.EnableDetailedErrors(true); // Enable for development
+                options.EnableSensitiveDataLogging(true);
+                options.EnableDetailedErrors(true);
                 options.LogTo(Console.WriteLine, LogLevel.Information);
             });
 
