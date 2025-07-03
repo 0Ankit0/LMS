@@ -1,0 +1,63 @@
+@using Microsoft.AspNetCore.Components.Web
+@using Microsoft.AspNetCore.Components
+@inject ILogger<EnhancedErrorBoundary> Logger
+
+<ErrorBoundary @ref="errorBoundary">
+    <ChildContent>
+        @ChildContent
+    </ChildContent>
+    <ErrorContent Context="exception">
+        <div class="alert alert-danger m-3">
+            <h4 class="alert-heading">⚠️ Component Error</h4>
+            <p><strong>A component error has occurred.</strong></p>
+            
+            @if (ShowDetails)
+            {
+                <hr>
+                <div class="mb-3">
+                    <strong>Error Type:</strong> @exception.GetType().Name<br/>
+                    <strong>Message:</strong> @exception.Message
+                </div>
+                
+                <details>
+                    <summary><strong>Stack Trace</strong></summary>
+                    <pre class="mt-2 p-2 bg-light border rounded small">@exception.ToString()</pre>
+                </details>
+            }
+            
+            <hr>
+            <div class="d-flex gap-2">
+                <button class="btn btn-primary btn-sm" @onclick="Recover">
+                    🔄 Try Again
+                </button>
+                <button class="btn btn-outline-secondary btn-sm" @onclick="ToggleDetails">
+                    @(ShowDetails ? "Hide" : "Show") Details
+                </button>
+            </div>
+        </div>
+    </ErrorContent>
+</ErrorBoundary>
+
+@code {
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+    [Parameter] public bool ShowDetailsDefault { get; set; } = true;
+
+    private ErrorBoundary? errorBoundary;
+    private bool ShowDetails = true;
+
+    protected override void OnParametersSet()
+    {
+        ShowDetails = ShowDetailsDefault;
+    }
+
+    private void Recover()
+    {
+        Logger.LogInformation("User initiated error recovery");
+        errorBoundary?.Recover();
+    }
+
+    private void ToggleDetails()
+    {
+        ShowDetails = !ShowDetails;
+    }
+}

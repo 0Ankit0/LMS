@@ -1,0 +1,133 @@
+﻿@page "/home"
+@layout AuthLayout
+@inject NavigationManager NavigationManager
+
+<PageTitle>Home</PageTitle>
+
+<div class="container mt-4">
+    <div class="row">
+        <!-- Left: Navigation Cards -->
+        <div class="col-12 col-md-3 mb-4 mb-md-0">
+            <div class="card mb-3 shadow-sm" style="cursor:pointer;" @onclick="() => NavigateTo('/dashboard')">
+                <div class="card-body text-center">
+                    <i class="bi bi-speedometer2 fs-2 mb-2"></i>
+                    <h5 class="card-title mb-1">Dashboard</h5>
+                    <p class="card-text text-muted">View your learning stats</p>
+                </div>
+            </div>
+            <div class="card mb-3 shadow-sm" style="cursor:pointer;" @onclick="() => NavigateTo('/course-catalog')">
+                <div class="card-body text-center">
+                    <i class="bi bi-book fs-2 mb-2"></i>
+                    <h5 class="card-title mb-1">Course Catalog</h5>
+                    <p class="card-text text-muted">Browse all courses</p>
+                </div>
+            </div>
+            <div class="card mb-3 shadow-sm" style="cursor:pointer;" @onclick="@(() => NavigateTo("/my-courses"))">
+                <div class="card-body text-center">
+                    <i class="bi bi-journal-bookmark fs-2 mb-2"></i>
+                    <h5 class="card-title mb-1">My Courses</h5>
+                    <p class="card-text text-muted">Access your enrolled courses</p>
+                </div>
+            </div>
+            <div class="card mb-3 shadow-sm" style="cursor:pointer;" @onclick="() => NavigateTo('/user-management')">
+                <div class="card-body text-center">
+                    <i class="bi bi-people fs-2 mb-2"></i>
+                    <h5 class="card-title mb-1">User Management</h5>
+                    <p class="card-text text-muted">Manage users</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Middle: Announcements -->
+        <div class="col-12 col-md-6 mb-4 mb-md-0">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <i class="bi bi-megaphone"></i> Announcements
+                </div>
+                <div class="card-body">
+                    <!-- Example Announcements -->
+                    <div class="mb-3">
+                        <h6 class="mb-1">Welcome to the LMS!</h6>
+                        <small class="text-muted">July 3, 2025</small>
+                        <p class="mb-0">Check out the new features and updated course catalog.</p>
+                    </div>
+                    <hr />
+                    <div class="mb-3">
+                        <h6 class="mb-1">Upcoming Maintenance</h6>
+                        <small class="text-muted">July 10, 2025</small>
+                        <p class="mb-0">The platform will be under maintenance from 2 AM to 4 AM UTC.</p>
+                    </div>
+                    <!-- Add more announcements as needed -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Right: Course Details & Search -->
+        <div class="col-12 col-md-3">
+            <div class="card mb-4 shadow-sm">
+                <div class="card-header bg-info text-white">
+                    <i class="bi bi-search"></i> Search Courses
+                </div>
+                <div class="card-body">
+                    <input type="text" class="form-control mb-2" placeholder="Search courses..." @bind="searchTerm" />
+                    <button class="btn btn-info w-100" @onclick="SearchCourses">
+                        <i class="bi bi-search"></i> Search
+                    </button>
+                </div>
+            </div>
+            <div class="card shadow-sm">
+                <div class="card-header bg-secondary text-white">
+                    <i class="bi bi-info-circle"></i> Course Details
+                </div>
+                <div class="card-body">
+                    @if (selectedCourse != null)
+                    {
+                        <h6>@selectedCourse.Title</h6>
+                        <p class="mb-1 text-muted">@selectedCourse.Description</p>
+                        <div><strong>Instructor:</strong> @selectedCourse.InstructorName</div>
+                        <div><strong>Level:</strong> @selectedCourse.Level</div>
+                        <div><strong>Start:</strong> @selectedCourse.StartDate.ToString("MMM dd, yyyy")</div>
+                    }
+                    else
+                    {
+                        <div class="text-muted">Select a course to see details.</div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private string searchTerm = string.Empty;
+
+    // Example course model for demonstration
+    private CourseInfo? selectedCourse;
+
+    private void SearchCourses()
+    {
+        // Replace with actual search logic
+        selectedCourse = new CourseInfo
+        {
+            Title = "Introduction to C# Programming",
+            Description = "Learn the fundamentals of C# programming language and object-oriented programming concepts.",
+            InstructorName = "John Smith",
+            Level = "Beginner",
+            StartDate = DateTime.Now.AddDays(7)
+        };
+    }
+
+    private void NavigateTo(string url)
+    {
+        NavigationManager.NavigateTo(url);
+    }
+
+    public class CourseInfo
+    {
+        public string Title { get; set; } = string.Empty;
+        public string Description { get; set; } = string.Empty;
+        public string InstructorName { get; set; } = string.Empty;
+        public string Level { get; set; } = string.Empty;
+        public DateTime StartDate { get; set; }
+    }
+}
