@@ -2,15 +2,17 @@
 @page "/"
 @layout AuthLayout
 @using Microsoft.AspNetCore.Components.Forms
+@using Microsoft.AspNetCore.Components.Authorization
 @inject Microsoft.AspNetCore.Antiforgery.IAntiforgery Antiforgery
 @inject Microsoft.AspNetCore.Http.IHttpContextAccessor HttpContextAccessor
 @inject NavigationManager NavigationManager
+@inject AuthenticationStateProvider AuthenticationStateProvider
 
-<div class="row justify-content-center">
-<h1 class="text-center">Login</h1>
+<div class="row justify-content-center m-0 p-0">
+    <h1 class="text-center">Login</h1>
     <div class="col-12 col-md-8 col-lg-5 col-xl-4">
         <form method="post" action="/api/user/account/login" name="loginForm">
-            <div class="form-floating mb-3">
+            <div class="form-floating">
                 <input name="Email" type="text" class="form-control" autocomplete="username" placeholder="Username" required />
                 <label class="form-label">Username</label>
             </div>
@@ -53,13 +55,14 @@
 @code {
     private string? statusMessage;
     private bool _showPassword = false;
+    private bool _redirectChecked = false;
 
     private void TogglePassword()
     {
         _showPassword = !_showPassword;
     }
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
         // Optionally, read status message from query string if redirected back after login failure
         var uri = new Uri(NavigationManager.Uri);
@@ -67,6 +70,20 @@
         if (query.TryGetValue("error", out var msg))
         {
             statusMessage = msg;
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && !_redirectChecked)
+        {
+            _redirectChecked = true;
+            var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+            var user = authState.User;
+            if (user.Identity is not null && user.Identity.IsAuthenticated)
+            {
+                NavigationManager.NavigateTo("/home", true);
+            }
         }
     }
 }
