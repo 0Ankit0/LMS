@@ -1,0 +1,10 @@
+using System.ComponentModel.DataAnnotations;
+
+namespace LMS.Models.Account
+{
+    public class ProfileInputModel
+    {
+        [Required]
+        public string NewUsername { get; set; } = string.Empty;
+    }
+}
