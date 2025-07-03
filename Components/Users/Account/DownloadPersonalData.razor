@@ -1,0 +1,69 @@
+@using Microsoft.AspNetCore.Identity
+@using System.Text.Json
+@using System.Reflection
+@using Microsoft.AspNetCore.Components.Authorization
+@using LMS.Data
+@inject UserManager<User> UserManager
+@inject ILogger<DownloadPersonalData> Logger
+@inject IJSRuntime JS
+
+<h3>Personal Data</h3>
+<div class="mb-3 d-flex align-items-center">
+    <div class="flex-grow-1 position-relative">
+        <span class="form-control-plaintext text-body">Download a copy of your personal data stored with us.</span>
+    </div>
+    <button type="button" class="btn btn-outline-primary ms-2" @onclick="DownloadData">
+        Download
+    </button>
+</div>
+@if (!string.IsNullOrEmpty(statusMessage))
+{
+    <div class="alert alert-info mt-2">@statusMessage</div>
+}
+
+<style>
+    .material-symbols-outlined {
+        font-family: 'Material Symbols Outlined', sans-serif;
+        font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        vertical-align: middle;
+    }
+</style>
+
+@code {
+    [Parameter] public User? User { get; set; }
+    private string? statusMessage;
+
+    private async Task DownloadData()
+    {
+        if (User == null)
+        {
+            statusMessage = "User not found.";
+            return;
+        }
+
+        Logger.LogInformation("User with ID '{UserId}' asked for their personal data.", await UserManager.GetUserIdAsync(User));
+
+        var personalData = new Dictionary<string, string?>();
+        var personalDataProps = typeof(User).GetProperties()
+        .Where(prop => Attribute.IsDefined(prop, typeof(PersonalDataAttribute)));
+        foreach (var p in personalDataProps)
+        {
+            personalData.Add(p.Name, p.GetValue(User)?.ToString() ?? "null");
+        }
+
+        var logins = await UserManager.GetLoginsAsync(User);
+        foreach (var l in logins)
+        {
+            personalData.Add($"{l.LoginProvider} external login provider key", l.ProviderKey);
+        }
+
+        var authenticatorKey = await UserManager.GetAuthenticatorKeyAsync(User);
+        personalData.Add("Authenticator Key", authenticatorKey ?? "null");
+
+        var json = JsonSerializer.Serialize(personalData, new JsonSerializerOptions { WriteIndented = true });
+        var bytes = System.Text.Encoding.UTF8.GetBytes(json);
+        await JS.InvokeVoidAsync("downloadFileFromBytes", "PersonalData.json", "application/json", bytes);
+
+        statusMessage = "Personal data downloaded.";
+    }
+}

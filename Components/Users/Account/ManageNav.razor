@@ -1,0 +1,80 @@
+@using Microsoft.AspNetCore.Components.Authorization
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject NavigationManager NavigationManager
+@inject HttpClient Http
+
+<nav>
+    <ul class="nav">
+        @if (isAuthenticated)
+        {
+            <li class="nav-item">
+                <div class="dropdown">
+                    <button class="btn btn-secondary dropdown-toggle"
+                            type="button"
+                            id="accountDropdown"
+                            data-bs-toggle="dropdown"
+                            aria-expanded="false">
+                        Account
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-start" aria-labelledby="accountDropdown">
+                        <li>
+                            <button class="dropdown-item" type="button" @onclick="@(() => NavigationManager.NavigateTo("/user/account/manage"))">
+                                Manage
+                            </button>
+                        </li>
+                        <li>
+                            <button class="dropdown-item" type="button" @onclick="@(() => NavigationManager.NavigateTo("/user/account/changepassword"))">
+                                Change Password
+                            </button>
+                        </li>
+                        <li>
+                            <button class="dropdown-item" type="button" @onclick="@(() => NavigationManager.NavigateTo("/user/account/externallogins"))">
+                                External Logins
+                            </button>
+                        </li>
+                        <li>
+                            <button class="dropdown-item" type="button" @onclick="@(() => NavigationManager.NavigateTo("/user/account/personaldata"))">
+                                Personal Data
+                            </button>
+                        </li>
+                        <li><hr class="dropdown-divider" /></li>
+                        <li>
+                            <button class="dropdown-item" type="button" @onclick="LogoutAsync">
+                                Logout
+                            </button>
+                        </li>
+                    </ul>
+                </div>
+            </li>
+        }
+        else
+        {
+            <li class="nav-item">
+                <a class="nav-link" href="/user/account/login">Login</a>
+            </li>
+        }
+    </ul>
+</nav>
+
+@code {
+    private bool isAuthenticated;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        isAuthenticated = authState.User.Identity?.IsAuthenticated ?? false;
+    }
+    private async Task LogoutAsync()
+    {
+        NavigationManager.NavigateTo("/api/user/account/logout",forceLoad:true);
+        // var response = await Http.PostAsync(NavigationManager.BaseUri+"api/user/account/logout", null);
+        // if (response.IsSuccessStatusCode)
+        // {
+        //     NavigationManager.NavigateTo("/user/account/login", forceLoad: true);
+        // }
+        // else
+        // {
+        //     Optionally handle error
+        // }
+    }
+}

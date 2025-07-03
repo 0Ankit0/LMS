@@ -1,0 +1,64 @@
+@page "/user/account/resetauthenticator"
+@using Microsoft.AspNetCore.Identity
+@using Microsoft.AspNetCore.Components.Authorization
+@inject UserManager<User> UserManager
+@inject SignInManager<User> SignInManager
+@inject ILogger<ResetAuthenticator> Logger
+@inject NavigationManager NavigationManager
+@inject IJSRuntime JS
+@inject HttpClient http
+@attribute [Authorize]
+
+<button class="btn btn-link mb-3" type="button" @onclick="NavigateBack">
+    <i class="bi bi-arrow-left"></i> Back
+</button>
+@* <h3>Reset authenticator key</h3> *@
+
+@if (!string.IsNullOrEmpty(statusMessage))
+{
+    <div class="alert alert-info">@statusMessage</div>
+}
+
+
+
+@code {
+    [CascadingParameter] private Task<AuthenticationState>? authenticationStateTask { get; set; }
+    private string? statusMessage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        statusMessage = null;
+
+        if (authenticationStateTask == null)
+        {
+            statusMessage = "Unable to load authentication state.";
+            return;
+        }
+        var authState = await authenticationStateTask;
+        var user = await UserManager.GetUserAsync(authState.User);
+        if (user == null)
+        {
+            statusMessage = "User not found.";
+            return;
+        }
+
+        await UserManager.SetTwoFactorEnabledAsync(user, false);
+        await UserManager.ResetAuthenticatorKeyAsync(user);
+        var userId = await UserManager.GetUserIdAsync(user);
+        Logger.LogInformation("User with ID '{UserId}' has reset their authentication app key.", userId);
+
+        // Optionally, you can show a message here before redirecting
+        statusMessage = "Your authenticator app key has been reset, you will need to configure your authenticator app using the new key.";
+
+        var refreshSigninResponse = await http.GetAsync(NavigationManager.BaseUri + "api/user/account/refreshsignin");
+        
+        // Redirect to the enable authenticator page after a short delay
+        // await Task.Delay(1000);
+        // NavigationManager.NavigateTo("/user/account/enableauthenticator", forceLoad: true);
+
+    }
+    private void NavigateBack()
+    {
+        JS.InvokeVoidAsync("history.back");
+    }
+}

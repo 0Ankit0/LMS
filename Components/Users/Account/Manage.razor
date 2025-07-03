@@ -1,0 +1,174 @@
+@page "/user/account/manage"
+@page "/user/account/manage/{Section}"
+@using Microsoft.AspNetCore.Identity
+@using Microsoft.AspNetCore.Components.Authorization
+@using LMS.Data
+@using LMS.Components.Users.Account
+@inject UserManager<User> UserManager
+@inject NavigationManager NavigationManager
+@attribute [Authorize]
+
+@code {
+    [Parameter]
+    public string? Section { get; set; }
+    private bool _navigatedToSection = false;
+
+    private string activeSection = "profile";
+    private User? user;
+    [CascadingParameter] private Task<AuthenticationState>? authenticationStateTask { get; set; }
+    private bool isLoaded = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (authenticationStateTask != null)
+        {
+            var authState = await authenticationStateTask;
+            user = await UserManager.GetUserAsync(authState.User);
+        }
+        isLoaded = true;
+    }
+
+    protected override void OnParametersSet()
+    {
+        // If no section is provided, navigate to the default section in the URL
+        if (string.IsNullOrWhiteSpace(Section))
+        {
+            if (!_navigatedToSection)
+            {
+                _navigatedToSection = true;
+                NavigationManager.NavigateTo("/user/account/manage/profile", forceLoad: false);
+            }
+            activeSection = "profile";
+        }
+        else
+        {
+            activeSection = Section;
+        }
+    }
+
+    private void SetSection(string section)
+    {
+        // Update the URL and the active section
+        if (activeSection != section)
+        {
+            NavigationManager.NavigateTo($"/user/account/manage/{section}", forceLoad: false);
+        }
+    }
+}
+
+<style>
+    .nav-pills .nav-link.active {
+        border-top-left-radius: 0 !important;
+        border-bottom-left-radius: 0 !important;
+        border-top-right-radius: 1.25rem !important;
+        border-bottom-right-radius: 1.25rem !important;
+    }
+</style>
+<div class="d-flex m-0">
+    <!-- Sidebar -->
+    <div class="flex-shrink-0 py-3 px-0" style="width: 280px;">
+        <a href="#" class="d-flex align-items-center mb-3 mb-md-0 me-md-auto text-decoration-none">
+            <span class="fs-4 fw-bold">Settings</span>
+        </a>
+        <hr>
+        <ul class="nav nav-pills flex-column mb-auto">
+            <li class="nav-item">
+                <a href="@NavigationManager.ToAbsoluteUri($"/user/account/manage/profile")"
+                    class="nav-link @(activeSection == "profile" ? "active" : "text-dark")"
+                    @onclick="@(() => SetSection("profile"))" @onclick:preventDefault="true">
+                    <i class="bi bi-person-circle me-2"></i> Profile
+                </a>
+            </li>
+            <li>
+                <a href="@NavigationManager.ToAbsoluteUri($"/user/account/manage/2FA")"
+                    class="nav-link @(activeSection == "2FA" ? "active" : "text-dark")"
+                    @onclick="@(() => SetSection("2FA"))" @onclick:preventDefault="true">
+                    <i class="bi bi-person-badge me-2"></i> 2FA
+                </a>
+            </li>
+            <li>
+                <a href="@NavigationManager.ToAbsoluteUri($"/user/account/manage/privacy")"
+                    class="nav-link @(activeSection == "privacy" ? "active" : "text-dark")"
+                    @onclick="@(() => SetSection("privacy"))" @onclick:preventDefault="true">
+                    <i class="bi bi-shield-lock me-2"></i> Data & privacy
+                </a>
+            </li>
+            <li>
+                <a href="@NavigationManager.ToAbsoluteUri($"/user/account/manage/security")"
+                    class="nav-link @(activeSection == "security" ? "active" : "text-dark")"
+                    @onclick="@(() => SetSection("security"))" @onclick:preventDefault="true">
+                    <i class="bi bi-lock-fill me-2"></i> Security
+                </a>
+            </li>
+            <li>
+                <a href="@NavigationManager.ToAbsoluteUri($"/user/account/manage/people")"
+                    class="nav-link @(activeSection == "people" ? "active" : "text-dark")"
+                    @onclick="@(() => SetSection("people"))" @onclick:preventDefault="true">
+                    <i class="bi bi-people-fill me-2"></i> People & sharing
+                </a>
+            </li>
+            <li>
+                <a href="@NavigationManager.ToAbsoluteUri($"/user/account/manage/payments")"
+                    class="nav-link @(activeSection == "payments" ? "active" : "text-dark")"
+                    @onclick="@(() => SetSection("payments"))" @onclick:preventDefault="true">
+                    <i class="bi bi-credit-card me-2"></i> Payments & subscriptions
+                </a>
+            </li>
+            <li>
+                <a href="@NavigationManager.ToAbsoluteUri($"/user/account/manage/about")"
+                    class="nav-link @(activeSection == "about" ? "active" : "text-dark")"
+                    @onclick="@(() => SetSection("about"))" @onclick:preventDefault="true">
+                    <i class="bi bi-info-circle me-2"></i> About
+                </a>
+            </li>
+        </ul>
+    </div>
+
+    <!-- Main Content -->
+    <div class="flex-grow-1 p-4">
+        @if (!isLoaded)
+        {
+            <p>Loading...</p>
+        }
+        else if (user == null)
+        {
+            <div class="alert alert-danger">User not found.</div>
+        }
+        else if (activeSection == "profile")
+        {
+            <Email User="user" />
+            <Profile User="user" />
+            <Phone User="user" />
+        }
+        else if (activeSection == "security")
+        {
+            <h2>Welcome to your account settings</h2>
+            <p>Select a section from the left to manage your account.</p>
+        }
+        else if (activeSection == "2FA")
+        {
+            <TwoFactorAuthentication User="user" />
+        }
+        else if (activeSection == "privacy")
+        {
+            <DownloadPersonalData User="user" />
+            <DeletePersonalData User="user" />
+            <EnableLockout User="user" />
+        }
+        else if (activeSection == "people")
+        {
+            <h2>People & sharing</h2>
+            <p>Manage people and sharing settings here.</p>
+        }
+        else if (activeSection == "payments")
+        {
+            <h2>Payments & subscriptions</h2>
+            <p>Manage your payment methods and subscriptions here.</p>
+        }
+        else if (activeSection == "about")
+        {
+            <h2>About</h2>
+            <p>Information about your account and this application.</p>
+        }
+    </div>
+</div>

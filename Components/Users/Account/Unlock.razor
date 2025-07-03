@@ -1,0 +1,82 @@
+@page "/user/account/unlock"
+@layout AuthLayout
+@using System.Text
+@using Microsoft.AspNetCore.Identity
+@using Microsoft.AspNetCore.WebUtilities
+@inject UserManager<User> UserManager
+
+<h1>Unlock Your Account</h1>
+<p>
+    The system is processing your unlock request.
+</p>
+
+@if (!string.IsNullOrEmpty(Message))
+{
+    <div>@Message</div>
+}
+
+@if (!HasParams && !IsLoading)
+{
+    <div class="alert alert-warning">Invalid unlock link. Please check your email and use the link provided.</div>
+}
+
+@code {
+    private string? Message;
+    private bool IsLoading = false;
+
+    [SupplyParameterFromQuery]
+    public string? Email { get; set; }
+
+    [SupplyParameterFromQuery(Name = "code")]
+    public string? EncodedCode { get; set; }
+
+    private bool HasParams => !string.IsNullOrWhiteSpace(Email) && !string.IsNullOrWhiteSpace(EncodedCode);
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (HasParams)
+        {
+            await RemoveLockout();
+        }
+    }
+
+    private async Task RemoveLockout()
+    {
+        IsLoading = true;
+        Message = string.Empty;
+        try
+        {
+            var user = await UserManager.FindByEmailAsync(Email!);
+            if (user == null)
+            {
+                Message = "Invalid unlock link or user not found.";
+                return;
+            }
+
+            // Decode the code from Base64Url
+            var codeBytes = WebEncoders.Base64UrlDecode(EncodedCode!);
+            var code = Encoding.UTF8.GetString(codeBytes);
+
+            var isValid = await UserManager.VerifyUserTokenAsync(
+            user, TokenOptions.DefaultProvider, "RemoveLockout", code);
+
+            if (!isValid)
+            {
+                Message = "Failed to remove lockout. The link may be invalid or expired.";
+                return;
+            }
+
+            await UserManager.SetLockoutEndDateAsync(user, null);
+            await UserManager.ResetAccessFailedCountAsync(user);
+            Message = "Lockout removed. You may now try logging in again.";
+        }
+        catch
+        {
+            Message = "An error occurred while attempting to remove lockout.";
+        }
+        finally
+        {
+            IsLoading = false;
+        }
+    }
+}

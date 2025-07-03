@@ -1,0 +1,72 @@
+@page "/user/account/login"
+@page "/"
+@layout AuthLayout
+@using Microsoft.AspNetCore.Components.Forms
+@inject Microsoft.AspNetCore.Antiforgery.IAntiforgery Antiforgery
+@inject Microsoft.AspNetCore.Http.IHttpContextAccessor HttpContextAccessor
+@inject NavigationManager NavigationManager
+
+<div class="row justify-content-center">
+<h1 class="text-center">Login</h1>
+    <div class="col-12 col-md-8 col-lg-5 col-xl-4">
+        <form method="post" action="/api/user/account/login" name="loginForm">
+            <div class="form-floating mb-3">
+                <input name="Email" type="text" class="form-control" autocomplete="username" placeholder="Username" required />
+                <label class="form-label">Username</label>
+            </div>
+            <div class="form-floating mb-3 position-relative">
+                <input name="Password" type="@(_showPassword ? "text" : "password")" class="form-control"
+                       autocomplete="current-password" placeholder="Password" required />
+                <label class="form-label">Password</label>
+                @* <i class="bi @( _showPassword ? "bi-eye-slash" : "bi-eye") password-eye"
+                   tabindex="0"
+                   @onclick="TogglePassword"
+                   @onkeydown="@(e => { if (e.Key == "Enter" || e.Key == " ") TogglePassword(); })"
+                   title="@(_showPassword ? "Hide password" : "Show password")"
+                   style="position:absolute;top:50%;right:1rem;transform:translateY(-50%);cursor:pointer;user-select:none;font-size:1.25rem;">
+                </i> *@
+            </div>
+            <div class="form-check mb-3">
+                <input name="rememberMe" type="checkbox" class="form-check-input" value="true" />
+                <label class="form-check-label">Remember me?</label>
+            </div>
+            <button type="submit" class="w-100 btn btn-lg btn-primary">Login</button>
+            <div class="mt-2 text-end">
+                <a href="/user/account/forgotpassword">Forgot your password?</a>
+            </div>
+        </form>
+        <div class="mt-3 text-center">
+            <span>Don't have an account?</span>
+            <a href="/user/account/register" class="ms-1">Register</a>
+        </div>
+        @if (!string.IsNullOrEmpty(statusMessage))
+        {
+            <div class="alert alert-info mt-2">@statusMessage</div>
+        }
+    </div>
+</div>
+<style>
+    .password-eye:focus {
+        outline: 2px solid #0d6efd;
+    }
+</style>
+@code {
+    private string? statusMessage;
+    private bool _showPassword = false;
+
+    private void TogglePassword()
+    {
+        _showPassword = !_showPassword;
+    }
+
+    protected override void OnInitialized()
+    {
+        // Optionally, read status message from query string if redirected back after login failure
+        var uri = new Uri(NavigationManager.Uri);
+        var query = Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery(uri.Query);
+        if (query.TryGetValue("error", out var msg))
+        {
+            statusMessage = msg;
+        }
+    }
+}

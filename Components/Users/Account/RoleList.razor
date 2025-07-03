@@ -1,0 +1,179 @@
+@page "/user/account/roles"
+@using Microsoft.AspNetCore.Identity
+@inject RoleManager<IdentityRole> RoleManager
+@inject UserManager<User> UserManager
+@inject NavigationManager NavigationManager
+@attribute [Authorize(Roles = "Admin")]
+
+<div class="container mt-4">
+    <div class="row mb-3">
+        <div class="col">
+            <h1 class="display-6">Roles</h1>
+        </div>
+        <div class="col-auto">
+            <a class="btn btn-primary" href="/user/account/roles/create">
+                <i class="bi bi-plus-lg"></i> Create New Role
+            </a>
+        </div>
+    </div>
+
+    @if (!string.IsNullOrEmpty(statusMessage))
+    {
+        <div class="alert alert-info alert-dismissible fade show" role="alert">
+            @statusMessage
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <div class="card shadow-sm">
+        <div class="card-body p-0">
+            <table class="table table-hover mb-0 align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>Name</th>
+                        <th>Assigned Users</th>
+                        <th style="width: 260px;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var role in roles)
+                    {
+                        var assignedUsers = roleUserNames.TryGetValue(role.Id, out var users) ? users : new List<string>();
+                        <tr>
+                            <td>@role.Name</td>
+                            <td>
+                                @if (assignedUsers.Count > 0)
+                                {
+                                    @foreach (var username in assignedUsers)
+                                    {
+                                        <span class="badge bg-info text-dark me-1">@username</span>
+                                    }
+                                }
+                                else
+                                {
+                                    <span class="text-muted">None</span>
+                                }
+                            </td>
+                            <td>
+                                <div class="d-flex flex-row align-items-center gap-2">
+                                    <a class="btn btn-sm btn-outline-secondary" href="/user/account/roles/edit/@role.Id">
+                                        <i class="bi bi-pencil"></i> Edit
+                                    </a>
+                                    <button class="btn btn-sm btn-outline-danger" @onclick="() => ConfirmDelete(role)"
+                                        disabled="@(assignedUsers.Count > 0)"
+                                        title="@(assignedUsers.Count > 0 ? "Cannot delete: role assigned to users" : "Delete")">
+                                        <i class="bi bi-trash"></i> Delete
+                                    </button>
+                                    <a class="btn btn-sm btn-outline-info" href="/user/account/roles/assign/@role.Id">
+                                        <i class="bi bi-person-plus"></i> Assign Users
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+@if (showDeleteConfirmId != null && roleToDelete != null)
+{
+    <div class="modal fade show d-block" tabindex="-1" style="background:rgba(0,0,0,0.5);" role="dialog">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title text-danger">
+                        <i class="bi bi-exclamation-triangle"></i> Confirm Delete
+                    </h5>
+                    <button type="button" class="btn-close" aria-label="Close" @onclick="CancelDelete"></button>
+                </div>
+                <div class="modal-body">
+                    <p>
+                        Are you sure you want to delete the role
+                        <strong>@roleToDelete.Name</strong>?
+                    </p>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-danger" @onclick="() => DeleteRole(roleToDelete)">
+                        <i class="bi bi-trash"></i> Delete
+                    </button>
+                    <button class="btn btn-secondary" @onclick="CancelDelete">
+                        Cancel
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal-backdrop fade show"></div>
+}
+
+@code {
+    private List<IdentityRole> roles = new();
+    private Dictionary<string, List<string>> roleUserNames = new();
+    private string? statusMessage;
+    private string? showDeleteConfirmId;
+    private IdentityRole? roleToDelete;
+
+    protected override async Task OnInitializedAsync()
+    {
+        roles = RoleManager.Roles.ToList();
+        await LoadRoleUserNames();
+    }
+
+    private async Task LoadRoleUserNames()
+    {
+        roleUserNames = new Dictionary<string, List<string>>();
+        var allUsers = UserManager.Users.ToList();
+        foreach (var role in roles)
+        {
+            var userNames = new List<string>();
+            foreach (var user in allUsers)
+            {
+                var userRoles = await UserManager.GetRolesAsync(user);
+                if (userRoles.Contains(role.Name))
+                {
+                    userNames.Add(user.UserName ?? user.Email ?? user.Id);
+                }
+            }
+            roleUserNames[role.Id] = userNames;
+        }
+    }
+
+    private void ConfirmDelete(IdentityRole role)
+    {
+        showDeleteConfirmId = role.Id;
+        roleToDelete = role;
+    }
+
+    private void CancelDelete()
+    {
+        showDeleteConfirmId = null;
+        roleToDelete = null;
+    }
+
+    private async Task DeleteRole(IdentityRole role)
+    {
+        if (roleUserNames.TryGetValue(role.Id, out var users) && users.Count > 0)
+        {
+            statusMessage = $"Cannot delete role '{role.Name}' because it is assigned to {users.Count} user(s).";
+        }
+        else
+        {
+            var result = await RoleManager.DeleteAsync(role);
+            if (result.Succeeded)
+            {
+                statusMessage = $"Role '{role.Name}' deleted.";
+                roles = RoleManager.Roles.ToList();
+                await LoadRoleUserNames();
+            }
+            else
+            {
+                statusMessage = string.Join("; ", result.Errors.Select(e => e.Description));
+            }
+        }
+        showDeleteConfirmId = null;
+        roleToDelete = null;
+    }
+}

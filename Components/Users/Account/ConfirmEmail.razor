@@ -1,0 +1,61 @@
+@page "/user/account/confirmemail"
+@layout AuthLayout
+@using Microsoft.AspNetCore.Identity
+@using Microsoft.AspNetCore.WebUtilities
+@using System.Text
+@inject UserManager<User> UserManager
+@inject NavigationManager NavigationManager
+
+<h1>Confirm email</h1>
+
+@if (isLoading)
+{
+    <p>Loading...</p>
+}
+else if (!string.IsNullOrEmpty(statusMessage))
+{
+    <div class="alert alert-info">@statusMessage</div>
+}
+@code {
+    [Parameter, SupplyParameterFromQuery]
+    public string? UserId { get; set; }
+
+    [Parameter, SupplyParameterFromQuery]
+    public string? Code { get; set; }
+
+    private string? statusMessage;
+    private bool isLoading = true;
+    private bool shouldRedirect = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var user = await UserManager.FindByIdAsync(UserId!);
+        if (user == null)
+        {
+            statusMessage = $"Unable to load user with ID '{UserId}'.";
+            isLoading = false;
+            return;
+        }
+
+        try
+        {
+            var decodedCode = Encoding.UTF8.GetString(WebEncoders.Base64UrlDecode(Code!));
+            var result = await UserManager.ConfirmEmailAsync(user, decodedCode);
+            statusMessage = result.Succeeded ? "Thank you for confirming your email." : "Error confirming your email.";
+        }
+        catch
+        {
+            statusMessage = "Invalid confirmation link.";
+        }
+        isLoading = false;
+    }
+
+    protected override void OnAfterRender(bool firstRender)
+    {
+        if (shouldRedirect)
+        {
+            shouldRedirect = false;
+            NavigationManager.NavigateTo("/", forceLoad: true);
+        }
+    }
+}
