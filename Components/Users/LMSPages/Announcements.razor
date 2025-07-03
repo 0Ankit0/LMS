@@ -1,0 +1,74 @@
+@using LMS.Models.Communication
+@inject IAnnouncementService AnnouncementService
+
+@rendermode InteractiveServer
+
+@code {
+    [Parameter]
+    public UserModel? User { get; set; }
+    private List<AnnouncementModel>? announcements;
+    private bool isLoading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        isLoading = true;
+        announcements = await AnnouncementService.GetAnnouncementsAsync();
+        isLoading = false;
+    }
+}
+
+<div class="container py-4">
+    <div class="row mb-2">
+        <div class="col-12">
+            <div class="d-flex align-items-center justify-content-between">
+                <div class="d-flex align-items-center">
+                    <span class="display-6 me-3 text-primary"><i class="fas fa-bullhorn"></i></span>
+                    </div>
+                @if (isLoading)
+                {
+                    <span class="spinner-border spinner-border-sm text-primary ms-3" role="status" aria-hidden="true"></span>
+                }
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        @if (isLoading)
+        {
+            <div class="col-12 d-flex justify-content-center align-items-center" style="min-height: 300px;">
+                <div class="spinner-border text-primary" style="width: 3rem; height: 3rem;" role="status">
+                    <span class="visually-hidden">Loading announcements...</span>
+                </div>
+            </div>
+        }
+        else if (announcements?.Any() == true)
+        {
+            @foreach (var announcement in announcements)
+            {
+                <div class="col-12 mb-4">
+                    <div class="card shadow-sm">
+                        <div class="card-body">
+                            <h5 class="card-title mb-2">@announcement.Title</h5>
+                            <h6 class="card-subtitle mb-2 text-muted">
+                                @announcement.AuthorName
+                                <span class="mx-2">|</span>
+                                <span class="badge bg-secondary">@announcement.Priority</span>
+                                <span class="mx-2">|</span>
+                                <small>@announcement.PublishedAt.ToString("g")</small>
+                            </h6>
+                            <p class="card-text">@announcement.Content</p>
+                        </div>
+                    </div>
+                </div>
+            }
+        }
+        else
+        {
+            <div class="col-12">
+                <div class="alert alert-info text-center">
+                    No announcements found.
+                </div>
+            </div>
+        }
+    </div>
+</div>

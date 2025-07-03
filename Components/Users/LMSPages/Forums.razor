@@ -1,0 +1,339 @@
+@page "/user/lms/forums"
+@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.AspNetCore.Identity
+@using LMS.Data
+@using LMS.Models.Communication
+@using LMS.Models.Course
+@using LMS.Services
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject UserManager<User> UserManager
+@inject IForumService ForumService
+@inject NavigationManager Navigation
+@inject IJSRuntime JSRuntime
+
+<PageTitle>Forums - LMS</PageTitle>
+
+<div class="container-fluid">
+    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+        <h1 class="h2"><i class="fas fa-comments me-2"></i>Forums</h1>
+        <div class="btn-toolbar mb-2 mb-md-0">
+            <button type="button" class="btn btn-primary" @onclick="ShowCreateForumModal">
+                <i class="fas fa-plus me-1"></i>Create Forum
+            </button>
+        </div>
+    </div>
+
+    @if (isLoading)
+    {
+        <div class="d-flex justify-content-center py-5">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading forums...</span>
+            </div>
+        </div>
+    }
+    else if (forums?.Any() == true)
+    {
+        <!-- General Forums -->
+        @if (forums.Where(f => f.IsGeneral).Any())
+        {
+            <div class="card mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="fas fa-globe me-2"></i>General Discussion</h5>
+                </div>
+                <div class="card-body p-0">
+                    @foreach (var forum in forums.Where(f => f.IsGeneral))
+                    {
+                        <div class="border-bottom p-3">
+                            <div class="row align-items-center">
+                                <div class="col-md-8">
+                                    <h6 class="mb-1">
+                                        <a href="/forum/@forum.Id" class="text-decoration-none">@forum.Title</a>
+                                    </h6>
+                                    <p class="text-muted mb-0 small">@forum.Description</p>
+                                </div>
+                                <div class="col-md-2 text-center">
+                                    <div class="fw-bold">@forum.TopicCount</div>
+                                    <small class="text-muted">Topics</small>
+                                </div>
+                                <div class="col-md-2 text-center">
+                                    @if (forum.LastPostAt.HasValue)
+                                    {
+                                        <small class="text-muted">@forum.LastPostAt.Value.ToString("MMM dd, yyyy")</small>
+                                    }
+                                    else
+                                    {
+                                        <small class="text-muted">No posts yet</small>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+
+        <!-- Course Forums -->
+        @foreach (var courseGroup in forums.Where(f => !f.IsGeneral).GroupBy(f => f.CourseName ?? "Unknown Course"))
+        {
+            <div class="card mb-4">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0"><i class="fas fa-book me-2"></i>@courseGroup.Key</h5>
+                </div>
+                <div class="card-body p-0">
+                    @foreach (var forum in courseGroup)
+                    {
+                        <div class="border-bottom p-3">
+                            <div class="row align-items-center">
+                                <div class="col-md-8">
+                                    <h6 class="mb-1">
+                                        <a href="/forum/@forum.Id" class="text-decoration-none">@forum.Title</a>
+                                    </h6>
+                                    <p class="text-muted mb-0 small">@forum.Description</p>
+                                </div>
+                                <div class="col-md-2 text-center">
+                                    <div class="fw-bold">@forum.TopicCount</div>
+                                    <small class="text-muted">Topics</small>
+                                </div>
+                                <div class="col-md-2 text-center">
+                                    @if (forum.LastPostAt.HasValue)
+                                    {
+                                        <small class="text-muted">@forum.LastPostAt.Value.ToString("MMM dd, yyyy")</small>
+                                    }
+                                    else
+                                    {
+                                        <small class="text-muted">No posts yet</small>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+
+        <!-- Recent Topics -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-clock me-2"></i>Recent Topics</h5>
+            </div>
+            <div class="card-body">
+                @if (recentTopics?.Any() == true)
+                {
+                    <div class="list-group list-group-flush">
+                        @foreach (var topic in recentTopics.Take(10))
+                        {
+                            <div class="list-group-item d-flex justify-content-between align-items-start">
+                                <div class="ms-2 me-auto">
+                                    <div class="fw-bold">
+                                        <a href="/forum/@topic.ForumId/topic/@topic.Id" class="text-decoration-none">@topic.Title</a>
+                                    </div>
+                                    <small class="text-muted">
+                                        by @topic.CreatedByUserName in @topic.ForumTitle
+                                    </small>
+                                </div>
+                                <div class="text-end">
+                                    <span class="badge bg-primary rounded-pill">@topic.PostCount</span>
+                                    <div>
+                                        <small class="text-muted">@topic.CreatedAt.ToString("MMM dd")</small>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <p class="text-muted text-center py-3">No recent topics found.</p>
+                }
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="text-center py-5">
+            <i class="fas fa-comments fa-4x text-muted mb-3"></i>
+            <h4 class="text-muted">No forums available</h4>
+            <p class="text-muted">Be the first to create a discussion forum!</p>
+            <button type="button" class="btn btn-primary" @onclick="ShowCreateForumModal">
+                <i class="fas fa-plus me-1"></i>Create First Forum
+            </button>
+        </div>
+    }
+</div>
+
+<!-- Create Forum Modal -->
+@if (showCreateModal)
+{
+    <div class="modal fade show" style="display: block;" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Create New Forum</h5>
+                    <button type="button" class="btn-close" @onclick="HideCreateModal"></button>
+                </div>
+                <div class="modal-body">
+                    <EditForm Model="@newForum" OnValidSubmit="@CreateForum">
+                        <DataAnnotationsValidator />
+                        <ValidationSummary class="alert alert-danger" />
+                        
+                        <div class="mb-3">
+                            <label for="title" class="form-label">Title</label>
+                            <InputText id="title" class="form-control" @bind-Value="newForum.Title" />
+                            <ValidationMessage For="@(() => newForum.Title)" />
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="description" class="form-label">Description</label>
+                            <InputTextArea id="description" class="form-control" rows="3" @bind-Value="newForum.Description" />
+                            <ValidationMessage For="@(() => newForum.Description)" />
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="courseId" class="form-label">Course (Optional)</label>
+                            <InputSelect id="courseId" class="form-select" @bind-Value="newForum.CourseId">
+                                <option value="">General Forum</option>
+                                @if (availableCourses != null)
+                                {
+                                    @foreach (var course in availableCourses)
+                                    {
+                                        <option value="@course.Id">@course.Title</option>
+                                    }
+                                }
+                            </InputSelect>
+                        </div>
+                        
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" @onclick="HideCreateModal">Cancel</button>
+                            <button type="submit" class="btn btn-primary" disabled="@isCreating">
+                                @if (isCreating)
+                                {
+                                    <span class="spinner-border spinner-border-sm me-2"></span>
+                                }
+                                Create Forum
+                            </button>
+                        </div>
+                    </EditForm>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal-backdrop fade show"></div>
+}
+
+@code {
+    private bool isLoading = true;
+    private bool isCreating = false;
+    private bool showCreateModal = false;
+    private string? currentUserId;
+    
+    private List<ForumModel>? forums;
+    private List<ForumTopicModel>? recentTopics;
+    private List<LMS.Models.Course.CourseModel>? availableCourses;
+    private CreateForumRequest newForum = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadForumData();
+    }
+
+    private async Task LoadForumData()
+    {
+        try
+        {
+            isLoading = true;
+            var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+            if (authState.User.Identity?.IsAuthenticated == true)
+            {
+                var user = await UserManager.GetUserAsync(authState.User);
+                if (user != null)
+                {
+                    currentUserId = user.Id;
+                    
+                    // Load forums
+                    forums = await ForumService.GetForumsAsync();
+                    
+                    // Load recent topics across all forums
+                    recentTopics = new List<ForumTopicModel>();
+                    if (forums != null)
+                    {
+                        foreach (var forum in forums)
+                        {
+                            var topics = await ForumService.GetTopicsByForumIdAsync(forum.Id);
+                            if (topics != null)
+                                recentTopics.AddRange(topics);
+                        }
+                        recentTopics = recentTopics.OrderByDescending(t => t.CreatedAt).ToList();
+                    }
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("console.error", "Error loading forums:", ex.Message);
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private async Task ShowCreateForumModal()
+    {
+        if (availableCourses == null)
+        {
+            // Load available courses for the dropdown
+            try
+            {
+                // TODO: Load user's enrolled courses or all courses if admin
+                availableCourses = new List<LMS.Models.Course.CourseModel>(); // Placeholder
+            }
+            catch (Exception ex)
+            {
+                await JSRuntime.InvokeVoidAsync("console.error", "Error loading courses:", ex.Message);
+            }
+        }
+        
+        showCreateModal = true;
+    }
+
+    private void HideCreateModal()
+    {
+        showCreateModal = false;
+        newForum = new CreateForumRequest();
+    }
+
+    private async Task CreateForum()
+    {
+        if (currentUserId == null) return;
+
+        try
+        {
+            isCreating = true;
+            var forum = await ForumService.CreateForumAsync(newForum);
+            
+            await JSRuntime.InvokeVoidAsync("showToast", "Forum created successfully!", "success");
+            HideCreateModal();
+            await LoadForumData();
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("showToast", $"Error creating forum: {ex.Message}", "error");
+        }
+        finally
+        {
+            isCreating = false;
+        }
+    }
+}lms/forums"
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">Forums</h1>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="alert alert-info">
+            <i class="fas fa-info-circle"></i>
+            This is the Forums component. It will display discussion forums and enable communication.
+        </div>
+    </div>
+</div>

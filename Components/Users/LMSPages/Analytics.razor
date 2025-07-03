@@ -1,0 +1,559 @@
+@page "/user/lms/analytics"
+@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.AspNetCore.Identity
+@using LMS.Data
+@using LMS.Models.User
+@using LMS.Models.Course
+@using LMS.Services
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject UserManager<User> UserManager
+@inject ProgressService ProgressService
+@inject ICourseService CourseService
+@inject IEnrollmentService EnrollmentService
+@inject IJSRuntime JSRuntime
+
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2"><i class="fas fa-chart-line text-info me-2"></i>Learning Analytics</h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <div class="btn-group me-2" role="group">
+            <button type="button" class="btn @(selectedPeriod == "week" ? "btn-primary" : "btn-outline-primary") btn-sm" 
+                    @onclick='() => SelectPeriod("week")'>
+                This Week
+            </button>
+            <button type="button" class="btn @(selectedPeriod == "month" ? "btn-primary" : "btn-outline-primary") btn-sm" 
+                    @onclick='() => SelectPeriod("month")'>
+                This Month
+            </button>
+            <button type="button" class="btn @(selectedPeriod == "all" ? "btn-primary" : "btn-outline-primary") btn-sm" 
+                    @onclick='() => SelectPeriod("all")'>
+                All Time
+            </button>
+        </div>
+        <button class="btn btn-outline-primary btn-sm" @onclick="RefreshAnalytics">
+            <i class="fas fa-sync-alt"></i> Refresh
+        </button>
+    </div>
+</div>
+
+@if (isLoading)
+{
+    <div class="d-flex justify-content-center py-5">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading analytics...</span>
+        </div>
+    </div>
+}
+else
+{
+    <!-- Key Performance Indicators -->
+    <div class="row mb-4">
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-primary shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                Course Progress
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">@overallProgress.ToString("F1")%</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-chart-pie fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-success shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                Completed Courses
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">@completedCourses</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-graduation-cap fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-info shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                                Study Hours
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">@totalStudyHours</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-clock fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-warning shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                                Average Score
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">@averageScore.ToString("F1")%</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-star fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Progress Charts Row -->
+    <div class="row mb-4">
+        <!-- Course Progress Chart -->
+        <div class="col-lg-8">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="fas fa-chart-area"></i> Course Progress Overview
+                    </h6>
+                </div>
+                <div class="card-body">
+                    @if (enrollments?.Any() == true)
+                    {
+                        @foreach (var enrollment in enrollments.Take(5))
+                        {
+                            var courseProgress = GetCourseProgress(enrollment.Id);
+                            <div class="mb-3">
+                                <div class="d-flex justify-content-between mb-1">
+                                    <span class="font-weight-bold">@enrollment.CourseTitle</span>
+                                    <span class="text-muted">@courseProgress.ToString("F1")%</span>
+                                </div>
+                                <div class="progress mb-2" style="height: 10px;">
+                                    <div class="progress-bar @GetProgressBarClass(courseProgress)" 
+                                         style="width: @courseProgress%" 
+                                         role="progressbar"></div>
+                                </div>
+                                <div class="d-flex justify-content-between">
+                                    <small class="text-muted">
+                                        @GetCompletedModules(enrollment.Id) / @GetTotalModules(enrollment.Id) modules
+                                    </small>
+                                    <small class="text-muted">
+                                        Enrolled: @enrollment.EnrolledAt.ToString("MMM dd, yyyy")
+                                    </small>
+                                </div>
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <div class="text-center py-4">
+                            <i class="fas fa-book fa-3x text-muted mb-3"></i>
+                            <p class="text-muted">No course enrollments found.</p>
+                            <a href="/user/lms/coursecatalog" class="btn btn-primary">Browse Courses</a>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- Activity Summary -->
+        <div class="col-lg-4">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-success">
+                        <i class="fas fa-tasks"></i> Activity Summary
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="text-center">
+                        <div class="mb-3">
+                            <div class="circle-progress mx-auto mb-2" style="--progress: @overallProgress">
+                                <span class="circle-progress-value">@overallProgress.ToString("F0")%</span>
+                            </div>
+                            <h6 class="text-muted">Overall Progress</h6>
+                        </div>
+                        
+                        <hr />
+                        
+                        <div class="row text-center">
+                            <div class="col-6 border-right">
+                                <div class="h5 text-primary mb-0">@totalLessonsCompleted</div>
+                                <small class="text-muted">Lessons</small>
+                            </div>
+                            <div class="col-6">
+                                <div class="h5 text-success mb-0">@totalModulesCompleted</div>
+                                <small class="text-muted">Modules</small>
+                            </div>
+                        </div>
+                        
+                        <hr />
+                        
+                        <div class="row text-center">
+                            <div class="col-6 border-right">
+                                <div class="h5 text-warning mb-0">@currentStreak</div>
+                                <small class="text-muted">Day Streak</small>
+                            </div>
+                            <div class="col-6">
+                                <div class="h5 text-info mb-0">@activeDays</div>
+                                <small class="text-muted">Active Days</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Activity & Performance -->
+    <div class="row">
+        <!-- Recent Learning Activity -->
+        <div class="col-lg-6">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-info">
+                        <i class="fas fa-clock"></i> Recent Activity
+                    </h6>
+                </div>
+                <div class="card-body">
+                    @if (recentActivities?.Any() == true)
+                    {
+                        <div class="timeline">
+                            @foreach (var activity in recentActivities.Take(5))
+                            {
+                                <div class="timeline-item mb-3">
+                                    <div class="timeline-marker bg-@GetActivityColor(activity.Type)"></div>
+                                    <div class="timeline-content">
+                                        <div class="d-flex justify-content-between">
+                                            <strong>@activity.Description</strong>
+                                            <small class="text-muted">@activity.Timestamp.ToString("MMM dd, HH:mm")</small>
+                                        </div>
+                                        <small class="text-muted">@activity.CourseTitle</small>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-center py-3">
+                            <i class="fas fa-history fa-2x text-muted mb-2"></i>
+                            <p class="text-muted">No recent activity found.</p>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- Performance Metrics -->
+        <div class="col-lg-6">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-warning">
+                        <i class="fas fa-chart-bar"></i> Performance Metrics
+                    </h6>
+                </div>
+                <div class="card-body">
+                    @if (performanceMetrics?.Any() == true)
+                    {
+                        @foreach (var metric in performanceMetrics)
+                        {
+                            <div class="mb-3">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <span class="font-weight-bold">@metric.Name</span>
+                                    <span class="badge @GetMetricBadgeClass(metric.Value)">
+                                        @metric.Value.ToString("F1")@metric.Unit
+                                    </span>
+                                </div>
+                                <div class="progress" style="height: 6px;">
+                                    <div class="progress-bar @GetMetricProgressClass(metric.Value)" 
+                                         style="width: @GetMetricPercentage(metric.Value, metric.MaxValue)%"></div>
+                                </div>
+                                <small class="text-muted">@metric.Description</small>
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <div class="text-center py-3">
+                            <i class="fas fa-chart-bar fa-2x text-muted mb-2"></i>
+                            <p class="text-muted">Performance data will appear as you progress through courses.</p>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+<style>
+    .border-left-primary { border-left: 0.25rem solid #4e73df !important; }
+    .border-left-success { border-left: 0.25rem solid #1cc88a !important; }
+    .border-left-info { border-left: 0.25rem solid #36b9cc !important; }
+    .border-left-warning { border-left: 0.25rem solid #f6c23e !important; }
+    
+    .circle-progress {
+        position: relative;
+        width: 120px;
+        height: 120px;
+        border-radius: 50%;
+        background: conic-gradient(#007bff calc(var(--progress) * 1%), #e9ecef 0deg);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .circle-progress::before {
+        content: '';
+        position: absolute;
+        width: 90px;
+        height: 90px;
+        border-radius: 50%;
+        background: white;
+    }
+    
+    .circle-progress-value {
+        position: relative;
+        z-index: 1;
+        font-weight: bold;
+        font-size: 1.2rem;
+        color: #007bff;
+    }
+    
+    .timeline {
+        position: relative;
+        padding-left: 30px;
+    }
+    
+    .timeline::before {
+        content: '';
+        position: absolute;
+        left: 10px;
+        top: 0;
+        bottom: 0;
+        width: 2px;
+        background: #e9ecef;
+    }
+    
+    .timeline-item {
+        position: relative;
+    }
+    
+    .timeline-marker {
+        position: absolute;
+        left: -25px;
+        top: 5px;
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        border: 2px solid white;
+    }
+    
+    .timeline-content {
+        background: #f8f9fa;
+        padding: 10px 15px;
+        border-radius: 5px;
+        border-left: 3px solid #007bff;
+    }
+</style>
+
+@code {
+    private List<EnrollmentModel>? enrollments;
+    private List<ActivityModel> recentActivities = new();
+    private List<MetricModel> performanceMetrics = new();
+    private bool isLoading = true;
+    private string selectedPeriod = "month";
+    private double overallProgress = 0;
+    private int completedCourses = 0;
+    private int totalStudyHours = 0;
+    private double averageScore = 0;
+    private int totalLessonsCompleted = 0;
+    private int totalModulesCompleted = 0;
+    private int currentStreak = 0;
+    private int activeDays = 0;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadAnalytics();
+    }
+
+    private async Task LoadAnalytics()
+    {
+        try
+        {
+            isLoading = true;
+            var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+            var user = await UserManager.GetUserAsync(authState.User);
+            
+            if (user != null)
+            {
+                // Load user enrollments
+                enrollments = await EnrollmentService.GetUserEnrollmentsAsync(user.Id);
+                
+                // Calculate analytics
+                await CalculateAnalytics(user.Id);
+                
+                // Load recent activities (mock data for now)
+                LoadRecentActivities();
+                
+                // Load performance metrics (mock data for now)
+                LoadPerformanceMetrics();
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading analytics: {ex.Message}");
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private Task CalculateAnalytics(string userId)
+    {
+        if (enrollments == null) return Task.CompletedTask;
+
+        var completedEnrollments = enrollments.Where(e => e.ProgressPercentage >= 100).ToList();
+        completedCourses = completedEnrollments.Count;
+
+        if (enrollments.Any())
+        {
+            overallProgress = enrollments.Average(e => e.ProgressPercentage);
+            averageScore = enrollments.Where(e => e.FinalGrade.HasValue).Any() 
+                ? enrollments.Where(e => e.FinalGrade.HasValue).Average(e => e.FinalGrade!.Value) 
+                : 0;
+        }
+
+        // Calculate study hours and other metrics (mock calculation)
+        totalStudyHours = enrollments.Count * 10; // Mock: 10 hours per enrollment
+        totalLessonsCompleted = enrollments.Sum(e => (int)(e.ProgressPercentage / 100 * 20)); // Mock: 20 lessons per course
+        totalModulesCompleted = enrollments.Sum(e => (int)(e.ProgressPercentage / 100 * 5)); // Mock: 5 modules per course
+        currentStreak = 7; // Mock data
+        activeDays = 45; // Mock data
+        
+        return Task.CompletedTask;
+    }
+
+    private void LoadRecentActivities()
+    {
+        // Mock recent activities
+        recentActivities = new List<ActivityModel>
+        {
+            new() { Type = "lesson", Description = "Completed lesson: Introduction to Programming", CourseTitle = "Programming Basics", Timestamp = DateTime.Now.AddHours(-2) },
+            new() { Type = "quiz", Description = "Passed quiz with 85%", CourseTitle = "Data Structures", Timestamp = DateTime.Now.AddHours(-5) },
+            new() { Type = "module", Description = "Finished module: Web Development Fundamentals", CourseTitle = "Full Stack Development", Timestamp = DateTime.Now.AddDays(-1) },
+            new() { Type = "certificate", Description = "Earned certificate", CourseTitle = "JavaScript Essentials", Timestamp = DateTime.Now.AddDays(-2) },
+            new() { Type = "enrollment", Description = "Enrolled in new course", CourseTitle = "Machine Learning Basics", Timestamp = DateTime.Now.AddDays(-3) }
+        };
+    }
+
+    private void LoadPerformanceMetrics()
+    {
+        // Mock performance metrics
+        performanceMetrics = new List<MetricModel>
+        {
+            new() { Name = "Completion Rate", Value = overallProgress, Unit = "%", MaxValue = 100, Description = "Average course completion" },
+            new() { Name = "Quiz Average", Value = averageScore, Unit = "%", MaxValue = 100, Description = "Average quiz score" },
+            new() { Name = "Study Consistency", Value = 85, Unit = "%", MaxValue = 100, Description = "Daily learning consistency" },
+            new() { Name = "Engagement Score", Value = 78, Unit = "%", MaxValue = 100, Description = "Course interaction level" }
+        };
+    }
+
+    private async Task RefreshAnalytics()
+    {
+        await LoadAnalytics();
+    }
+
+    private async Task SelectPeriod(string period)
+    {
+        selectedPeriod = period;
+        await LoadAnalytics();
+    }
+
+    private double GetCourseProgress(int enrollmentId)
+    {
+        var enrollment = enrollments?.FirstOrDefault(e => e.Id == enrollmentId);
+        return enrollment?.ProgressPercentage ?? 0;
+    }
+
+    private int GetCompletedModules(int enrollmentId)
+    {
+        var progress = GetCourseProgress(enrollmentId);
+        return (int)(progress / 100 * 5); // Mock: 5 modules per course
+    }
+
+    private int GetTotalModules(int enrollmentId)
+    {
+        return 5; // Mock: 5 modules per course
+    }
+
+    private string GetProgressBarClass(double progress) => progress switch
+    {
+        >= 90 => "bg-success",
+        >= 70 => "bg-info",
+        >= 50 => "bg-warning",
+        _ => "bg-danger"
+    };
+
+    private string GetActivityColor(string type) => type switch
+    {
+        "lesson" => "primary",
+        "quiz" => "success",
+        "module" => "info",
+        "certificate" => "warning",
+        "enrollment" => "secondary",
+        _ => "muted"
+    };
+
+    private string GetMetricBadgeClass(double value) => value switch
+    {
+        >= 90 => "bg-success",
+        >= 80 => "bg-info",
+        >= 70 => "bg-warning",
+        _ => "bg-secondary"
+    };
+
+    private string GetMetricProgressClass(double value) => value switch
+    {
+        >= 90 => "bg-success",
+        >= 80 => "bg-info",
+        >= 70 => "bg-warning",
+        _ => "bg-secondary"
+    };
+
+    private double GetMetricPercentage(double value, double maxValue)
+    {
+        return maxValue > 0 ? (value / maxValue) * 100 : 0;
+    }
+
+    // Helper models for analytics
+    public class ActivityModel
+    {
+        public string Type { get; set; } = string.Empty;
+        public string Description { get; set; } = string.Empty;
+        public string CourseTitle { get; set; } = string.Empty;
+        public DateTime Timestamp { get; set; }
+    }
+
+    public class MetricModel
+    {
+        public string Name { get; set; } = string.Empty;
+        public double Value { get; set; }
+        public string Unit { get; set; } = string.Empty;
+        public double MaxValue { get; set; }
+        public string Description { get; set; } = string.Empty;
+    }
+}
