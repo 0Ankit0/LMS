@@ -46,10 +46,6 @@ namespace LMS.Data
 
         public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 
-        // SCORM Support
-        public bool IsScormPackage { get; set; }
-        public string? ScormManifestPath { get; set; }
-
         // Navigation Properties
         public virtual ICollection<Module> Modules { get; set; } = new List<Module>();
         public virtual ICollection<Enrollment> Enrollments { get; set; } = new List<Enrollment>();
