@@ -1,0 +1,83 @@
+﻿@page "/questions/create"
+@using Microsoft.EntityFrameworkCore
+@using LMS.Data
+@inject IDbContextFactory<LMS.Data.AuthDbContext> DbFactory
+@inject NavigationManager NavigationManager
+
+<PageTitle>Create</PageTitle>
+
+<h1>Create</h1>
+
+<h2>Question</h2>
+<hr />
+<div class="row">
+    <div class="col-md-4">
+        <EditForm Model="Question" OnValidSubmit="AddQuestion">
+            <DataAnnotationsValidator />
+            <ValidationSummary class="text-danger" role="alert" />
+            <div class="mb-3">
+                <label for="text" class="form-label">Text:</label>
+                <InputText id="text" @bind-Value="Question.Text" class="form-control" aria-required="true" />
+                <ValidationMessage For="() => Question.Text" class="text-danger" />
+            </div>
+            <div class="mb-3">
+                <label for="assessmentid" class="form-label">AssessmentId:</label>
+                <InputNumber id="assessmentid" @bind-Value="Question.AssessmentId" class="form-control" />
+                <ValidationMessage For="() => Question.AssessmentId" class="text-danger" />
+            </div>
+            <div class="mb-3">
+                <label for="type" class="form-label">Type:</label>
+                <InputSelect id="type" @bind-Value="Question.Type" class="form-control">
+                    @foreach (var enumValue in Enum.GetValues(typeof(QuestionType)))
+                    {
+                        <option value="@enumValue">@enumValue.ToString()</option>
+                    }
+                </InputSelect>
+                <ValidationMessage For="() => Question.Type" class="text-danger" />
+            </div>
+            <div class="mb-3">
+                <label for="points" class="form-label">Points:</label>
+                <InputNumber id="points" @bind-Value="Question.Points" class="form-control" />
+                <ValidationMessage For="() => Question.Points" class="text-danger" />
+            </div>
+            <div class="mb-3">
+                <label for="orderindex" class="form-label">OrderIndex:</label>
+                <InputNumber id="orderindex" @bind-Value="Question.OrderIndex" class="form-control" />
+                <ValidationMessage For="() => Question.OrderIndex" class="text-danger" />
+            </div>
+            <div class="mb-3">
+                <label for="explanation" class="form-label">Explanation:</label>
+                <InputText id="explanation" @bind-Value="Question.Explanation" class="form-control" />
+                <ValidationMessage For="() => Question.Explanation" class="text-danger" />
+            </div>
+            <div class="mb-3">
+                <label for="isrequired" class="form-label">IsRequired:</label>
+                <InputCheckbox id="isrequired" @bind-Value="Question.IsRequired" class="form-check-input" />
+                <ValidationMessage For="() => Question.IsRequired" class="text-danger" />
+            </div>
+            <div class="mb-3">
+                <label for="createdat" class="form-label">CreatedAt:</label>
+                <InputDate id="createdat" @bind-Value="Question.CreatedAt" class="form-control" />
+                <ValidationMessage For="() => Question.CreatedAt" class="text-danger" />
+            </div>
+            <button type="submit" class="btn btn-primary">Create</button>
+        </EditForm>
+    </div>
+</div>
+
+<div>
+    <a href="/questions">Back to List</a>
+</div>
+
+@code {
+    [SupplyParameterFromForm]
+    private Question Question { get; set; } = new();
+
+    private async Task AddQuestion()
+    {
+        using var context = DbFactory.CreateDbContext();
+        context.Questions.Add(Question);
+        await context.SaveChangesAsync();
+        NavigationManager.NavigateTo("/questions");
+    }
+}

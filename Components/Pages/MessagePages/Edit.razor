@@ -1,0 +1,132 @@
+﻿@page "/messages/edit"
+@using Microsoft.EntityFrameworkCore
+@using LMS.Data
+@inject IDbContextFactory<LMS.Data.AuthDbContext> DbFactory
+@inject NavigationManager NavigationManager
+
+<PageTitle>Edit</PageTitle>
+
+<h1>Edit</h1>
+
+<h2>Message</h2>
+<hr />
+@if (Message is null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <div class="row">
+        <div class="col-md-4">
+            <EditForm Model="Message" OnValidSubmit="UpdateMessage">
+                <DataAnnotationsValidator />
+                <ValidationSummary role="alert" />
+                <input type="hidden" name="Message.Id" value="@Message.Id" />
+                <div class="mb-3">
+                    <label for="subject" class="form-label">Subject:</label>
+                    <InputText id="subject" @bind-Value="Message.Subject" class="form-control" aria-required="true" />
+                    <ValidationMessage For="() => Message.Subject" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <label for="content" class="form-label">Content:</label>
+                    <InputText id="content" @bind-Value="Message.Content" class="form-control" aria-required="true" />
+                    <ValidationMessage For="() => Message.Content" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <label for="fromuserid" class="form-label">FromUserId:</label>
+                    <InputText id="fromuserid" @bind-Value="Message.FromUserId" class="form-control" aria-required="true" />
+                    <ValidationMessage For="() => Message.FromUserId" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <label for="touserid" class="form-label">ToUserId:</label>
+                    <InputText id="touserid" @bind-Value="Message.ToUserId" class="form-control" aria-required="true" />
+                    <ValidationMessage For="() => Message.ToUserId" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <label for="parentmessageid" class="form-label">ParentMessageId:</label>
+                    <InputNumber id="parentmessageid" @bind-Value="Message.ParentMessageId" class="form-control" />
+                    <ValidationMessage For="() => Message.ParentMessageId" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <label for="sentat" class="form-label">SentAt:</label>
+                    <InputDate id="sentat" @bind-Value="Message.SentAt" class="form-control" />
+                    <ValidationMessage For="() => Message.SentAt" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <label for="readat" class="form-label">ReadAt:</label>
+                    <InputDate id="readat" @bind-Value="Message.ReadAt" class="form-control" />
+                    <ValidationMessage For="() => Message.ReadAt" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <label for="isdeleted" class="form-label">IsDeleted:</label>
+                    <InputCheckbox id="isdeleted" @bind-Value="Message.IsDeleted" class="form-check-input" />
+                    <ValidationMessage For="() => Message.IsDeleted" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <label for="priority" class="form-label">Priority:</label>
+                    <InputSelect id="priority" @bind-Value="Message.Priority" class="form-control">
+                        @foreach (var enumValue in Enum.GetValues(typeof(MessagePriority)))
+                        {
+                            <option value="@enumValue">@enumValue.ToString()</option>
+                        }
+                    </InputSelect>
+                    <ValidationMessage For="() => Message.Priority" class="text-danger" />
+                </div>
+                <button type="submit" class="btn btn-primary">Save</button>
+            </EditForm>
+        </div>
+    </div>
+}
+
+<div>
+    <a href="/messages">Back to List</a>
+</div>
+
+@code {
+    [SupplyParameterFromQuery]
+    private int Id { get; set; }
+
+    [SupplyParameterFromForm]
+    private Message? Message { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        using var context = DbFactory.CreateDbContext();
+        Message ??= await context.Messages.FirstOrDefaultAsync(m => m.Id == Id);
+
+        if (Message is null)
+        {
+            NavigationManager.NavigateTo("notfound");
+        }
+    }
+
+    private async Task UpdateMessage()
+    {
+        using var context = DbFactory.CreateDbContext();
+        context.Attach(Message!).State = EntityState.Modified;
+
+        try
+        {
+            await context.SaveChangesAsync();
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            if (!MessageExists(Message!.Id))
+            {
+                NavigationManager.NavigateTo("notfound");
+            }
+            else
+            {
+                throw;
+            }
+        }
+
+        NavigationManager.NavigateTo("/messages");
+    }
+
+    private bool MessageExists(int id)
+    {
+        using var context = DbFactory.CreateDbContext();
+        return context.Messages.Any(e => e.Id == id);
+    }
+}

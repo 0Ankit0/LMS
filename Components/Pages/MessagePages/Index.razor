@@ -1,0 +1,44 @@
+﻿@page "/messages"
+@using Microsoft.EntityFrameworkCore
+@using Microsoft.AspNetCore.Components.QuickGrid
+@using LMS.Data
+@using LMS.Data
+@implements IAsyncDisposable
+@inject IDbContextFactory<LMS.Data.AuthDbContext> DbFactory
+
+<PageTitle>Index</PageTitle>
+
+<h1>Index</h1>
+
+<p>
+    <a href="messages/create">Create New</a>
+</p>
+
+<QuickGrid Class="table" Items="context.Messages">
+    <PropertyColumn Property="message => message.Subject" />
+    <PropertyColumn Property="message => message.Content" />
+    <PropertyColumn Property="message => message.FromUserId" />
+    <PropertyColumn Property="message => message.ToUserId" />
+    <PropertyColumn Property="message => message.ParentMessageId" />
+    <PropertyColumn Property="message => message.SentAt" />
+    <PropertyColumn Property="message => message.ReadAt" />
+    <PropertyColumn Property="message => message.IsDeleted" />
+    <PropertyColumn Property="message => message.Priority" />
+
+    <TemplateColumn Context="message">
+        <a href="@($"messages/edit?id={message.Id}")">Edit</a> |
+        <a href="@($"messages/details?id={message.Id}")">Details</a> |
+        <a href="@($"messages/delete?id={message.Id}")">Delete</a>
+    </TemplateColumn>
+</QuickGrid>
+
+@code {
+    private AuthDbContext context = default!;
+
+    protected override void OnInitialized()
+    {
+        context = DbFactory.CreateDbContext();
+    }
+
+    public async ValueTask DisposeAsync() => await context.DisposeAsync();
+}

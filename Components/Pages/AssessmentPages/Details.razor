@@ -1,0 +1,78 @@
+﻿@page "/assessments/details"
+@using Microsoft.EntityFrameworkCore
+@using LMS.Data
+@inject IDbContextFactory<LMS.Data.AuthDbContext> DbFactory
+@inject NavigationManager NavigationManager
+
+<PageTitle>Details</PageTitle>
+
+<h1>Details</h1>
+
+<div>
+    <h2>Assessment</h2>
+    <hr />
+    @if (assessment is null)
+    {
+        <p><em>Loading...</em></p>
+    }
+    else {
+        <dl class="row">
+            <dt class="col-sm-2">Title</dt>
+            <dd class="col-sm-10">@assessment.Title</dd>
+            <dt class="col-sm-2">Description</dt>
+            <dd class="col-sm-10">@assessment.Description</dd>
+            <dt class="col-sm-2">CourseId</dt>
+            <dd class="col-sm-10">@assessment.CourseId</dd>
+            <dt class="col-sm-2">ModuleId</dt>
+            <dd class="col-sm-10">@assessment.ModuleId</dd>
+            <dt class="col-sm-2">LessonId</dt>
+            <dd class="col-sm-10">@assessment.LessonId</dd>
+            <dt class="col-sm-2">Type</dt>
+            <dd class="col-sm-10">@assessment.Type</dd>
+            <dt class="col-sm-2">MaxAttempts</dt>
+            <dd class="col-sm-10">@assessment.MaxAttempts</dd>
+            <dt class="col-sm-2">TimeLimit</dt>
+            <dd class="col-sm-10">@assessment.TimeLimit</dd>
+            <dt class="col-sm-2">PassingScore</dt>
+            <dd class="col-sm-10">@assessment.PassingScore</dd>
+            <dt class="col-sm-2">IsRandomized</dt>
+            <dd class="col-sm-10">@assessment.IsRandomized</dd>
+            <dt class="col-sm-2">ShowCorrectAnswers</dt>
+            <dd class="col-sm-10">@assessment.ShowCorrectAnswers</dd>
+            <dt class="col-sm-2">ShowScoreImmediately</dt>
+            <dd class="col-sm-10">@assessment.ShowScoreImmediately</dd>
+            <dt class="col-sm-2">AvailableFrom</dt>
+            <dd class="col-sm-10">@assessment.AvailableFrom</dd>
+            <dt class="col-sm-2">AvailableUntil</dt>
+            <dd class="col-sm-10">@assessment.AvailableUntil</dd>
+            <dt class="col-sm-2">IsActive</dt>
+            <dd class="col-sm-10">@assessment.IsActive</dd>
+            <dt class="col-sm-2">CreatedAt</dt>
+            <dd class="col-sm-10">@assessment.CreatedAt</dd>
+            <dt class="col-sm-2">UpdatedAt</dt>
+            <dd class="col-sm-10">@assessment.UpdatedAt</dd>
+        </dl>
+        <div>
+            <a href="@($"/assessments/edit?id={assessment.Id}")">Edit</a> |
+            <a href="@($"/assessments")">Back to List</a>
+        </div>
+    }
+</div>
+
+@code {
+    private Assessment? assessment;
+
+    [SupplyParameterFromQuery]
+    private int Id { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        using var context = DbFactory.CreateDbContext();
+        assessment = await context.Assessments.FirstOrDefaultAsync(m => m.Id == Id);
+
+        if (assessment is null)
+        {
+            NavigationManager.NavigateTo("notfound");
+        }
+    }
+}

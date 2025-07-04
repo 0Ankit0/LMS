@@ -1,0 +1,105 @@
+﻿@page "/enrollments/create"
+@using Microsoft.EntityFrameworkCore
+@using LMS.Data
+@inject IDbContextFactory<LMS.Data.AuthDbContext> DbFactory
+@inject NavigationManager NavigationManager
+
+<PageTitle>Create</PageTitle>
+
+<h1>Create</h1>
+
+<h2>Enrollment</h2>
+<hr />
+<div class="row">
+    <div class="col-md-4">
+        <EditForm Model="Enrollment" OnValidSubmit="AddEnrollment">
+            <DataAnnotationsValidator />
+            <ValidationSummary class="text-danger" role="alert" />
+            <div class="mb-3">
+                <label for="userid" class="form-label">UserId:</label>
+                <InputText id="userid" @bind-Value="Enrollment.UserId" class="form-control" aria-required="true" />
+                <ValidationMessage For="() => Enrollment.UserId" class="text-danger" />
+            </div>
+            <div class="mb-3">
+                <label for="courseid" class="form-label">CourseId:</label>
+                <InputNumber id="courseid" @bind-Value="Enrollment.CourseId" class="form-control" />
+                <ValidationMessage For="() => Enrollment.CourseId" class="text-danger" />
+            </div>
+            <div class="mb-3">
+                <label for="enrolledat" class="form-label">EnrolledAt:</label>
+                <InputDate id="enrolledat" @bind-Value="Enrollment.EnrolledAt" class="form-control" />
+                <ValidationMessage For="() => Enrollment.EnrolledAt" class="text-danger" />
+            </div>
+            <div class="mb-3">
+                <label for="startedat" class="form-label">StartedAt:</label>
+                <InputDate id="startedat" @bind-Value="Enrollment.StartedAt" class="form-control" />
+                <ValidationMessage For="() => Enrollment.StartedAt" class="text-danger" />
+            </div>
+            <div class="mb-3">
+                <label for="completedat" class="form-label">CompletedAt:</label>
+                <InputDate id="completedat" @bind-Value="Enrollment.CompletedAt" class="form-control" />
+                <ValidationMessage For="() => Enrollment.CompletedAt" class="text-danger" />
+            </div>
+            <div class="mb-3">
+                <label for="status" class="form-label">Status:</label>
+                <InputSelect id="status" @bind-Value="Enrollment.Status" class="form-control">
+                    @foreach (var enumValue in Enum.GetValues(typeof(EnrollmentStatus)))
+                    {
+                        <option value="@enumValue">@enumValue.ToString()</option>
+                    }
+                </InputSelect>
+                <ValidationMessage For="() => Enrollment.Status" class="text-danger" />
+            </div>
+            <div class="mb-3">
+                <label for="progresspercentage" class="form-label">ProgressPercentage:</label>
+                <InputNumber id="progresspercentage" @bind-Value="Enrollment.ProgressPercentage" class="form-control" />
+                <ValidationMessage For="() => Enrollment.ProgressPercentage" class="text-danger" />
+            </div>
+            <div class="mb-3">
+                <label for="timespent" class="form-label">TimeSpent (minutes):</label>
+                <InputNumber id="timespent" @bind-Value="TimeSpentMinutes" class="form-control" />
+                <ValidationMessage For="() => TimeSpentMinutes" class="text-danger" />
+            </div>
+            <div class="mb-3">
+                <label for="finalgrade" class="form-label">FinalGrade:</label>
+                <InputNumber id="finalgrade" @bind-Value="Enrollment.FinalGrade" class="form-control" />
+                <ValidationMessage For="() => Enrollment.FinalGrade" class="text-danger" />
+            </div>
+            <div class="mb-3">
+                <label for="iscertificateissued" class="form-label">IsCertificateIssued:</label>
+                <InputCheckbox id="iscertificateissued" @bind-Value="Enrollment.IsCertificateIssued" class="form-check-input" />
+                <ValidationMessage For="() => Enrollment.IsCertificateIssued" class="text-danger" />
+            </div>
+            <div class="mb-3">
+                <label for="certificateissuedat" class="form-label">CertificateIssuedAt:</label>
+                <InputDate id="certificateissuedat" @bind-Value="Enrollment.CertificateIssuedAt" class="form-control" />
+                <ValidationMessage For="() => Enrollment.CertificateIssuedAt" class="text-danger" />
+            </div>
+            <button type="submit" class="btn btn-primary">Create</button>
+        </EditForm>
+    </div>
+</div>
+
+<div>
+    <a href="/enrollments">Back to List</a>
+</div>
+
+@code {
+    [SupplyParameterFromForm]
+    private Enrollment Enrollment { get; set; } = new();
+
+    // Helper property for binding TimeSpent as minutes
+    private int TimeSpentMinutes
+    {
+        get => (int)Enrollment.TimeSpent.TotalMinutes;
+        set => Enrollment.TimeSpent = TimeSpan.FromMinutes(value);
+    }
+
+    private async Task AddEnrollment()
+    {
+        using var context = DbFactory.CreateDbContext();
+        context.Enrollments.Add(Enrollment);
+        await context.SaveChangesAsync();
+        NavigationManager.NavigateTo("/enrollments");
+    }
+}

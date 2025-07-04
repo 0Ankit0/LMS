@@ -1,0 +1,114 @@
+﻿@page "/categories/edit"
+@using Microsoft.EntityFrameworkCore
+@using LMS.Data
+@inject IDbContextFactory<LMS.Data.AuthDbContext> DbFactory
+@inject NavigationManager NavigationManager
+
+<PageTitle>Edit</PageTitle>
+
+<h1>Edit</h1>
+
+<h2>Category</h2>
+<hr />
+@if (Category is null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <div class="row">
+        <div class="col-md-4">
+            <EditForm method="post" Model="Category" OnValidSubmit="UpdateCategory" FormName="edit" Enhance>
+                <DataAnnotationsValidator />
+                <ValidationSummary role="alert"/>
+                <input type="hidden" name="Category.Id" value="@Category.Id" />
+                <div class="mb-3">
+                    <label for="name" class="form-label">Name:</label>
+                    <InputText id="name" @bind-Value="Category.Name" class="form-control" aria-required="true"/>
+                    <ValidationMessage For="() => Category.Name" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <label for="description" class="form-label">Description:</label>
+                    <InputText id="description" @bind-Value="Category.Description" class="form-control" />
+                    <ValidationMessage For="() => Category.Description" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <label for="iconurl" class="form-label">IconUrl:</label>
+                    <InputText id="iconurl" @bind-Value="Category.IconUrl" class="form-control" />
+                    <ValidationMessage For="() => Category.IconUrl" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <label for="color" class="form-label">Color:</label>
+                    <InputText id="color" @bind-Value="Category.Color" class="form-control" />
+                    <ValidationMessage For="() => Category.Color" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <label for="isactive" class="form-label">IsActive:</label>
+                    <InputCheckbox id="isactive" @bind-Value="Category.IsActive" class="form-check-input" />
+                    <ValidationMessage For="() => Category.IsActive" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <label for="parentcategoryid" class="form-label">ParentCategoryId:</label>
+                    <InputNumber id="parentcategoryid" @bind-Value="Category.ParentCategoryId" class="form-control" />
+                    <ValidationMessage For="() => Category.ParentCategoryId" class="text-danger" />
+                </div>
+                <button type="submit" class="btn btn-primary">Save</button>
+            </EditForm>
+        </div>
+    </div>
+}
+
+<div>
+    <a href="/categories">Back to List</a>
+</div>
+
+@code {
+    [SupplyParameterFromQuery]
+    private int Id { get; set; }
+
+    [SupplyParameterFromForm]
+    private Category? Category { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        using var context = DbFactory.CreateDbContext();
+        Category ??= await context.Categories.FirstOrDefaultAsync(m => m.Id == Id);
+
+        if (Category is null)
+        {
+            NavigationManager.NavigateTo("notfound");
+        }
+    }
+
+    // To protect from overposting attacks, enable the specific properties you want to bind to.
+    // For more information, see https://learn.microsoft.com/aspnet/core/blazor/forms/#mitigate-overposting-attacks.
+    private async Task UpdateCategory()
+    {
+        using var context = DbFactory.CreateDbContext();
+        context.Attach(Category!).State = EntityState.Modified;
+
+        try
+        {
+            await context.SaveChangesAsync();
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            if (!CategoryExists(Category!.Id))
+            {
+                NavigationManager.NavigateTo("notfound");
+            }
+            else
+            {
+                throw;
+            }
+        }
+
+        NavigationManager.NavigateTo("/categories");
+    }
+
+    private bool CategoryExists(int id)
+    {
+        using var context = DbFactory.CreateDbContext();
+        return context.Categories.Any(e => e.Id == id);
+    }
+}

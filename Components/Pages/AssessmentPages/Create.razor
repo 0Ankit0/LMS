@@ -1,0 +1,135 @@
+﻿@page "/assessments/create"
+@using Microsoft.EntityFrameworkCore
+@using LMS.Data
+@inject IDbContextFactory<LMS.Data.AuthDbContext> DbFactory
+@inject NavigationManager NavigationManager
+
+<PageTitle>Create</PageTitle>
+
+<h1>Create</h1>
+
+<h2>Assessment</h2>
+<hr />
+<div class="row">
+    <div class="col-md-4">
+        <EditForm Model="Assessment" OnValidSubmit="AddAssessment">
+            <DataAnnotationsValidator />
+            <ValidationSummary class="text-danger" role="alert" />
+            <div class="mb-3">
+                <label for="title" class="form-label">Title:</label>
+                <InputText id="title" @bind-Value="Assessment.Title" class="form-control" aria-required="true" />
+                <ValidationMessage For="() => Assessment.Title" class="text-danger" />
+            </div>
+            <div class="mb-3">
+                <label for="description" class="form-label">Description:</label>
+                <InputText id="description" @bind-Value="Assessment.Description" class="form-control" />
+                <ValidationMessage For="() => Assessment.Description" class="text-danger" />
+            </div>
+            <div class="mb-3">
+                <label for="courseid" class="form-label">CourseId:</label>
+                <InputNumber id="courseid" @bind-Value="Assessment.CourseId" class="form-control" />
+                <ValidationMessage For="() => Assessment.CourseId" class="text-danger" />
+            </div>
+            <div class="mb-3">
+                <label for="moduleid" class="form-label">ModuleId:</label>
+                <InputNumber id="moduleid" @bind-Value="Assessment.ModuleId" class="form-control" />
+                <ValidationMessage For="() => Assessment.ModuleId" class="text-danger" />
+            </div>
+            <div class="mb-3">
+                <label for="lessonid" class="form-label">LessonId:</label>
+                <InputNumber id="lessonid" @bind-Value="Assessment.LessonId" class="form-control" />
+                <ValidationMessage For="() => Assessment.LessonId" class="text-danger" />
+            </div>
+            <div class="mb-3">
+                <label for="type" class="form-label">Type:</label>
+                <InputSelect id="type" @bind-Value="Assessment.Type" class="form-control">
+                    @foreach (var enumValue in Enum.GetValues(typeof(AssessmentType)))
+                    {
+                        <option value="@enumValue">@enumValue.ToString()</option>
+                    }
+                </InputSelect>
+                <ValidationMessage For="() => Assessment.Type" class="text-danger" />
+            </div>
+            <div class="mb-3">
+                <label for="maxattempts" class="form-label">MaxAttempts:</label>
+                <InputNumber id="maxattempts" @bind-Value="Assessment.MaxAttempts" class="form-control" />
+                <ValidationMessage For="() => Assessment.MaxAttempts" class="text-danger" />
+            </div>
+            <div class="mb-3">
+                <label for="timelimit" class="form-label">TimeLimit (minutes):</label>
+                <InputNumber id="timelimit" @bind-Value="TimeLimitMinutes" class="form-control" />
+                <ValidationMessage For="() => TimeLimitMinutes" class="text-danger" />
+            </div>
+            <div class="mb-3">
+                <label for="passingscore" class="form-label">PassingScore:</label>
+                <InputNumber id="passingscore" @bind-Value="Assessment.PassingScore" class="form-control" />
+                <ValidationMessage For="() => Assessment.PassingScore" class="text-danger" />
+            </div>
+            <div class="mb-3">
+                <label for="israndomized" class="form-label">IsRandomized:</label>
+                <InputCheckbox id="israndomized" @bind-Value="Assessment.IsRandomized" class="form-check-input" />
+                <ValidationMessage For="() => Assessment.IsRandomized" class="text-danger" />
+            </div>
+            <div class="mb-3">
+                <label for="showcorrectanswers" class="form-label">ShowCorrectAnswers:</label>
+                <InputCheckbox id="showcorrectanswers" @bind-Value="Assessment.ShowCorrectAnswers" class="form-check-input" />
+                <ValidationMessage For="() => Assessment.ShowCorrectAnswers" class="text-danger" />
+            </div>
+            <div class="mb-3">
+                <label for="showscoreimmediately" class="form-label">ShowScoreImmediately:</label>
+                <InputCheckbox id="showscoreimmediately" @bind-Value="Assessment.ShowScoreImmediately" class="form-check-input" />
+                <ValidationMessage For="() => Assessment.ShowScoreImmediately" class="text-danger" />
+            </div>
+            <div class="mb-3">
+                <label for="availablefrom" class="form-label">AvailableFrom:</label>
+                <InputDate id="availablefrom" @bind-Value="Assessment.AvailableFrom" class="form-control" />
+                <ValidationMessage For="() => Assessment.AvailableFrom" class="text-danger" />
+            </div>
+            <div class="mb-3">
+                <label for="availableuntil" class="form-label">AvailableUntil:</label>
+                <InputDate id="availableuntil" @bind-Value="Assessment.AvailableUntil" class="form-control" />
+                <ValidationMessage For="() => Assessment.AvailableUntil" class="text-danger" />
+            </div>
+            <div class="mb-3">
+                <label for="isactive" class="form-label">IsActive:</label>
+                <InputCheckbox id="isactive" @bind-Value="Assessment.IsActive" class="form-check-input" />
+                <ValidationMessage For="() => Assessment.IsActive" class="text-danger" />
+            </div>
+            <div class="mb-3">
+                <label for="createdat" class="form-label">CreatedAt:</label>
+                <InputDate id="createdat" @bind-Value="Assessment.CreatedAt" class="form-control" />
+                <ValidationMessage For="() => Assessment.CreatedAt" class="text-danger" />
+            </div>
+            <div class="mb-3">
+                <label for="updatedat" class="form-label">UpdatedAt:</label>
+                <InputDate id="updatedat" @bind-Value="Assessment.UpdatedAt" class="form-control" />
+                <ValidationMessage For="() => Assessment.UpdatedAt" class="text-danger" />
+            </div>
+            <button type="submit" class="btn btn-primary">Create</button>
+        </EditForm>
+    </div>
+</div>
+
+<div>
+    <a href="/assessments">Back to List</a>
+</div>
+
+@code {
+    [SupplyParameterFromForm]
+    private Assessment Assessment { get; set; } = new();
+
+    // Helper property for binding TimeLimit as minutes
+    private int TimeLimitMinutes
+    {
+        get => (int)Assessment.TimeLimit.TotalMinutes;
+        set => Assessment.TimeLimit = TimeSpan.FromMinutes(value);
+    }
+
+    private async Task AddAssessment()
+    {
+        using var context = DbFactory.CreateDbContext();
+        context.Assessments.Add(Assessment);
+        await context.SaveChangesAsync();
+        NavigationManager.NavigateTo("/assessments");
+    }
+}

@@ -1,0 +1,41 @@
+﻿@page "/categories"
+@using Microsoft.EntityFrameworkCore
+@using Microsoft.AspNetCore.Components.QuickGrid
+@using LMS.Data
+@using LMS.Data
+@implements IAsyncDisposable
+@inject IDbContextFactory<LMS.Data.AuthDbContext> DbFactory
+
+<PageTitle>Index</PageTitle>
+
+<h1>Index</h1>
+
+<p>
+    <a href="categories/create">Create New</a>
+</p>
+
+<QuickGrid Class="table" Items="context.Categories">
+    <PropertyColumn Property="category => category.Name" />
+    <PropertyColumn Property="category => category.Description" />
+    <PropertyColumn Property="category => category.IconUrl" />
+    <PropertyColumn Property="category => category.Color" />
+    <PropertyColumn Property="category => category.IsActive" />
+    <PropertyColumn Property="category => category.ParentCategoryId" />
+
+    <TemplateColumn Context="category">
+        <a href="@($"categories/edit?id={category.Id}")">Edit</a> |
+        <a href="@($"categories/details?id={category.Id}")">Details</a> |
+        <a href="@($"categories/delete?id={category.Id}")">Delete</a>
+    </TemplateColumn>
+</QuickGrid>
+
+@code {
+    private AuthDbContext context = default!;
+
+    protected override void OnInitialized()
+    {
+        context = DbFactory.CreateDbContext();
+    }
+
+    public async ValueTask DisposeAsync() => await context.DisposeAsync();
+}

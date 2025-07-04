@@ -1,0 +1,52 @@
+﻿@page "/lessons"
+@using Microsoft.EntityFrameworkCore
+@using Microsoft.AspNetCore.Components.QuickGrid
+@using LMS.Data
+@using LMS.Data
+@implements IAsyncDisposable
+@inject IDbContextFactory<LMS.Data.AuthDbContext> DbFactory
+
+<PageTitle>Index</PageTitle>
+
+<h1>Index</h1>
+
+<p>
+    <a href="lessons/create">Create New</a>
+</p>
+
+<QuickGrid Class="table" Items="context.Lessons">
+    <PropertyColumn Property="lesson => lesson.Title" />
+    <PropertyColumn Property="lesson => lesson.Description" />
+    <PropertyColumn Property="lesson => lesson.Content" />
+    <PropertyColumn Property="lesson => lesson.ModuleId" />
+    <PropertyColumn Property="lesson => lesson.Type" />
+    <PropertyColumn Property="lesson => lesson.VideoUrl" />
+    <PropertyColumn Property="lesson => lesson.DocumentUrl" />
+    <PropertyColumn Property="lesson => lesson.ExternalUrl" />
+    <PropertyColumn Property="lesson => lesson.EstimatedDuration" />
+    <PropertyColumn Property="lesson => lesson.OrderIndex" />
+    <PropertyColumn Property="lesson => lesson.IsRequired" />
+    <PropertyColumn Property="lesson => lesson.IsActive" />
+    <PropertyColumn Property="lesson => lesson.CreatedAt" />
+    <PropertyColumn Property="lesson => lesson.UpdatedAt" />
+    <PropertyColumn Property="lesson => lesson.IsScormContent" />
+    <PropertyColumn Property="lesson => lesson.ScormLaunchUrl" />
+    <PropertyColumn Property="lesson => lesson.XApiActivityId" />
+
+    <TemplateColumn Context="lesson">
+        <a href="@($"lessons/edit?id={lesson.Id}")">Edit</a> |
+        <a href="@($"lessons/details?id={lesson.Id}")">Details</a> |
+        <a href="@($"lessons/delete?id={lesson.Id}")">Delete</a>
+    </TemplateColumn>
+</QuickGrid>
+
+@code {
+    private AuthDbContext context = default!;
+
+    protected override void OnInitialized()
+    {
+        context = DbFactory.CreateDbContext();
+    }
+
+    public async ValueTask DisposeAsync() => await context.DisposeAsync();
+}

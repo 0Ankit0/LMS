@@ -1,0 +1,60 @@
+﻿@page "/modules/details"
+@using Microsoft.EntityFrameworkCore
+@using LMS.Data
+@inject IDbContextFactory<LMS.Data.AuthDbContext> DbFactory
+@inject NavigationManager NavigationManager
+
+<PageTitle>Details</PageTitle>
+
+<h1>Details</h1>
+
+<div>
+    <h2>Module</h2>
+    <hr />
+    @if (module is null)
+    {
+        <p><em>Loading...</em></p>
+    }
+    else {
+        <dl class="row">
+            <dt class="col-sm-2">Title</dt>
+            <dd class="col-sm-10">@module.Title</dd>
+            <dt class="col-sm-2">Description</dt>
+            <dd class="col-sm-10">@module.Description</dd>
+            <dt class="col-sm-2">CourseId</dt>
+            <dd class="col-sm-10">@module.CourseId</dd>
+            <dt class="col-sm-2">OrderIndex</dt>
+            <dd class="col-sm-10">@module.OrderIndex</dd>
+            <dt class="col-sm-2">IsRequired</dt>
+            <dd class="col-sm-10">@module.IsRequired</dd>
+            <dt class="col-sm-2">IsActive</dt>
+            <dd class="col-sm-10">@module.IsActive</dd>
+            <dt class="col-sm-2">CreatedAt</dt>
+            <dd class="col-sm-10">@module.CreatedAt</dd>
+            <dt class="col-sm-2">UpdatedAt</dt>
+            <dd class="col-sm-10">@module.UpdatedAt</dd>
+        </dl>
+        <div>
+            <a href="@($"/modules/edit?id={module.Id}")">Edit</a> |
+            <a href="@($"/modules")">Back to List</a>
+        </div>
+    }
+</div>
+
+@code {
+    private Module? module;
+
+    [SupplyParameterFromQuery]
+    private int Id { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        using var context = DbFactory.CreateDbContext();
+        module = await context.Modules.FirstOrDefaultAsync(m => m.Id == Id);
+
+        if (module is null)
+        {
+            NavigationManager.NavigateTo("notfound");
+        }
+    }
+}

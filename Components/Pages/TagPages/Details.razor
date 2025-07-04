@@ -1,0 +1,48 @@
+﻿@page "/tags/details"
+@using Microsoft.EntityFrameworkCore
+@using LMS.Data
+@inject IDbContextFactory<LMS.Data.AuthDbContext> DbFactory
+@inject NavigationManager NavigationManager
+
+<PageTitle>Details</PageTitle>
+
+<h1>Details</h1>
+
+<div>
+    <h2>Tag</h2>
+    <hr />
+    @if (tag is null)
+    {
+        <p><em>Loading...</em></p>
+    }
+    else {
+        <dl class="row">
+            <dt class="col-sm-2">Name</dt>
+            <dd class="col-sm-10">@tag.Name</dd>
+            <dt class="col-sm-2">Color</dt>
+            <dd class="col-sm-10">@tag.Color</dd>
+        </dl>
+        <div>
+            <a href="@($"/tags/edit?id={tag.Id}")">Edit</a> |
+            <a href="@($"/tags")">Back to List</a>
+        </div>
+    }
+</div>
+
+@code {
+    private Tag? tag;
+
+    [SupplyParameterFromQuery]
+    private int Id { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        using var context = DbFactory.CreateDbContext();
+        tag = await context.Tags.FirstOrDefaultAsync(m => m.Id == Id);
+
+        if (tag is null)
+        {
+            NavigationManager.NavigateTo("notfound");
+        }
+    }
+}

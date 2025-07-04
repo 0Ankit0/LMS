@@ -1,0 +1,103 @@
+﻿@page "/announcements/create"
+@using Microsoft.EntityFrameworkCore
+@using LMS.Data
+@inject IDbContextFactory<LMS.Data.AuthDbContext> DbFactory
+@inject NavigationManager NavigationManager
+
+<PageTitle>Create</PageTitle>
+
+<h1>Create</h1>
+
+<h2>Announcement</h2>
+<hr />
+<div class="row">
+    <div class="col-md-4">
+        <EditForm Model="Announcement" OnValidSubmit="AddAnnouncement">
+            <DataAnnotationsValidator />
+            <ValidationSummary class="text-danger" role="alert" />
+            <div class="mb-3">
+                <label for="title" class="form-label">Title:</label>
+                <InputText id="title" @bind-Value="Announcement.Title" class="form-control" aria-required="true" />
+                <ValidationMessage For="() => Announcement.Title" class="text-danger" />
+            </div>
+            <div class="mb-3">
+                <label for="content" class="form-label">Content:</label>
+                <InputText id="content" @bind-Value="Announcement.Content" class="form-control" aria-required="true" />
+                <ValidationMessage For="() => Announcement.Content" class="text-danger" />
+            </div>
+            <div class="mb-3">
+                <label for="authorid" class="form-label">AuthorId:</label>
+                <InputText id="authorid" @bind-Value="Announcement.AuthorId" class="form-control" aria-required="true" />
+                <ValidationMessage For="() => Announcement.AuthorId" class="text-danger" />
+            </div>
+            <div class="mb-3">
+                <label for="courseid" class="form-label">CourseId:</label>
+                <InputNumber id="courseid" @bind-Value="Announcement.CourseId" class="form-control" />
+                <ValidationMessage For="() => Announcement.CourseId" class="text-danger" />
+            </div>
+            <div class="mb-3">
+                <label for="type" class="form-label">Type:</label>
+                <InputSelect id="type" @bind-Value="Announcement.Type" class="form-control" aria-required="true">
+                    @foreach (var enumValue in Enum.GetValues(typeof(AnnouncementType)))
+                    {
+                        <option value="@enumValue">@enumValue.ToString()</option>
+                    }
+                </InputSelect>
+                <ValidationMessage For="() => Announcement.Type" class="text-danger" />
+            </div>
+            <div class="mb-3">
+                <label for="priority" class="form-label">Priority:</label>
+                <InputSelect id="priority" @bind-Value="Announcement.Priority" class="form-control">
+                    @foreach (var enumValue in Enum.GetValues(typeof(AnnouncementPriority)))
+                    {
+                        <option value="@enumValue">@enumValue.ToString()</option>
+                    }
+                </InputSelect>
+                <ValidationMessage For="() => Announcement.Priority" class="text-danger" />
+            </div>
+            <div class="mb-3">
+                <label for="publishedat" class="form-label">PublishedAt:</label>
+                <InputDate id="publishedat" @bind-Value="Announcement.PublishedAt" class="form-control" />
+                <ValidationMessage For="() => Announcement.PublishedAt" class="text-danger" />
+            </div>
+            <div class="mb-3">
+                <label for="expiresat" class="form-label">ExpiresAt:</label>
+                <InputDate id="expiresat" @bind-Value="Announcement.ExpiresAt" class="form-control" />
+                <ValidationMessage For="() => Announcement.ExpiresAt" class="text-danger" />
+            </div>
+            <div class="mb-3">
+                <label for="isactive" class="form-label">IsActive:</label>
+                <InputCheckbox id="isactive" @bind-Value="Announcement.IsActive" class="form-check-input" />
+                <ValidationMessage For="() => Announcement.IsActive" class="text-danger" />
+            </div>
+            <div class="mb-3">
+                <label for="sendemail" class="form-label">SendEmail:</label>
+                <InputCheckbox id="sendemail" @bind-Value="Announcement.SendEmail" class="form-check-input" />
+                <ValidationMessage For="() => Announcement.SendEmail" class="text-danger" />
+            </div>
+            <div class="mb-3">
+                <label for="sendsms" class="form-label">SendSms:</label>
+                <InputCheckbox id="sendsms" @bind-Value="Announcement.SendSms" class="form-check-input" />
+                <ValidationMessage For="() => Announcement.SendSms" class="text-danger" />
+            </div>
+            <button type="submit" class="btn btn-primary">Create</button>
+        </EditForm>
+    </div>
+</div>
+
+<div>
+    <a href="/announcements">Back to List</a>
+</div>
+
+@code {
+    [SupplyParameterFromForm]
+    private Announcement Announcement { get; set; } = new();
+
+    private async Task AddAnnouncement()
+    {
+        using var context = DbFactory.CreateDbContext();
+        context.Announcements.Add(Announcement);
+        await context.SaveChangesAsync();
+        NavigationManager.NavigateTo("/announcements");
+    }
+}

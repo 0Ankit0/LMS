@@ -1,0 +1,69 @@
+﻿@page "/forums/create"
+@using Microsoft.EntityFrameworkCore
+@using LMS.Data
+@inject IDbContextFactory<LMS.Data.AuthDbContext> DbFactory
+@inject NavigationManager NavigationManager
+
+<PageTitle>Create</PageTitle>
+
+<h1>Create</h1>
+
+<h2>Forum</h2>
+<hr />
+<div class="row">
+    <div class="col-md-4">
+        <EditForm method="post" Model="Forum" OnValidSubmit="AddForum" FormName="create" Enhance>
+            <DataAnnotationsValidator />
+            <ValidationSummary class="text-danger" role="alert"/>
+            <div class="mb-3">
+                <label for="title" class="form-label">Title:</label> 
+                <InputText id="title" @bind-Value="Forum.Title" class="form-control" aria-required="true"/> 
+                <ValidationMessage For="() => Forum.Title" class="text-danger" /> 
+            </div>        
+            <div class="mb-3">
+                <label for="description" class="form-label">Description:</label> 
+                <InputText id="description" @bind-Value="Forum.Description" class="form-control" /> 
+                <ValidationMessage For="() => Forum.Description" class="text-danger" /> 
+            </div>        
+            <div class="mb-3">
+                <label for="courseid" class="form-label">CourseId:</label> 
+                <InputNumber id="courseid" @bind-Value="Forum.CourseId" class="form-control" /> 
+                <ValidationMessage For="() => Forum.CourseId" class="text-danger" /> 
+            </div>        
+            <div class="mb-3">
+                <label for="isgeneral" class="form-label">IsGeneral:</label> 
+                <InputCheckbox id="isgeneral" @bind-Value="Forum.IsGeneral" class="form-check-input" /> 
+                <ValidationMessage For="() => Forum.IsGeneral" class="text-danger" /> 
+            </div>        
+            <div class="mb-3">
+                <label for="isactive" class="form-label">IsActive:</label> 
+                <InputCheckbox id="isactive" @bind-Value="Forum.IsActive" class="form-check-input" /> 
+                <ValidationMessage For="() => Forum.IsActive" class="text-danger" /> 
+            </div>        
+            <div class="mb-3">
+                <label for="createdat" class="form-label">CreatedAt:</label> 
+                <InputDate id="createdat" @bind-Value="Forum.CreatedAt" class="form-control" /> 
+                <ValidationMessage For="() => Forum.CreatedAt" class="text-danger" /> 
+            </div>        
+            <button type="submit" class="btn btn-primary">Create</button>
+        </EditForm>
+    </div>
+</div>
+
+<div>
+    <a href="/forums">Back to List</a>
+</div>
+
+@code {
+    [SupplyParameterFromForm]
+    private Forum Forum { get; set; } = new();
+
+    // To protect from overposting attacks, see https://learn.microsoft.com/aspnet/core/blazor/forms/#mitigate-overposting-attacks.
+    private async Task AddForum()
+    {
+        using var context = DbFactory.CreateDbContext();
+        context.Forums.Add(Forum);
+        await context.SaveChangesAsync();
+        NavigationManager.NavigateTo("/forums");
+    }
+}

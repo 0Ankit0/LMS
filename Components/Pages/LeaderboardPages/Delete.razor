@@ -1,0 +1,79 @@
+﻿@page "/leaderboards/delete"
+@using Microsoft.EntityFrameworkCore
+@using LMS.Data
+@inject IDbContextFactory<LMS.Data.AuthDbContext> DbFactory
+@inject NavigationManager NavigationManager
+
+<PageTitle>Delete</PageTitle>
+
+<h1>Delete</h1>
+
+<p>Are you sure you want to delete this?</p>
+<div>
+    <h2>Leaderboard</h2>
+    <hr />
+    @if (leaderboard is null)
+    {
+        <p><em>Loading...</em></p>
+    }
+    else {
+        <dl class="row">
+            <dt class="col-sm-2">Name</dt>
+            <dd class="col-sm-10">@leaderboard.Name</dd>
+        </dl>
+        <dl class="row">
+            <dt class="col-sm-2">Description</dt>
+            <dd class="col-sm-10">@leaderboard.Description</dd>
+        </dl>
+        <dl class="row">
+            <dt class="col-sm-2">Type</dt>
+            <dd class="col-sm-10">@leaderboard.Type</dd>
+        </dl>
+        <dl class="row">
+            <dt class="col-sm-2">Period</dt>
+            <dd class="col-sm-10">@leaderboard.Period</dd>
+        </dl>
+        <dl class="row">
+            <dt class="col-sm-2">CourseId</dt>
+            <dd class="col-sm-10">@leaderboard.CourseId</dd>
+        </dl>
+        <dl class="row">
+            <dt class="col-sm-2">IsActive</dt>
+            <dd class="col-sm-10">@leaderboard.IsActive</dd>
+        </dl>
+        <dl class="row">
+            <dt class="col-sm-2">CreatedAt</dt>
+            <dd class="col-sm-10">@leaderboard.CreatedAt</dd>
+        </dl>
+        <EditForm method="post" Model="leaderboard" OnValidSubmit="DeleteLeaderboard" FormName="delete" Enhance>
+            <button type="submit" class="btn btn-danger" disabled="@(leaderboard is null)">Delete</button> |
+            <a href="/leaderboards">Back to List</a>
+        </EditForm>
+    }
+</div>
+
+@code {
+    private Leaderboard? leaderboard;
+
+    [SupplyParameterFromQuery]
+    private int Id { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        using var context = DbFactory.CreateDbContext();
+        leaderboard = await context.Leaderboards.FirstOrDefaultAsync(m => m.Id == Id);
+
+        if (leaderboard is null)
+        {
+            NavigationManager.NavigateTo("notfound");
+        }
+    }
+
+    private async Task DeleteLeaderboard()
+    {
+        using var context = DbFactory.CreateDbContext();
+        context.Leaderboards.Remove(leaderboard!);
+        await context.SaveChangesAsync();
+        NavigationManager.NavigateTo("/leaderboards");
+    }
+}

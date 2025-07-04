@@ -1,0 +1,43 @@
+﻿@page "/modules"
+@using Microsoft.EntityFrameworkCore
+@using Microsoft.AspNetCore.Components.QuickGrid
+@using LMS.Data
+@using LMS.Data
+@implements IAsyncDisposable
+@inject IDbContextFactory<LMS.Data.AuthDbContext> DbFactory
+
+<PageTitle>Index</PageTitle>
+
+<h1>Index</h1>
+
+<p>
+    <a href="modules/create">Create New</a>
+</p>
+
+<QuickGrid Class="table" Items="context.Modules">
+    <PropertyColumn Property="module => module.Title" />
+    <PropertyColumn Property="module => module.Description" />
+    <PropertyColumn Property="module => module.CourseId" />
+    <PropertyColumn Property="module => module.OrderIndex" />
+    <PropertyColumn Property="module => module.IsRequired" />
+    <PropertyColumn Property="module => module.IsActive" />
+    <PropertyColumn Property="module => module.CreatedAt" />
+    <PropertyColumn Property="module => module.UpdatedAt" />
+
+    <TemplateColumn Context="module">
+        <a href="@($"modules/edit?id={module.Id}")">Edit</a> |
+        <a href="@($"modules/details?id={module.Id}")">Details</a> |
+        <a href="@($"modules/delete?id={module.Id}")">Delete</a>
+    </TemplateColumn>
+</QuickGrid>
+
+@code {
+    private AuthDbContext context = default!;
+
+    protected override void OnInitialized()
+    {
+        context = DbFactory.CreateDbContext();
+    }
+
+    public async ValueTask DisposeAsync() => await context.DisposeAsync();
+}

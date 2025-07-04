@@ -1,0 +1,56 @@
+﻿@page "/forums/details"
+@using Microsoft.EntityFrameworkCore
+@using LMS.Data
+@inject IDbContextFactory<LMS.Data.AuthDbContext> DbFactory
+@inject NavigationManager NavigationManager
+
+<PageTitle>Details</PageTitle>
+
+<h1>Details</h1>
+
+<div>
+    <h2>Forum</h2>
+    <hr />
+    @if (forum is null)
+    {
+        <p><em>Loading...</em></p>
+    }
+    else {
+        <dl class="row">
+            <dt class="col-sm-2">Title</dt>
+            <dd class="col-sm-10">@forum.Title</dd>
+            <dt class="col-sm-2">Description</dt>
+            <dd class="col-sm-10">@forum.Description</dd>
+            <dt class="col-sm-2">CourseId</dt>
+            <dd class="col-sm-10">@forum.CourseId</dd>
+            <dt class="col-sm-2">IsGeneral</dt>
+            <dd class="col-sm-10">@forum.IsGeneral</dd>
+            <dt class="col-sm-2">IsActive</dt>
+            <dd class="col-sm-10">@forum.IsActive</dd>
+            <dt class="col-sm-2">CreatedAt</dt>
+            <dd class="col-sm-10">@forum.CreatedAt</dd>
+        </dl>
+        <div>
+            <a href="@($"/forums/edit?id={forum.Id}")">Edit</a> |
+            <a href="@($"/forums")">Back to List</a>
+        </div>
+    }
+</div>
+
+@code {
+    private Forum? forum;
+
+    [SupplyParameterFromQuery]
+    private int Id { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        using var context = DbFactory.CreateDbContext();
+        forum = await context.Forums.FirstOrDefaultAsync(m => m.Id == Id);
+
+        if (forum is null)
+        {
+            NavigationManager.NavigateTo("notfound");
+        }
+    }
+}

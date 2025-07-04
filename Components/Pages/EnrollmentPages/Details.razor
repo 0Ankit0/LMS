@@ -1,0 +1,66 @@
+﻿@page "/enrollments/details"
+@using Microsoft.EntityFrameworkCore
+@using LMS.Data
+@inject IDbContextFactory<LMS.Data.AuthDbContext> DbFactory
+@inject NavigationManager NavigationManager
+
+<PageTitle>Details</PageTitle>
+
+<h1>Details</h1>
+
+<div>
+    <h2>Enrollment</h2>
+    <hr />
+    @if (enrollment is null)
+    {
+        <p><em>Loading...</em></p>
+    }
+    else {
+        <dl class="row">
+            <dt class="col-sm-2">UserId</dt>
+            <dd class="col-sm-10">@enrollment.UserId</dd>
+            <dt class="col-sm-2">CourseId</dt>
+            <dd class="col-sm-10">@enrollment.CourseId</dd>
+            <dt class="col-sm-2">EnrolledAt</dt>
+            <dd class="col-sm-10">@enrollment.EnrolledAt</dd>
+            <dt class="col-sm-2">StartedAt</dt>
+            <dd class="col-sm-10">@enrollment.StartedAt</dd>
+            <dt class="col-sm-2">CompletedAt</dt>
+            <dd class="col-sm-10">@enrollment.CompletedAt</dd>
+            <dt class="col-sm-2">Status</dt>
+            <dd class="col-sm-10">@enrollment.Status</dd>
+            <dt class="col-sm-2">ProgressPercentage</dt>
+            <dd class="col-sm-10">@enrollment.ProgressPercentage</dd>
+            <dt class="col-sm-2">TimeSpent</dt>
+            <dd class="col-sm-10">@enrollment.TimeSpent</dd>
+            <dt class="col-sm-2">FinalGrade</dt>
+            <dd class="col-sm-10">@enrollment.FinalGrade</dd>
+            <dt class="col-sm-2">IsCertificateIssued</dt>
+            <dd class="col-sm-10">@enrollment.IsCertificateIssued</dd>
+            <dt class="col-sm-2">CertificateIssuedAt</dt>
+            <dd class="col-sm-10">@enrollment.CertificateIssuedAt</dd>
+        </dl>
+        <div>
+            <a href="@($"/enrollments/edit?id={enrollment.Id}")">Edit</a> |
+            <a href="@($"/enrollments")">Back to List</a>
+        </div>
+    }
+</div>
+
+@code {
+    private Enrollment? enrollment;
+
+    [SupplyParameterFromQuery]
+    private int Id { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        using var context = DbFactory.CreateDbContext();
+        enrollment = await context.Enrollments.FirstOrDefaultAsync(m => m.Id == Id);
+
+        if (enrollment is null)
+        {
+            NavigationManager.NavigateTo("notfound");
+        }
+    }
+}

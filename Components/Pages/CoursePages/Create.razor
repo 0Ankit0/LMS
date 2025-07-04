@@ -1,0 +1,130 @@
+﻿@page "/courses/create"
+@using Microsoft.EntityFrameworkCore
+@using LMS.Data
+@inject IDbContextFactory<LMS.Data.AuthDbContext> DbFactory
+@inject NavigationManager NavigationManager
+
+<PageTitle>Create</PageTitle>
+
+<h1>Create</h1>
+
+<h2>Course</h2>
+<hr />
+<div class="row">
+    <div class="col-md-4">
+        <EditForm Model="Course" OnValidSubmit="AddCourse">
+            <DataAnnotationsValidator />
+            <ValidationSummary class="text-danger" role="alert" />
+            <div class="mb-3">
+                <label for="title" class="form-label">Title:</label>
+                <InputText id="title" @bind-Value="Course.Title" class="form-control" aria-required="true" />
+                <ValidationMessage For="() => Course.Title" class="text-danger" />
+            </div>
+            <div class="mb-3">
+                <label for="description" class="form-label">Description:</label>
+                <InputText id="description" @bind-Value="Course.Description" class="form-control" aria-required="true" />
+                <ValidationMessage For="() => Course.Description" class="text-danger" />
+            </div>
+            <div class="mb-3">
+                <label for="thumbnailurl" class="form-label">ThumbnailUrl:</label>
+                <InputText id="thumbnailurl" @bind-Value="Course.ThumbnailUrl" class="form-control" />
+                <ValidationMessage For="() => Course.ThumbnailUrl" class="text-danger" />
+            </div>
+            <div class="mb-3">
+                <label for="instructorid" class="form-label">InstructorId:</label>
+                <InputText id="instructorid" @bind-Value="Course.InstructorId" class="form-control" aria-required="true" />
+                <ValidationMessage For="() => Course.InstructorId" class="text-danger" />
+            </div>
+            <div class="mb-3">
+                <label for="level" class="form-label">Level:</label>
+                <InputSelect id="level" @bind-Value="Course.Level" class="form-control">
+                    @foreach (var enumValue in Enum.GetValues(typeof(CourseLevel)))
+                    {
+                        <option value="@enumValue">@enumValue.ToString()</option>
+                    }
+                </InputSelect>
+                <ValidationMessage For="() => Course.Level" class="text-danger" />
+            </div>
+            <div class="mb-3">
+                <label for="status" class="form-label">Status:</label>
+                <InputSelect id="status" @bind-Value="Course.Status" class="form-control">
+                    @foreach (var enumValue in Enum.GetValues(typeof(CourseStatus)))
+                    {
+                        <option value="@enumValue">@enumValue.ToString()</option>
+                    }
+                </InputSelect>
+                <ValidationMessage For="() => Course.Status" class="text-danger" />
+            </div>
+            <div class="mb-3">
+                <label for="maxenrollments" class="form-label">MaxEnrollments:</label>
+                <InputNumber id="maxenrollments" @bind-Value="Course.MaxEnrollments" class="form-control" />
+                <ValidationMessage For="() => Course.MaxEnrollments" class="text-danger" />
+            </div>
+            <div class="mb-3">
+                <label for="startdate" class="form-label">StartDate:</label>
+                <InputDate id="startdate" @bind-Value="Course.StartDate" class="form-control" />
+                <ValidationMessage For="() => Course.StartDate" class="text-danger" />
+            </div>
+            <div class="mb-3">
+                <label for="enddate" class="form-label">EndDate:</label>
+                <InputDate id="enddate" @bind-Value="Course.EndDate" class="form-control" />
+                <ValidationMessage For="() => Course.EndDate" class="text-danger" />
+            </div>
+            <div class="mb-3">
+                <label for="estimatedduration" class="form-label">EstimatedDuration (hours):</label>
+                <InputNumber id="estimatedduration" @bind-Value="EstimatedDurationHours" class="form-control" />
+                <ValidationMessage For="() => EstimatedDurationHours" class="text-danger" />
+            </div>
+            <div class="mb-3">
+                <label for="prerequisites" class="form-label">Prerequisites:</label>
+                <InputText id="prerequisites" @bind-Value="Course.Prerequisites" class="form-control" />
+                <ValidationMessage For="() => Course.Prerequisites" class="text-danger" />
+            </div>
+            <div class="mb-3">
+                <label for="learningobjectives" class="form-label">LearningObjectives:</label>
+                <InputText id="learningobjectives" @bind-Value="Course.LearningObjectives" class="form-control" />
+                <ValidationMessage For="() => Course.LearningObjectives" class="text-danger" />
+            </div>
+            <div class="mb-3">
+                <label for="isactive" class="form-label">IsActive:</label>
+                <InputCheckbox id="isactive" @bind-Value="Course.IsActive" class="form-check-input" />
+                <ValidationMessage For="() => Course.IsActive" class="text-danger" />
+            </div>
+            <div class="mb-3">
+                <label for="createdat" class="form-label">CreatedAt:</label>
+                <InputDate id="createdat" @bind-Value="Course.CreatedAt" class="form-control" />
+                <ValidationMessage For="() => Course.CreatedAt" class="text-danger" />
+            </div>
+            <div class="mb-3">
+                <label for="updatedat" class="form-label">UpdatedAt:</label>
+                <InputDate id="updatedat" @bind-Value="Course.UpdatedAt" class="form-control" />
+                <ValidationMessage For="() => Course.UpdatedAt" class="text-danger" />
+            </div>
+            <button type="submit" class="btn btn-primary">Create</button>
+        </EditForm>
+    </div>
+</div>
+
+<div>
+    <a href="/courses">Back to List</a>
+</div>
+
+@code {
+    [SupplyParameterFromForm]
+    private Course Course { get; set; } = new();
+
+    // Helper property for binding EstimatedDuration as hours
+    private int EstimatedDurationHours
+    {
+        get => (int)Course.EstimatedDuration.TotalHours;
+        set => Course.EstimatedDuration = TimeSpan.FromHours(value);
+    }
+
+    private async Task AddCourse()
+    {
+        using var context = DbFactory.CreateDbContext();
+        context.Courses.Add(Course);
+        await context.SaveChangesAsync();
+        NavigationManager.NavigateTo("/courses");
+    }
+}

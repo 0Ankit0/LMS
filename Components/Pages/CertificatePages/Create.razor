@@ -1,0 +1,79 @@
+﻿@page "/certificates/create"
+@using Microsoft.EntityFrameworkCore
+@using LMS.Data
+@inject IDbContextFactory<LMS.Data.AuthDbContext> DbFactory
+@inject NavigationManager NavigationManager
+
+<PageTitle>Create</PageTitle>
+
+<h1>Create</h1>
+
+<h2>Certificate</h2>
+<hr />
+<div class="row">
+    <div class="col-md-4">
+        <EditForm method="post" Model="Certificate" OnValidSubmit="AddCertificate" FormName="create" Enhance>
+            <DataAnnotationsValidator />
+            <ValidationSummary class="text-danger" role="alert"/>
+            <div class="mb-3">
+                <label for="userid" class="form-label">UserId:</label> 
+                <InputText id="userid" @bind-Value="Certificate.UserId" class="form-control" aria-required="true"/> 
+                <ValidationMessage For="() => Certificate.UserId" class="text-danger" /> 
+            </div>        
+            <div class="mb-3">
+                <label for="courseid" class="form-label">CourseId:</label> 
+                <InputNumber id="courseid" @bind-Value="Certificate.CourseId" class="form-control" /> 
+                <ValidationMessage For="() => Certificate.CourseId" class="text-danger" /> 
+            </div>        
+            <div class="mb-3">
+                <label for="certificatenumber" class="form-label">CertificateNumber:</label> 
+                <InputText id="certificatenumber" @bind-Value="Certificate.CertificateNumber" class="form-control" aria-required="true"/> 
+                <ValidationMessage For="() => Certificate.CertificateNumber" class="text-danger" /> 
+            </div>        
+            <div class="mb-3">
+                <label for="issuedat" class="form-label">IssuedAt:</label> 
+                <InputDate id="issuedat" @bind-Value="Certificate.IssuedAt" class="form-control" /> 
+                <ValidationMessage For="() => Certificate.IssuedAt" class="text-danger" /> 
+            </div>        
+            <div class="mb-3">
+                <label for="expiresat" class="form-label">ExpiresAt:</label> 
+                <InputDate id="expiresat" @bind-Value="Certificate.ExpiresAt" class="form-control" /> 
+                <ValidationMessage For="() => Certificate.ExpiresAt" class="text-danger" /> 
+            </div>        
+            <div class="mb-3">
+                <label for="finalgrade" class="form-label">FinalGrade:</label> 
+                <InputNumber id="finalgrade" @bind-Value="Certificate.FinalGrade" class="form-control" /> 
+                <ValidationMessage For="() => Certificate.FinalGrade" class="text-danger" /> 
+            </div>        
+            <div class="mb-3">
+                <label for="certificateurl" class="form-label">CertificateUrl:</label> 
+                <InputText id="certificateurl" @bind-Value="Certificate.CertificateUrl" class="form-control" /> 
+                <ValidationMessage For="() => Certificate.CertificateUrl" class="text-danger" /> 
+            </div>        
+            <div class="mb-3">
+                <label for="isvalid" class="form-label">IsValid:</label> 
+                <InputCheckbox id="isvalid" @bind-Value="Certificate.IsValid" class="form-check-input" /> 
+                <ValidationMessage For="() => Certificate.IsValid" class="text-danger" /> 
+            </div>        
+            <button type="submit" class="btn btn-primary">Create</button>
+        </EditForm>
+    </div>
+</div>
+
+<div>
+    <a href="/certificates">Back to List</a>
+</div>
+
+@code {
+    [SupplyParameterFromForm]
+    private Certificate Certificate { get; set; } = new();
+
+    // To protect from overposting attacks, see https://learn.microsoft.com/aspnet/core/blazor/forms/#mitigate-overposting-attacks.
+    private async Task AddCertificate()
+    {
+        using var context = DbFactory.CreateDbContext();
+        context.Certificates.Add(Certificate);
+        await context.SaveChangesAsync();
+        NavigationManager.NavigateTo("/certificates");
+    }
+}
