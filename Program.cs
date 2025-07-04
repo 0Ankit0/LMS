@@ -1,16 +1,9 @@
-using System.Configuration;
 using LMS.Api;
 using LMS.Components;
 using LMS.Config;
 using LMS.Data;
 using LMS.Services;
-using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Identity.Data;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -35,10 +28,21 @@ builder.Services.AddCascadingAuthenticationState();
 builder.Services.AddScoped<AuthenticationStateProvider, RevalidatingIdentityAuthenticationStateProvider<User>>();
 
 // Add LMS services
-builder.Services.AddScoped<CourseService>();
-builder.Services.AddScoped<UserService>();
-builder.Services.AddScoped<AssessmentService>();
-builder.Services.AddScoped<ProgressService>();
+// Add LMS services with interface-based DI
+builder.Services.AddScoped<ICourseService, CourseService>();
+builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<ICertificateService, CertificateService>();
+builder.Services.AddScoped<IModuleService, ModuleService>();
+builder.Services.AddScoped<ILessonService, LessonService>();
+builder.Services.AddScoped<ICategoryService,CategoryService>();
+builder.Services.AddScoped<IAchievementService, AchievementService>();
+builder.Services.AddScoped<IEnrollmentService, EnrollmentService>();
+builder.Services.AddScoped<ILeaderboardService, LeaderboardService>();
+builder.Services.AddScoped<IAssessmentService, AssessmentService>();
+builder.Services.AddScoped<IProgressService, ProgressService>();
+builder.Services.AddScoped<IMessageService, MessageService>();
+builder.Services.AddScoped<IUserService, UserService>();
+
 
 var app = builder.Build();
 
