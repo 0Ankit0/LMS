@@ -4,8 +4,9 @@ namespace LMS.Models.Assessment
 {
     public class CreateQuestionOptionRequest
     {
-        [Required]
         public string Text { get; set; } = string.Empty;
+
+        public int QuestionId { get; set; }
 
         public bool IsCorrect { get; set; }
 

@@ -6,7 +6,6 @@ namespace LMS.Models.Assessment
     {
         public int Id { get; set; }
 
-        [Required]
         public string Text { get; set; } = string.Empty;
 
         public int QuestionId { get; set; }
@@ -15,6 +14,6 @@ namespace LMS.Models.Assessment
 
         public int OrderIndex { get; set; }
 
-        public bool IsSelected { get; set; }
+        public List<QuestionResponseModel> Responses { get; set; } = new();
     }
 }

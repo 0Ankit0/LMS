@@ -4,7 +4,7 @@ namespace LMS.Models.Assessment
     {
         public int QuestionId { get; set; }
 
-        public int? SelectedOptionId { get; set; }
+        public int? OptionId { get; set; }
 
         public string? TextResponse { get; set; }
     }

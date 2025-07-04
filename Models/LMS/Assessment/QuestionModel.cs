@@ -6,12 +6,11 @@ namespace LMS.Models.Assessment
     {
         public int Id { get; set; }
 
-        [Required]
         public string Text { get; set; } = string.Empty;
 
         public int AssessmentId { get; set; }
 
-        public string Type { get; set; } = string.Empty;
+        public QuestionType Type { get; set; } = QuestionType.MultipleChoice;
 
         public double Points { get; set; } = 1.0;
 
@@ -21,10 +20,20 @@ namespace LMS.Models.Assessment
 
         public bool IsRequired { get; set; } = true;
 
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
         public List<QuestionOptionModel> Options { get; set; } = new();
+        public List<QuestionResponseModel> Responses { get; set; } = new();
+    }
 
-        public string? UserResponse { get; set; }
-
-        public bool? IsCorrect { get; set; }
+    public enum QuestionType
+    {
+        MultipleChoice = 1,
+        TrueFalse = 2,
+        ShortAnswer = 3,
+        Essay = 4,
+        Matching = 5,
+        FillInTheBlank = 6,
+        Ordering = 7
     }
 }
