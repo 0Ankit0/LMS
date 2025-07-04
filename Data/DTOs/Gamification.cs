@@ -24,14 +24,13 @@ namespace LMS.Data
 
         public AchievementType Type { get; set; } = AchievementType.Course;
 
-        public string? Criteria { get; set; } // JSON criteria for earning
-
         public bool IsActive { get; set; } = true;
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
         // Navigation Properties
         public virtual ICollection<UserAchievement> UserAchievements { get; set; } = new List<UserAchievement>();
+        public virtual ICollection<AchievementCriteria> Criteria { get; set; } = new List<AchievementCriteria>();
     }
 
     public class UserAchievement
@@ -110,38 +109,29 @@ namespace LMS.Data
         public DateTime LastUpdated { get; set; } = DateTime.UtcNow;
     }
 
-    // Additional Models for Resources and Analytics
-    public class LessonResource
+    public class AchievementCriteria
     {
         [Key]
         public int Id { get; set; }
 
         [Required]
-        [StringLength(200)]
-        public string Name { get; set; } = string.Empty;
+        public int AchievementId { get; set; }
 
-        [StringLength(500)]
-        public string? Description { get; set; }
-
-        public int LessonId { get; set; }
-
-        [ForeignKey("LessonId")]
-        public virtual Lesson Lesson { get; set; } = null!;
-
-        public ResourceType Type { get; set; } = ResourceType.Document;
+        [ForeignKey("AchievementId")]
+        public virtual Achievement Achievement { get; set; } = null!;
 
         [Required]
-        public string FilePath { get; set; } = string.Empty;
+        public CriteriaType Type { get; set; } // e.g., CourseCompletion, AssessmentScore, etc.
 
-        public string? ExternalUrl { get; set; }
+        public int? CourseId { get; set; } // Optional, for course-specific criteria
 
-        public long FileSize { get; set; }
+        public int? AssessmentId { get; set; } // Optional, for assessment-specific criteria
 
-        public string ContentType { get; set; } = string.Empty;
+        public double? MinScore { get; set; } // Optional, for score-based criteria
 
-        public bool IsDownloadable { get; set; } = true;
+        public int? RequiredCount { get; set; } // Optional, for participation or streaks
 
-        public DateTime UploadedAt { get; set; } = DateTime.UtcNow;
+        public string? AdditionalData { get; set; } // For any extra info (JSON or plain text)
     }
 
     public class Certificate
@@ -213,5 +203,15 @@ namespace LMS.Data
         Link = 5,
         Archive = 6,
         Presentation = 7
+    }
+
+    public enum CriteriaType
+    {
+        CourseCompletion = 1,
+        AssessmentScore = 2,
+        Participation = 3,
+        TimeSpent = 4,
+        Streak = 5,
+        Social = 6
     }
 }

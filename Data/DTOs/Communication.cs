@@ -91,6 +91,10 @@ namespace LMS.Data
         [ForeignKey("CourseId")]
         public virtual Course? Course { get; set; }
 
+        // Add Type property
+        [Required]
+        public AnnouncementType Type { get; set; } = AnnouncementType.General;
+
         public AnnouncementPriority Priority { get; set; } = AnnouncementPriority.Normal;
 
         public DateTime PublishedAt { get; set; } = DateTime.UtcNow;
@@ -118,5 +122,14 @@ namespace LMS.Data
         Normal = 2,
         High = 3,
         Critical = 4
+    }
+
+    // Add AnnouncementType enum
+    public enum AnnouncementType
+    {
+        General = 1,
+        Event = 2,
+        Deadline = 3,
+        Alert = 4
     }
 }

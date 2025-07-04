@@ -94,5 +94,43 @@ namespace LMS.Data
 
         // Navigation Properties
         public virtual ICollection<ForumPost> Replies { get; set; } = new List<ForumPost>();
+        public virtual ICollection<ForumAttachment> Attachments { get; set; } = new List<ForumAttachment>();
+    }
+
+    public class ForumAttachment
+    {
+        [Key]
+        public int Id { get; set; }
+
+        public int PostId { get; set; }
+
+        [ForeignKey("PostId")]
+        public virtual ForumPost Post { get; set; } = null!;
+
+        [Required]
+        [StringLength(255)]
+        public string FileName { get; set; } = string.Empty;
+
+        [Required]
+        [StringLength(500)]
+        public string FilePath { get; set; } = string.Empty;
+
+        public long FileSize { get; set; }
+
+        [StringLength(100)]
+        public string ContentType { get; set; } = string.Empty;
+
+        [StringLength(500)]
+        public string? Caption { get; set; }
+
+        public DateTime UploadedAt { get; set; } = DateTime.UtcNow;
+
+        [Required]
+        public string UploadedByUserId { get; set; } = string.Empty;
+
+        [ForeignKey("UploadedByUserId")]
+        public virtual User UploadedBy { get; set; } = null!;
+
+        public bool IsDeleted { get; set; } = false;
     }
 }

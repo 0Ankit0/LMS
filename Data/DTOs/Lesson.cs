@@ -51,6 +51,38 @@ namespace LMS.Data
         public virtual ICollection<LessonProgress> LessonProgresses { get; set; } = new List<LessonProgress>();
         public virtual ICollection<LessonResource> Resources { get; set; } = new List<LessonResource>();
     }
+    public class LessonResource
+    {
+        [Key]
+        public int Id { get; set; }
+
+        [Required]
+        [StringLength(200)]
+        public string Name { get; set; } = string.Empty;
+
+        [StringLength(500)]
+        public string? Description { get; set; }
+
+        public int LessonId { get; set; }
+
+        [ForeignKey("LessonId")]
+        public virtual Lesson Lesson { get; set; } = null!;
+
+        public ResourceType Type { get; set; } = ResourceType.Document;
+
+        [Required]
+        public string FilePath { get; set; } = string.Empty;
+
+        public string? ExternalUrl { get; set; }
+
+        public long FileSize { get; set; }
+
+        public string ContentType { get; set; } = string.Empty;
+
+        public bool IsDownloadable { get; set; } = true;
+
+        public DateTime UploadedAt { get; set; } = DateTime.UtcNow;
+    }
 
     public enum LessonType
     {
