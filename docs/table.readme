@@ -1,0 +1,526 @@
+# Database Tables Overview
+
+This document describes all tables, their purpose, and the meaning of each property as defined in the data and migration files.
+
+---
+
+## AspNetUsers
+
+**Purpose:**  
+Stores all user accounts for authentication and authorization. Includes profile, status, and gamification fields.
+
+**Properties:**
+- **Id**: Unique identifier for the user (Primary Key).
+- **UserName**: The user's login name.
+- **NormalizedUserName**: Uppercase version for lookups.
+- **Email**: User's email address.
+- **NormalizedEmail**: Uppercase version for lookups.
+- **EmailConfirmed**: Whether the email is confirmed.
+- **PasswordHash**: Hashed password.
+- **SecurityStamp**: Used to invalidate sessions.
+- **ConcurrencyStamp**: Used for concurrency checks.
+- **PhoneNumber**: User's phone number.
+- **PhoneNumberConfirmed**: Whether the phone is confirmed.
+- **TwoFactorEnabled**: If two-factor authentication is enabled.
+- **LockoutEnd**: When lockout ends (if locked out).
+- **LockoutEnabled**: If lockout is enabled.
+- **AccessFailedCount**: Failed login attempts.
+- **Bio**: Short biography for the user profile.
+- **CreatedAt**: When the account was created.
+- **DateOfBirth**: User's date of birth.
+- **FirstName**: User's first name.
+- **IsActive**: Whether the account is active.
+- **LastLoginAt**: Last login timestamp.
+- **LastName**: User's last name.
+- **Level**: Gamification level.
+- **ProfilePictureUrl**: URL to the user's profile picture.
+- **TotalPoints**: Gamification points earned.
+
+---
+
+## AspNetRoles
+
+**Purpose:**  
+Defines roles for users (e.g., Admin, Instructor, Student) for authorization.
+
+**Properties:**
+- **Id**: Unique identifier (Primary Key).
+- **Name**: Role name.
+- **NormalizedName**: Uppercase version for lookups.
+- **ConcurrencyStamp**: For concurrency checks.
+
+---
+
+## Achievements
+
+**Purpose:**  
+Defines gamification achievements that users can earn.
+
+**Properties:**
+- **Id**: Unique identifier (Primary Key).
+- **Name**: Achievement name.
+- **Description**: What the achievement is for.
+- **IconUrl**: Icon representing the achievement.
+- **Points**: Points awarded for earning.
+- **BadgeColor**: Color for display.
+- **Type**: Type/category of achievement.
+- **Criteria**: How to earn the achievement.
+- **IsActive**: If the achievement is available.
+- **CreatedAt**: When it was created.
+
+---
+
+## Announcements
+
+**Purpose:**  
+Stores announcements made by instructors/admins, optionally linked to a course.
+
+**Properties:**
+- **Id**: Unique identifier (Primary Key).
+- **Title**: Announcement title.
+- **Content**: Full announcement text.
+- **AuthorId**: User who created the announcement.
+- **CourseId**: (Optional) Related course.
+- **Priority**: Importance (e.g., Critical, High).
+- **PublishedAt**: When published.
+- **ExpiresAt**: When it expires.
+- **IsActive**: If currently visible.
+- **SendEmail**: If sent as email.
+- **SendSms**: If sent as SMS.
+
+---
+
+## Assessments
+
+**Purpose:**  
+Represents quizzes, tests, or exams in courses/modules/lessons.
+
+**Properties:**
+- **Id**: Unique identifier (Primary Key).
+- **Title**: Assessment title.
+- **Description**: Details about the assessment.
+- **CourseId**: (Optional) Related course.
+- **ModuleId**: (Optional) Related module.
+- **LessonId**: (Optional) Related lesson.
+- **Type**: Assessment type (quiz, exam, etc.).
+- **MaxAttempts**: Maximum allowed attempts.
+- **TimeLimit**: Time allowed per attempt.
+- **PassingScore**: Minimum score to pass.
+- **IsRandomized**: If questions are randomized.
+- **ShowCorrectAnswers**: If correct answers are shown after.
+- **ShowScoreImmediately**: If score is shown immediately.
+- **AvailableFrom/Until**: Availability window.
+- **IsActive**: If assessment is available.
+- **CreatedAt/UpdatedAt**: Timestamps.
+- **UserId**: (Optional) Owner/creator.
+
+---
+
+## Categories
+
+**Purpose:**  
+Organizes courses into categories and subcategories.
+
+**Properties:**
+- **Id**: Unique identifier (Primary Key).
+- **Name**: Category name.
+- **Description**: Details about the category.
+- **IconUrl**: Icon for display.
+- **Color**: Display color.
+- **IsActive**: If category is available.
+- **ParentCategoryId**: (Optional) For subcategories.
+
+---
+
+## Certificates
+
+**Purpose:**  
+Represents certificates issued to users for course completion.
+
+**Properties:**
+- **Id**: Unique identifier (Primary Key).
+- **UserId**: Recipient user.
+- **CourseId**: Related course.
+- **CertificateNumber**: Unique certificate code.
+- **IssuedAt**: When issued.
+- **ExpiresAt**: Expiry date (if any).
+- **FinalGrade**: Grade achieved.
+- **CertificateUrl**: Download/view link.
+- **IsValid**: If certificate is valid.
+
+---
+
+## Courses
+
+**Purpose:**  
+Represents a course offered in the LMS.
+
+**Properties:**
+- **Id**: Unique identifier (Primary Key).
+- **Title**: Course title.
+- **Description**: Course overview.
+- **ThumbnailUrl**: Image for the course.
+- **InstructorId**: User who teaches the course.
+- **Level**: Difficulty/level.
+- **Status**: Published, draft, etc.
+- **Price**: Cost to enroll.
+- **MaxEnrollments**: Enrollment cap.
+- **StartDate/EndDate**: Course schedule.
+- **EstimatedDuration**: Expected time to complete.
+- **Prerequisites**: Required prior knowledge.
+- **LearningObjectives**: What students will learn.
+- **IsActive**: If course is available.
+- **CreatedAt/UpdatedAt**: Timestamps.
+- **IsScormPackage**: If course uses SCORM.
+- **ScormManifestPath**: Path to SCORM manifest.
+
+---
+
+## CourseCategories
+
+**Purpose:**  
+Many-to-many join table linking courses and categories.
+
+**Properties:**
+- **CourseId**: Linked course.
+- **CategoryId**: Linked category.
+
+---
+
+## CourseTags
+
+**Purpose:**  
+Many-to-many join table linking courses and tags.
+
+**Properties:**
+- **CourseId**: Linked course.
+- **TagId**: Linked tag.
+
+---
+
+## Enrollments
+
+**Purpose:**  
+Tracks which users are enrolled in which courses, and their progress.
+
+**Properties:**
+- **Id**: Unique identifier (Primary Key).
+- **UserId**: Enrolled user.
+- **CourseId**: Enrolled course.
+- **EnrolledAt**: When enrolled.
+- **StartedAt/CompletedAt**: Progress timestamps.
+- **Status**: Enrollment status (active, completed, etc.).
+- **ProgressPercentage**: Completion percent.
+- **TimeSpent**: Total time spent.
+- **FinalGrade**: Final grade (if any).
+- **IsCertificateIssued**: If certificate was issued.
+- **CertificateIssuedAt**: When certificate was issued.
+
+---
+
+## Forums
+
+**Purpose:**  
+Discussion forums for courses or general topics.
+
+**Properties:**
+- **Id**: Unique identifier (Primary Key).
+- **Title**: Forum title.
+- **Description**: Forum description.
+- **CourseId**: (Optional) Related course.
+- **IsGeneral**: If forum is general (not course-specific).
+- **IsActive**: If forum is open.
+- **CreatedAt**: When created.
+
+---
+
+## ForumPosts
+
+**Purpose:**  
+Posts (and replies) within forum topics.
+
+**Properties:**
+- **Id**: Unique identifier (Primary Key).
+- **Content**: Post content.
+- **TopicId**: Related topic.
+- **AuthorId**: User who posted.
+- **ParentPostId**: (Optional) For replies.
+- **CreatedAt/UpdatedAt**: Timestamps.
+- **IsDeleted**: If post is deleted.
+
+---
+
+## ForumTopics
+
+**Purpose:**  
+Topics within forums, grouping related posts.
+
+**Properties:**
+- **Id**: Unique identifier (Primary Key).
+- **Title**: Topic title.
+- **ForumId**: Related forum.
+- **CreatedByUserId**: User who started the topic.
+- **IsPinned**: If topic is pinned.
+- **IsLocked**: If topic is locked.
+- **CreatedAt**: When created.
+- **LastPostAt**: Last activity.
+
+---
+
+## Leaderboards
+
+**Purpose:**  
+Tracks leaderboards for gamification, e.g., top students.
+
+**Properties:**
+- **Id**: Unique identifier (Primary Key).
+- **Name**: Leaderboard name.
+- **Description**: Details.
+- **Type**: Leaderboard type.
+- **Period**: Time period (weekly, monthly, etc.).
+- **CourseId**: (Optional) Related course.
+- **IsActive**: If leaderboard is active.
+- **CreatedAt**: When created.
+
+---
+
+## LeaderboardEntries
+
+**Purpose:**  
+Entries for each user in a leaderboard.
+
+**Properties:**
+- **Id**: Unique identifier (Primary Key).
+- **LeaderboardId**: Related leaderboard.
+- **UserId**: User in the leaderboard.
+- **Rank**: User's rank.
+- **Score**: User's score.
+- **LastUpdated**: When last updated.
+
+---
+
+## Lessons
+
+**Purpose:**  
+Represents a lesson within a module.
+
+**Properties:**
+- **Id**: Unique identifier (Primary Key).
+- **Title**: Lesson title.
+- **Description**: Lesson overview.
+- **Content**: Main lesson content.
+- **ModuleId**: Parent module.
+- **Type**: Lesson type (video, document, etc.).
+- **VideoUrl**: Video link (if any).
+- **DocumentUrl**: Document link (if any).
+- **ExternalUrl**: External resource.
+- **EstimatedDuration**: Expected time to complete.
+- **OrderIndex**: Order in module.
+- **IsRequired**: If lesson is required.
+- **IsActive**: If lesson is available.
+- **CreatedAt/UpdatedAt**: Timestamps.
+- **IsScormContent**: If lesson uses SCORM.
+- **ScormLaunchUrl**: SCORM launch URL.
+- **XApiActivityId**: xAPI activity ID.
+
+---
+
+## LessonProgresses
+
+**Purpose:**  
+Tracks a user's progress through a lesson.
+
+**Properties:**
+- **Id**: Unique identifier (Primary Key).
+- **ModuleProgressId**: Related module progress.
+- **LessonId**: Related lesson.
+- **StartedAt/CompletedAt**: Progress timestamps.
+- **TimeSpent**: Time spent on lesson.
+- **ProgressPercentage**: Completion percent.
+- **ScormData**: SCORM tracking data.
+- **XApiStatements**: xAPI tracking data.
+
+---
+
+## LessonResources
+
+**Purpose:**  
+Files and resources attached to lessons.
+
+**Properties:**
+- **Id**: Unique identifier (Primary Key).
+- **Name**: Resource name.
+- **Description**: Resource description.
+- **LessonId**: Related lesson.
+- **Type**: Resource type (file, link, etc.).
+- **FilePath**: Path to file.
+- **ExternalUrl**: External resource link.
+- **FileSize**: Size in bytes.
+- **ContentType**: MIME type.
+- **IsDownloadable**: If resource can be downloaded.
+- **UploadedAt**: When uploaded.
+
+---
+
+## MessageAttachments
+
+**Purpose:**  
+Attachments for messages between users.
+
+**Properties:**
+- **Id**: Unique identifier (Primary Key).
+- **MessageId**: Related message.
+- **FileName**: Name of the file.
+- **FilePath**: Path to file.
+- **FileSize**: Size in bytes.
+- **ContentType**: MIME type.
+- **UploadedAt**: When uploaded.
+
+---
+
+## Messages
+
+**Purpose:**  
+Private messages between users.
+
+**Properties:**
+- **Id**: Unique identifier (Primary Key).
+- **Subject**: Message subject.
+- **Content**: Message body.
+- **FromUserId**: Sender.
+- **ToUserId**: Recipient.
+- **ParentMessageId**: (Optional) For threads.
+- **SentAt**: When sent.
+- **ReadAt**: When read.
+- **IsDeleted**: If deleted.
+- **Priority**: Message priority.
+
+---
+
+## Modules
+
+**Purpose:**  
+A module is a group of lessons within a course.
+
+**Properties:**
+- **Id**: Unique identifier (Primary Key).
+- **Title**: Module title.
+- **Description**: Module overview.
+- **CourseId**: Parent course.
+- **OrderIndex**: Order in course.
+- **IsRequired**: If module is required.
+- **IsActive**: If module is available.
+- **CreatedAt/UpdatedAt**: Timestamps.
+
+---
+
+## ModuleProgresses
+
+**Purpose:**  
+Tracks a user's progress through a module.
+
+**Properties:**
+- **Id**: Unique identifier (Primary Key).
+- **EnrollmentId**: Related enrollment.
+- **ModuleId**: Related module.
+- **StartedAt/CompletedAt**: Progress timestamps.
+- **ProgressPercentage**: Completion percent.
+- **TimeSpent**: Time spent on module.
+
+---
+
+## QuestionOptions
+
+**Purpose:**  
+Possible answer options for a question.
+
+**Properties:**
+- **Id**: Unique identifier (Primary Key).
+- **Text**: Option text.
+- **QuestionId**: Related question.
+- **IsCorrect**: If this is the correct answer.
+- **OrderIndex**: Order in list.
+
+---
+
+## QuestionResponses
+
+**Purpose:**  
+Stores a user's answer to a question in an assessment attempt.
+
+**Properties:**
+- **Id**: Unique identifier (Primary Key).
+- **AttemptId**: Related assessment attempt.
+- **QuestionId**: Related question.
+- **SelectedOptionId**: (Optional) Chosen option.
+- **TextResponse**: Free-text answer.
+- **IsCorrect**: If answer is correct.
+- **PointsEarned**: Points earned for this answer.
+- **AnsweredAt**: When answered.
+
+---
+
+## Questions
+
+**Purpose:**  
+Questions in an assessment.
+
+**Properties:**
+- **Id**: Unique identifier (Primary Key).
+- **Text**: Question text.
+- **AssessmentId**: Related assessment.
+- **Type**: Question type (multiple choice, etc.).
+- **Points**: Points for correct answer.
+- **OrderIndex**: Order in assessment.
+- **Explanation**: Explanation for answer.
+- **IsRequired**: If question is required.
+- **CreatedAt**: When created.
+
+---
+
+## Tags
+
+**Purpose:**  
+Tags for categorizing courses.
+
+**Properties:**
+- **Id**: Unique identifier (Primary Key).
+- **Name**: Tag name.
+- **Color**: Display color.
+
+---
+
+## UserAchievements
+
+**Purpose:**  
+Tracks which achievements a user has earned.
+
+**Properties:**
+- **Id**: Unique identifier (Primary Key).
+- **UserId**: User who earned the achievement.
+- **AchievementId**: Achievement earned.
+- **EarnedAt**: When earned.
+- **CourseId**: (Optional) Related course.
+
+---
+
+## AssessmentAttempts
+
+**Purpose:**  
+Tracks a user's attempt at an assessment.
+
+**Properties:**
+- **Id**: Unique identifier (Primary Key).
+- **EnrollmentId**: Related enrollment.
+- **AssessmentId**: Related assessment.
+- **AttemptNumber**: Which attempt this is.
+- **StartedAt/CompletedAt**: Attempt timestamps.
+- **Score**: Raw score.
+- **Percentage**: Score as percent.
+- **IsPassed**: If user passed.
+- **TimeTaken**: Time spent on attempt.
+- **Status**: Attempt status.
+
+---
+
+*This document is auto-generated from migration and data model files. For more details, see the migration files in the Migrations folder.*
