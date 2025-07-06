@@ -1,215 +1,456 @@
 @page "/user/lms/forums"
 @using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.AspNetCore.Components.Forms
+@using Microsoft.AspNetCore.Components.Web
 @using Microsoft.AspNetCore.Identity
-@using LMS.Data
-@using LMS.Models.Communication
-@using LMS.Models.Course
-@using LMS.Services
+@using Microsoft.JSInterop
+@using Microsoft.AspNetCore.Components.Web.Virtualization
+@using Microsoft.AspNetCore.Components
+@using global::LMS.Data
+@using global::LMS.Models.Communication
+@using global::LMS.Models.Course
+@using global::LMS.Models.User
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @inject UserManager<User> UserManager
-@inject IForumService ForumService
 @inject NavigationManager Navigation
 @inject IJSRuntime JSRuntime
+@rendermode @(new InteractiveServerRenderMode())
+@layout Components.Layout.AuthLayout
 
 <PageTitle>Forums - LMS</PageTitle>
 
-<div class="container-fluid">
-    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-        <h1 class="h2"><i class="fas fa-comments me-2"></i>Forums</h1>
-        <div class="btn-toolbar mb-2 mb-md-0">
-            <button type="button" class="btn btn-primary" @onclick="ShowCreateForumModal">
-                <i class="fas fa-plus me-1"></i>Create Forum
-            </button>
+<div class="forums-layout">
+    <!-- Course Group Sidebar -->
+    <div class="course-group-sidebar">
+        <div class="group-list">
+            <!-- General Group -->
+            <div class="group-item @(selectedGroup == "general" ? "active" : "")" 
+                 @onclick='() => SelectGroup("general")'
+                 title="General Discussion">
+                <div class="group-icon general-icon">
+                    <i class="bi bi-globe"></i>
+                </div>
+            </div>
+
+            <!-- Course Groups -->
+            @if (courseGroups != null)
+            {
+                @foreach (var courseGroup in courseGroups)
+                {
+                    <div class="group-item @(selectedGroup == courseGroup.CourseName ? "active" : "")" 
+                         @onclick="() => SelectGroup(courseGroup.CourseName)"
+                         title="@courseGroup.CourseName">
+                        <div class="group-icon course-icon">
+                            <span class="course-initial">@courseGroup.CourseName.FirstOrDefault()</span>
+                        </div>
+                    </div>
+                }
+            }
+        </div>
+        
+        <!-- Add Forum Button -->
+        <div class="group-item add-forum-button" @onclick="ShowCreateForumModal" title="Create New Forum">
+            <div class="group-icon">
+                <i class="bi bi-plus-lg"></i>
+            </div>
         </div>
     </div>
 
-    @if (isLoading)
-    {
-        <div class="d-flex justify-content-center py-5">
-            <div class="spinner-border text-primary" role="status">
-                <span class="visually-hidden">Loading forums...</span>
-            </div>
-        </div>
-    }
-    else if (forums?.Any() == true)
-    {
-        <!-- General Forums -->
-        @if (forums.Where(f => f.IsGeneral).Any())
+    <!-- Forum List Sidebar -->
+    <div class="forum-list-sidebar">
+        @if (!string.IsNullOrEmpty(selectedGroup))
         {
-            <div class="card mb-4">
-                <div class="card-header bg-primary text-white">
-                    <h5 class="mb-0"><i class="fas fa-globe me-2"></i>General Discussion</h5>
-                </div>
-                <div class="card-body p-0">
-                    @foreach (var forum in forums.Where(f => f.IsGeneral))
+            <div class="forum-header">
+                <h4 class="forum-title">
+                    @if (selectedGroup == "general")
                     {
-                        <div class="border-bottom p-3">
-                            <div class="row align-items-center">
-                                <div class="col-md-8">
-                                    <h6 class="mb-1">
-                                        <a href="/forum/@forum.Id" class="text-decoration-none">@forum.Title</a>
-                                    </h6>
-                                    <p class="text-muted mb-0 small">@forum.Description</p>
-                                </div>
-                                <div class="col-md-2 text-center">
-                                    <div class="fw-bold">@forum.TopicCount</div>
-                                    <small class="text-muted">Topics</small>
-                                </div>
-                                <div class="col-md-2 text-center">
-                                    @if (forum.LastPostAt.HasValue)
-                                    {
-                                        <small class="text-muted">@forum.LastPostAt.Value.ToString("MMM dd, yyyy")</small>
-                                    }
-                                    else
-                                    {
-                                        <small class="text-muted">No posts yet</small>
-                                    }
-                                </div>
-                            </div>
-                        </div>
+                        <i class="bi bi-globe me-2"></i>
+                        <span>General Discussion</span>
                     }
-                </div>
-            </div>
-        }
-
-        <!-- Course Forums -->
-        @foreach (var courseGroup in forums.Where(f => !f.IsGeneral).GroupBy(f => f.CourseName ?? "Unknown Course"))
-        {
-            <div class="card mb-4">
-                <div class="card-header bg-info text-white">
-                    <h5 class="mb-0"><i class="fas fa-book me-2"></i>@courseGroup.Key</h5>
-                </div>
-                <div class="card-body p-0">
-                    @foreach (var forum in courseGroup)
+                    else
                     {
-                        <div class="border-bottom p-3">
-                            <div class="row align-items-center">
-                                <div class="col-md-8">
-                                    <h6 class="mb-1">
-                                        <a href="/forum/@forum.Id" class="text-decoration-none">@forum.Title</a>
-                                    </h6>
-                                    <p class="text-muted mb-0 small">@forum.Description</p>
-                                </div>
-                                <div class="col-md-2 text-center">
-                                    <div class="fw-bold">@forum.TopicCount</div>
-                                    <small class="text-muted">Topics</small>
-                                </div>
-                                <div class="col-md-2 text-center">
-                                    @if (forum.LastPostAt.HasValue)
-                                    {
-                                        <small class="text-muted">@forum.LastPostAt.Value.ToString("MMM dd, yyyy")</small>
-                                    }
-                                    else
-                                    {
-                                        <small class="text-muted">No posts yet</small>
-                                    }
-                                </div>
-                            </div>
-                        </div>
+                        <i class="bi bi-mortarboard me-2"></i>
+                        <span>@selectedGroup</span>
                     }
-                </div>
+                </h4>
             </div>
-        }
-
-        <!-- Recent Topics -->
-        <div class="card">
-            <div class="card-header">
-                <h5 class="mb-0"><i class="fas fa-clock me-2"></i>Recent Topics</h5>
-            </div>
-            <div class="card-body">
-                @if (recentTopics?.Any() == true)
+            
+            <div class="forum-list">
+                @if (selectedGroupForums != null)
                 {
-                    <div class="list-group list-group-flush">
-                        @foreach (var topic in recentTopics.Take(10))
-                        {
-                            <div class="list-group-item d-flex justify-content-between align-items-start">
-                                <div class="ms-2 me-auto">
-                                    <div class="fw-bold">
-                                        <a href="/forum/@topic.ForumId/topic/@topic.Id" class="text-decoration-none">@topic.Title</a>
-                                    </div>
-                                    <small class="text-muted">
-                                        by @topic.CreatedByUserName in @topic.ForumTitle
-                                    </small>
+                    @foreach (var forum in selectedGroupForums)
+                    {
+                        <div class="forum-item @(selectedForumId == forum.Id ? "active" : "")" 
+                             @onclick="() => SelectForum(forum.Id)">
+                            <div class="forum-info">
+                                <div class="forum-name">
+                                    <i class="bi bi-hash me-2"></i>
+                                    <span>@forum.Title</span>
                                 </div>
-                                <div class="text-end">
-                                    <span class="badge bg-primary rounded-pill">@topic.PostCount</span>
-                                    <div>
-                                        <small class="text-muted">@topic.CreatedAt.ToString("MMM dd")</small>
+                                <div class="forum-stats">
+                                    <small class="text-muted">@forum.TopicCount topics</small>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                }
+            </div>
+        }
+        else
+        {
+            <div class="forum-placeholder">
+                <i class="bi bi-chat-dots fa-3x text-muted mb-3"></i>
+                <p class="text-muted">Select a group to view forums</p>
+            </div>
+        }
+    </div>
+
+    <!-- Main Discussion Area -->
+    <div class="discussion-area">
+        @if (selectedForumId.HasValue && selectedForum != null)
+        {
+            @if (selectedTopicId.HasValue && selectedTopic != null)
+            {
+                <!-- Topic View Header -->
+                <div class="chat-header">
+                    <div class="chat-title">
+                        <button class="btn btn-sm btn-ghost me-2" @onclick="BackToForum" title="Back to Forum">
+                            <i class="bi bi-arrow-left"></i>
+                        </button>
+                        @if (selectedTopic.IsPinned)
+                        {
+                            <i class="bi bi-pin-angle me-2 text-warning"></i>
+                        }
+                        else if (selectedTopic.IsLocked)
+                        {
+                            <i class="bi bi-lock me-2 text-secondary"></i>
+                        }
+                        else
+                        {
+                            <i class="bi bi-chat-dots me-2"></i>
+                        }
+                        <span>@selectedTopic.Title</span>
+                    </div>
+                    <div class="chat-actions">
+                        <div class="topic-stats me-3">
+                            <small class="text-muted">
+                                <i class="bi bi-chat-left me-1"></i>@selectedTopic.PostCount posts
+                                <span class="ms-2"><i class="bi bi-person me-1"></i>by @selectedTopic.CreatedByUserName</span>
+                            </small>
+                        </div>
+                        @if (selectedTopic != null && !selectedTopic.IsLocked)
+                        {
+                            <button class="btn btn-sm btn-primary me-2" @onclick="ShowNewPostModal" title="New Post">
+                                <i class="bi bi-plus-lg me-1"></i>Reply
+                            </button>
+                        }
+                        <button class="btn btn-sm btn-outline-secondary me-2" title="Search in Topic">
+                            <i class="bi bi-search"></i>
+                        </button>
+                        <div class="dropdown">
+                            <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                <i class="bi bi-three-dots-vertical"></i>
+                            </button>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" href="#"><i class="bi bi-lock me-2"></i>Lock Topic</a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item text-danger" href="#"><i class="bi bi-trash me-2"></i>Delete Topic</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Topic Posts -->
+                <div class="messages-area" id="messagesArea">
+                    @if (selectedTopicPosts != null)
+                    {
+                        @foreach (var post in selectedTopicPosts)
+                        {
+                            <div class="message-item topic-post">
+                                <div class="message-avatar">
+                                    <div class="avatar-circle">
+                                        <span>@post.AuthorName.FirstOrDefault()</span>
+                                    </div>
+                                    <div class="user-info mt-2">
+                                        <div class="user-name">@post.AuthorName</div>
+                                        <div class="user-role">@post.AuthorRole</div>
+                                        <div class="user-stats">
+                                            <small class="text-muted">@post.AuthorPostCount posts</small>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="message-content post-content">
+                                    <div class="message-header">
+                                        <span class="message-author">@post.AuthorName</span>
+                                        <span class="message-time">@post.CreatedAt.ToString("MMM dd, yyyy HH:mm")</span>
+                                        @if (post.UpdatedAt.HasValue && post.UpdatedAt != post.CreatedAt)
+                                        {
+                                            <span class="text-muted small">(edited @post.UpdatedAt.Value.ToString("MMM dd, HH:mm"))</span>
+                                        }
+                                    </div>
+                                    <div class="message-text post-text">
+                                        @((MarkupString)post.Content.Replace("\n", "<br />"))
+                                    </div>
+                                    <div class="post-actions mt-2">
+                                        <button class="btn btn-sm btn-ghost" title="Like">
+                                            <i class="bi bi-heart me-1"></i>@post.LikeCount
+                                        </button>
+                                        <button class="btn btn-sm btn-ghost" @onclick="() => QuotePost(post)" title="Quote">
+                                            <i class="bi bi-quote me-1"></i>Quote
+                                        </button>
+                                        @if (currentUserId == post.AuthorId)
+                                        {
+                                            <button class="btn btn-sm btn-ghost" @onclick="() => EditPost(post)" title="Edit">
+                                                <i class="fas fa-edit me-1"></i>Edit
+                                            </button>
+                                            <button class="btn btn-sm btn-ghost text-danger" @onclick="() => DeletePost(post)" title="Delete">
+                                                <i class="fas fa-trash me-1"></i>Delete
+                                            </button>
+                                        }
                                     </div>
                                 </div>
                             </div>
                         }
+                    }
+                </div>
+
+                <!-- Quick Reply -->
+                @if (!selectedTopic.IsLocked)
+                {
+                    <div class="message-input-area">
+                        <div class="quick-reply-container">
+                            @if (!string.IsNullOrEmpty(quotedText))
+                            {
+                                <div class="quoted-text">
+                                    <div class="quote-header">
+                                        <span>Replying to @quotedAuthor:</span>
+                                        <button class="btn btn-sm btn-ghost" @onclick="ClearQuote">
+                                            <i class="fas fa-times"></i>
+                                        </button>
+                                    </div>
+                                    <div class="quote-content">@quotedText</div>
+                                </div>
+                            }
+                            <div class="message-input-container">
+                                <input type="text" class="message-input" placeholder="Reply to @selectedTopic.Title..." 
+                                       @bind="newTopicReply" @onkeypress="HandleTopicReplyKeyPress" />
+                                <button class="send-button" @onclick="SendTopicReply" disabled="@string.IsNullOrWhiteSpace(newTopicReply)">
+                                    <i class="fas fa-paper-plane"></i>
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 }
-                else
+            }
+            else
+            {
+                <!-- Forum Topics View -->
+                <div class="chat-header">
+                    <div class="chat-title">
+                        <i class="fas fa-hashtag me-2"></i>
+                        <span>@selectedForum.Title</span>
+                    </div>
+                    <div class="chat-actions">
+                        <div class="forum-stats me-3">
+                            <small class="text-muted">
+                                <i class="fas fa-list me-1"></i>@selectedForum.TopicCount topics
+                                <span class="ms-2"><i class="fas fa-users me-1"></i>@(selectedForumTopics?.SelectMany(t => new[] { t.CreatedByUserId }).Distinct().Count() ?? 0) contributors</span>
+                            </small>
+                        </div>
+                        <button class="btn btn-sm btn-primary me-2" @onclick="ShowNewTopicModal" title="New Topic">
+                            <i class="fas fa-plus me-1"></i>New Topic
+                        </button>
+                        <button class="btn btn-sm btn-outline-secondary me-2" title="Search Topics">
+                            <i class="fas fa-search"></i>
+                        </button>
+                        <div class="dropdown">
+                            <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                <i class="fas fa-sort"></i>
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-dark">
+                                <li><a class="dropdown-item" href="#"><i class="fas fa-calendar me-2"></i>Sort by Date</a></li>
+                                <li><a class="dropdown-item" href="#"><i class="fas fa-reply me-2"></i>Sort by Replies</a></li>
+                                <li><a class="dropdown-item" href="#"><i class="fas fa-user me-2"></i>Sort by Author</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Topics List -->
+                <div class="messages-area topics-area" id="topicsArea">
+                    @if (selectedForumTopics != null && selectedForumTopics.Any())
+                    {
+                        @foreach (var topic in selectedForumTopics)
+                        {
+                            <div class="topic-item @(topic.IsPinned ? "pinned" : "")" @onclick="() => SelectTopic(topic.Id)">
+                                <div class="topic-icon">
+                                    @if (topic.IsPinned)
+                                    {
+                                        <i class="fas fa-thumbtack text-warning"></i>
+                                    }
+                                    else if (topic.IsLocked)
+                                    {
+                                        <i class="fas fa-lock text-secondary"></i>
+                                    }
+                                    else
+                                    {
+                                        <i class="fas fa-comments text-primary"></i>
+                                    }
+                                </div>
+                                <div class="topic-content">
+                                    <div class="topic-header">
+                                        <h6 class="topic-title">@topic.Title</h6>
+                                        <div class="topic-badges">
+                                            @if (topic.IsPinned)
+                                            {
+                                                <span class="badge bg-warning text-dark">Pinned</span>
+                                            }
+                                            @if (topic.IsLocked)
+                                            {
+                                                <span class="badge bg-secondary">Locked</span>
+                                            }
+                                        </div>
+                                    </div>
+                                    <div class="topic-meta">
+                                        <span class="topic-author">by <strong>@topic.CreatedByUserName</strong></span>
+                                        <span class="topic-date">@topic.CreatedAt.ToString("MMM dd, yyyy")</span>
+                                        @if (topic.LastPostAt.HasValue)
+                                        {
+                                            <span class="topic-last-post">Last: @topic.LastPostAt.Value.ToString("MMM dd, HH:mm")</span>
+                                        }
+                                    </div>
+                                </div>
+                                <div class="topic-stats">
+                                    <div class="post-count">
+                                        <span class="count">@topic.PostCount</span>
+                                        <small>posts</small>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <div class="empty-state">
+                            <i class="fas fa-comments fa-4x text-muted mb-3"></i>
+                            <h5 class="text-muted">No Topics Yet</h5>
+                            <p class="text-muted">Be the first to start a discussion in this forum!</p>
+                            <button class="btn btn-primary" @onclick="ShowNewTopicModal">
+                                <i class="fas fa-plus me-2"></i>Create First Topic
+                            </button>
+                        </div>
+                    }
+                </div>
+            }
+
+            <!-- Forum Chat Area - Simple Messages -->
+            @* Keep original simple chat for quick discussions *@
+
+            <!-- Messages Area -->
+            <div class="messages-area" id="messagesArea">
+                @if (forumMessages != null)
                 {
-                    <p class="text-muted text-center py-3">No recent topics found.</p>
+                    @foreach (var message in forumMessages)
+                    {
+                        <div class="message-item">
+                            <div class="message-avatar">
+                                <div class="avatar-circle">
+                                    <span>@message.UserName.FirstOrDefault()</span>
+                                </div>
+                            </div>
+                            <div class="message-content">
+                                <div class="message-header">
+                                    <span class="message-author">@message.UserName</span>
+                                    <span class="message-time">@message.CreatedAt.ToString("MMM dd, yyyy HH:mm")</span>
+                                </div>
+                                <div class="message-text">
+                                    @message.Content
+                                </div>
+                            </div>
+                        </div>
+                    }
                 }
             </div>
-        </div>
-    }
-    else
-    {
-        <div class="text-center py-5">
-            <i class="fas fa-comments fa-4x text-muted mb-3"></i>
-            <h4 class="text-muted">No forums available</h4>
-            <p class="text-muted">Be the first to create a discussion forum!</p>
-            <button type="button" class="btn btn-primary" @onclick="ShowCreateForumModal">
-                <i class="fas fa-plus me-1"></i>Create First Forum
-            </button>
-        </div>
-    }
+
+            <!-- Main Message Input Area -->
+            @if (selectedForumId.HasValue)
+            {
+                <div class="main-message-input-area">
+                    <div class="main-message-input-container">
+                        <input type="text" class="main-message-input" placeholder="Type a message in this forum..." 
+                               @bind="newMessage" @onkeypress="HandleKeyPress" />
+                        <button class="main-send-button" @onclick="SendMessage" disabled="@string.IsNullOrWhiteSpace(newMessage)">
+                            <i class="fas fa-paper-plane"></i>
+                        </button>
+                    </div>
+                </div>
+            }
+
+            <!-- Forum Chat Area - Simple Messages -->
+            @* Keep original simple chat for quick discussions *@
+        }
+        else
+        {
+            <div class="chat-placeholder">
+                <i class="fas fa-comments fa-5x text-muted mb-4"></i>
+                <h3 class="text-muted mb-2">Welcome to Forums</h3>
+                <p class="text-muted">Select a forum from the sidebar to view topics and discussions</p>
+            </div>
+        }
+    </div>
 </div>
 
-<!-- Create Forum Modal -->
-@if (showCreateModal)
+<!-- New Topic Modal -->
+@if (showNewTopicModal)
 {
-    <div class="modal fade show" style="display: block;" tabindex="-1">
-        <div class="modal-dialog">
+    <div class="modal fade show" style="display: block; background-color: rgba(0,0,0,0.5);" tabindex="-1">
+        <div class="modal-dialog modal-lg">
             <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Create New Forum</h5>
-                    <button type="button" class="btn-close" @onclick="HideCreateModal"></button>
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title">
+                        <i class="fas fa-plus-circle me-2"></i>Create New Topic
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" @onclick="HideNewTopicModal"></button>
                 </div>
                 <div class="modal-body">
-                    <EditForm Model="@newForum" OnValidSubmit="@CreateForum">
+                    <EditForm Model="@newTopic" OnValidSubmit="@CreateTopic">
                         <DataAnnotationsValidator />
                         <ValidationSummary class="alert alert-danger" />
-                        
+
                         <div class="mb-3">
-                            <label for="title" class="form-label">Title</label>
-                            <InputText id="title" class="form-control" @bind-Value="newForum.Title" />
-                            <ValidationMessage For="@(() => newForum.Title)" />
+                            <label for="topicTitle" class="form-label fw-semibold">
+                                <i class="fas fa-heading me-1"></i>Topic Title
+                            </label>
+                            <InputText id="topicTitle" class="form-control form-control-lg" @bind-Value="newTopic.Title" 
+                                       placeholder="Enter an engaging topic title..." />
+                            <ValidationMessage For="@(() => newTopic.Title)" />
                         </div>
-                        
+
                         <div class="mb-3">
-                            <label for="description" class="form-label">Description</label>
-                            <InputTextArea id="description" class="form-control" rows="3" @bind-Value="newForum.Description" />
-                            <ValidationMessage For="@(() => newForum.Description)" />
+                            <label for="topicContent" class="form-label fw-semibold">
+                                <i class="bi bi-text-paragraph me-1"></i>Initial Post Content
+                            </label>
+                            <InputTextArea id="topicContent" class="form-control" rows="8" @bind-Value="newTopic.InitialPost" 
+                                           placeholder="Start the discussion with your thoughts..." />
+                            <ValidationMessage For="@(() => newTopic.InitialPost)" />
+                            <div class="form-text">You can use basic formatting: **bold**, *italic*, `code`</div>
                         </div>
-                        
-                        <div class="mb-3">
-                            <label for="courseId" class="form-label">Course (Optional)</label>
-                            <InputSelect id="courseId" class="form-select" @bind-Value="newForum.CourseId">
-                                <option value="">General Forum</option>
-                                @if (availableCourses != null)
-                                {
-                                    @foreach (var course in availableCourses)
-                                    {
-                                        <option value="@course.Id">@course.Title</option>
-                                    }
-                                }
-                            </InputSelect>
-                        </div>
-                        
-                        <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" @onclick="HideCreateModal">Cancel</button>
-                            <button type="submit" class="btn btn-primary" disabled="@isCreating">
-                                @if (isCreating)
+
+                        <div class="modal-footer border-0 px-0 mt-3">
+                            <button type="button" class="btn btn-light" @onclick="HideNewTopicModal">
+                                <i class="bi bi-x-lg me-1"></i>Cancel
+                            </button>
+                            <button type="submit" class="btn btn-primary" disabled="@isCreatingTopic">
+                                @if (isCreatingTopic)
                                 {
                                     <span class="spinner-border spinner-border-sm me-2"></span>
+                                    <span>Creating...</span>
                                 }
-                                Create Forum
+                                else
+                                {
+                                    <i class="bi bi-plus-lg me-1"></i>
+                                    <span>Create Topic</span>
+                                }
                             </button>
                         </div>
                     </EditForm>
@@ -217,19 +458,188 @@
             </div>
         </div>
     </div>
-    <div class="modal-backdrop fade show"></div>
+}
+
+<!-- New Post Modal -->
+@if (showNewPostModal)
+{
+    <div class="modal fade show" style="display: block; background-color: rgba(0,0,0,0.5);" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title">
+                        <i class="fas fa-reply me-2"></i>Reply to: @selectedTopic?.Title
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" @onclick="HideNewPostModal"></button>
+                </div>
+                <div class="modal-body">
+                    <EditForm Model="@newPost" OnValidSubmit="@CreatePost">
+                        <DataAnnotationsValidator />
+                        <ValidationSummary class="alert alert-danger" />
+
+                        @if (!string.IsNullOrEmpty(quotedText))
+                        {
+                            <div class="quote-preview mb-3">
+                                <div class="quote-header">
+                                    <strong>@quotedAuthor wrote:</strong>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary ms-2" @onclick="ClearQuote">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </div>
+                                <div class="quote-body">@quotedText</div>
+                            </div>
+                        }
+
+                        <div class="mb-3">
+                            <label for="postContent" class="form-label fw-semibold">
+                                <i class="fas fa-align-left me-1"></i>Your Reply
+                            </label>
+                            <InputTextArea id="postContent" class="form-control" rows="8" @bind-Value="newPost.Content" 
+                                           placeholder="Share your thoughts..." />
+                            <ValidationMessage For="@(() => newPost.Content)" />
+                            <div class="form-text">You can use basic formatting: **bold**, *italic*, `code`</div>
+                        </div>
+
+                        <div class="modal-footer border-0 px-0">
+                            <button type="button" class="btn btn-light" @onclick="HideNewPostModal">
+                                <i class="fas fa-times me-1"></i>Cancel
+                            </button>
+                            <button type="submit" class="btn btn-primary" disabled="@isCreatingPost">
+                                @if (isCreatingPost)
+                                {
+                                    <span class="spinner-border spinner-border-sm me-2"></span>
+                                    <span>Posting...</span>
+                                }
+                                else
+                                {
+                                    <i class="fas fa-reply me-1"></i>
+                                    <span>Post Reply</span>
+                                }
+                            </button>
+                        </div>
+                    </EditForm>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+<!-- Create Forum Modal -->
+@if (showCreateModal)
+{
+    <div class="modal fade show" style="display: block; background-color: rgba(0,0,0,0.5);" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content border-0 shadow">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title">
+                        <i class="fas fa-plus-circle me-2"></i>Create New Forum
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" @onclick="HideCreateModal"></button>
+                </div>
+                <div class="modal-body">
+                    <EditForm Model="@newForum" OnValidSubmit="@CreateForum">
+                        <DataAnnotationsValidator />
+                        <ValidationSummary class="alert alert-danger" />
+
+                        <div class="row">
+                            <div class="col-md-8">
+                                <div class="mb-3">
+                                    <label for="title" class="form-label fw-semibold">
+                                        <i class="fas fa-heading me-1"></i>Forum Title
+                                    </label>
+                                    <InputText id="title" class="form-control form-control-lg" @bind-Value="newForum.Title" placeholder="Enter forum title..." />
+                                    <ValidationMessage For="@(() => newForum.Title)" />
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="courseId" class="form-label fw-semibold">
+                                        <i class="fas fa-graduation-cap me-1"></i>Course
+                                    </label>
+                                    <InputSelect id="courseId" class="form-select form-select-lg" @bind-Value="newForum.CourseId">
+                                        <option value="">General Forum</option>
+                                        @if (availableCourses != null)
+                                        {
+                                            @foreach (var course in availableCourses)
+                                            {
+                                                <option value="@course.Id">@course.Title</option>
+                                            }
+                                        }
+                                    </InputSelect>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="description" class="form-label fw-semibold">
+                                <i class="fas fa-align-left me-1"></i>Description
+                            </label>
+                            <InputTextArea id="description" class="form-control" rows="4" @bind-Value="newForum.Description" placeholder="Describe what this forum is about..." />
+                            <ValidationMessage For="@(() => newForum.Description)" />
+                        </div>
+
+                        <div class="modal-footer border-0 px-0">
+                            <button type="button" class="btn btn-light" @onclick="HideCreateModal">
+                                <i class="fas fa-times me-1"></i>Cancel
+                            </button>
+                            <button type="submit" class="btn btn-primary" disabled="@isCreating">
+                                @if (isCreating)
+                                {
+                                    <span class="spinner-border spinner-border-sm me-2"></span>
+                                    <span>
+                                        Creating...
+                                    </span>
+                                }
+                                else
+                                {
+                                    <i class="fas fa-plus me-1"></i>
+                                    <span>Create Forum</span>
+                                }
+                            </button>
+                        </div>
+                    </EditForm>
+                </div>
+            </div>
+        </div>
+    </div>
 }
 
 @code {
-    private bool isLoading = true;
+    private bool isLoading = false;
     private bool isCreating = false;
     private bool showCreateModal = false;
     private string? currentUserId;
+    private string newMessage = "";
+    private string newTopicReply = "";
+
+    // Enhanced forum features
+    private bool showNewTopicModal = false;
+    private bool showNewPostModal = false;
+    private bool isCreatingTopic = false;
+    private bool isCreatingPost = false;
     
+    // Topic and post management
+    private int? selectedTopicId;
+    private ForumTopicModel? selectedTopic;
+    private List<ForumTopicModel>? selectedForumTopics;
+    private List<TopicPost>? selectedTopicPosts;
+    private string quotedText = "";
+    private string quotedAuthor = "";
+
+    // Discord-like state management
+    private string selectedGroup = "";
+    private int? selectedForumId;
+    private ForumModel? selectedForum;
+    private List<ForumModel>? selectedGroupForums;
+    private List<CourseGroup>? courseGroups;
+    private List<ForumMessage>? forumMessages;
+
     private List<ForumModel>? forums;
     private List<ForumTopicModel>? recentTopics;
-    private List<LMS.Models.Course.CourseModel>? availableCourses;
+    private List<CourseModel>? availableCourses;
     private CreateForumRequest newForum = new();
+    private CreateForumTopicRequest newTopic = new();
+    private CreateForumPostRequest newPost = new();
 
     protected override async Task OnInitializedAsync()
     {
@@ -248,22 +658,19 @@
                 if (user != null)
                 {
                     currentUserId = user.Id;
+                    forums = GenerateDummyForums();
+                    recentTopics = GenerateDummyRecentTopics();
+                    availableCourses = GenerateDummyCourses();
                     
-                    // Load forums
-                    forums = await ForumService.GetForumsAsync();
-                    
-                    // Load recent topics across all forums
-                    recentTopics = new List<ForumTopicModel>();
-                    if (forums != null)
-                    {
-                        foreach (var forum in forums)
-                        {
-                            var topics = await ForumService.GetTopicsByForumIdAsync(forum.Id);
-                            if (topics != null)
-                                recentTopics.AddRange(topics);
-                        }
-                        recentTopics = recentTopics.OrderByDescending(t => t.CreatedAt).ToList();
-                    }
+                    // Generate course groups
+                    courseGroups = forums.Where(f => !f.IsGeneral)
+                        .GroupBy(f => f.CourseName ?? "Unknown Course")
+                        .Select(g => new CourseGroup 
+                        { 
+                            CourseName = g.Key, 
+                            ForumCount = g.Count() 
+                        })
+                        .ToList();
                 }
             }
         }
@@ -277,22 +684,652 @@
         }
     }
 
-    private async Task ShowCreateForumModal()
+    private void SelectGroup(string groupName)
+    {
+        selectedGroup = groupName;
+        selectedForumId = null;
+        selectedForum = null;
+        selectedTopicId = null;
+        selectedTopic = null;
+        forumMessages = null;
+        
+        if (groupName == "general")
+        {
+            selectedGroupForums = forums?.Where(f => f.IsGeneral).ToList();
+        }
+        else
+        {
+            selectedGroupForums = forums?.Where(f => !f.IsGeneral && f.CourseName == groupName).ToList();
+        }
+    }
+
+    private void SelectForum(int forumId)
+    {
+        selectedForumId = forumId;
+        selectedForum = forums?.FirstOrDefault(f => f.Id == forumId);
+        selectedTopicId = null;
+        selectedTopic = null;
+        
+        if (selectedForum != null)
+        {
+            selectedForumTopics = GenerateDummyTopics(forumId);
+            forumMessages = GenerateDummyMessages(forumId);
+        }
+    }
+
+    private void SelectTopic(int topicId)
+    {
+        selectedTopicId = topicId;
+        selectedTopic = selectedForumTopics?.FirstOrDefault(t => t.Id == topicId);
+        
+        if (selectedTopic != null)
+        {
+            selectedTopicPosts = GenerateDummyTopicPosts(topicId);
+        }
+    }
+
+    private void BackToForum()
+    {
+        selectedTopicId = null;
+        selectedTopic = null;
+        selectedTopicPosts = null;
+        quotedText = "";
+        quotedAuthor = "";
+    }
+
+    private void ShowNewTopicModal()
+    {
+        if (selectedForum != null)
+        {
+            showNewTopicModal = true;
+        }
+    }
+
+    private void HideNewTopicModal()
+    {
+        showNewTopicModal = false;
+        newTopic = new CreateForumTopicRequest();
+    }
+
+    private void ShowNewPostModal()
+    {
+        if (selectedTopic != null && !selectedTopic.IsLocked)
+        {
+            showNewPostModal = true;
+        }
+    }
+
+    private void HideNewPostModal()
+    {
+        showNewPostModal = false;
+        newPost = new CreateForumPostRequest();
+        quotedText = "";
+        quotedAuthor = "";
+    }
+
+    private void QuotePost(TopicPost post)
+    {
+        quotedText = post.Content.Length > 100 ? post.Content.Substring(0, 100) + "..." : post.Content;
+        quotedAuthor = post.AuthorName;
+    }
+
+    private void ClearQuote()
+    {
+        quotedText = "";
+        quotedAuthor = "";
+    }
+
+    private async Task EditPost(TopicPost post)
+    {
+        // Implementation for editing posts
+        await JSRuntime.InvokeVoidAsync("showToast", "Edit functionality coming soon!", "info");
+    }
+
+    private async Task DeletePost(TopicPost post)
+    {
+        // Implementation for deleting posts
+        if (await JSRuntime.InvokeAsync<bool>("confirm", $"Are you sure you want to delete this post?"))
+        {
+            selectedTopicPosts?.Remove(post);
+            await JSRuntime.InvokeVoidAsync("showToast", "Post deleted successfully!", "success");
+        }
+    }
+
+    private async Task CreateTopic()
+    {
+        if (currentUserId == null || selectedForum == null) return;
+
+        try
+        {
+            isCreatingTopic = true;
+            await Task.Delay(1000);
+
+            var topic = new ForumTopicModel
+            {
+                Id = (selectedForumTopics?.Count ?? 0) + 1,
+                Title = newTopic.Title,
+                ForumId = selectedForum.Id,
+                CreatedByUserId = currentUserId,
+                CreatedByUserName = "Current User",
+                IsPinned = false,
+                IsLocked = false,
+                CreatedAt = DateTime.Now,
+                LastPostAt = DateTime.Now,
+                PostCount = 1
+            };
+
+            selectedForumTopics ??= new List<ForumTopicModel>();
+            selectedForumTopics.Insert(0, topic);
+            selectedForum.TopicCount++;
+
+            await JSRuntime.InvokeVoidAsync("showToast", "Topic created successfully!", "success");
+            HideNewTopicModal();
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("showToast", $"Error creating topic: {ex.Message}", "error");
+        }
+        finally
+        {
+            isCreatingTopic = false;
+        }
+    }
+
+    private async Task CreatePost()
+    {
+        if (currentUserId == null || selectedTopic == null) return;
+
+        try
+        {
+            isCreatingPost = true;
+            await Task.Delay(1000);
+
+            var content = newPost.Content;
+            if (!string.IsNullOrEmpty(quotedText))
+            {
+                content = $"[quote={quotedAuthor}]{quotedText}[/quote]\n\n{content}";
+            }
+
+            var post = new TopicPost
+            {
+                Id = (selectedTopicPosts?.Count ?? 0) + 1,
+                Content = content,
+                AuthorId = currentUserId,
+                AuthorName = "Current User",
+                AuthorRole = "Member",
+                AuthorPostCount = 25,
+                CreatedAt = DateTime.Now,
+                LikeCount = 0
+            };
+
+            selectedTopicPosts ??= new List<TopicPost>();
+            selectedTopicPosts.Add(post);
+            selectedTopic.PostCount++;
+            selectedTopic.LastPostAt = DateTime.Now;
+
+            await JSRuntime.InvokeVoidAsync("showToast", "Reply posted successfully!", "success");
+            HideNewPostModal();
+            await JSRuntime.InvokeVoidAsync("scrollToBottom", "messagesArea");
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("showToast", $"Error posting reply: {ex.Message}", "error");
+        }
+        finally
+        {
+            isCreatingPost = false;
+        }
+    }
+
+    private async Task HandleTopicReplyKeyPress(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter" && !string.IsNullOrWhiteSpace(newTopicReply))
+        {
+            await SendTopicReply();
+        }
+    }
+
+    private async Task SendTopicReply()
+    {
+        if (string.IsNullOrWhiteSpace(newTopicReply) || selectedTopic == null || currentUserId == null)
+            return;
+
+        try
+        {
+            var post = new TopicPost
+            {
+                Id = (selectedTopicPosts?.Count ?? 0) + 1,
+                Content = newTopicReply,
+                AuthorId = currentUserId,
+                AuthorName = "Current User",
+                AuthorRole = "Member",
+                AuthorPostCount = 25,
+                CreatedAt = DateTime.Now,
+                LikeCount = 0
+            };
+
+            selectedTopicPosts ??= new List<TopicPost>();
+            selectedTopicPosts.Add(post);
+            selectedTopic.PostCount++;
+            selectedTopic.LastPostAt = DateTime.Now;
+
+            newTopicReply = "";
+            await JSRuntime.InvokeVoidAsync("scrollToBottom", "messagesArea");
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("console.error", "Error sending reply:", ex.Message);
+        }
+    }
+
+    private async Task HandleKeyPress(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter" && !string.IsNullOrWhiteSpace(newMessage))
+        {
+            await SendMessage();
+        }
+    }
+
+    private async Task SendMessage()
+    {
+        if (string.IsNullOrWhiteSpace(newMessage) || selectedForumId == null || currentUserId == null)
+            return;
+
+        try
+        {
+            var message = new ForumMessage
+            {
+                Id = (forumMessages?.Count ?? 0) + 1,
+                ForumId = selectedForumId.Value,
+                UserId = currentUserId,
+                UserName = "Current User",
+                Content = newMessage,
+                CreatedAt = DateTime.Now
+            };
+
+            forumMessages ??= new List<ForumMessage>();
+            forumMessages.Add(message);
+
+            newMessage = "";
+            await JSRuntime.InvokeVoidAsync("scrollToBottom", "messagesArea");
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("console.error", "Error sending message:", ex.Message);
+        }
+    }
+
+    private List<ForumTopicModel> GenerateDummyTopics(int forumId)
+    {
+        return new List<ForumTopicModel>
+        {
+            new ForumTopicModel
+            {
+                Id = 1,
+                Title = "Welcome to the Forum!",
+                ForumId = forumId,
+                CreatedByUserId = "instructor1",
+                CreatedByUserName = "John Instructor",
+                IsPinned = true,
+                IsLocked = false,
+                CreatedAt = DateTime.Now.AddDays(-7),
+                LastPostAt = DateTime.Now.AddHours(-2),
+                PostCount = 15
+            },
+            new ForumTopicModel
+            {
+                Id = 2,
+                Title = "Best Practices Discussion",
+                ForumId = forumId,
+                CreatedByUserId = "student1",
+                CreatedByUserName = "Sarah Martinez",
+                IsPinned = false,
+                IsLocked = false,
+                CreatedAt = DateTime.Now.AddDays(-3),
+                LastPostAt = DateTime.Now.AddHours(-1),
+                PostCount = 8
+            },
+            new ForumTopicModel
+            {
+                Id = 3,
+                Title = "Help with Assignment",
+                ForumId = forumId,
+                CreatedByUserId = "student2",
+                CreatedByUserName = "Mike Johnson",
+                IsPinned = false,
+                IsLocked = false,
+                CreatedAt = DateTime.Now.AddDays(-1),
+                LastPostAt = DateTime.Now.AddMinutes(-30),
+                PostCount = 12
+            }
+        };
+    }
+
+    private List<TopicPost> GenerateDummyTopicPosts(int topicId)
+    {
+        return new List<TopicPost>
+        {
+            new TopicPost
+            {
+                Id = 1,
+                Content = "Welcome to this discussion! I'm excited to hear everyone's thoughts on this topic. Please feel free to share your experiences and ask questions.",
+                AuthorId = "instructor1",
+                AuthorName = "John Instructor",
+                AuthorRole = "Instructor",
+                AuthorPostCount = 234,
+                CreatedAt = DateTime.Now.AddDays(-2),
+                LikeCount = 8
+            },
+            new TopicPost
+            {
+                Id = 2,
+                Content = "Thank you for starting this discussion! I have some thoughts I'd like to share. **This is really important** for understanding the core concepts.",
+                AuthorId = "student1",
+                AuthorName = "Sarah Martinez",
+                AuthorRole = "Student",
+                AuthorPostCount = 45,
+                CreatedAt = DateTime.Now.AddDays(-1),
+                LikeCount = 3
+            },
+            new TopicPost
+            {
+                Id = 3,
+                Content = "I agree with the previous points. Here's my perspective on this matter...\n\nI think we should also consider the practical applications of what we're learning.",
+                AuthorId = "student2",
+                AuthorName = "Mike Johnson",
+                AuthorRole = "Student",
+                AuthorPostCount = 23,
+                CreatedAt = DateTime.Now.AddHours(-4),
+                UpdatedAt = DateTime.Now.AddHours(-2),
+                LikeCount = 5
+            }
+        };
+    }
+
+    // Keep existing dummy data generation methods
+
+    private List<ForumMessage> GenerateDummyMessages(int forumId)
+    {
+        var messages = new List<ForumMessage>();
+        var userNames = new[] { "John Instructor", "Sarah Martinez", "Mike Johnson", "Emma Wilson", "David Chen", "Lisa Anderson" };
+        var random = new Random();
+
+        for (int i = 1; i <= 20; i++)
+        {
+            var user = userNames[random.Next(userNames.Length)];
+            messages.Add(new ForumMessage
+            {
+                Id = i,
+                ForumId = forumId,
+                UserId = $"user{i}",
+                UserName = user,
+                Content = GenerateRandomMessage(i),
+                CreatedAt = DateTime.Now.AddDays(-random.Next(1, 30)).AddHours(-random.Next(0, 24))
+            });
+        }
+
+        return messages.OrderBy(m => m.CreatedAt).ToList();
+    }
+
+    private string GenerateRandomMessage(int index)
+    {
+        var messages = new[]
+        {
+            "Welcome to the forum! Great to have everyone here.",
+            "Has anyone tried the new features in the latest update?",
+            "I'm having trouble with the assignment. Can someone help?",
+            "Great explanation! This really helped me understand the concept.",
+            "Here's a useful resource I found: [link]",
+            "Looking forward to working with all of you this semester.",
+            "Can we schedule a study group for next week?",
+            "The documentation on this topic is really comprehensive.",
+            "I found a bug in the code. Here's how to fix it...",
+            "Thanks for sharing your insights on this topic!",
+            "This is exactly what I was looking for. Much appreciated!",
+            "I've updated the project repository with the latest changes.",
+            "Anyone else excited about the upcoming workshop?",
+            "I'll be hosting office hours tomorrow from 2-4 PM.",
+            "Great job on the presentation! Really well done.",
+            "I've added some additional resources to the course materials.",
+            "Don't forget about the deadline for the next assignment.",
+            "Has anyone completed the optional reading yet?",
+            "I'm available for questions if anyone needs help.",
+            "Looking forward to seeing everyone's final projects!"
+        };
+
+        return messages[index % messages.Length];
+    }
+
+    // Supporting classes
+    public class CourseGroup
+    {
+        public string CourseName { get; set; } = "";
+        public int ForumCount { get; set; }
+    }
+
+    public class ForumMessage
+    {
+        public int Id { get; set; }
+        public int ForumId { get; set; }
+        public string UserId { get; set; } = "";
+        public string UserName { get; set; } = "";
+        public string Content { get; set; } = "";
+        public DateTime CreatedAt { get; set; }
+    }
+
+    public class TopicPost
+    {
+        public int Id { get; set; }
+        public string Content { get; set; } = "";
+        public string AuthorId { get; set; } = "";
+        public string AuthorName { get; set; } = "";
+        public string AuthorRole { get; set; } = "";
+        public int AuthorPostCount { get; set; }
+        public DateTime CreatedAt { get; set; }
+        public DateTime? UpdatedAt { get; set; }
+        public int LikeCount { get; set; }
+    }
+
+    // Keep existing dummy data generation methods
+    private List<ForumModel> GenerateDummyForums()
+    {
+        return new List<ForumModel>
+        {
+            // General Forums
+            new ForumModel
+            {
+                Id = 1,
+                Title = "General Discussion",
+                Description = "Welcome to our general discussion forum! This is a place for open conversation, introductions, and non-course specific discussions.",
+                IsGeneral = true,
+                IsActive = true,
+                CreatedAt = DateTime.Now.AddDays(-30),
+                TopicCount = 45,
+                LastPostAt = DateTime.Now.AddHours(-2)
+            },
+            new ForumModel
+            {
+                Id = 2,
+                Title = "Study Groups & Collaboration",
+                Description = "Find study partners, form study groups, and collaborate on projects. Share resources and support each other's learning journey.",
+                IsGeneral = true,
+                IsActive = true,
+                CreatedAt = DateTime.Now.AddDays(-25),
+                TopicCount = 23,
+                LastPostAt = DateTime.Now.AddHours(-1)
+            },
+            new ForumModel
+            {
+                Id = 3,
+                Title = "Technical Help & Support",
+                Description = "Get help with technical issues, troubleshooting, and platform-related questions. Our community is here to help!",
+                IsGeneral = true,
+                IsActive = true,
+                CreatedAt = DateTime.Now.AddDays(-20),
+                TopicCount = 67,
+                LastPostAt = DateTime.Now.AddMinutes(-30)
+            },
+            new ForumModel
+            {
+                Id = 4,
+                Title = "Career & Professional Development",
+                Description = "Discuss career opportunities, share professional experiences, and get advice on career development in your field.",
+                IsGeneral = true,
+                IsActive = true,
+                CreatedAt = DateTime.Now.AddDays(-15),
+                TopicCount = 34,
+                LastPostAt = DateTime.Now.AddHours(-4)
+            },
+
+            // Course-specific Forums
+            new ForumModel
+            {
+                Id = 5,
+                Title = "Course Discussion",
+                Description = "General discussion about Blazor Fundamentals course content, assignments, and projects.",
+                CourseId = 1,
+                CourseName = "Blazor Fundamentals",
+                IsGeneral = false,
+                IsActive = true,
+                CreatedAt = DateTime.Now.AddDays(-28),
+                TopicCount = 89,
+                LastPostAt = DateTime.Now.AddMinutes(-15)
+            },
+            new ForumModel
+            {
+                Id = 6,
+                Title = "Assignment Help",
+                Description = "Get help with assignments, share solutions, and collaborate on course projects for Blazor Fundamentals.",
+                CourseId = 1,
+                CourseName = "Blazor Fundamentals",
+                IsGeneral = false,
+                IsActive = true,
+                CreatedAt = DateTime.Now.AddDays(-28),
+                TopicCount = 156,
+                LastPostAt = DateTime.Now.AddMinutes(-45)
+            },
+            new ForumModel
+            {
+                Id = 7,
+                Title = "Q&A with Instructor",
+                Description = "Ask questions directly to the instructor and get detailed explanations about course concepts.",
+                CourseId = 1,
+                CourseName = "Blazor Fundamentals",
+                IsGeneral = false,
+                IsActive = true,
+                CreatedAt = DateTime.Now.AddDays(-28),
+                TopicCount = 78,
+                LastPostAt = DateTime.Now.AddHours(-3)
+            },
+            new ForumModel
+            {
+                Id = 8,
+                Title = "Advanced Discussion",
+                Description = "Deep dive into advanced C# concepts, design patterns, and best practices discussed in the course.",
+                CourseId = 2,
+                CourseName = "Advanced C# Programming",
+                IsGeneral = false,
+                IsActive = true,
+                CreatedAt = DateTime.Now.AddDays(-22),
+                TopicCount = 123,
+                LastPostAt = DateTime.Now.AddHours(-1)
+            },
+            new ForumModel
+            {
+                Id = 9,
+                Title = "Code Review & Best Practices",
+                Description = "Share your code, get feedback from peers, and learn best practices for clean, maintainable code.",
+                CourseId = 2,
+                CourseName = "Advanced C# Programming",
+                IsGeneral = false,
+                IsActive = true,
+                CreatedAt = DateTime.Now.AddDays(-22),
+                TopicCount = 67,
+                LastPostAt = DateTime.Now.AddMinutes(-20)
+            },
+            new ForumModel
+            {
+                Id = 10,
+                Title = "Project Showcase",
+                Description = "Share your completed projects, get feedback, and inspire others with your creative solutions.",
+                CourseId = 3,
+                CourseName = "Web Development Masterclass",
+                IsGeneral = false,
+                IsActive = true,
+                CreatedAt = DateTime.Now.AddDays(-18),
+                TopicCount = 45,
+                LastPostAt = DateTime.Now.AddHours(-2)
+            }
+        };
+    }
+
+    private List<ForumTopicModel> GenerateDummyRecentTopics()
+    {
+        return new List<ForumTopicModel>
+        {
+            new ForumTopicModel
+            {
+                Id = 1,
+                Title = "Welcome to the Blazor Fundamentals Course!",
+                ForumId = 5,
+                ForumTitle = "Course Discussion",
+                CreatedByUserId = "user1",
+                CreatedByUserName = "John Instructor",
+                IsPinned = true,
+                IsLocked = false,
+                CreatedAt = DateTime.Now.AddDays(-28),
+                LastPostAt = DateTime.Now.AddMinutes(-15),
+                PostCount = 34
+            },
+            new ForumTopicModel
+            {
+                Id = 2,
+                Title = "Help with Component Data Binding",
+                ForumId = 6,
+                ForumTitle = "Assignment Help",
+                CreatedByUserId = "user2",
+                CreatedByUserName = "Sarah Martinez",
+                IsPinned = false,
+                IsLocked = false,
+                CreatedAt = DateTime.Now.AddHours(-3),
+                LastPostAt = DateTime.Now.AddMinutes(-45),
+                PostCount = 12
+            }
+        };
+    }
+
+    private List<CourseModel> GenerateDummyCourses()
+    {
+        return new List<CourseModel>
+        {
+            new CourseModel
+            {
+                Id = 1,
+                Title = "Blazor Fundamentals",
+                Description = "Learn the basics of Blazor development"
+            },
+            new CourseModel
+            {
+                Id = 2,
+                Title = "Advanced C# Programming",
+                Description = "Deep dive into advanced C# concepts"
+            },
+            new CourseModel
+            {
+                Id = 3,
+                Title = "Web Development Masterclass",
+                Description = "Complete web development course"
+            }
+        };
+    }
+
+    private void ShowCreateForumModal()
     {
         if (availableCourses == null)
         {
-            // Load available courses for the dropdown
-            try
-            {
-                // TODO: Load user's enrolled courses or all courses if admin
-                availableCourses = new List<LMS.Models.Course.CourseModel>(); // Placeholder
-            }
-            catch (Exception ex)
-            {
-                await JSRuntime.InvokeVoidAsync("console.error", "Error loading courses:", ex.Message);
-            }
+            availableCourses = GenerateDummyCourses();
         }
-        
+
         showCreateModal = true;
     }
 
@@ -309,11 +1346,29 @@
         try
         {
             isCreating = true;
-            var forum = await ForumService.CreateForumAsync(newForum);
-            
+
+            // Simulate API call delay
+            await Task.Delay(1000);
+
+            // Create new forum with dummy data
+            var newForumModel = new ForumModel
+            {
+                Id = forums?.Count + 1 ?? 1,
+                Title = newForum.Title,
+                Description = newForum.Description,
+                CourseId = newForum.CourseId,
+                CourseName = newForum.CourseId.HasValue ? availableCourses?.FirstOrDefault(c => c.Id == newForum.CourseId)?.Title : null,
+                IsGeneral = !newForum.CourseId.HasValue,
+                IsActive = true,
+                CreatedAt = DateTime.Now,
+                TopicCount = 0,
+                LastPostAt = null
+            };
+
+            forums?.Add(newForumModel);
+
             await JSRuntime.InvokeVoidAsync("showToast", "Forum created successfully!", "success");
             HideCreateModal();
-            await LoadForumData();
         }
         catch (Exception ex)
         {
@@ -324,16 +1379,14 @@
             isCreating = false;
         }
     }
-}lms/forums"
-<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-    <h1 class="h2">Forums</h1>
-</div>
 
-<div class="row">
-    <div class="col-12">
-        <div class="alert alert-info">
-            <i class="fas fa-info-circle"></i>
-            This is the Forums component. It will display discussion forums and enable communication.
-        </div>
-    </div>
-</div>
+}
+
+<script>
+    window.scrollToBottom = (elementId) => {
+        const element = document.getElementById(elementId);
+        if (element) {
+            element.scrollTop = element.scrollHeight;
+        }
+    };
+</script>
