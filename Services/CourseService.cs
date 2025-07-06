@@ -46,7 +46,7 @@ namespace LMS.Services
             {
         new CourseModel
         {
-            Id = -1,
+            Id = 1,
             Title = "Introduction to Quantum Computing",
             Description = "A beginner-friendly course on the basics of quantum computing and its applications.",
             InstructorId = "dummy1",
@@ -66,7 +66,7 @@ namespace LMS.Services
         },
         new CourseModel
         {
-            Id = -2,
+            Id = 2,
             Title = "Creative Writing Workshop",
             Description = "Unlock your creativity and learn the art of storytelling in this interactive workshop.",
             InstructorId = "dummy2",

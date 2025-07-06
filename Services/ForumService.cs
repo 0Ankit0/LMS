@@ -155,7 +155,6 @@ namespace LMS.Services
                 Title = request.Title,
                 ForumId = request.ForumId,
                 CreatedByUserId = userId,
-                IsPinned = false,
                 IsLocked = false,
                 CreatedAt = DateTime.UtcNow
             };
@@ -282,7 +281,6 @@ namespace LMS.Services
                 ForumTitle = topic.Forum?.Title ?? "",
                 CreatedByUserId = topic.CreatedByUserId,
                 CreatedByUserName = topic.CreatedBy?.UserName ?? "",
-                IsPinned = topic.IsPinned,
                 IsLocked = topic.IsLocked,
                 PostCount = topic.Posts?.Count ?? 0,
                 CreatedAt = topic.CreatedAt,

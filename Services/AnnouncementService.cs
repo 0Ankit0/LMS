@@ -41,7 +41,7 @@ namespace LMS.Services
                     AuthorId = a.AuthorId,
                     AuthorName = a.Author.FullName,
                     CourseId = a.CourseId,
-                    CourseName = a.Course.Id.ToString(),
+                    CourseName = a.Course != null ? a.Course.Id.ToString() : null,
                     Priority = a.Priority.ToString(),
                     PublishedAt = a.PublishedAt,
                     IsActive = a.IsActive
@@ -123,11 +123,13 @@ namespace LMS.Services
                 Id = new Random().Next(1000, 9999),
                 Title = request.Title,
                 Content = request.Content,
-                Priority = GetPriorityString(request.Priority),
+                Priority = request.Priority.ToString(),
                 PublishedAt = DateTime.Now,
                 IsActive = true,
                 SendEmail = request.SendEmail,
-                SendSms = request.SendSms
+                SendSms = request.SendSms,
+                CourseId = request.CourseId,
+                AuthorName = "Current User" // Replace with actual user
             };
         }
 
@@ -141,7 +143,7 @@ namespace LMS.Services
 
             announcement.Title = request.Title;
             announcement.Content = request.Content;
-            announcement.Priority = GetPriorityString(request.Priority);
+            announcement.Priority = request.Priority.ToString();
 
             return announcement;
         }

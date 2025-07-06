@@ -5,8 +5,22 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 
 namespace LMS.Services;
-
-public class ProgressService
+public interface IProgressService
+{
+    Task<IEnumerable<ModuleProgress>> GetModuleProgressAsync(int enrollmentId);
+    Task<IEnumerable<LessonProgress>> GetLessonProgressAsync(int enrollmentId);
+    Task<ModuleProgress?> GetModuleProgressAsync(int enrollmentId, int moduleId);
+    Task<LessonProgress?> GetLessonProgressAsync(int enrollmentId, int lessonId);
+    Task<ModuleProgress> UpdateModuleProgressAsync(UpdateProgressRequest request);
+    Task<LessonProgress> UpdateLessonProgressAsync(UpdateProgressRequest request);
+    Task<IEnumerable<UserAchievement>> GetUserAchievementsAsync(string userId);
+    Task<UserAchievement> AddAchievementAsync(string userId, string type, string title, string description, int points = 0);
+    Task<IEnumerable<LeaderboardEntry>> GetLeaderboardAsync(int limit = 10);
+    Task<LeaderboardEntry?> GetUserLeaderboardPositionAsync(string userId);
+    Task UpdateLeaderboardAsync();
+    Task<Dictionary<string, object>> GetProgressSummaryAsync(int enrollmentId);
+}
+public class ProgressService : IProgressService
 {
     private readonly IDbContextFactory<AuthDbContext> _contextFactory;
 

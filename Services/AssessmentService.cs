@@ -4,8 +4,16 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 
 namespace LMS.Services;
-
-public class AssessmentService
+public interface IAssessmentService
+{
+    Task<IEnumerable<AssessmentModel>> GetAssessmentsAsync();
+    Task<IEnumerable<AssessmentModel>> GetAssessmentsByCourseAsync(int courseId);
+    Task<AssessmentModel?> GetAssessmentAsync(int id);
+    Task<AssessmentModel> CreateAssessmentAsync(CreateAssessmentRequest request);
+    Task<AssessmentModel> UpdateAssessmentAsync(int id, CreateAssessmentRequest request);
+    Task<bool> DeleteAssessmentAsync(int id);
+}
+public class AssessmentService :IAssessmentService
 {
     private readonly IDbContextFactory<AuthDbContext> _contextFactory;
 
@@ -143,7 +151,7 @@ public class AssessmentService
             {
                 Id = q.Id,
                 Text = q.Text,
-                Type = q.Type.ToString(),
+                Type = q.Type,
                 Points = q.Points,
                 AssessmentId = q.AssessmentId,
                 OrderIndex = q.OrderIndex,
