@@ -1,373 +1,323 @@
 @page "/user/lms/analytics"
 @using Microsoft.AspNetCore.Components.Authorization
 @using Microsoft.AspNetCore.Identity
-@using LMS.Data
-@using LMS.Models.User
-@using LMS.Models.Course
-@using LMS.Services
+@using Microsoft.AspNetCore.Components
+@using Microsoft.JSInterop
+@using global::LMS.Data
+@using global::LMS.Models.User
+@using global::LMS.Models.Course
+@using global::LMS.Services
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @inject UserManager<User> UserManager
-@inject ProgressService ProgressService
+@inject IProgressService ProgressService
 @inject ICourseService CourseService
 @inject IEnrollmentService EnrollmentService
 @inject IJSRuntime JSRuntime
+@rendermode InteractiveServer
 
-<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-    <h1 class="h2"><i class="fas fa-chart-line text-info me-2"></i>Learning Analytics</h1>
-    <div class="btn-toolbar mb-2 mb-md-0">
-        <div class="btn-group me-2" role="group">
-            <button type="button" class="btn @(selectedPeriod == "week" ? "btn-primary" : "btn-outline-primary") btn-sm" 
-                    @onclick='() => SelectPeriod("week")'>
-                This Week
-            </button>
-            <button type="button" class="btn @(selectedPeriod == "month" ? "btn-primary" : "btn-outline-primary") btn-sm" 
-                    @onclick='() => SelectPeriod("month")'>
-                This Month
-            </button>
-            <button type="button" class="btn @(selectedPeriod == "all" ? "btn-primary" : "btn-outline-primary") btn-sm" 
-                    @onclick='() => SelectPeriod("all")'>
-                All Time
-            </button>
+<div class="analytics-layout">
+    <!-- Analytics Sidebar -->
+    <div class="analytics-sidebar">
+        <div class="sidebar-header">
+            <h5 class="sidebar-title">Analytics</h5>
         </div>
-        <button class="btn btn-outline-primary btn-sm" @onclick="RefreshAnalytics">
-            <i class="fas fa-sync-alt"></i> Refresh
-        </button>
-    </div>
-</div>
-
-@if (isLoading)
-{
-    <div class="d-flex justify-content-center py-5">
-        <div class="spinner-border text-primary" role="status">
-            <span class="visually-hidden">Loading analytics...</span>
-        </div>
-    </div>
-}
-else
-{
-    <!-- Key Performance Indicators -->
-    <div class="row mb-4">
-        <div class="col-xl-3 col-md-6 mb-4">
-            <div class="card border-left-primary shadow h-100 py-2">
-                <div class="card-body">
-                    <div class="row no-gutters align-items-center">
-                        <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
-                                Course Progress
-                            </div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">@overallProgress.ToString("F1")%</div>
-                        </div>
-                        <div class="col-auto">
-                            <i class="fas fa-chart-pie fa-2x text-gray-300"></i>
-                        </div>
+        <div class="sidebar-content">
+            <div class="analytics-nav">
+                <div class="nav-item @(selectedView == "overview" ? "active" : "")" @onclick='() => SelectView("overview")'>
+                    <div class="nav-icon">
+                        <i class="bi bi-speedometer2"></i>
+                    </div>
+                    <span class="nav-text">Overview</span>
+                </div>
+                <div class="nav-item @(selectedView == "progress" ? "active" : "")" @onclick='() => SelectView("progress")'>
+                    <div class="nav-icon">
+                        <i class="bi bi-graph-up"></i>
+                    </div>
+                    <span class="nav-text">Progress</span>
+                </div>
+                <div class="nav-item @(selectedView == "performance" ? "active" : "")" @onclick='() => SelectView("performance")'>
+                    <div class="nav-icon">
+                        <i class="bi bi-trophy"></i>
+                    </div>
+                    <span class="nav-text">Performance</span>
+                </div>
+                <div class="nav-item @(selectedView == "activity" ? "active" : "")" @onclick='() => SelectView("activity")'>
+                    <div class="nav-icon">
+                        <i class="bi bi-clock-history"></i>
+                    </div>
+                    <span class="nav-text">Activity</span>
+                </div>
+            </div>
+            
+            <div class="filters-section">
+                <h6 class="filter-title">Time Period</h6>
+                <div class="filter-group">
+                    <div class="filter-options">
+                        <label class="filter-option @(selectedPeriod == "week" ? "active" : "")" @onclick='() => SelectPeriod("week")'>
+                            <span>This Week</span>
+                        </label>
+                        <label class="filter-option @(selectedPeriod == "month" ? "active" : "")" @onclick='() => SelectPeriod("month")'>
+                            <span>This Month</span>
+                        </label>
+                        <label class="filter-option @(selectedPeriod == "all" ? "active" : "")" @onclick='() => SelectPeriod("all")'>
+                            <span>All Time</span>
+                        </label>
                     </div>
                 </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Main Analytics Area -->
+    <div class="analytics-main">
+        <!-- Header -->
+        <div class="analytics-header">
+            <div class="header-info">
+                <h3 class="page-title">Learning Analytics</h3>
+                <p class="page-subtitle">Track your learning progress and performance</p>
+            </div>
+            <div class="header-actions">
+                <button class="btn btn-outline-primary refresh-btn" @onclick="RefreshAnalytics">
+                    <i class="bi bi-arrow-clockwise"></i>
+                    <span>Refresh</span>
+                </button>
             </div>
         </div>
         
-        <div class="col-xl-3 col-md-6 mb-4">
-            <div class="card border-left-success shadow h-100 py-2">
-                <div class="card-body">
-                    <div class="row no-gutters align-items-center">
-                        <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
-                                Completed Courses
-                            </div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">@completedCourses</div>
-                        </div>
-                        <div class="col-auto">
-                            <i class="fas fa-graduation-cap fa-2x text-gray-300"></i>
+        <!-- Analytics Content -->
+        <div class="analytics-content">
+            @if (isLoading)
+            {
+                <div class="loading-container">
+                    <div class="spinner">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading analytics...</span>
                         </div>
                     </div>
+                    <p class="loading-text">Loading your analytics...</p>
                 </div>
-            </div>
-        </div>
-        
-        <div class="col-xl-3 col-md-6 mb-4">
-            <div class="card border-left-info shadow h-100 py-2">
-                <div class="card-body">
-                    <div class="row no-gutters align-items-center">
-                        <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
-                                Study Hours
+            }
+            else
+            {
+                @if (selectedView == "overview")
+                {
+                    <!-- KPI Cards -->
+                    <div class="kpi-grid">
+                        <div class="kpi-card primary">
+                            <div class="kpi-icon">
+                                <i class="bi bi-graph-up-arrow"></i>
                             </div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">@totalStudyHours</div>
-                        </div>
-                        <div class="col-auto">
-                            <i class="fas fa-clock fa-2x text-gray-300"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        <div class="col-xl-3 col-md-6 mb-4">
-            <div class="card border-left-warning shadow h-100 py-2">
-                <div class="card-body">
-                    <div class="row no-gutters align-items-center">
-                        <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
-                                Average Score
-                            </div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">@averageScore.ToString("F1")%</div>
-                        </div>
-                        <div class="col-auto">
-                            <i class="fas fa-star fa-2x text-gray-300"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Progress Charts Row -->
-    <div class="row mb-4">
-        <!-- Course Progress Chart -->
-        <div class="col-lg-8">
-            <div class="card shadow mb-4">
-                <div class="card-header py-3">
-                    <h6 class="m-0 font-weight-bold text-primary">
-                        <i class="fas fa-chart-area"></i> Course Progress Overview
-                    </h6>
-                </div>
-                <div class="card-body">
-                    @if (enrollments?.Any() == true)
-                    {
-                        @foreach (var enrollment in enrollments.Take(5))
-                        {
-                            var courseProgress = GetCourseProgress(enrollment.Id);
-                            <div class="mb-3">
-                                <div class="d-flex justify-content-between mb-1">
-                                    <span class="font-weight-bold">@enrollment.CourseTitle</span>
-                                    <span class="text-muted">@courseProgress.ToString("F1")%</span>
-                                </div>
-                                <div class="progress mb-2" style="height: 10px;">
-                                    <div class="progress-bar @GetProgressBarClass(courseProgress)" 
-                                         style="width: @courseProgress%" 
-                                         role="progressbar"></div>
-                                </div>
-                                <div class="d-flex justify-content-between">
-                                    <small class="text-muted">
-                                        @GetCompletedModules(enrollment.Id) / @GetTotalModules(enrollment.Id) modules
-                                    </small>
-                                    <small class="text-muted">
-                                        Enrolled: @enrollment.EnrolledAt.ToString("MMM dd, yyyy")
-                                    </small>
-                                </div>
-                            </div>
-                        }
-                    }
-                    else
-                    {
-                        <div class="text-center py-4">
-                            <i class="fas fa-book fa-3x text-muted mb-3"></i>
-                            <p class="text-muted">No course enrollments found.</p>
-                            <a href="/user/lms/coursecatalog" class="btn btn-primary">Browse Courses</a>
-                        </div>
-                    }
-                </div>
-            </div>
-        </div>
-
-        <!-- Activity Summary -->
-        <div class="col-lg-4">
-            <div class="card shadow mb-4">
-                <div class="card-header py-3">
-                    <h6 class="m-0 font-weight-bold text-success">
-                        <i class="fas fa-tasks"></i> Activity Summary
-                    </h6>
-                </div>
-                <div class="card-body">
-                    <div class="text-center">
-                        <div class="mb-3">
-                            <div class="circle-progress mx-auto mb-2" style="--progress: @overallProgress">
-                                <span class="circle-progress-value">@overallProgress.ToString("F0")%</span>
-                            </div>
-                            <h6 class="text-muted">Overall Progress</h6>
-                        </div>
-                        
-                        <hr />
-                        
-                        <div class="row text-center">
-                            <div class="col-6 border-right">
-                                <div class="h5 text-primary mb-0">@totalLessonsCompleted</div>
-                                <small class="text-muted">Lessons</small>
-                            </div>
-                            <div class="col-6">
-                                <div class="h5 text-success mb-0">@totalModulesCompleted</div>
-                                <small class="text-muted">Modules</small>
+                            <div class="kpi-content">
+                                <div class="kpi-value">@overallProgress.ToString("F1")%</div>
+                                <div class="kpi-label">Overall Progress</div>
                             </div>
                         </div>
                         
-                        <hr />
-                        
-                        <div class="row text-center">
-                            <div class="col-6 border-right">
-                                <div class="h5 text-warning mb-0">@currentStreak</div>
-                                <small class="text-muted">Day Streak</small>
+                        <div class="kpi-card success">
+                            <div class="kpi-icon">
+                                <i class="bi bi-check-circle"></i>
                             </div>
-                            <div class="col-6">
-                                <div class="h5 text-info mb-0">@activeDays</div>
-                                <small class="text-muted">Active Days</small>
+                            <div class="kpi-content">
+                                <div class="kpi-value">@completedCourses</div>
+                                <div class="kpi-label">Completed Courses</div>
+                            </div>
+                        </div>
+                        
+                        <div class="kpi-card info">
+                            <div class="kpi-icon">
+                                <i class="bi bi-clock"></i>
+                            </div>
+                            <div class="kpi-content">
+                                <div class="kpi-value">@totalStudyHours</div>
+                                <div class="kpi-label">Study Hours</div>
+                            </div>
+                        </div>
+                        
+                        <div class="kpi-card warning">
+                            <div class="kpi-icon">
+                                <i class="bi bi-star"></i>
+                            </div>
+                            <div class="kpi-content">
+                                <div class="kpi-value">@averageScore.ToString("F1")%</div>
+                                <div class="kpi-label">Average Score</div>
                             </div>
                         </div>
                     </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Recent Activity & Performance -->
-    <div class="row">
-        <!-- Recent Learning Activity -->
-        <div class="col-lg-6">
-            <div class="card shadow mb-4">
-                <div class="card-header py-3">
-                    <h6 class="m-0 font-weight-bold text-info">
-                        <i class="fas fa-clock"></i> Recent Activity
-                    </h6>
-                </div>
-                <div class="card-body">
-                    @if (recentActivities?.Any() == true)
-                    {
-                        <div class="timeline">
-                            @foreach (var activity in recentActivities.Take(5))
-                            {
-                                <div class="timeline-item mb-3">
-                                    <div class="timeline-marker bg-@GetActivityColor(activity.Type)"></div>
-                                    <div class="timeline-content">
-                                        <div class="d-flex justify-content-between">
-                                            <strong>@activity.Description</strong>
-                                            <small class="text-muted">@activity.Timestamp.ToString("MMM dd, HH:mm")</small>
+                    
+                    <!-- Charts Row -->
+                    <div class="charts-row">
+                        <!-- Course Progress Chart -->
+                        <div class="chart-card large">
+                            <div class="card-header">
+                                <h6 class="card-title">
+                                    <i class="bi bi-bar-chart"></i>
+                                    Course Progress Overview
+                                </h6>
+                            </div>
+                            <div class="card-content">
+                                @if (enrollments?.Any() == true)
+                                {
+                                    @foreach (var enrollment in enrollments.Take(5))
+                                    {
+                                        var courseProgress = GetCourseProgress(enrollment.Id);
+                                        <div class="progress-item">
+                                            <div class="progress-header">
+                                                <span class="course-name">@enrollment.CourseTitle</span>
+                                                <span class="progress-value">@courseProgress.ToString("F1")%</span>
+                                            </div>
+                                            <div class="progress-bar-container">
+                                                <div class="progress-bar @GetProgressBarClass(courseProgress)" 
+                                                     style="width: @courseProgress%"></div>
+                                            </div>
+                                            <div class="progress-meta">
+                                                <span class="modules-info">
+                                                    @GetCompletedModules(enrollment.Id) / @GetTotalModules(enrollment.Id) modules
+                                                </span>
+                                                <span class="enrollment-date">
+                                                    Enrolled: @enrollment.EnrolledAt.ToString("MMM dd, yyyy")
+                                                </span>
+                                            </div>
                                         </div>
-                                        <small class="text-muted">@activity.CourseTitle</small>
+                                    }
+                                }
+                                else
+                                {
+                                    <div class="empty-state">
+                                        <i class="bi bi-book"></i>
+                                        <p>No course enrollments found.</p>
+                                        <a href="/user/lms/courses/catalog" class="btn btn-primary">Browse Courses</a>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+
+                        <!-- Activity Summary -->
+                        <div class="chart-card small">
+                            <div class="card-header">
+                                <h6 class="card-title">
+                                    <i class="bi bi-activity"></i>
+                                    Activity Summary
+                                </h6>
+                            </div>
+                            <div class="card-content center">
+                                <div class="circular-progress">
+                                    <div class="circle-progress" style="--progress: @overallProgress">
+                                        <span class="progress-text">@overallProgress.ToString("F0")%</span>
+                                    </div>
+                                    <div class="progress-label">Overall Progress</div>
+                                </div>
+                                
+                                <div class="stats-grid">
+                                    <div class="stat-item">
+                                        <div class="stat-value">@totalLessonsCompleted</div>
+                                        <div class="stat-label">Lessons</div>
+                                    </div>
+                                    <div class="stat-item">
+                                        <div class="stat-value">@totalModulesCompleted</div>
+                                        <div class="stat-label">Modules</div>
+                                    </div>
+                                    <div class="stat-item">
+                                        <div class="stat-value">@currentStreak</div>
+                                        <div class="stat-label">Day Streak</div>
+                                    </div>
+                                    <div class="stat-item">
+                                        <div class="stat-value">@activeDays</div>
+                                        <div class="stat-label">Active Days</div>
                                     </div>
                                 </div>
-                            }
-                        </div>
-                    }
-                    else
-                    {
-                        <div class="text-center py-3">
-                            <i class="fas fa-history fa-2x text-muted mb-2"></i>
-                            <p class="text-muted">No recent activity found.</p>
-                        </div>
-                    }
-                </div>
-            </div>
-        </div>
-
-        <!-- Performance Metrics -->
-        <div class="col-lg-6">
-            <div class="card shadow mb-4">
-                <div class="card-header py-3">
-                    <h6 class="m-0 font-weight-bold text-warning">
-                        <i class="fas fa-chart-bar"></i> Performance Metrics
-                    </h6>
-                </div>
-                <div class="card-body">
-                    @if (performanceMetrics?.Any() == true)
-                    {
-                        @foreach (var metric in performanceMetrics)
-                        {
-                            <div class="mb-3">
-                                <div class="d-flex justify-content-between align-items-center mb-1">
-                                    <span class="font-weight-bold">@metric.Name</span>
-                                    <span class="badge @GetMetricBadgeClass(metric.Value)">
-                                        @metric.Value.ToString("F1")@metric.Unit
-                                    </span>
-                                </div>
-                                <div class="progress" style="height: 6px;">
-                                    <div class="progress-bar @GetMetricProgressClass(metric.Value)" 
-                                         style="width: @GetMetricPercentage(metric.Value, metric.MaxValue)%"></div>
-                                </div>
-                                <small class="text-muted">@metric.Description</small>
                             </div>
-                        }
-                    }
-                    else
-                    {
-                        <div class="text-center py-3">
-                            <i class="fas fa-chart-bar fa-2x text-muted mb-2"></i>
-                            <p class="text-muted">Performance data will appear as you progress through courses.</p>
                         </div>
-                    }
-                </div>
-            </div>
+                    </div>
+                }
+                
+                @if (selectedView == "activity")
+                {
+                    <!-- Recent Activity -->
+                    <div class="activity-section">
+                        <div class="activity-card">
+                            <div class="card-header">
+                                <h6 class="card-title">
+                                    <i class="bi bi-clock-history"></i>
+                                    Recent Activity
+                                </h6>
+                            </div>
+                            <div class="card-content">
+                                @if (recentActivities?.Any() == true)
+                                {
+                                    <div class="activity-timeline">
+                                        @foreach (var activity in recentActivities.Take(10))
+                                        {
+                                            <div class="timeline-item">
+                                                <div class="timeline-marker @GetActivityColor(activity.Type)"></div>
+                                                <div class="timeline-content">
+                                                    <div class="activity-header">
+                                                        <strong class="activity-title">@activity.Description</strong>
+                                                        <span class="activity-time">@activity.Timestamp.ToString("MMM dd, HH:mm")</span>
+                                                    </div>
+                                                    <div class="activity-course">@activity.CourseTitle</div>
+                                                </div>
+                                            </div>
+                                        }
+                                    </div>
+                                }
+                                else
+                                {
+                                    <div class="empty-state">
+                                        <i class="bi bi-clock-history"></i>
+                                        <p>No recent activity found.</p>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                }
+                
+                @if (selectedView == "performance")
+                {
+                    <!-- Performance Metrics -->
+                    <div class="performance-section">
+                        <div class="performance-card">
+                            <div class="card-header">
+                                <h6 class="card-title">
+                                    <i class="bi bi-graph-up"></i>
+                                    Performance Metrics
+                                </h6>
+                            </div>
+                            <div class="card-content">
+                                @if (performanceMetrics?.Any() == true)
+                                {
+                                    @foreach (var metric in performanceMetrics)
+                                    {
+                                        <div class="metric-item">
+                                            <div class="metric-header">
+                                                <span class="metric-name">@metric.Name</span>
+                                                <span class="metric-badge @GetMetricBadgeClass(metric.Value)">
+                                                    @metric.Value.ToString("F1")@metric.Unit
+                                                </span>
+                                            </div>
+                                            <div class="metric-progress">
+                                                <div class="progress-bar @GetMetricProgressClass(metric.Value)" 
+                                                     style="width: @GetMetricPercentage(metric.Value, metric.MaxValue)%"></div>
+                                            </div>
+                                            <div class="metric-description">@metric.Description</div>
+                                        </div>
+                                    }
+                                }
+                                else
+                                {
+                                    <div class="empty-state">
+                                        <i class="bi bi-graph-up"></i>
+                                        <p>Performance data will appear as you progress through courses.</p>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                }
+            }
         </div>
     </div>
-}
-
-<style>
-    .border-left-primary { border-left: 0.25rem solid #4e73df !important; }
-    .border-left-success { border-left: 0.25rem solid #1cc88a !important; }
-    .border-left-info { border-left: 0.25rem solid #36b9cc !important; }
-    .border-left-warning { border-left: 0.25rem solid #f6c23e !important; }
-    
-    .circle-progress {
-        position: relative;
-        width: 120px;
-        height: 120px;
-        border-radius: 50%;
-        background: conic-gradient(#007bff calc(var(--progress) * 1%), #e9ecef 0deg);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-    
-    .circle-progress::before {
-        content: '';
-        position: absolute;
-        width: 90px;
-        height: 90px;
-        border-radius: 50%;
-        background: white;
-    }
-    
-    .circle-progress-value {
-        position: relative;
-        z-index: 1;
-        font-weight: bold;
-        font-size: 1.2rem;
-        color: #007bff;
-    }
-    
-    .timeline {
-        position: relative;
-        padding-left: 30px;
-    }
-    
-    .timeline::before {
-        content: '';
-        position: absolute;
-        left: 10px;
-        top: 0;
-        bottom: 0;
-        width: 2px;
-        background: #e9ecef;
-    }
-    
-    .timeline-item {
-        position: relative;
-    }
-    
-    .timeline-marker {
-        position: absolute;
-        left: -25px;
-        top: 5px;
-        width: 12px;
-        height: 12px;
-        border-radius: 50%;
-        border: 2px solid white;
-    }
-    
-    .timeline-content {
-        background: #f8f9fa;
-        padding: 10px 15px;
-        border-radius: 5px;
-        border-left: 3px solid #007bff;
-    }
-</style>
+</div>
 
 @code {
     private List<EnrollmentModel>? enrollments;
@@ -375,6 +325,7 @@ else
     private List<MetricModel> performanceMetrics = new();
     private bool isLoading = true;
     private string selectedPeriod = "month";
+    private string selectedView = "overview";
     private double overallProgress = 0;
     private int completedCourses = 0;
     private int totalStudyHours = 0;
@@ -481,6 +432,11 @@ else
     {
         selectedPeriod = period;
         await LoadAnalytics();
+    }
+
+    private void SelectView(string view)
+    {
+        selectedView = view;
     }
 
     private double GetCourseProgress(int enrollmentId)
