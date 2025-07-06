@@ -1,38 +1,73 @@
-﻿<div class="top-row ps-3 navbar navbar-dark">
+﻿@using System.Collections.Generic
+@rendermode InteractiveServer
+
+<div class="top-row ps-3 navbar navbar-dark">
     <div class="container-fluid">
         <a class="navbar-brand" href="">LMS</a>
+        <button class="navbar-collapse-toggle" @onclick="ToggleNavbar"
+            title="@(isNavbarCollapsed ? "Expand sidebar" : "Collapse sidebar")">
+            <span class="bi @(isNavbarCollapsed ? "bi-chevron-right" : "bi-chevron-left")"></span>
+        </button>
+        <button class="navbar-toggler" @onclick="ToggleMobileMenu" title="Toggle navigation menu">
+        </button>
     </div>
 </div>
 
-<input type="checkbox" title="Navigation menu" class="navbar-toggler" />
-
-<div class="nav-scrollable" onclick="document.querySelector('.navbar-toggler').click()">
+<div class="nav-scrollable @(GetNavScrollableClasses())" style="@(isMobileMenuOpen ? "display: block;" : "")">
     <nav class="nav">
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
-                <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span> Home
+        <div class="nav-item px-3" data-tooltip="Home">
+            <NavLink class="nav-link" href="" Match="NavLinkMatch.All" title="Home">
+                <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span>
+                <span class="nav-text">Home</span>
             </NavLink>
         </div>
 
-       
-
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="dashboard">
-                <span class="bi bi-speedometer2 fs-4" aria-hidden="true"></span> Analytics Dashboard
+        <div class="nav-item px-3" data-tooltip="Analytics Dashboard">
+            <NavLink class="nav-link" href="dashboard" title="Analytics Dashboard">
+                <span class="bi bi-speedometer2" aria-hidden="true"></span>
+                <span class="nav-text">Analytics Dashboard</span>
             </NavLink>
         </div>
 
-        <div class="nav-item px-3">
-            <NavLink class="nav-link d-flex" href="course-catalog">
-                <span class="bi bi-book" aria-hidden="true"></span> Course Catalog
+        <div class="nav-item px-3" data-tooltip="Course Catalog">
+            <NavLink class="nav-link" href="user/lms/courses/catalog" title="Course Catalog">
+                <span class="bi bi-book" aria-hidden="true"></span>
+                <span class="nav-text">Course Catalog</span>
             </NavLink>
         </div>
 
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="account/manage">
-                <span class="bi bi-person-circle" aria-hidden="true"></span> Account
+        <div class="nav-item px-3" data-tooltip="Account">
+            <NavLink class="nav-link" href="user/account/manage" title="Account">
+                <span class="bi bi-person-circle" aria-hidden="true"></span>
+                <span class="nav-text">Account</span>
             </NavLink>
         </div>
     </nav>
 </div>
 
+@code {
+    private bool isNavbarCollapsed = false; // Start expanded by default
+    private bool isMobileMenuOpen = false; // Mobile menu state
+
+    private void ToggleNavbar()
+    {
+        isNavbarCollapsed = !isNavbarCollapsed;
+    }
+
+    private void ToggleMobileMenu()
+    {
+        isMobileMenuOpen = !isMobileMenuOpen;
+    }
+
+    private string GetNavScrollableClasses()
+    {
+        var classes = new List<string>();
+
+        if (isNavbarCollapsed)
+        {
+            classes.Add("collapsed");
+        }
+
+        return string.Join(" ", classes);
+    }
+}
