@@ -49,7 +49,7 @@ namespace LMS.Data
 
         [ForeignKey("CreatedByUserId")]
         public virtual User CreatedBy { get; set; } = null!;
-
+        //to use if necessary for pinned topics
         public bool IsPinned { get; set; } = false;
 
         public bool IsLocked { get; set; } = false;
