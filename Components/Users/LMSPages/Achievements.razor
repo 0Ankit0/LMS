@@ -151,13 +151,16 @@
                                         <span class="badge bg-outline-primary">@achievement.Points pts</span>
                                         <small class="text-muted">@achievement.Type</small>
                                     </div>
-                                    @if (!string.IsNullOrEmpty(achievement.Criteria))
+                                    @if (achievement.Criteria.Count>0)
                                     {
-                                        <div class="mt-2">
-                                            <small class="text-info">
-                                                <i class="fas fa-info-circle me-1"></i>@achievement.Criteria
-                                            </small>
-                                        </div>
+                                        foreach(var criterion in achievement.Criteria)
+                                        {
+                                            <div class="mt-2">
+                                                <small class="text-info">
+                                                    <i class="fas fa-check-circle me-1"></i>@criterion
+                                                </small>
+                                            </div>
+                                        }
                                     }
                                 </div>
                             </div>
