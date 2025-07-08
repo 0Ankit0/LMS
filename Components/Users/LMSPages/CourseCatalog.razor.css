@@ -1,7 +1,7 @@
 /* Course Catalog Layout - Similar to Forums */
 .course-catalog-layout {
     display: flex;
-    height: 100vh;
+    min-height: 100vh;
     background-color: #ffffff;
     color: #2c3e50;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -15,6 +15,11 @@
     flex-direction: column;
     border-right: 1px solid #dee2e6;
     flex-shrink: 0;
+    position: sticky;
+    left: 0;
+    top: 0;
+    height: 100vh;
+    z-index: 10;
 }
 
 .sidebar-header {
@@ -147,6 +152,9 @@
     justify-content: space-between;
     flex-wrap: wrap;
     gap: 16px;
+    position: sticky;
+    top: 0;
+    z-index: 5;
 }
 
 .header-info {

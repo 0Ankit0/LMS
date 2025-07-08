@@ -32,7 +32,8 @@
                 @foreach (var course in filteredCourses)
                 {
                     <div class="col-12 ">
-                        <div class="card border-0 shadow shadow-lg mb-1" style="cursor:pointer;" @onclick="@(() => ShowCourse(course))">
+                        <div class="card border-0 shadow mb-1" style="cursor:pointer;"
+                             @onclick="@(() => NavigationManager.NavigateTo($"/user/lms/course/{course.Id}"))">
                             <div class="card-body px-3 d-flex flex-column justify-content-between">
                                 <div>
                                     <h6 class="card-title mb-1 text-primary" style="font-size: 1.05rem;">@course.Title</h6>
@@ -52,9 +53,6 @@
                                     {
                                         <span class="badge bg-light text-dark border">@course.StartDate.ToString("MMM dd, yyyy")</span>
                                     }
-                                    <button class="btn btn-link p-0 ms-2" title="View Full Description" @onclick:stopPropagation="true" @onclick="() => ShowCourse(course)">
-                                        <i class="bi bi-eye fs-5"></i>
-                                    </button>
                                 </div>
                             </div>
                         </div>
@@ -72,39 +70,6 @@
             </div>
         }
     </div>
-
-    <!-- Modal for full course description -->
-    @if (showModal && selectedCourse != null)
-    {
-        <div class="modal fade show d-block" tabindex="-1" style="background:rgba(0,0,0,0.4);" aria-modal="true" role="dialog">
-            <div class="modal-dialog modal-lg modal-dialog-centered">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title">@selectedCourse.Title</h5>
-                        <button type="button" class="btn-close" @onclick="CloseModal" aria-label="Close"></button>
-                    </div>
-                    <div class="modal-body">
-                        <div class="mb-2 text-muted">
-                            <i class="bi bi-person-circle me-1"></i>@selectedCourse.InstructorName
-                            @if (selectedCourse.StartDate != default)
-                            {
-                                <span class="ms-3"><i class="bi bi-calendar-event"></i> @selectedCourse.StartDate.ToString("MMM dd, yyyy")</span>
-                            }
-                        </div>
-                        <div class="mb-3">
-                            <span class="badge bg-secondary me-2">@selectedCourse.Level</span>
-                        </div>
-                        <div class="fs-5">
-                            @selectedCourse.Description
-                        </div>
-                    </div>
-                    <div class="modal-footer d-flex justify-content-end">
-                        <button class="btn btn-secondary" @onclick="CloseModal">Close</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    }
 </div>
 
 @code {
@@ -115,9 +80,6 @@
     private List<CourseModel>? courses;
     private List<CourseModel>? filteredCourses;
     private bool isLoading = true;
-
-    private bool showModal = false;
-    private CourseModel? selectedCourse;
 
     protected override async Task OnInitializedAsync()
     {
@@ -155,24 +117,5 @@
                     (!string.IsNullOrEmpty(c.InstructorName) && c.InstructorName.Contains(searchTerm, StringComparison.OrdinalIgnoreCase)))
                 .ToList();
         }
-    }
-
-    private void ShowCourse(CourseModel course)
-    {
-        selectedCourse = course;
-        showModal = true;
-        StateHasChanged();
-    }
-
-    private void CloseModal()
-    {
-        showModal = false;
-        selectedCourse = null;
-        StateHasChanged();
-    }
-
-    private void GoToCourseDetails(int courseId)
-    {
-        NavigationManager.NavigateTo($"/course-catalog/{courseId}");
     }
 }
