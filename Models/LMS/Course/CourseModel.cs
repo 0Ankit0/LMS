@@ -1,3 +1,5 @@
+using LMS.Data;
+using LMS.Models.Assessment;
 using System.ComponentModel.DataAnnotations;
 
 namespace LMS.Models.Course
@@ -45,5 +47,10 @@ namespace LMS.Models.Course
         public List<string> Tags { get; set; } = new();
 
         public List<ModuleModel> Modules { get; set; } = new();
+        public List<AssessmentModel> Assessments { get; set; } = new();
+        public List<Forum> Forums { get; set; } = new();
+        public List<CourseCategory> CourseCategories { get; set; } = new();
+        public List<CourseTags> CourseTags { get; set; } = new();
+
     }
 }

@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using LMS.Data;
 
 namespace LMS.Models.Communication
 {
@@ -13,7 +14,10 @@ namespace LMS.Models.Communication
 
         public int? CourseId { get; set; }
 
-        public int Priority { get; set; } = 2; // Normal priority
+        [Required]
+        public AnnouncementType Type { get; set; } = AnnouncementType.General;
+
+        public AnnouncementPriority Priority { get; set; } = AnnouncementPriority.Normal;
 
         public DateTime? ExpiresAt { get; set; }
 

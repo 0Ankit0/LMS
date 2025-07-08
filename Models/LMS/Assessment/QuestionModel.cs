@@ -1,3 +1,4 @@
+using LMS.Data;
 using System.ComponentModel.DataAnnotations;
 
 namespace LMS.Models.Assessment
@@ -26,14 +27,14 @@ namespace LMS.Models.Assessment
         public List<QuestionResponseModel> Responses { get; set; } = new();
     }
 
-    public enum QuestionType
-    {
-        MultipleChoice = 1,
-        TrueFalse = 2,
-        ShortAnswer = 3,
-        Essay = 4,
-        Matching = 5,
-        FillInTheBlank = 6,
-        Ordering = 7
-    }
+    //public enum QuestionType
+    //{
+    //    MultipleChoice = 1,
+    //    TrueFalse = 2,
+    //    ShortAnswer = 3,
+    //    Essay = 4,
+    //    Matching = 5,
+    //    FillInTheBlank = 6,
+    //    Ordering = 7
+    //}
 }

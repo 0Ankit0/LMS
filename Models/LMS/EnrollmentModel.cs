@@ -1,3 +1,4 @@
+using LMS.Models.Course;
 using System.ComponentModel.DataAnnotations;
 
 namespace LMS.Models.LMS
@@ -24,16 +25,5 @@ namespace LMS.Models.LMS
 
         // Navigation properties for UI
         public CourseModel? Course { get; set; }
-    }
-
-    public class CourseModel
-    {
-        public int Id { get; set; }
-        public string Name { get; set; } = string.Empty;
-        public string Description { get; set; } = string.Empty;
-        public string Thumbnail { get; set; } = string.Empty;
-        public string InstructorName { get; set; } = string.Empty;
-        public int DurationInHours { get; set; }
-        public string DifficultyLevel { get; set; } = string.Empty;
     }
 }

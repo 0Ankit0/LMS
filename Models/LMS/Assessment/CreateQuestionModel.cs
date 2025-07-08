@@ -1,3 +1,4 @@
+using LMS.Data;
 using System.ComponentModel.DataAnnotations;
 
 namespace LMS.Models.Assessment

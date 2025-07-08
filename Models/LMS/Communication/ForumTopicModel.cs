@@ -18,8 +18,6 @@ namespace LMS.Models.Communication
 
         public string CreatedByUserName { get; set; } = string.Empty;
 
-        public bool IsPinned { get; set; }
-
         public bool IsLocked { get; set; }
 
         public DateTime CreatedAt { get; set; }
