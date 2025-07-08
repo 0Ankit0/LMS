@@ -7,9 +7,10 @@
 @using LMS.Models.Course
 @using LMS.Models.LMS
 @using LMS.Services
+@using global::LMS.Services
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @inject UserManager<User> UserManager
-@inject AssessmentService AssessmentService
+@inject IAssessmentService AssessmentService
 @inject IEnrollmentService EnrollmentService
 @inject IJSRuntime JSRuntime
 
@@ -17,20 +18,23 @@
     <h1 class="h2"><i class="fas fa-clipboard-check text-success me-2"></i>Assessments & Quizzes</h1>
     <div class="btn-toolbar mb-2 mb-md-0">
         <div class="btn-group me-2" role="group">
-            <button type="button" class="btn @(selectedFilter == "all" ? "btn-primary" : "btn-outline-primary") btn-sm" 
-                    @onclick='() => FilterAssessments("all")'>
+            <button type="button" class="btn @(selectedFilter == "all" ? "btn-primary" : "btn-outline-primary") btn-sm"
+                @onclick='() => FilterAssessments("all")'>
                 All
             </button>
-            <button type="button" class="btn @(selectedFilter == "available" ? "btn-primary" : "btn-outline-primary") btn-sm" 
-                    @onclick='() => FilterAssessments("available")'>
+            <button type="button"
+                class="btn @(selectedFilter == "available" ? "btn-primary" : "btn-outline-primary") btn-sm"
+                @onclick='() => FilterAssessments("available")'>
                 Available
             </button>
-            <button type="button" class="btn @(selectedFilter == "completed" ? "btn-primary" : "btn-outline-primary") btn-sm" 
-                    @onclick='() => FilterAssessments("completed")'>
+            <button type="button"
+                class="btn @(selectedFilter == "completed" ? "btn-primary" : "btn-outline-primary") btn-sm"
+                @onclick='() => FilterAssessments("completed")'>
                 Completed
             </button>
-            <button type="button" class="btn @(selectedFilter == "pending" ? "btn-primary" : "btn-outline-primary") btn-sm" 
-                    @onclick='() => FilterAssessments("pending")'>
+            <button type="button"
+                class="btn @(selectedFilter == "pending" ? "btn-primary" : "btn-outline-primary") btn-sm"
+                @onclick='() => FilterAssessments("pending")'>
                 Pending
             </button>
         </div>
@@ -95,8 +99,8 @@ else
         <div class="col-md-6">
             <div class="input-group">
                 <span class="input-group-text"><i class="fas fa-search"></i></span>
-                <input type="text" class="form-control" placeholder="Search assessments..." 
-                       @bind="searchTerm" @oninput="OnSearchTermChanged" />
+                <input type="text" class="form-control" placeholder="Search assessments..." @bind="searchTerm"
+                    @oninput="OnSearchTermChanged" />
             </div>
         </div>
         <div class="col-md-3">
@@ -131,7 +135,7 @@ else
                 var userAttempt = GetUserAttempt(assessment.Id);
                 var isCompleted = userAttempt != null;
                 var canRetake = !isCompleted || assessment.AllowRetakes;
-                
+
                 <div class="col-lg-6 col-xl-4 mb-4">
                     <div class="card h-100 shadow-sm @(isCompleted ? "border-success" : "")">
                         <div class="card-header d-flex justify-content-between align-items-center">
@@ -139,7 +143,7 @@ else
                                 <i class="fas @GetAssessmentIcon(assessment.Type) me-2"></i>
                                 <span class="fw-bold">@assessment.Type</span>
                             </div>
-                            
+
                             @if (isCompleted)
                             {
                                 <span class="badge bg-success">
@@ -159,11 +163,11 @@ else
                                 </span>
                             }
                         </div>
-                        
+
                         <div class="card-body">
                             <h5 class="card-title">@assessment.Title</h5>
                             <p class="card-text text-muted">@assessment.Description</p>
-                            
+
                             <div class="mb-3">
                                 <div class="row text-center">
                                     <div class="col-4">
@@ -197,8 +201,8 @@ else
                                         </span>
                                     </div>
                                     <div class="progress mb-2" style="height: 8px;">
-                                        <div class="progress-bar @GetScoreProgressClass(userAttempt.Score)" 
-                                             style="width: @userAttempt.Score%"></div>
+                                        <div class="progress-bar @GetScoreProgressClass(userAttempt.Score)"
+                                            style="width: @userAttempt.Score%"></div>
                                     </div>
                                     <small class="text-muted">
                                         Completed: @userAttempt.CompletedAt?.ToString("MMM dd, yyyy 'at' HH:mm")
@@ -211,7 +215,7 @@ else
                                     <i class="fas fa-book"></i> @assessment.Course?.Title
                                 </small>
                             </div>
-                            
+
                             @if (assessment.Module != null)
                             {
                                 <div class="mb-2">
@@ -221,7 +225,7 @@ else
                                 </div>
                             }
                         </div>
-                        
+
                         <div class="card-footer bg-transparent">
                             @if (IsAssessmentAvailable(assessment))
                             {
@@ -300,7 +304,7 @@ else
     private string selectedFilter = "all";
     private string selectedCourse = string.Empty;
     private string sortBy = "newest";
-    
+
     // Statistics
     private int totalAssessments = 0;
     private int completedAssessments = 0;
@@ -319,13 +323,13 @@ else
             isLoading = true;
             var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
             var user = await UserManager.GetUserAsync(authState.User);
-            
+
             if (user != null)
             {
                 // Get user enrollments to find available assessments
                 var enrollments = await EnrollmentService.GetUserEnrollmentsAsync(user.Id);
                 var courseIds = enrollments.Select(e => e.CourseId).ToList();
-                
+
                 // Load assessments for enrolled courses
                 var allAssessments = new List<AssessmentModel>();
                 foreach (var courseId in courseIds)
@@ -333,27 +337,27 @@ else
                     var courseAssessments = await AssessmentService.GetAssessmentsByCourseAsync(courseId);
                     allAssessments.AddRange(courseAssessments);
                 }
-                
+
                 assessments = allAssessments.ToList();
-                
-                // Load available courses for filtering  
+
+                // Load available courses for filtering
                 availableCourses = enrollments
-                    .Where(e => !string.IsNullOrEmpty(e.CourseTitle))
-                    .Select(e => new LMS.Models.Course.CourseModel
-                    {
-                        Id = e.CourseId,
-                        Title = e.CourseTitle,
-                        ThumbnailUrl = e.CourseThumbnailUrl
-                    })
-                    .DistinctBy(c => c.Id)
-                    .ToList();
-                
+                .Where(e => !string.IsNullOrEmpty(e.CourseTitle))
+                .Select(e => new LMS.Models.Course.CourseModel
+                {
+                    Id = e.CourseId,
+                    Title = e.CourseTitle,
+                    ThumbnailUrl = e.CourseThumbnailUrl
+                })
+                .DistinctBy(c => c.Id)
+                .ToList();
+
                 // Load user attempts (mock data for now)
                 LoadUserAttempts(user.Id);
-                
+
                 // Calculate statistics
                 CalculateStatistics();
-                
+
                 // Apply initial filtering
                 FilterAndSortAssessments();
             }
@@ -373,17 +377,17 @@ else
     {
         // Mock user attempts - in real implementation, this would come from database
         userAttempts = new List<AssessmentAttemptModel>
-        {
-            new() { AssessmentId = 1, UserId = userId, Score = 87.5, CompletedAt = DateTime.Now.AddDays(-5) },
-            new() { AssessmentId = 2, UserId = userId, Score = 92.0, CompletedAt = DateTime.Now.AddDays(-10) },
-            new() { AssessmentId = 3, UserId = userId, Score = 78.5, CompletedAt = DateTime.Now.AddDays(-15) }
-        };
+{
+new() { AssessmentId = 1, UserId = userId, Score = 87.5, CompletedAt = DateTime.Now.AddDays(-5) },
+new() { AssessmentId = 2, UserId = userId, Score = 92.0, CompletedAt = DateTime.Now.AddDays(-10) },
+new() { AssessmentId = 3, UserId = userId, Score = 78.5, CompletedAt = DateTime.Now.AddDays(-15) }
+};
     }
 
     private void CalculateStatistics()
     {
         if (assessments == null) return;
-        
+
         totalAssessments = assessments.Count;
         completedAssessments = userAttempts.Count;
         pendingAssessments = totalAssessments - completedAssessments;
@@ -426,10 +430,10 @@ else
         // Apply search filter
         if (!string.IsNullOrWhiteSpace(searchTerm))
         {
-            filtered = filtered.Where(a => 
-                a.Title.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ||
-                a.Description.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ||
-                (a.Course?.Title.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ?? false));
+            filtered = filtered.Where(a =>
+            a.Title.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ||
+            a.Description.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ||
+            (a.Course?.Title.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ?? false));
         }
 
         // Apply status filter

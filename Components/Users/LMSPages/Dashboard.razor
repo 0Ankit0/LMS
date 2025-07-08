@@ -1,437 +1,239 @@
 @page "/user/lms/dashboard"
-@using Microsoft.AspNetCore.Components
-@using Microsoft.AspNetCore.Components.Authorization
-@using Microsoft.AspNetCore.Identity
-@using LMS.Data
-@using LMS.Models.Assessment
-@using LMS.Models.User
-@inject AuthenticationStateProvider AuthenticationStateProvider
-@inject UserManager<User> UserManager
+@using LMS.Models.Course
+@inject NavigationManager NavigationManager
+@rendermode InteractiveServer
 
-<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-    <h1 class="h2">Dashboard</h1>
-    <div class="btn-toolbar mb-2 mb-md-0">
-        <div class="btn-group me-2">
-            <button type="button" class="btn btn-sm btn-outline-secondary">Today</button>
-            <button type="button" class="btn btn-sm btn-outline-secondary">This Week</button>
-            <button type="button" class="btn btn-sm btn-outline-secondary">This Month</button>
+<div class="container-fluid py-4" style="background: #f6f7fb; min-height: 100vh;">
+    <div class="row g-4 mb-4">
+        <!-- Continue with Course -->
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm h-100" style="background: #fff; border-radius: 18px;">
+                <div class="card-body d-flex align-items-center" style="padding: 2rem;">
+                    <img src="@ContinueCourse.ThumbnailUrl" class="rounded-4 shadow-sm me-4" style="width: 140px; height: 90px; object-fit: cover; background: #e9ecef;" alt="Course image" />
+                    <div class="flex-grow-1">
+                        <div class="d-flex align-items-center mb-2">
+                            <span class="badge bg-primary bg-opacity-10 text-primary fw-semibold me-2" style="font-size: 0.9rem;">Continue Course</span>
+                        </div>
+                        <h4 class="fw-bold mb-1" style="letter-spacing: -0.5px;">@ContinueCourse.Title</h4>
+                        <p class="mb-3 text-muted" style="font-size: 1rem;">@ContinueCourse.Description</p>
+                        <a class="btn btn-primary px-4 py-2 rounded-pill fw-semibold" href="@($"/courses/details?id={ContinueCourse.Id}")" style="font-size: 1rem;">
+                            Go to Course <i class="bi bi-arrow-right ms-1"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Your Progress -->
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm h-100" style="background: #fff; border-radius: 18px;">
+                <div class="card-title fs-4 text-center fw-bold text-primary mt-2" style="font-size: 1.1rem; width: 100%;">Your Progress</div>
+                <div class="card-body d-flex flex-column align-items-center justify-content-center">
+                      <select class="form-select form-select-sm w-full" @onchange="OnProgressCourseChanged" style="border-radius: 12px;">
+                            @foreach (var item in ProgressCourses)
+                            {
+                                <option value="@item.Course.Id" selected="@(item.Course.Id == SelectedProgressCourse.Id)">
+                                    @item.Course.Title
+                                </option>
+                            }
+                        </select>
+                    <div class="w-100 m-2 d-flex">
+                        <div class="position-relative mx-auto" style="width: 110px; height: 110px;">
+                            <svg width="110" height="110">
+                                <circle cx="55" cy="55" r="48" stroke="#e9ecef" stroke-width="10" fill="none" />
+                                <circle cx="55" cy="55" r="48" stroke="#4e73df" stroke-width="10" fill="none"
+                                        stroke-dasharray="301.592"
+                                        stroke-dashoffset="@((1 - SelectedProgressCourseProgress / 100.0) * 301.592)"
+                                        stroke-linecap="round"
+                                        style="transition: stroke-dashoffset 0.5s;" />
+                            </svg>
+                            <div class="position-absolute top-50 start-50 translate-middle text-center">
+                                <span class="fw-bold" style="font-size: 2rem;">@SelectedProgressCourseProgress.ToString("F0")%</span>
+                            </div>
+                        </div>
+                        <div class="justify-content-center">
+
+                        <div class="text-bold text-center mb-2" style="font-size: 1rem; width: 100%;">@SelectedProgressCourse.Title</div>
+                        <div class="text-muted text-center small mb-2" style="min-height: 38px; width: 100%;">@SelectedProgressCourse.Description</div>
+                        </div>
+                    </div>
+                        <div class="d-flex justify-content-center">
+                            <a class="btn btn-outline-primary btn-sm rounded-pill fw-semibold" href="@($"/courses/details?id={SelectedProgressCourse.Id}")">
+                                Go to Course <i class="bi bi-arrow-right ms-1"></i>
+                            </a>
+                        </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4 mb-4">
+        <!-- New Courses -->
+        <div class="col-lg-6">
+            <div class="card border-0 shadow-sm h-100" style="background: #fff; border-radius: 18px;">
+                <div class="card-body" style="padding: 2rem;">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <span class="fw-bold text-primary" style="font-size: 1.1rem;">New Courses</span>
+                        <a class="btn btn-link btn-sm px-0 fw-semibold" href="/courses" style="text-decoration: none;">See All</a>
+                    </div>
+                    <div class="row g-3">
+                        @foreach (var course in NewCourses)
+                        {
+                            <div class="col-md-6">
+                                <div class="card border-0 shadow-sm h-100" style="border-radius: 14px;">
+                                    <img src="@course.ThumbnailUrl" class="card-img-top rounded-top" style="height: 90px; object-fit: cover; background: #e9ecef;" alt="Course image" />
+                                    <div class="card-body p-2">
+                                        <h6 class="fw-bold mb-1" style="font-size: 1rem;">@course.Title</h6>
+                                        <p class="text-muted small mb-2">@course.Description</p>
+                                        <a class="btn btn-outline-primary btn-sm w-100 rounded-pill fw-semibold" href="@($"/courses/details?id={course.Id}")">View</a>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Your Courses -->
+        <div class="col-lg-6">
+            <div class="card border-0 shadow-sm h-100" style="background: #fff; border-radius: 18px;">
+                <div class="card-body" style="padding: 2rem;">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <span class="fw-bold text-primary" style="font-size: 1.1rem;">Your Courses</span>
+                        <a class="btn btn-link btn-sm px-0 fw-semibold" href="/user/courses" style="text-decoration: none;">See All</a>
+                    </div>
+                    <div class="row g-3">
+                        @foreach (var course in YourCourses)
+                        {
+                            <div class="col-md-6">
+                                <div class="card border-0 shadow-sm h-100" style="border-radius: 14px;">
+                                    <img src="@course.ThumbnailUrl" class="card-img-top rounded-top" style="height: 90px; object-fit: cover; background: #e9ecef;" alt="Course image" />
+                                    <div class="card-body p-2">
+                                        <h6 class="fw-bold mb-1" style="font-size: 1rem;">@course.Title</h6>
+                                        <p class="text-muted small mb-2">@course.Description</p>
+                                        <a class="btn btn-outline-primary btn-sm w-100 rounded-pill fw-semibold" href="@($"/courses/details?id={course.Id}")">View</a>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4 mb-4">
+        <!-- Upcoming Courses -->
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm h-100" style="background: #fff; border-radius: 18px;">
+                <div class="card-body" style="padding: 2rem;">
+                    <div class="fw-bold text-primary mb-3" style="font-size: 1.1rem;">
+                        Upcoming Courses
+                    </div>
+                    @if (UpcomingCourses.Any())
+                    {
+                        @foreach (var course in UpcomingCourses)
+                        {
+                            <div class="d-flex align-items-center mb-3 p-3" style="background: #f6f7fb; border-radius: 12px;">
+                                <img src="@course.ThumbnailUrl" class="rounded-3 shadow-sm me-3" style="width: 70px; height: 50px; object-fit: cover; background: #e9ecef;" alt="Course image" />
+                                <div class="flex-grow-1">
+                                    <h6 class="fw-bold mb-1" style="font-size: 1rem;">@course.Title</h6>
+                                    <p class="text-muted small mb-1">@course.Description</p>
+                                    <a class="btn btn-primary btn-sm px-3 rounded-pill fw-semibold" href="@($"/courses/details?id={course.Id}")">Go to Course</a>
+                                </div>
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <p class="text-muted">No upcoming courses.</p>
+                    }
+                </div>
+            </div>
+        </div>
+        <!-- Your Notes -->
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm h-100" style="background: #fff; border-radius: 18px;">
+                <div class="card-body" style="padding: 2rem;">
+                    <div class="fw-bold text-primary mb-3" style="font-size: 1.1rem;">
+                        Your Notes
+                    </div>
+                    @if (UserNotes.Any())
+                    {
+                        <ul class="list-group list-group-flush">
+                            @foreach (var note in UserNotes)
+                            {
+                                <li class="list-group-item border-0 px-0 py-2" style="background: transparent;">
+                                    <div class="fw-bold mb-1" style="font-size: 1rem;">@note.Title</div>
+                                    <div class="text-muted small">@note.Content</div>
+                                </li>
+                            }
+                        </ul>
+                    }
+                    else
+                    {
+                        <p class="text-muted">No notes yet.</p>
+                    }
+                </div>
+            </div>
         </div>
     </div>
 </div>
 
-@if (isLoading)
-{
-    <div class="d-flex justify-content-center">
-        <div class="spinner-border" role="status">
-            <span class="visually-hidden">Loading...</span>
-        </div>
-    </div>
-}
-else
-{
-    <!-- Key Metrics Cards -->
-    <div class="row mb-4">
-        <div class="col-xl-3 col-md-6 mb-4">
-            <div class="card border-left-primary shadow h-100 py-2">
-                <div class="card-body">
-                    <div class="row no-gutters align-items-center">
-                        <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
-                                Enrolled Courses
-                            </div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">@dashboardData.EnrolledCoursesCount</div>
-                        </div>
-                        <div class="col-auto">
-                            <i class="fas fa-graduation-cap fa-2x text-gray-300"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-xl-3 col-md-6 mb-4">
-            <div class="card border-left-success shadow h-100 py-2">
-                <div class="card-body">
-                    <div class="row no-gutters align-items-center">
-                        <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
-                                Completed Courses
-                            </div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">@dashboardData.CompletedCoursesCount</div>
-                        </div>
-                        <div class="col-auto">
-                            <i class="fas fa-trophy fa-2x text-gray-300"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-xl-3 col-md-6 mb-4">
-            <div class="card border-left-info shadow h-100 py-2">
-                <div class="card-body">
-                    <div class="row no-gutters align-items-center">
-                        <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
-                                Average Progress
-                            </div>
-                            <div class="row no-gutters align-items-center">
-                                <div class="col-auto">
-                                    <div class="h5 mb-0 mr-3 font-weight-bold text-gray-800">@dashboardData.AverageProgress.ToString("F1")%</div>
-                                </div>
-                                <div class="col">
-                                    <div class="progress progress-sm mr-2">
-                                        <div class="progress-bar bg-info" role="progressbar" style="width: @(dashboardData.AverageProgress)%"
-                                             aria-valuenow="@dashboardData.AverageProgress" aria-valuemin="0" aria-valuemax="100"></div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-auto">
-                            <i class="fas fa-chart-line fa-2x text-gray-300"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-xl-3 col-md-6 mb-4">
-            <div class="card border-left-warning shadow h-100 py-2">
-                <div class="card-body">
-                    <div class="row no-gutters align-items-center">
-                        <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
-                                Total Points
-                            </div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">@dashboardData.TotalPoints</div>
-                        </div>
-                        <div class="col-auto">
-                            <i class="fas fa-star fa-2x text-gray-300"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="row">
-        <!-- Recent Courses -->
-        <div class="col-lg-8 mb-4">
-            <div class="card shadow">
-                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
-                    <h6 class="m-0 font-weight-bold text-primary">Recent Courses</h6>
-                    <a href="#" class="btn btn-primary btn-sm">View All</a>
-                </div>
-                <div class="card-body">
-                    @if (dashboardData.RecentCourses.Any())
-                    {
-                        @foreach (var course in dashboardData.RecentCourses)
-                        {
-                            <div class="row mb-3 p-3 border rounded">
-                                <div class="col-md-2">
-                                    @if (!string.IsNullOrEmpty(course.CourseThumbnailUrl))
-                                    {
-                                        <img src="@course.CourseThumbnailUrl" class="img-fluid rounded" alt="Course thumbnail" />
-                                    }
-                                    else
-                                    {
-                                        <div class="bg-primary text-white rounded d-flex align-items-center justify-content-center" style="height: 60px;">
-                                            <i class="fas fa-book fa-2x"></i>
-                                        </div>
-                                    }
-                                </div>
-                                <div class="col-md-7">
-                                    <h6 class="mb-1">@course.CourseTitle</h6>
-                                    <p class="text-muted mb-1">Status: @course.Status</p>
-                                    <div class="progress mb-1" style="height: 6px;">
-                                        <div class="progress-bar" role="progressbar" style="width: @(course.ProgressPercentage)%"
-                                             aria-valuenow="@course.ProgressPercentage" aria-valuemin="0" aria-valuemax="100"></div>
-                                    </div>
-                                    <small class="text-muted">@course.ProgressPercentage.ToString("F1")% Complete</small>
-                                </div>
-                                <div class="col-md-3 text-end">
-                                    <button class="btn btn-primary btn-sm">Continue</button>
-                                </div>
-                            </div>
-                        }
-                    }
-                    else
-                    {
-                        <p class="text-muted">No courses enrolled yet. <a href="#">Browse the catalog</a> to get started!</p>
-                    }
-                </div>
-            </div>
-        </div>
-
-        <!-- Recent Achievements & Activity -->
-        <div class="col-lg-4 mb-4">
-            <div class="card shadow">
-                <div class="card-header py-3">
-                    <h6 class="m-0 font-weight-bold text-primary">Recent Achievements</h6>
-                </div>
-                <div class="card-body">
-                    @if (dashboardData.RecentAchievements.Any())
-                    {
-                        @foreach (var achievement in dashboardData.RecentAchievements)
-                        {
-                            <div class="d-flex align-items-center mb-3">
-                                <div class="me-3">
-                                    @if (!string.IsNullOrEmpty(achievement.AchievementIconUrl))
-                                    {
-                                        <img src="@achievement.AchievementIconUrl" width="32" height="32" alt="Achievement" />
-                                    }
-                                    else
-                                    {
-                                        <div class="bg-warning text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;">
-                                            <i class="fas fa-trophy"></i>
-                                        </div>
-                                    }
-                                </div>
-                                <div class="flex-grow-1">
-                                    <h6 class="mb-0">@achievement.AchievementName</h6>
-                                    <small class="text-muted">@achievement.EarnedAt.ToString("MMM dd, yyyy")</small>
-                                    <span class="badge bg-warning text-dark">+@achievement.Points pts</span>
-                                </div>
-                            </div>
-                        }
-                    }
-                    else
-                    {
-                        <p class="text-muted">No achievements yet. Start learning to earn your first achievement!</p>
-                    }
-                </div>
-            </div>
-
-            <!-- Study Time Chart -->
-            <div class="card shadow mt-4">
-                <div class="card-header py-3">
-                    <h6 class="m-0 font-weight-bold text-primary">Study Time This Week</h6>
-                </div>
-                <div class="card-body">
-                    <canvas id="studyTimeChart" width="100" height="80"></canvas>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Upcoming Assessments -->
-    <div class="row">
-        <div class="col-12">
-            <div class="card shadow">
-                <div class="card-header py-3">
-                    <h6 class="m-0 font-weight-bold text-primary">Upcoming Assessments</h6>
-                </div>
-                <div class="card-body">
-                    @if (dashboardData.UpcomingAssessments.Any())
-                    {
-                        <div class="table-responsive">
-                            <table class="table table-bordered">
-                                <thead>
-                                    <tr>
-                                        <th>Assessment</th>
-                                        <th>Course</th>
-                                        <th>Due Date</th>
-                                        <th>Attempts Left</th>
-                                        <th>Action</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @foreach (var assessment in dashboardData.UpcomingAssessments)
-                                    {
-                                        <tr>
-                                            <td>@assessment.Title</td>
-                                            <td>@assessment.CourseName</td>
-                                            <td>@assessment.AvailableUntil?.ToString("MMM dd, yyyy HH:mm")</td>
-                                            <td>
-                                                @if (assessment.CanAttempt)
-                                                {
-                                                    <span class="badge bg-success">@(assessment.MaxAttempts - assessment.AttemptsUsed) left</span>
-                                                }
-                                                else
-                                                {
-                                                    <span class="badge bg-danger">No attempts left</span>
-                                                }
-                                            </td>
-                                            <td>
-                                                @if (assessment.CanAttempt)
-                                                {
-                                                    <button class="btn btn-primary btn-sm">Start Assessment</button>
-                                                }
-                                                else
-                                                {
-                                                    <button class="btn btn-secondary btn-sm" disabled>Completed</button>
-                                                }
-                                            </td>
-                                        </tr>
-                                    }
-                                </tbody>
-                            </table>
-                        </div>
-                    }
-                    else
-                    {
-                        <p class="text-muted">No upcoming assessments.</p>
-                    }
-                </div>
-            </div>
-        </div>
-    </div>
-}
-
-<style>
-    .border-left-primary {
-        border-left: 0.25rem solid #4e73df !important;
-    }
-
-    .border-left-success {
-        border-left: 0.25rem solid #1cc88a !important;
-    }
-
-    .border-left-info {
-        border-left: 0.25rem solid #36b9cc !important;
-    }
-
-    .border-left-warning {
-        border-left: 0.25rem solid #f6c23e !important;
-    }
-
-    .progress-sm {
-        height: 0.5rem;
-    }
-
-    .text-xs {
-        font-size: 0.7rem;
-    }
-</style>
-
 @code {
-    private bool isLoading = true;
-    private DashboardData dashboardData = new();
-
-    protected override async Task OnInitializedAsync()
+    // Mock data for demonstration. Replace with real data/service calls.
+    private CourseModel ContinueCourse = new()
     {
-        await LoadDashboardData();
-        isLoading = false;
-        StateHasChanged();
-    }
+        Id = 1,
+        Title = "Blazor Fundamentals",
+        Description = "Learn the basics of Blazor and build interactive web UIs.",
+        ThumbnailUrl = "/course.png"
+    };
 
-    private async Task LoadDashboardData()
+    private List<CourseModel> NewCourses = new()
     {
-        try
+        new CourseModel { Id = 2, Title = "Advanced C#", Description = "Deep dive into C# features.", ThumbnailUrl = "/course.png" },
+        new CourseModel { Id = 3, Title = "Entity Framework Core", Description = "Master data access with EF Core.", ThumbnailUrl = "/course.png" }
+    };
+
+    private List<CourseModel> YourCourses = new()
+    {
+        new CourseModel { Id = 1, Title = "Blazor Fundamentals", Description = "Learn the basics of Blazor and build interactive web UIs.", ThumbnailUrl = "/course.png" },
+        new CourseModel { Id = 4, Title = "ASP.NET Core Web API", Description = "Build RESTful APIs with ASP.NET Core.", ThumbnailUrl = "/course.png" }
+    };
+
+    private List<CourseModel> UpcomingCourses = new()
+    {
+        new CourseModel { Id = 5, Title = "Microservices Architecture", Description = "Design scalable microservices.", ThumbnailUrl = "/course.png" }
+    };
+
+    // For progress, you may want to store progress percentage in a separate model or extend CourseModel.
+    private List<(CourseModel Course, double Progress)> ProgressCourses = new()
+    {
+        (new CourseModel { Id = 1, Title = "Blazor Fundamentals", Description = "Learn the basics of Blazor and build interactive web UIs.", ThumbnailUrl = "/course.png" }, 70),
+        (new CourseModel { Id = 4, Title = "ASP.NET Core Web API",Description = "Build RESTful APIs with ASP.NET Core.", ThumbnailUrl = "/course.png" }, 40)
+    };
+
+    private int selectedProgressCourseId = 1;
+    private CourseModel SelectedProgressCourse => ProgressCourses.FirstOrDefault(c => c.Course.Id == selectedProgressCourseId).Course ?? ProgressCourses.First().Course;
+    private double SelectedProgressCourseProgress => ProgressCourses.FirstOrDefault(c => c.Course.Id == selectedProgressCourseId).Progress;
+
+    private void OnProgressCourseChanged(ChangeEventArgs e)
+    {
+        if (int.TryParse(e.Value?.ToString(), out var id))
         {
-            var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
-            if (authState.User.Identity?.IsAuthenticated == true)
-            {
-                var user = await UserManager.GetUserAsync(authState.User);
-                if (user != null)
-                {
-                    // TODO: Replace with actual service calls
-                    dashboardData = new DashboardData
-                    {
-                        EnrolledCoursesCount = 5,
-                        CompletedCoursesCount = 2,
-                        AverageProgress = 68.5,
-                        TotalPoints = user.TotalPoints,
-                        RecentCourses = GetMockRecentCourses(),
-                        RecentAchievements = GetMockRecentAchievements(),
-                        UpcomingAssessments = GetMockUpcomingAssessments()
-                    };
-                }
-            }
+            selectedProgressCourseId = id;
         }
-        catch (Exception ex)
-        {
-            // Log error
-            Console.WriteLine($"Error loading dashboard data: {ex.Message}");
-        }
     }
 
-    private List<EnrollmentModel> GetMockRecentCourses()
+    private List<UserNoteModel> UserNotes = new()
     {
-        return new List<EnrollmentModel>
-        {
-            new EnrollmentModel
-            {
-                CourseTitle = "Introduction to C# Programming",
-                CourseThumbnailUrl = "/images/csharp-course.jpg",
-                Status = "In Progress",
-                ProgressPercentage = 75.0,
-                EnrolledAt = DateTime.Now.AddDays(-10)
-            },
-            new EnrollmentModel
-            {
-                CourseTitle = "Web Development with ASP.NET Core",
-                CourseThumbnailUrl = "/images/aspnet-course.jpg",
-                Status = "In Progress",
-                ProgressPercentage = 45.0,
-                EnrolledAt = DateTime.Now.AddDays(-5)
-            },
-            new EnrollmentModel
-            {
-                CourseTitle = "Database Design Fundamentals",
-                CourseThumbnailUrl = "/images/database-course.jpg",
-                Status = "Completed",
-                ProgressPercentage = 100.0,
-                EnrolledAt = DateTime.Now.AddDays(-20),
-                CompletedAt = DateTime.Now.AddDays(-2)
-            }
-        };
-    }
+        new UserNoteModel { Title = "Blazor Tips", Content = "Remember to use @key when rendering lists." },
+        new UserNoteModel { Title = "API Auth", Content = "Use JWT for securing your APIs." }
+    };
 
-    private List<UserAchievementModel> GetMockRecentAchievements()
+    public class UserNoteModel
     {
-        return new List<UserAchievementModel>
-        {
-            new UserAchievementModel
-            {
-                AchievementName = "First Steps",
-                AchievementDescription = "Complete your first lesson",
-                Points = 10,
-                EarnedAt = DateTime.Now.AddDays(-1)
-            },
-            new UserAchievementModel
-            {
-                AchievementName = "Quick Learner",
-                AchievementDescription = "Complete 5 lessons in a day",
-                Points = 25,
-                EarnedAt = DateTime.Now.AddDays(-3)
-            }
-        };
-    }
-
-    private List<AssessmentModel> GetMockUpcomingAssessments()
-    {
-        return new List<AssessmentModel>
-        {
-            new AssessmentModel
-            {
-                Title = "C# Fundamentals Quiz",
-                CourseName = "Introduction to C# Programming",
-                AvailableUntil = DateTime.Now.AddDays(5),
-                MaxAttempts = 3,
-                AttemptsUsed = 1,
-                CanAttempt = true
-            },
-            new AssessmentModel
-            {
-                Title = "Database Design Assessment",
-                CourseName = "Database Design Fundamentals",
-                AvailableUntil = DateTime.Now.AddDays(7),
-                MaxAttempts = 2,
-                AttemptsUsed = 0,
-                CanAttempt = true
-            }
-        };
-    }
-
-    public class DashboardData
-    {
-        public int EnrolledCoursesCount { get; set; }
-        public int CompletedCoursesCount { get; set; }
-        public double AverageProgress { get; set; }
-        public int TotalPoints { get; set; }
-        public List<EnrollmentModel> RecentCourses { get; set; } = new();
-        public List<UserAchievementModel> RecentAchievements { get; set; } = new();
-        public List<AssessmentModel> UpcomingAssessments { get; set; } = new();
+        public string Title { get; set; } = string.Empty;
+        public string Content { get; set; } = string.Empty;
     }
 }
