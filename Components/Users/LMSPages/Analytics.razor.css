@@ -1,7 +1,7 @@
 /* Analytics Layout - Similar to Forums */
 .analytics-layout {
     display: flex;
-    height: 100vh;
+    min-height: 100vh;
     background-color: #ffffff;
     color: #2c3e50;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -15,6 +15,11 @@
     flex-direction: column;
     border-right: 1px solid #dee2e6;
     flex-shrink: 0;
+    position: sticky;
+    left: 0;
+    top: 0;
+    height: 100vh;
+    z-index: 10;
 }
 
 .sidebar-header {
@@ -671,27 +676,28 @@
         flex-direction: column;
         height: auto;
         min-height: 100vh;
+        overflow: visible;
     }
-    
     .analytics-sidebar {
         width: 100%;
         height: auto;
         border-right: none;
         border-bottom: 1px solid #dee2e6;
+        position: static;
+        top: auto;
+        left: auto;
+        z-index: 1;
     }
-    
     .sidebar-content {
         flex-direction: row;
         gap: 16px;
         padding: 12px;
     }
-    
     .analytics-nav {
         flex-direction: row;
         gap: 8px;
         flex-wrap: wrap;
     }
-    
     .nav-item {
         flex-direction: column;
         gap: 4px;
@@ -699,11 +705,9 @@
         text-align: center;
         padding: 8px 4px;
     }
-    
     .nav-text {
         font-size: 12px;
     }
-    
     .filters-section {
         border-top: none;
         border-left: 1px solid #dee2e6;
@@ -711,25 +715,22 @@
         padding-left: 16px;
         min-width: 120px;
     }
-    
     .analytics-header {
         flex-direction: column;
         align-items: stretch;
         gap: 12px;
     }
-    
     .kpi-grid {
         grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
         gap: 16px;
     }
-    
     .charts-row {
         grid-template-columns: 1fr;
         gap: 16px;
     }
-    
     .analytics-content {
         padding: 16px;
+        overflow-y: visible;
     }
 }
 
