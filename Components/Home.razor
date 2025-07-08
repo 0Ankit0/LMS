@@ -1,133 +1,112 @@
 ﻿@page "/home"
+@using LMS.Components.Users.LMSPages
+@using LMS.Models.User
 @layout AuthLayout
 @inject NavigationManager NavigationManager
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@rendermode InteractiveServer
 
 <PageTitle>Home</PageTitle>
 
-<div class="container mt-4">
-    <div class="row">
+<div class="container-fluid px-0">
+    <div class="row g-0 g-3">
         <!-- Left: Navigation Cards -->
-        <div class="col-12 col-md-3 mb-4 mb-md-0">
-            <div class="card mb-3 shadow-sm" style="cursor:pointer;" @onclick="() => NavigateTo('/dashboard')">
-                <div class="card-body text-center">
-                    <i class="bi bi-speedometer2 fs-2 mb-2"></i>
-                    <h5 class="card-title mb-1">Dashboard</h5>
-                    <p class="card-text text-muted">View your learning stats</p>
+        <div class="col-12 col-md-2 mb-4 mb-md-0 d-flex flex-column">
+            <div class="card shadow-sm mb-3">
+                <div class="card-body d-flex align-items-center" @onclick="@(() => NavigateTo("/user/lms/dashboard"))"
+                    style="cursor:pointer;">
+                    <i class="bi bi-speedometer2 me-2 fs-4 text-primary"></i>
+                    <span>Dashboard</span>
                 </div>
             </div>
-            <div class="card mb-3 shadow-sm" style="cursor:pointer;" @onclick="() => NavigateTo('/course-catalog')">
-                <div class="card-body text-center">
-                    <i class="bi bi-book fs-2 mb-2"></i>
-                    <h5 class="card-title mb-1">Course Catalog</h5>
-                    <p class="card-text text-muted">Browse all courses</p>
+            <div class="card shadow-sm mb-3">
+                <div class="card-body d-flex align-items-center" @onclick="@(() => NavigateTo("/user/lms/forums"))"
+                    style="cursor:pointer;">
+                    <i class="bi bi-journal-bookmark me-2 fs-4 text-success"></i>
+                    <span>Forums</span>
                 </div>
             </div>
-            <div class="card mb-3 shadow-sm" style="cursor:pointer;" @onclick="@(() => NavigateTo("/my-courses"))">
-                <div class="card-body text-center">
-                    <i class="bi bi-journal-bookmark fs-2 mb-2"></i>
-                    <h5 class="card-title mb-1">My Courses</h5>
-                    <p class="card-text text-muted">Access your enrolled courses</p>
+            <div class="card shadow-sm mb-3">
+                <div class="card-body d-flex align-items-center" @onclick="@(() => NavigateTo("/user/lms/analytics"))"
+                    style="cursor:pointer;">
+                    <i class="bi bi-person-circle me-2 fs-4 text-info"></i>
+                    <span>Analytics</span>
                 </div>
             </div>
-            <div class="card mb-3 shadow-sm" style="cursor:pointer;" @onclick="() => NavigateTo('/user-management')">
-                <div class="card-body text-center">
-                    <i class="bi bi-people fs-2 mb-2"></i>
-                    <h5 class="card-title mb-1">User Management</h5>
-                    <p class="card-text text-muted">Manage users</p>
+            <div class="card shadow-sm mb-3">
+                <div class="card-body d-flex align-items-center" @onclick="@(() => NavigateTo("/user/lms/my-courses"))"
+                    style="cursor:pointer;">
+                    <i class="bi bi-trophy me-2 fs-4 text-warning"></i>
+                    <span>My Courses</span>
                 </div>
             </div>
         </div>
 
         <!-- Middle: Announcements -->
-        <div class="col-12 col-md-6 mb-4 mb-md-0">
-            <div class="card shadow-sm">
-                <div class="card-header bg-primary text-white">
-                    <i class="bi bi-megaphone"></i> Announcements
+        <div class="col-12 col-md-6 mb-4 mb-md-0 d-flex flex-column">
+            <div class="card border-0 mb-4 flex-grow-1 d-flex flex-column">
+                <div class="card-header bg-primary bg-opacity-50 text-white">
+                    <div class="d-flex justify-content-between align-items-center w-100">
+                        <span><i class="bi bi-megaphone"></i> Announcements</span>
+                        <a href="/user/lms/announcement-list"
+                            class="btn btn-link btn-sm text-white text-decoration-underline p-0"
+                            style="font-size: 0.95em;">View All</a>
+                    </div>
                 </div>
-                <div class="card-body">
-                    <!-- Example Announcements -->
-                    <div class="mb-3">
-                        <h6 class="mb-1">Welcome to the LMS!</h6>
-                        <small class="text-muted">July 3, 2025</small>
-                        <p class="mb-0">Check out the new features and updated course catalog.</p>
-                    </div>
-                    <hr />
-                    <div class="mb-3">
-                        <h6 class="mb-1">Upcoming Maintenance</h6>
-                        <small class="text-muted">July 10, 2025</small>
-                        <p class="mb-0">The platform will be under maintenance from 2 AM to 4 AM UTC.</p>
-                    </div>
-                    <!-- Add more announcements as needed -->
+                <div class="card-body  p-0 flex-grow-1 d-flex flex-column hide-scrollbar"
+                    style="max-height: 80svh; overflow-y: auto;">
+                    <Announcements />
                 </div>
             </div>
         </div>
-
-        <!-- Right: Course Details & Search -->
-        <div class="col-12 col-md-3">
-            <div class="card mb-4 shadow-sm">
-                <div class="card-header bg-info text-white">
-                    <i class="bi bi-search"></i> Search Courses
-                </div>
-                <div class="card-body">
-                    <input type="text" class="form-control mb-2" placeholder="Search courses..." @bind="searchTerm" />
-                    <button class="btn btn-info w-100" @onclick="SearchCourses">
-                        <i class="bi bi-search"></i> Search
-                    </button>
-                </div>
-            </div>
-            <div class="card shadow-sm">
-                <div class="card-header bg-secondary text-white">
-                    <i class="bi bi-info-circle"></i> Course Details
-                </div>
-                <div class="card-body">
-                    @if (selectedCourse != null)
-                    {
-                        <h6>@selectedCourse.Title</h6>
-                        <p class="mb-1 text-muted">@selectedCourse.Description</p>
-                        <div><strong>Instructor:</strong> @selectedCourse.InstructorName</div>
-                        <div><strong>Level:</strong> @selectedCourse.Level</div>
-                        <div><strong>Start:</strong> @selectedCourse.StartDate.ToString("MMM dd, yyyy")</div>
-                    }
-                    else
-                    {
-                        <div class="text-muted">Select a course to see details.</div>
-                    }
-                </div>
+        <!-- Right: Course List Search -->
+        <div class="col-12 col-md-4 mb-4 mb-md-0 d-flex flex-column">
+            <div class="flex-grow-1 d-flex flex-column">
+                <CourseListSearch User="currentUser" />
             </div>
         </div>
     </div>
 </div>
 
+<style>
+    .hide-scrollbar {
+        scrollbar-width: none;
+        /* Firefox */
+        -ms-overflow-style: none;
+        /* IE and Edge */
+    }
+
+    .hide-scrollbar::-webkit-scrollbar {
+        display: none;
+        /* Chrome, Safari, Opera */
+    }
+</style>
+
 @code {
-    private string searchTerm = string.Empty;
+    private UserModel? currentUser;
 
-    // Example course model for demonstration
-    private CourseInfo? selectedCourse;
-
-    private void SearchCourses()
+    protected override async Task OnInitializedAsync()
     {
-        // Replace with actual search logic
-        selectedCourse = new CourseInfo
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        if (user.Identity is not null && user.Identity.IsAuthenticated)
         {
-            Title = "Introduction to C# Programming",
-            Description = "Learn the fundamentals of C# programming language and object-oriented programming concepts.",
-            InstructorName = "John Smith",
-            Level = "Beginner",
-            StartDate = DateTime.Now.AddDays(7)
-        };
+            currentUser = new UserModel
+            {
+                UserName = user.Identity.Name,
+                Email = user.FindFirst(c => c.Type == "email")?.Value,
+                Id = user.FindFirst(c => c.Type == "sub" || c.Type == "userid")?.Value,
+            };
+        }
+        else
+        {
+            currentUser = null;
+        }
     }
 
     private void NavigateTo(string url)
     {
         NavigationManager.NavigateTo(url);
-    }
-
-    public class CourseInfo
-    {
-        public string Title { get; set; } = string.Empty;
-        public string Description { get; set; } = string.Empty;
-        public string InstructorName { get; set; } = string.Empty;
-        public string Level { get; set; } = string.Empty;
-        public DateTime StartDate { get; set; }
     }
 }

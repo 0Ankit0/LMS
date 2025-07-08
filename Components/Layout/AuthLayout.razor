@@ -2,17 +2,10 @@
 @inherits LayoutComponentBase
 
 <div class="auth-layout">
-    <div class="container-fluid py-2">
-        <div class="d-flex align-items-center">
-            <div class="flex-grow-1">
-            </div>
-            <div class="ms-auto">
-                <ManageNav></ManageNav>
-            </div>
-        </div>
-    </div>
-
     <main class="auth-main">
+         <div>
+            <ManageNav></ManageNav>
+        </div>
         <div class="container p-2" style="max-width: 100%;">
             @Body
         </div>

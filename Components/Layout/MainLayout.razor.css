@@ -32,7 +32,6 @@ main {
     }
 
     .top-row ::deep a:first-child {
-        overflow: hidden;
         text-overflow: ellipsis;
     }
 
@@ -56,6 +55,7 @@ main {
         height: 100vh;
         position: sticky;
         top: 0;
+        flex-shrink: 0;
     }
 
     .top-row {
@@ -73,6 +73,16 @@ main {
     .top-row, article {
         padding-left: 2rem !important;
         padding-right: 1.5rem !important;
+    }
+
+    /* Sidebar width adjustments for collapsed state */
+    .sidebar:has(.nav-scrollable.collapsed) {
+        width: 60px;
+        transition: width 0.3s ease;
+    }
+    
+    .sidebar {
+        transition: width 0.3s ease;
     }
 }
 
