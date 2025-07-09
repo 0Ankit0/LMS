@@ -1,7 +1,9 @@
-﻿@page "/modules/create"
-@using Microsoft.EntityFrameworkCore
-@using LMS.Data
-@inject IDbContextFactory<LMS.Data.AuthDbContext> DbFactory
+﻿@page "/admin/modules/create"
+@layout LMS.Components.Layout.AdminLayout
+@using LMS.Services
+@using LMS.Components.Shared
+@inject ICourseService CourseService
+@inject IDropdownService DropdownService
 @inject NavigationManager NavigationManager
 
 <PageTitle>Create</PageTitle>
@@ -13,6 +15,7 @@
 <div class="row">
     <div class="col-md-4">
         <EditForm method="post" Model="Module" OnValidSubmit="AddModule" FormName="create" Enhance>
+            <AntiforgeryToken />
             <DataAnnotationsValidator />
             <ValidationSummary class="text-danger" role="alert"/>
             <div class="mb-3">
@@ -26,9 +29,19 @@
                 <ValidationMessage For="() => Module.Description" class="text-danger" /> 
             </div>        
             <div class="mb-3">
-                <label for="courseid" class="form-label">CourseId:</label> 
-                <InputNumber id="courseid" @bind-Value="Module.CourseId" class="form-control" /> 
-                <ValidationMessage For="() => Module.CourseId" class="text-danger" /> 
+                <label for="courseid" class="form-label">Course <span class="text-danger">*</span></label>
+                <SearchableSelectComponent 
+                    TItem="DropdownOption"
+                    TValue="int"
+                    Items="@courseOptions"
+                    ValueSelector="@(item => item.Value)"
+                    DisplaySelector="@(item => item.Text)"
+                    SearchFunction="@SearchCourses"
+                    SelectedValue="@Module.CourseId"
+                    OnSelectedValueChanged="@((int value) => Module.CourseId = value)"
+                    Placeholder="Select a course..."
+                    class="form-control" />
+                <ValidationMessage For="() => Module.CourseId" class="text-danger" />
             </div>        
             <div class="mb-3">
                 <label for="orderindex" class="form-label">OrderIndex:</label> 
@@ -40,40 +53,46 @@
                 <InputCheckbox id="isrequired" @bind-Value="Module.IsRequired" class="form-check-input" /> 
                 <ValidationMessage For="() => Module.IsRequired" class="text-danger" /> 
             </div>        
-            <div class="mb-3">
-                <label for="isactive" class="form-label">IsActive:</label> 
-                <InputCheckbox id="isactive" @bind-Value="Module.IsActive" class="form-check-input" /> 
-                <ValidationMessage For="() => Module.IsActive" class="text-danger" /> 
-            </div>        
-            <div class="mb-3">
-                <label for="createdat" class="form-label">CreatedAt:</label> 
-                <InputDate id="createdat" @bind-Value="Module.CreatedAt" class="form-control" /> 
-                <ValidationMessage For="() => Module.CreatedAt" class="text-danger" /> 
-            </div>        
-            <div class="mb-3">
-                <label for="updatedat" class="form-label">UpdatedAt:</label> 
-                <InputDate id="updatedat" @bind-Value="Module.UpdatedAt" class="form-control" /> 
-                <ValidationMessage For="() => Module.UpdatedAt" class="text-danger" /> 
-            </div>        
             <button type="submit" class="btn btn-primary">Create</button>
         </EditForm>
     </div>
 </div>
 
 <div>
-    <a href="/modules">Back to List</a>
+    <a href="/admin/modules">Back to List</a>
 </div>
 
 @code {
     [SupplyParameterFromForm]
-    private Module Module { get; set; } = new();
+    private CreateModuleRequest Module { get; set; } = new();
 
-    // To protect from overposting attacks, see https://learn.microsoft.com/aspnet/core/blazor/forms/#mitigate-overposting-attacks.
+    private List<DropdownOption> courseOptions = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Load initial options
+        courseOptions = await DropdownService.GetCoursesAsync(search: "", take: 20);
+    }
+
+    private async Task<IEnumerable<DropdownOption>> SearchCourses(string searchTerm)
+    {
+        return await DropdownService.GetCoursesAsync(searchTerm, take: 20);
+    }
+
     private async Task AddModule()
     {
-        using var context = DbFactory.CreateDbContext();
-        context.Modules.Add(Module);
-        await context.SaveChangesAsync();
-        NavigationManager.NavigateTo("/modules");
+        try
+        {
+            var result = await CourseService.CreateModuleAsync(Module);
+            if (result != null)
+            {
+                NavigationManager.NavigateTo("/admin/modules");
+            }
+        }
+        catch (Exception ex)
+        {
+            // Handle error - could add error display logic here
+            Console.WriteLine($"Error creating module: {ex.Message}");
+        }
     }
 }
