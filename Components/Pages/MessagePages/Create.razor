@@ -1,7 +1,10 @@
 ﻿@page "/messages/create"
 @using Microsoft.EntityFrameworkCore
 @using LMS.Data
+@using LMS.Services
+@using LMS.Components.Shared
 @inject IDbContextFactory<LMS.Data.AuthDbContext> DbFactory
+@inject DropdownService DropdownService
 @inject NavigationManager NavigationManager
 
 <PageTitle>Create</PageTitle>
@@ -26,13 +29,33 @@
                 <ValidationMessage For="() => Message.Content" class="text-danger" />
             </div>
             <div class="mb-3">
-                <label for="fromuserid" class="form-label">FromUserId:</label>
-                <InputText id="fromuserid" @bind-Value="Message.FromUserId" class="form-control" aria-required="true" />
+                <label for="fromuserid" class="form-label">From User</label>
+                <SearchableSelectComponent 
+                    TItem="DropdownOption"
+                    TValue="string"
+                    Items="@userOptions"
+                    ValueSelector="@(item => item.Value.ToString())"
+                    DisplaySelector="@(item => item.Text)"
+                    SearchFunction="@SearchUsers"
+                    SelectedValue="@Message.FromUserId"
+                    OnSelectedValueChanged="@((string value) => Message.FromUserId = value)"
+                    Placeholder="Select from user..."
+                    class="form-control" />
                 <ValidationMessage For="() => Message.FromUserId" class="text-danger" />
             </div>
             <div class="mb-3">
-                <label for="touserid" class="form-label">ToUserId:</label>
-                <InputText id="touserid" @bind-Value="Message.ToUserId" class="form-control" aria-required="true" />
+                <label for="touserid" class="form-label">To User</label>
+                <SearchableSelectComponent 
+                    TItem="DropdownOption"
+                    TValue="string"
+                    Items="@userOptions"
+                    ValueSelector="@(item => item.Value.ToString())"
+                    DisplaySelector="@(item => item.Text)"
+                    SearchFunction="@SearchUsers"
+                    SelectedValue="@Message.ToUserId"
+                    OnSelectedValueChanged="@((string value) => Message.ToUserId = value)"
+                    Placeholder="Select to user..."
+                    class="form-control" />
                 <ValidationMessage For="() => Message.ToUserId" class="text-danger" />
             </div>
             <div class="mb-3">
@@ -77,6 +100,19 @@
 @code {
     [SupplyParameterFromForm]
     private Message Message { get; set; } = new();
+
+    private List<DropdownOption> userOptions = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Load initial options
+        userOptions = await DropdownService.GetUsersAsync(search: "", take: 20);
+    }
+
+    private async Task<IEnumerable<DropdownOption>> SearchUsers(string searchTerm)
+    {
+        return await DropdownService.GetUsersAsync(searchTerm, take: 20);
+    }
 
     private async Task AddMessage()
     {

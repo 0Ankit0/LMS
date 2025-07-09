@@ -1,7 +1,10 @@
 ﻿@page "/leaderboards/create"
 @using Microsoft.EntityFrameworkCore
 @using LMS.Data
+@using LMS.Services
+@using LMS.Components.Shared
 @inject IDbContextFactory<LMS.Data.AuthDbContext> DbFactory
+@inject DropdownService DropdownService
 @inject NavigationManager NavigationManager
 
 <PageTitle>Create</PageTitle>
@@ -46,8 +49,18 @@
                 <ValidationMessage For="() => Leaderboard.Period" class="text-danger" />
             </div>
             <div class="mb-3">
-                <label for="courseid" class="form-label">CourseId:</label>
-                <InputNumber id="courseid" @bind-Value="Leaderboard.CourseId" class="form-control" />
+                <label for="courseid" class="form-label">Course</label>
+                <SearchableSelectComponent 
+                    TItem="DropdownOption"
+                    TValue="int?"
+                    Items="@courseOptions"
+                    ValueSelector="@(item => (int?)item.Value)"
+                    DisplaySelector="@(item => item.Text)"
+                    SearchFunction="@SearchCourses"
+                    SelectedValue="@Leaderboard.CourseId"
+                    OnSelectedValueChanged="@((int? value) => Leaderboard.CourseId = value)"
+                    Placeholder="Select a course (optional)..."
+                    class="form-control" />
                 <ValidationMessage For="() => Leaderboard.CourseId" class="text-danger" />
             </div>
             <div class="mb-3">
@@ -72,6 +85,19 @@
 @code {
     [SupplyParameterFromForm]
     private Leaderboard Leaderboard { get; set; } = new();
+
+    private List<DropdownOption> courseOptions = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Load initial options
+        courseOptions = await DropdownService.GetCoursesAsync(search: "", take: 20);
+    }
+
+    private async Task<IEnumerable<DropdownOption>> SearchCourses(string searchTerm)
+    {
+        return await DropdownService.GetCoursesAsync(searchTerm, take: 20);
+    }
 
     private async Task AddLeaderboard()
     {
