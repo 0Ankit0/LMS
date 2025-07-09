@@ -1,5 +1,6 @@
 using LMS.Data;
 using LMS.Models.User;
+using LMS.Models.Common;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 
@@ -8,6 +9,7 @@ namespace LMS.Services
     public interface ICertificateService
     {
         Task<List<CertificateModel>> GetCertificatesAsync();
+        Task<PaginatedResult<CertificateModel>> GetCertificatesPaginatedAsync(PaginationRequest request);
         Task<CertificateModel?> GetCertificateByIdAsync(int id);
         Task<List<CertificateModel>> GetCertificatesByUserIdAsync(string userId);
         Task<CertificateModel?> GetCertificateByCourseAndUserAsync(int courseId, string userId);
@@ -36,6 +38,31 @@ namespace LMS.Services
                 .ToListAsync();
 
             return certificates.Select(MapToCertificateModel).ToList();
+        }
+
+        public async Task<PaginatedResult<CertificateModel>> GetCertificatesPaginatedAsync(PaginationRequest request)
+        {
+            await using var _context = _contextFactory.CreateDbContext();
+
+            var query = _context.Certificates
+                .Include(c => c.User)
+                .Include(c => c.Course)
+                .OrderByDescending(c => c.IssuedAt);
+
+            var totalCount = await query.CountAsync();
+
+            var certificates = await query
+                .Skip((request.PageNumber - 1) * request.PageSize)
+                .Take(request.PageSize)
+                .ToListAsync();
+
+            return new PaginatedResult<CertificateModel>
+            {
+                Items = certificates.Select(MapToCertificateModel).ToList(),
+                TotalCount = totalCount,
+                PageNumber = request.PageNumber,
+                PageSize = request.PageSize
+            };
         }
 
         public async Task<CertificateModel?> GetCertificateByIdAsync(int id)

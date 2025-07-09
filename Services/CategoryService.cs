@@ -1,34 +1,14 @@
 using LMS.Data;
+using LMS.Models.Course;
+using LMS.Models.Common;
 using Microsoft.EntityFrameworkCore;
 
 namespace LMS.Services
 {
-    public class CategoryModel
-    {
-        public int Id { get; set; }
-        public string Name { get; set; } = string.Empty;
-        public string? Description { get; set; }
-        public string? IconUrl { get; set; }
-        public string Color { get; set; } = "#007bff";
-        public bool IsActive { get; set; }
-        public int? ParentCategoryId { get; set; }
-        public string? ParentCategoryName { get; set; }
-        public List<CategoryModel> SubCategories { get; set; } = new();
-        public int CourseCount { get; set; }
-    }
-
-    public class CreateCategoryRequest
-    {
-        public string Name { get; set; } = string.Empty;
-        public string? Description { get; set; }
-        public string? IconUrl { get; set; }
-        public string Color { get; set; } = "#007bff";
-        public int? ParentCategoryId { get; set; }
-    }
-
     public interface ICategoryService
     {
         Task<List<CategoryModel>> GetCategoriesAsync();
+        Task<PaginatedResult<CategoryModel>> GetCategoriesPaginatedAsync(PaginationRequest request);
         Task<List<CategoryModel>> GetRootCategoriesAsync();
         Task<CategoryModel?> GetCategoryByIdAsync(int id);
         Task<List<CategoryModel>> GetSubCategoriesAsync(int parentCategoryId);
@@ -53,11 +33,32 @@ namespace LMS.Services
                 .Include(c => c.ParentCategory)
                 .Include(c => c.SubCategories)
                 .Include(c => c.CourseCategories)
-                .Where(c => c.IsActive)
                 .OrderBy(c => c.Name)
                 .ToListAsync();
 
             return categories.Select(MapToCategoryModel).ToList();
+        }
+
+        public async Task<PaginatedResult<CategoryModel>> GetCategoriesPaginatedAsync(PaginationRequest request)
+        {
+            request.Validate();
+            var query = _context.Categories
+                .Include(c => c.ParentCategory)
+                .Include(c => c.SubCategories)
+                .Include(c => c.CourseCategories)
+                .OrderBy(c => c.Name);
+
+            var totalCount = await query.CountAsync();
+            var skip = (request.PageNumber - 1) * request.PageSize;
+            var categories = await query.Skip(skip).Take(request.PageSize).ToListAsync();
+
+            return new PaginatedResult<CategoryModel>
+            {
+                Items = categories.Select(MapToCategoryModel).ToList(),
+                TotalCount = totalCount,
+                PageSize = request.PageSize,
+                PageNumber = request.PageNumber
+            };
         }
 
         public async Task<List<CategoryModel>> GetRootCategoriesAsync()

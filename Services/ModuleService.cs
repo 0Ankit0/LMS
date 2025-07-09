@@ -1,5 +1,6 @@
 using LMS.Data;
 using LMS.Models.Course;
+using LMS.Models.Common;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 
@@ -8,6 +9,7 @@ namespace LMS.Services
     public interface IModuleService
     {
         Task<List<ModuleModel>> GetModulesAsync();
+        Task<PaginatedResult<ModuleModel>> GetModulesPaginatedAsync(PaginationRequest request);
         Task<ModuleModel?> GetModuleByIdAsync(int id);
         Task<List<ModuleModel>> GetModulesByCourseIdAsync(int courseId);
         Task<ModuleModel> CreateModuleAsync(CreateModuleRequest request);
@@ -36,6 +38,32 @@ namespace LMS.Services
                 .ToListAsync();
 
             return modules.Select(MapToModuleModel).ToList();
+        }
+
+        public async Task<PaginatedResult<ModuleModel>> GetModulesPaginatedAsync(PaginationRequest request)
+        {
+            await using var _context = _contextFactory.CreateDbContext();
+
+            var query = _context.Modules
+                .Include(m => m.Course)
+                .Include(m => m.Lessons)
+                .OrderBy(m => m.CourseId)
+                .ThenBy(m => m.OrderIndex);
+
+            var totalCount = await query.CountAsync();
+
+            var modules = await query
+                .Skip((request.PageNumber - 1) * request.PageSize)
+                .Take(request.PageSize)
+                .ToListAsync();
+
+            return new PaginatedResult<ModuleModel>
+            {
+                Items = modules.Select(MapToModuleModel).ToList(),
+                TotalCount = totalCount,
+                PageNumber = request.PageNumber,
+                PageSize = request.PageSize
+            };
         }
 
         public async Task<ModuleModel?> GetModuleByIdAsync(int id)

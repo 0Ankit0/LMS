@@ -1,19 +1,25 @@
 using LMS.Data;
 using LMS.Models.Assessment;
+using LMS.Models.Common;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 
 namespace LMS.Services;
+
 public interface IAssessmentService
 {
     Task<IEnumerable<AssessmentModel>> GetAssessmentsAsync();
+    Task<PaginatedResult<AssessmentModel>> GetAssessmentsPaginatedAsync(PaginationRequest request);
     Task<IEnumerable<AssessmentModel>> GetAssessmentsByCourseAsync(int courseId);
     Task<AssessmentModel?> GetAssessmentAsync(int id);
     Task<AssessmentModel> CreateAssessmentAsync(CreateAssessmentRequest request);
     Task<AssessmentModel> UpdateAssessmentAsync(int id, CreateAssessmentRequest request);
     Task<bool> DeleteAssessmentAsync(int id);
+    Task<QuestionModel> CreateQuestionAsync(CreateQuestionRequest request);
+    Task<IEnumerable<QuestionModel>> GetAllQuestionsAsync();
+    Task<PaginatedResult<QuestionModel>> GetAllQuestionsPaginatedAsync(PaginationRequest request);
 }
-public class AssessmentService :IAssessmentService
+public class AssessmentService : IAssessmentService
 {
     private readonly IDbContextFactory<AuthDbContext> _contextFactory;
 
@@ -130,6 +136,106 @@ public class AssessmentService :IAssessmentService
         return true;
     }
 
+    public async Task<QuestionModel> CreateQuestionAsync(CreateQuestionRequest request)
+    {
+        await using var _context = _contextFactory.CreateDbContext();
+
+        var question = new Question
+        {
+            Text = request.Text,
+            AssessmentId = request.AssessmentId,
+            Type = (QuestionType)request.Type,
+            Points = request.Points,
+            OrderIndex = request.OrderIndex,
+            Explanation = request.Explanation,
+            IsRequired = request.IsRequired,
+            CreatedAt = DateTime.UtcNow
+        };
+
+        _context.Questions.Add(question);
+        await _context.SaveChangesAsync();
+
+        // Add options if provided
+        if (request.Options.Any())
+        {
+            var options = request.Options.Select(o => new QuestionOption
+            {
+                Text = o.Text,
+                QuestionId = question.Id,
+                IsCorrect = o.IsCorrect,
+                OrderIndex = o.OrderIndex
+            }).ToList();
+
+            _context.QuestionOptions.AddRange(options);
+            await _context.SaveChangesAsync();
+        }
+
+        // Return the created question as a model
+        var createdQuestion = await _context.Questions
+            .Include(q => q.Options)
+            .FirstAsync(q => q.Id == question.Id);
+
+        return MapToQuestionModel(createdQuestion);
+    }
+
+    public async Task<IEnumerable<QuestionModel>> GetAllQuestionsAsync()
+    {
+        await using var _context = _contextFactory.CreateDbContext();
+        var questions = await _context.Questions
+            .Include(q => q.Options)
+            .ToListAsync();
+
+        return questions.Select(MapToQuestionModel);
+    }
+
+    public async Task<PaginatedResult<QuestionModel>> GetAllQuestionsPaginatedAsync(PaginationRequest request)
+    {
+        request.Validate();
+        await using var _context = _contextFactory.CreateDbContext();
+        var query = _context.Questions
+            .Include(q => q.Options)
+            .Include(q => q.Assessment)
+            .OrderBy(q => q.Assessment.Title)
+            .ThenBy(q => q.OrderIndex);
+
+        var totalCount = await query.CountAsync();
+        var skip = (request.PageNumber - 1) * request.PageSize;
+        var questions = await query.Skip(skip).Take(request.PageSize).ToListAsync();
+
+        return new PaginatedResult<QuestionModel>
+        {
+            Items = questions.Select(MapToQuestionModel).ToList(),
+            TotalCount = totalCount,
+            PageSize = request.PageSize,
+            PageNumber = request.PageNumber
+        };
+    }
+
+    public async Task<PaginatedResult<AssessmentModel>> GetAssessmentsPaginatedAsync(PaginationRequest request)
+    {
+        request.Validate();
+        await using var _context = _contextFactory.CreateDbContext();
+        var query = _context.Assessments
+            .Include(a => a.Questions)
+                .ThenInclude(q => q.Options)
+            .Include(a => a.Course)
+            .Include(a => a.Module)
+            .Include(a => a.Lesson)
+            .OrderBy(a => a.Title);
+
+        var totalCount = await query.CountAsync();
+        var skip = (request.PageNumber - 1) * request.PageSize;
+        var assessments = await query.Skip(skip).Take(request.PageSize).ToListAsync();
+
+        return new PaginatedResult<AssessmentModel>
+        {
+            Items = assessments.Select(MapToAssessmentModel).ToList(),
+            TotalCount = totalCount,
+            PageSize = request.PageSize,
+            PageNumber = request.PageNumber
+        };
+    }
+
     private static AssessmentModel MapToAssessmentModel(Assessment assessment)
     {
         return new AssessmentModel
@@ -165,6 +271,29 @@ public class AssessmentService :IAssessmentService
                     OrderIndex = o.OrderIndex
                 }).ToList() ?? new List<QuestionOptionModel>()
             }).ToList() ?? new List<QuestionModel>()
+        };
+    }
+
+    private static QuestionModel MapToQuestionModel(Question question)
+    {
+        return new QuestionModel
+        {
+            Id = question.Id,
+            Text = question.Text,
+            AssessmentId = question.AssessmentId,
+            Type = question.Type,
+            Points = question.Points,
+            OrderIndex = question.OrderIndex,
+            Explanation = question.Explanation,
+            IsRequired = question.IsRequired,
+            CreatedAt = question.CreatedAt,
+            Options = question.Options?.Select(o => new QuestionOptionModel
+            {
+                Id = o.Id,
+                Text = o.Text,
+                IsCorrect = o.IsCorrect,
+                OrderIndex = o.OrderIndex
+            }).ToList() ?? new List<QuestionOptionModel>()
         };
     }
 }

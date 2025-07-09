@@ -1,5 +1,6 @@
 using LMS.Data;
 using LMS.Models.User;
+using LMS.Models.Common;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 
@@ -9,6 +10,7 @@ namespace LMS.Services
     {
         Task<List<AchievementModel>> GetAchievementsAsync();
         Task<List<AchievementModel>> GetAllAchievementsAsync();
+        Task<PaginatedResult<AchievementModel>> GetAllAchievementsPaginatedAsync(PaginationRequest request);
         Task<AchievementModel?> GetAchievementByIdAsync(int id);
         Task<AchievementModel> CreateAchievementAsync(CreateAchievementRequest request);
         Task<AchievementModel> UpdateAchievementAsync(int id, CreateAchievementRequest request);
@@ -49,6 +51,30 @@ namespace LMS.Services
                 .ToListAsync();
 
             return achievements.Select(MapToAchievementModel).ToList();
+        }
+
+        public async Task<PaginatedResult<AchievementModel>> GetAllAchievementsPaginatedAsync(PaginationRequest request)
+        {
+            await using var _context = _contextFactory.CreateDbContext();
+
+            var query = _context.Achievements
+                .Include(a => a.UserAchievements)
+                .OrderBy(a => a.Name);
+
+            var totalCount = await query.CountAsync();
+
+            var achievements = await query
+                .Skip((request.PageNumber - 1) * request.PageSize)
+                .Take(request.PageSize)
+                .ToListAsync();
+
+            return new PaginatedResult<AchievementModel>
+            {
+                Items = achievements.Select(MapToAchievementModel).ToList(),
+                TotalCount = totalCount,
+                PageNumber = request.PageNumber,
+                PageSize = request.PageSize
+            };
         }
 
         public async Task<AchievementModel?> GetAchievementByIdAsync(int id)
@@ -191,7 +217,7 @@ namespace LMS.Services
                 Points = achievement.Points,
                 BadgeColor = achievement.BadgeColor,
                 Type = achievement.Type.ToString(),
-                Criteria = achievement.Criteria,
+                Criteria = achievement.Criteria?.ToList() ?? new List<AchievementCriteria>(),
                 IsActive = achievement.IsActive,
                 CreatedAt = achievement.CreatedAt,
                 UsersEarnedCount = achievement.UserAchievements?.Count ?? 0

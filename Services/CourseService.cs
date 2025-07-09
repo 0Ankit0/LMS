@@ -1,5 +1,6 @@
 using LMS.Data;
 using LMS.Models.Course;
+using LMS.Models.Common;
 using Microsoft.EntityFrameworkCore;
 
 namespace LMS.Services
@@ -7,6 +8,7 @@ namespace LMS.Services
     public interface ICourseService
     {
         Task<List<CourseModel>> GetCoursesAsync();
+        Task<PaginatedResult<CourseModel>> GetCoursesPaginatedAsync(PaginationRequest request);
         Task<CourseModel?> GetCourseByIdAsync(int id);
         Task<CourseModel> CreateCourseAsync(CreateCourseRequest request);
         Task<CourseModel> UpdateCourseAsync(int id, CreateCourseRequest request);
@@ -41,7 +43,7 @@ namespace LMS.Services
 
             var courseModels = courses.Select(MapToCourseModel).ToList();
 
-            // Add dummy data
+            // Add dummy data for demo purposes
             courseModels.AddRange(new[]
             {
         new CourseModel
@@ -87,6 +89,33 @@ namespace LMS.Services
     });
 
             return courseModels;
+        }
+
+        public async Task<PaginatedResult<CourseModel>> GetCoursesPaginatedAsync(PaginationRequest request)
+        {
+            request.Validate();
+            using var context = _contextFactory.CreateDbContext();
+            var query = context.Courses
+                .Include(c => c.Instructor)
+                .Include(c => c.Modules)
+                .Include(c => c.Enrollments)
+                .Include(c => c.CourseCategories)
+                    .ThenInclude(cc => cc.Category)
+                .Include(c => c.CourseTags)
+                    .ThenInclude(ct => ct.Tag)
+                .OrderBy(c => c.Title);
+
+            var totalCount = await query.CountAsync();
+            var skip = (request.PageNumber - 1) * request.PageSize;
+            var courses = await query.Skip(skip).Take(request.PageSize).ToListAsync();
+
+            return new PaginatedResult<CourseModel>
+            {
+                Items = courses.Select(MapToCourseModel).ToList(),
+                TotalCount = totalCount,
+                PageSize = request.PageSize,
+                PageNumber = request.PageNumber
+            };
         }
 
         public async Task<CourseModel?> GetCourseByIdAsync(int id)

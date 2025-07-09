@@ -1,5 +1,6 @@
 using LMS.Data;
 using LMS.Models.User;
+using LMS.Models.Common;
 using Microsoft.EntityFrameworkCore;
 
 namespace LMS.Services
@@ -7,6 +8,7 @@ namespace LMS.Services
     public interface IEnrollmentService
     {
         Task<List<EnrollmentModel>> GetEnrollmentsAsync();
+        Task<PaginatedResult<EnrollmentModel>> GetEnrollmentsPaginatedAsync(PaginationRequest request);
         Task<EnrollmentModel?> GetEnrollmentByIdAsync(int id);
         Task<List<EnrollmentModel>> GetEnrollmentsByUserIdAsync(string userId);
         Task<List<EnrollmentModel>> GetUserEnrollmentsAsync(string userId); // Add this method
@@ -38,6 +40,29 @@ namespace LMS.Services
                 .ToListAsync();
 
             return enrollments.Select(MapToEnrollmentModel).ToList();
+        }
+
+        public async Task<PaginatedResult<EnrollmentModel>> GetEnrollmentsPaginatedAsync(PaginationRequest request)
+        {
+            var query = _context.Enrollments
+                .Include(e => e.User)
+                .Include(e => e.Course)
+                .OrderByDescending(e => e.EnrolledAt);
+
+            var totalCount = await query.CountAsync();
+
+            var enrollments = await query
+                .Skip((request.PageNumber - 1) * request.PageSize)
+                .Take(request.PageSize)
+                .ToListAsync();
+
+            return new PaginatedResult<EnrollmentModel>
+            {
+                Items = enrollments.Select(MapToEnrollmentModel).ToList(),
+                TotalCount = totalCount,
+                PageNumber = request.PageNumber,
+                PageSize = request.PageSize
+            };
         }
 
         public async Task<EnrollmentModel?> GetEnrollmentByIdAsync(int id)

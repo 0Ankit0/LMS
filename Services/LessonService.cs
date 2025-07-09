@@ -1,5 +1,6 @@
 using LMS.Data;
 using LMS.Models.Course;
+using LMS.Models.Common;
 using Microsoft.EntityFrameworkCore;
 
 namespace LMS.Services
@@ -7,6 +8,7 @@ namespace LMS.Services
     public interface ILessonService
     {
         Task<List<LessonModel>> GetLessonsAsync();
+        Task<PaginatedResult<LessonModel>> GetLessonsPaginatedAsync(PaginationRequest request);
         Task<LessonModel?> GetLessonByIdAsync(int id);
         Task<List<LessonModel>> GetLessonsByModuleIdAsync(int moduleId);
         Task<LessonModel> CreateLessonAsync(CreateLessonRequest request);
@@ -34,6 +36,30 @@ namespace LMS.Services
                 .ToListAsync();
 
             return lessons.Select(MapToLessonModel).ToList();
+        }
+
+        public async Task<PaginatedResult<LessonModel>> GetLessonsPaginatedAsync(PaginationRequest request)
+        {
+            var query = _context.Lessons
+                .Include(l => l.Module)
+                .Include(l => l.Resources)
+                .OrderBy(l => l.ModuleId)
+                .ThenBy(l => l.OrderIndex);
+
+            var totalCount = await query.CountAsync();
+
+            var lessons = await query
+                .Skip((request.PageNumber - 1) * request.PageSize)
+                .Take(request.PageSize)
+                .ToListAsync();
+
+            return new PaginatedResult<LessonModel>
+            {
+                Items = lessons.Select(MapToLessonModel).ToList(),
+                TotalCount = totalCount,
+                PageNumber = request.PageNumber,
+                PageSize = request.PageSize
+            };
         }
 
         public async Task<LessonModel?> GetLessonByIdAsync(int id)

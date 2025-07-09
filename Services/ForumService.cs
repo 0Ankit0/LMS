@@ -1,5 +1,6 @@
 using LMS.Data;
 using LMS.Models.Communication;
+using LMS.Models.Common;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 
@@ -8,6 +9,7 @@ namespace LMS.Services
     public interface IForumService
     {
         Task<List<ForumModel>> GetForumsAsync();
+        Task<PaginatedResult<ForumModel>> GetForumsPaginatedAsync(PaginationRequest request);
         Task<ForumModel?> GetForumByIdAsync(int id);
         Task<List<ForumModel>> GetForumsByCourseIdAsync(int courseId);
         Task<ForumModel> CreateForumAsync(CreateForumRequest request);
@@ -22,6 +24,8 @@ namespace LMS.Services
 
         // Forum Posts
         Task<List<ForumPostModel>> GetPostsByTopicIdAsync(int topicId);
+        Task<List<ForumPostModel>> GetAllForumPostsAsync();
+        Task<PaginatedResult<ForumPostModel>> GetAllForumPostsPaginatedAsync(PaginationRequest request);
         Task<ForumPostModel?> GetPostByIdAsync(int id);
         Task<ForumPostModel> CreatePostAsync(CreateForumPostRequest request, string authorId);
         Task<bool> DeletePostAsync(int id);
@@ -46,6 +50,30 @@ namespace LMS.Services
                 .ToListAsync();
 
             return forums.Select(MapToForumModel).ToList();
+        }
+
+        public async Task<PaginatedResult<ForumModel>> GetForumsPaginatedAsync(PaginationRequest request)
+        {
+            request.Validate();
+            await using var _context = _contextFactory.CreateDbContext();
+            var query = _context.Forums.AsQueryable()
+                .Include(f => f.Course)
+                .Include(f => f.Topics)
+                .OrderBy(f => f.Title);
+
+            var totalCount = await query.CountAsync();
+            var skip = (request.PageNumber - 1) * request.PageSize;
+            var forums = await query.Skip(skip).Take(request.PageSize).ToListAsync();
+
+            var forumModels = forums.Select(MapToForumModel).ToList();
+
+            return new PaginatedResult<ForumModel>
+            {
+                Items = forumModels,
+                TotalCount = totalCount,
+                PageSize = request.PageSize,
+                PageNumber = request.PageNumber
+            };
         }
 
         public async Task<ForumModel?> GetForumByIdAsync(int id)
@@ -202,6 +230,44 @@ namespace LMS.Services
                 .ToListAsync();
 
             return posts.Select(MapToForumPostModel).ToList();
+        }
+
+        public async Task<List<ForumPostModel>> GetAllForumPostsAsync()
+        {
+            await using var _context = _contextFactory.CreateDbContext();
+            var posts = await _context.ForumPosts
+                .Include(p => p.Topic)
+                    .ThenInclude(t => t.Forum)
+                .Include(p => p.Author)
+                .OrderByDescending(p => p.CreatedAt)
+                .ToListAsync();
+
+            return posts.Select(MapToForumPostModel).ToList();
+        }
+
+        public async Task<PaginatedResult<ForumPostModel>> GetAllForumPostsPaginatedAsync(PaginationRequest request)
+        {
+            request.Validate();
+            await using var _context = _contextFactory.CreateDbContext();
+            var query = _context.ForumPosts.AsQueryable()
+                .Include(p => p.Topic)
+                    .ThenInclude(t => t.Forum)
+                .Include(p => p.Author)
+                .OrderByDescending(p => p.CreatedAt);
+
+            var totalCount = await query.CountAsync();
+            var skip = (request.PageNumber - 1) * request.PageSize;
+            var posts = await query.Skip(skip).Take(request.PageSize).ToListAsync();
+
+            var postModels = posts.Select(MapToForumPostModel).ToList();
+
+            return new PaginatedResult<ForumPostModel>
+            {
+                Items = postModels,
+                TotalCount = totalCount,
+                PageSize = request.PageSize,
+                PageNumber = request.PageNumber
+            };
         }
 
         public async Task<ForumPostModel?> GetPostByIdAsync(int id)
