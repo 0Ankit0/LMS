@@ -1,8 +1,9 @@
 ﻿@page "/admin/categories/create"
 @layout LMS.Components.Layout.AdminLayout
-@using Microsoft.EntityFrameworkCore
-@using LMS.Data
-@inject IDbContextFactory<LMS.Data.AuthDbContext> DbFactory
+@using LMS.Services
+@using LMS.Components.Shared
+@inject ICategoryService CategoryService
+@inject IDropdownService DropdownService
 @inject NavigationManager NavigationManager
 
 <PageTitle>Create Category - Admin</PageTitle>
@@ -21,7 +22,7 @@
                 <h5 class="card-title mb-0">Category Information</h5>
             </div>
             <div class="card-body">
-                <EditForm method="post" Model="Category" OnValidSubmit="AddCategory" FormName="create" Enhance>
+                <EditForm Model="Category" OnValidSubmit="AddCategory">
                     <DataAnnotationsValidator />
                     <ValidationSummary class="alert alert-danger" role="alert" />
 
@@ -29,7 +30,7 @@
                         <div class="col-md-6 mb-3">
                             <label for="name" class="form-label">Name <span class="text-danger">*</span></label>
                             <InputText id="name" @bind-Value="Category.Name" class="form-control" aria-required="true"
-                                placeholder="Enter category name" />
+                                       placeholder="Enter category name" />
                             <ValidationMessage For="() => Category.Name" class="text-danger" />
                         </div>
                         <div class="col-md-6 mb-3">
@@ -42,7 +43,7 @@
                     <div class="mb-3">
                         <label for="description" class="form-label">Description</label>
                         <InputTextArea id="description" @bind-Value="Category.Description" class="form-control" rows="3"
-                            placeholder="Enter category description" />
+                                       placeholder="Enter category description" />
                         <ValidationMessage For="() => Category.Description" class="text-danger" />
                     </div>
 
@@ -50,13 +51,18 @@
                         <div class="col-md-6 mb-3">
                             <label for="iconurl" class="form-label">Icon URL</label>
                             <InputText id="iconurl" @bind-Value="Category.IconUrl" class="form-control"
-                                placeholder="https://example.com/icon.png" />
+                                       placeholder="https://example.com/icon.png" />
                             <ValidationMessage For="() => Category.IconUrl" class="text-danger" />
                         </div>
                         <div class="col-md-6 mb-3">
-                            <label for="parentcategoryid" class="form-label">Parent Category ID</label>
-                            <InputNumber id="parentcategoryid" @bind-Value="Category.ParentCategoryId"
-                                class="form-control" />
+                            <label for="parentcategoryid" class="form-label">Parent Category</label>
+                            <InputSelect id="parentcategoryid" @bind-Value="Category.ParentCategoryId" class="form-select">
+                                <option value="">Select parent category (optional)...</option>
+                                @foreach (var option in categoryOptions)
+                                {
+                                    <option value="@option.Value">@option.Text</option>
+                                }
+                            </InputSelect>
                             <ValidationMessage For="() => Category.ParentCategoryId" class="text-danger" />
                         </div>
                     </div>
@@ -82,16 +88,39 @@
 </div>
 
 @code {
-    [SupplyParameterFromForm]
-    private Category Category { get; set; } = new();
+    private CreateCategoryRequest Category { get; set; } = new();
+    private List<DropdownOption> categoryOptions = new();
 
-private async Task AddCategory()
+    protected override async Task OnInitializedAsync()
     {
-        using var context = DbFactory.CreateDbContext();
-        context.Categories.Add(Category);
-        await context.SaveChangesAsync();
-        NavigationManager.NavigateTo("/admin/categories");
+        // Load initial options
+        try
+        {
+            var categories = await DropdownService.GetCategoriesAsync(search: "", take: 20);
+            categoryOptions = categories ?? new List<DropdownOption>();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading categories: {ex.Message}");
+            categoryOptions = new List<DropdownOption>();
+        }
+    }
+
+    private async Task AddCategory()
+    {
+        Console.WriteLine("AddCategory method called!"); // Debug log
+        try
+        {
+            var result = await CategoryService.CreateCategoryAsync(Category);
+            if (result != null)
+            {
+                NavigationManager.NavigateTo("/admin/categories");
+            }
+        }
+        catch (Exception ex)
+        {
+            // Handle error - could add error display logic here
+            Console.WriteLine($"Error creating category: {ex.Message}");
+        }
     }
 }
-
-   
