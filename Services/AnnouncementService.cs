@@ -7,6 +7,7 @@ namespace LMS.Services
     public interface IAnnouncementService
     {
         Task<List<AnnouncementModel>> GetAnnouncementsAsync();
+        Task<List<AnnouncementModel>> GetLatestAnnouncementsAsync();
         Task<List<AnnouncementModel>> GetAnnouncementsByCourseAsync(int courseId);
         Task<AnnouncementModel?> GetAnnouncementByIdAsync(int id);
         Task<AnnouncementModel> CreateAnnouncementAsync(CreateAnnouncementRequest request);
@@ -46,6 +47,82 @@ namespace LMS.Services
                     PublishedAt = a.PublishedAt,
                     IsActive = a.IsActive
                 })
+                .ToListAsync();
+
+            // Add dummy data
+            dbAnnouncements.AddRange(new List<AnnouncementModel>
+            {
+                new()
+                {
+                    Id = -1,
+                    Title = "Welcome to the LMS Platform",
+                    Content = "We're excited to have you join our learning management system. Explore the courses, complete assignments, and track your progress.",
+                    AuthorId = "admin",
+                    AuthorName = "System Administrator",
+                    Priority = "Critical",
+                    PublishedAt = DateTime.Now.AddDays(-1),
+                    IsActive = true
+                },
+                new()
+                {
+                    Id = -2,
+                    Title = "New Course Available: Machine Learning Basics",
+                    Content = "A new course on Machine Learning fundamentals is now available. Enroll today to get started with AI and data science.",
+                    AuthorId = "instructor1",
+                    AuthorName = "Dr. Sarah Johnson",
+                    CourseId = 1,
+                    CourseName = "Machine Learning Basics",
+                    Priority = "High",
+                    PublishedAt = DateTime.Now.AddDays(-3),
+                    IsActive = true
+                },
+                new()
+                {
+                    Id = -3,
+                    Title = "System Maintenance Scheduled",
+                    Content = "The system will undergo scheduled maintenance this weekend from 2 AM to 6 AM EST. Some features may be temporarily unavailable.",
+                    AuthorId = "admin",
+                    AuthorName = "System Administrator",
+                    Priority = "Medium",
+                    PublishedAt = DateTime.Now.AddDays(-5),
+                    IsActive = true
+                },
+                new()
+                {
+                    Id = -4,
+                    Title = "Tips for Effective Online Learning",
+                    Content = "Here are some proven strategies to maximize your learning experience: 1) Set a regular study schedule, 2) Take notes actively, 3) Participate in discussions, 4) Seek help when needed.",
+                    AuthorId = "instructor2",
+                    AuthorName = "Prof. Michael Chen",
+                    Priority = "Low",
+                    PublishedAt = DateTime.Now.AddDays(-7),
+                    IsActive = true
+                }
+            });
+
+            return dbAnnouncements;
+        }
+        public async Task<List<AnnouncementModel>> GetLatestAnnouncementsAsync()
+        {
+            using var context = _contextFactory.CreateDbContext();
+            // Only get active announcements from the database
+            var dbAnnouncements = await context.Announcements
+                .Where(a => a.IsActive && (a.ExpiresAt == null || a.ExpiresAt > DateTime.UtcNow))
+                .OrderByDescending(a => a.Id)
+                .Select(a => new AnnouncementModel
+                {
+                    Id = a.Id,
+                    Title = a.Title,
+                    Content = a.Content,
+                    AuthorId = a.AuthorId,
+                    AuthorName = a.Author.FullName,
+                    CourseId = a.CourseId,
+                    CourseName = a.Course != null ? a.Course.Id.ToString() : null,
+                    Priority = a.Priority.ToString(),
+                    PublishedAt = a.PublishedAt,
+                    IsActive = a.IsActive
+                })
+                .Take(5)
                 .ToListAsync();
 
             // Add dummy data

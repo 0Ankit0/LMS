@@ -1,6 +1,4 @@
 @page "/user/lms/announcement-list"
-@using LMS.Models.Communication
-@using LMS.Models.User
 @using LMS.Services
 @using Microsoft.AspNetCore.Components
 @using Microsoft.AspNetCore.Components.Web
@@ -228,19 +226,13 @@
             // Load announcements from service
             announcements = await AnnouncementService.GetAnnouncementsAsync();
             
-            // If no announcements from service, use mock data
-            if (!announcements.Any())
-            {
-                announcements = GetMockAnnouncements();
-            }
-            
+           
             ApplyFilters();
         }
         catch (Exception ex)
         {
             // Log error and use mock data
             Console.WriteLine($"Error loading announcements: {ex.Message}");
-            announcements = GetMockAnnouncements();
             ApplyFilters();
         }
         finally
@@ -248,74 +240,6 @@
             isLoading = false;
         }
     }
-
-    private List<AnnouncementModel> GetMockAnnouncements()
-    {
-        return new List<AnnouncementModel>
-        {
-            new AnnouncementModel
-            {
-                Id = 1,
-                Title = "System Maintenance Scheduled",
-                Content = "We will be performing routine system maintenance on Saturday, December 14th from 2:00 AM to 4:00 AM EST. During this time, the learning management system will be temporarily unavailable. We apologize for any inconvenience and appreciate your patience.",
-                Priority = "high",
-                AuthorName = "System Administrator",
-                PublishedAt = DateTime.Now.AddDays(-1),
-                IsActive = true
-            },
-            new AnnouncementModel
-            {
-                Id = 2,
-                Title = "New Course Available: Advanced Web Development",
-                Content = "We're excited to announce the launch of our new Advanced Web Development course! This comprehensive program covers modern frameworks, best practices, and hands-on projects. Enrollment is now open for all students.",
-                Priority = "medium",
-                AuthorName = "Dr. Sarah Johnson",
-                PublishedAt = DateTime.Now.AddDays(-2),
-                IsActive = true
-            },
-            new AnnouncementModel
-            {
-                Id = 3,
-                Title = "Holiday Schedule Update",
-                Content = "Please note that our support team will have modified hours during the holiday season. From December 20th to January 2nd, support will be available from 9:00 AM to 5:00 PM EST, Monday through Friday.",
-                Priority = "low",
-                AuthorName = "Support Team",
-                PublishedAt = DateTime.Now.AddDays(-3),
-                IsActive = true
-            },
-            new AnnouncementModel
-            {
-                Id = 4,
-                Title = "Student Achievement Recognition",
-                Content = "Congratulations to our outstanding students who completed their certifications this month! We're proud to celebrate their dedication and hard work. Keep up the excellent progress!",
-                Priority = "low",
-                AuthorName = "Academic Affairs",
-                PublishedAt = DateTime.Now.AddDays(-5),
-                IsActive = true
-            },
-            new AnnouncementModel
-            {
-                Id = 5,
-                Title = "Security Update Required",
-                Content = "As part of our ongoing commitment to security, we're implementing enhanced authentication measures. All users will need to update their passwords by December 20th. Please use the password reset feature if needed.",
-                Priority = "high",
-                AuthorName = "IT Security Team",
-                PublishedAt = DateTime.Now.AddDays(-7),
-                IsActive = true
-            },
-            new AnnouncementModel
-            {
-                Id = 6,
-                Title = "New Mobile App Features",
-                Content = "Our mobile app has been updated with new features including offline course access, push notifications, and improved performance. Update your app from the App Store or Google Play Store.",
-                Priority = "medium",
-                AuthorName = "Development Team",
-                PublishedAt = DateTime.Now.AddDays(-10),
-                IsActive = true
-            }
-        };
-    }
-
     private void SelectFilter(string filter)
     {
         selectedFilter = filter;

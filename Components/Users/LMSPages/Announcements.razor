@@ -1,6 +1,4 @@
 @page "/user/lms/announcements"
-@using LMS.Models.Communication
-@using LMS.Models.User
 @using LMS.Services
 @using Microsoft.AspNetCore.Components
 @using Microsoft.AspNetCore.Components.Web
@@ -13,7 +11,7 @@
 <div class="simple-announcements-layout">
     <div class="announcements-container">
         <!-- Header -->
-        
+
         <!-- Announcements Content -->
         <div class="announcements-content">
             @if (isLoading)
@@ -53,17 +51,18 @@
                                 <p class="announcement-excerpt">@GetExcerpt(announcement.Content)</p>
                             </div>
                             <div class="announcement-actions">
-                                <button class="btn btn-sm btn-outline-primary view-btn" 
-                                        @onclick="() => ShowAnnouncement(announcement)"
-                                        @onclick:stopPropagation="true">
+                                <button class="btn btn-sm btn-outline-primary view-btn"
+                                    @onclick="() => ShowAnnouncement(announcement)" @onclick:stopPropagation="true">
                                     <i class="bi bi-eye"></i>
                                 </button>
                             </div>
                         </div>
                     }
                     <div class="d-flex justify-content-end mt-2">
-    <a href="/user/lms/announcement-list" class="btn btn-link btn-sm text-primary text-decoration-underline p-0" style="font-size: 0.95em;">View All</a>
-</div>
+                        <a href="/user/lms/announcement-list"
+                            class="btn btn-link btn-sm text-primary text-decoration-underline p-0"
+                            style="font-size: 0.95em;">View All</a>
+                    </div>
                 </div>
             }
             else
@@ -124,11 +123,11 @@
     // Properties
     private bool isLoading = true;
     private bool showModal = false;
-    
+
     // Collections and selected items
     private List<AnnouncementModel> announcements = new();
     private AnnouncementModel? selectedAnnouncement;
-    
+
     protected override async Task OnInitializedAsync()
     {
         await LoadAnnouncements();
@@ -137,102 +136,22 @@
     private async Task LoadAnnouncements()
     {
         isLoading = true;
-        
+
         try
         {
             // Load announcements from service
-            announcements = await AnnouncementService.GetAnnouncementsAsync();
-            
-            // If no announcements from service, use mock data
-            if (!announcements.Any())
-            {
-                announcements = GetMockAnnouncements();
-            }
-            
-            // Sort by date (newest first)
-            announcements = announcements
-                .Where(a => a.IsActive)
-                .OrderByDescending(a => a.PublishedAt)
-                .Take(5) // Limit to 5 most recent announcements
-                .ToList();
+            announcements = await AnnouncementService.GetLatestAnnouncementsAsync();
+
         }
         catch (Exception ex)
         {
             // Log error and use mock data
             Console.WriteLine($"Error loading announcements: {ex.Message}");
-            announcements = GetMockAnnouncements();
         }
         finally
         {
             isLoading = false;
         }
-    }
-
-    private List<AnnouncementModel> GetMockAnnouncements()
-    {
-        return new List<AnnouncementModel>
-        {
-            new AnnouncementModel
-            {
-                Id = 1,
-                Title = "System Maintenance Scheduled",
-                Content = "We will be performing routine system maintenance on Saturday, December 14th from 2:00 AM to 4:00 AM EST. During this time, the learning management system will be temporarily unavailable. We apologize for any inconvenience and appreciate your patience. Please make sure to save any work before the maintenance window begins.",
-                Priority = "high",
-                AuthorName = "System Administrator",
-                PublishedAt = DateTime.Now.AddDays(-1),
-                IsActive = true
-            },
-            new AnnouncementModel
-            {
-                Id = 2,
-                Title = "New Course Available: Advanced Web Development",
-                Content = "We're excited to announce the launch of our new Advanced Web Development course! This comprehensive program covers modern frameworks, best practices, and hands-on projects. The course includes modules on React, Vue.js, Node.js, and modern CSS frameworks. Enrollment is now open for all students with intermediate programming knowledge.",
-                Priority = "medium",
-                AuthorName = "Dr. Sarah Johnson",
-                PublishedAt = DateTime.Now.AddDays(-2),
-                IsActive = true
-            },
-            new AnnouncementModel
-            {
-                Id = 3,
-                Title = "Holiday Schedule Update",
-                Content = "Please note that our support team will have modified hours during the holiday season. From December 20th to January 2nd, support will be available from 9:00 AM to 5:00 PM EST, Monday through Friday. Emergency support will still be available 24/7 for critical issues. We appreciate your understanding during this time.",
-                Priority = "low",
-                AuthorName = "Support Team",
-                PublishedAt = DateTime.Now.AddDays(-3),
-                IsActive = true
-            },
-            new AnnouncementModel
-            {
-                Id = 4,
-                Title = "Student Achievement Recognition",
-                Content = "Congratulations to our outstanding students who completed their certifications this month! We're proud to celebrate their dedication and hard work. This month we had 45 students complete their certifications across various programs. Special recognition goes to our top performers who achieved perfect scores. Keep up the excellent progress!",
-                Priority = "low",
-                AuthorName = "Academic Affairs",
-                PublishedAt = DateTime.Now.AddDays(-5),
-                IsActive = true
-            },
-            new AnnouncementModel
-            {
-                Id = 5,
-                Title = "Security Update Required",
-                Content = "As part of our ongoing commitment to security, we're implementing enhanced authentication measures. All users will need to update their passwords by December 20th. The new password requirements include minimum 12 characters with a combination of uppercase, lowercase, numbers, and special characters. Please use the password reset feature if you need assistance.",
-                Priority = "high",
-                AuthorName = "IT Security Team",
-                PublishedAt = DateTime.Now.AddDays(-7),
-                IsActive = true
-            },
-            new AnnouncementModel
-            {
-                Id = 6,
-                Title = "New Mobile App Features",
-                Content = "Our mobile app has been updated with exciting new features! The latest version includes offline course access, push notifications for important updates, improved performance, and a redesigned user interface. You can now download course materials for offline viewing and receive real-time notifications about your progress. Update your app from the App Store or Google Play Store to access these new features.",
-                Priority = "medium",
-                AuthorName = "Development Team",
-                PublishedAt = DateTime.Now.AddDays(-10),
-                IsActive = true
-            }
-        };
     }
 
     private void ShowAnnouncement(AnnouncementModel announcement)
@@ -272,7 +191,7 @@
     private string FormatDate(DateTime date)
     {
         var timeSpan = DateTime.Now - date;
-        
+
         if (timeSpan.Days > 0)
         {
             return $"{timeSpan.Days} day{(timeSpan.Days > 1 ? "s" : "")} ago";
