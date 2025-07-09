@@ -1,7 +1,9 @@
-﻿@page "/forums/create"
-@using Microsoft.EntityFrameworkCore
-@using LMS.Data
-@inject IDbContextFactory<LMS.Data.AuthDbContext> DbFactory
+﻿@page "/admin/forums/create"
+@layout LMS.Components.Layout.AdminLayout
+@using LMS.Services
+@using LMS.Components.Shared
+@inject IForumService ForumService
+@inject IDropdownService DropdownService
 @inject NavigationManager NavigationManager
 
 <PageTitle>Create</PageTitle>
@@ -13,6 +15,7 @@
 <div class="row">
     <div class="col-md-4">
         <EditForm method="post" Model="Forum" OnValidSubmit="AddForum" FormName="create" Enhance>
+            <AntiforgeryToken />
             <DataAnnotationsValidator />
             <ValidationSummary class="text-danger" role="alert"/>
             <div class="mb-3">
@@ -26,24 +29,24 @@
                 <ValidationMessage For="() => Forum.Description" class="text-danger" /> 
             </div>        
             <div class="mb-3">
-                <label for="courseid" class="form-label">CourseId:</label> 
-                <InputNumber id="courseid" @bind-Value="Forum.CourseId" class="form-control" /> 
-                <ValidationMessage For="() => Forum.CourseId" class="text-danger" /> 
+                <label for="courseid" class="form-label">Course</label>
+                <SearchableSelectComponent 
+                    TItem="DropdownOption"
+                    TValue="int?"
+                    Items="@courseOptions"
+                    ValueSelector="@(item => (int?)item.Value)"
+                    DisplaySelector="@(item => item.Text)"
+                    SearchFunction="@SearchCourses"
+                    SelectedValue="@Forum.CourseId"
+                    OnSelectedValueChanged="@((int? value) => Forum.CourseId = value)"
+                    Placeholder="Select a course (optional)..."
+                    class="form-control" />
+                <ValidationMessage For="() => Forum.CourseId" class="text-danger" />
             </div>        
             <div class="mb-3">
                 <label for="isgeneral" class="form-label">IsGeneral:</label> 
                 <InputCheckbox id="isgeneral" @bind-Value="Forum.IsGeneral" class="form-check-input" /> 
                 <ValidationMessage For="() => Forum.IsGeneral" class="text-danger" /> 
-            </div>        
-            <div class="mb-3">
-                <label for="isactive" class="form-label">IsActive:</label> 
-                <InputCheckbox id="isactive" @bind-Value="Forum.IsActive" class="form-check-input" /> 
-                <ValidationMessage For="() => Forum.IsActive" class="text-danger" /> 
-            </div>        
-            <div class="mb-3">
-                <label for="createdat" class="form-label">CreatedAt:</label> 
-                <InputDate id="createdat" @bind-Value="Forum.CreatedAt" class="form-control" /> 
-                <ValidationMessage For="() => Forum.CreatedAt" class="text-danger" /> 
             </div>        
             <button type="submit" class="btn btn-primary">Create</button>
         </EditForm>
@@ -51,19 +54,40 @@
 </div>
 
 <div>
-    <a href="/forums">Back to List</a>
+    <a href="/admin/forums">Back to List</a>
 </div>
 
 @code {
     [SupplyParameterFromForm]
-    private Forum Forum { get; set; } = new();
+    private CreateForumRequest Forum { get; set; } = new();
 
-    // To protect from overposting attacks, see https://learn.microsoft.com/aspnet/core/blazor/forms/#mitigate-overposting-attacks.
+    private List<DropdownOption> courseOptions = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Load initial options
+        courseOptions = await DropdownService.GetCoursesAsync(search: "", take: 20);
+    }
+
+    private async Task<IEnumerable<DropdownOption>> SearchCourses(string searchTerm)
+    {
+        return await DropdownService.GetCoursesAsync(searchTerm, take: 20);
+    }
+
     private async Task AddForum()
     {
-        using var context = DbFactory.CreateDbContext();
-        context.Forums.Add(Forum);
-        await context.SaveChangesAsync();
-        NavigationManager.NavigateTo("/forums");
+        try
+        {
+            var result = await ForumService.CreateForumAsync(Forum);
+            if (result != null)
+            {
+                NavigationManager.NavigateTo("/admin/forums");
+            }
+        }
+        catch (Exception ex)
+        {
+            // Handle error - could add error display logic here
+            Console.WriteLine($"Error creating forum: {ex.Message}");
+        }
     }
 }
