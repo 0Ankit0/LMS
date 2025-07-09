@@ -1,7 +1,9 @@
-﻿@page "/certificates/create"
-@using Microsoft.EntityFrameworkCore
-@using LMS.Data
-@inject IDbContextFactory<LMS.Data.AuthDbContext> DbFactory
+﻿@page "/admin/certificates/create"
+@layout LMS.Components.Layout.AdminLayout
+@using LMS.Services
+@using LMS.Components.Shared
+@inject ICertificateService CertificateService
+@inject IDropdownService DropdownService
 @inject NavigationManager NavigationManager
 
 <PageTitle>Create</PageTitle>
@@ -12,68 +14,98 @@
 <hr />
 <div class="row">
     <div class="col-md-4">
-        <EditForm method="post" Model="Certificate" OnValidSubmit="AddCertificate" FormName="create" Enhance>
+        <EditForm Model="Certificate" OnValidSubmit="AddCertificate">
+            <AntiforgeryToken />
             <DataAnnotationsValidator />
             <ValidationSummary class="text-danger" role="alert"/>
             <div class="mb-3">
-                <label for="userid" class="form-label">UserId:</label> 
-                <InputText id="userid" @bind-Value="Certificate.UserId" class="form-control" aria-required="true"/> 
-                <ValidationMessage For="() => Certificate.UserId" class="text-danger" /> 
+                <label for="userid" class="form-label">User <span class="text-danger">*</span></label>
+                <SearchableSelectComponent 
+                    TItem="DropdownOption"
+                    TValue="string"
+                    Items="@userOptions"
+                    ValueSelector="@(item => item.Value.ToString())"
+                    DisplaySelector="@(item => item.Text)"
+                    SearchFunction="@SearchUsers"
+                    SelectedValue="@Certificate.UserId"
+                    OnSelectedValueChanged="@((string value) => Certificate.UserId = value)"
+                    Placeholder="Select a user..."
+                    class="form-control" />
+                <ValidationMessage For="() => Certificate.UserId" class="text-danger" />
+            </div>
+            <div class="mb-3">
+                <label for="courseid" class="form-label">Course <span class="text-danger">*</span></label>
+                <SearchableSelectComponent 
+                    TItem="DropdownOption"
+                    TValue="int"
+                    Items="@courseOptions"
+                    ValueSelector="@(item => item.Value)"
+                    DisplaySelector="@(item => item.Text)"
+                    SearchFunction="@SearchCourses"
+                    SelectedValue="@Certificate.CourseId"
+                    OnSelectedValueChanged="@((int value) => Certificate.CourseId = value)"
+                    Placeholder="Select a course..."
+                    class="form-control" />
+                <ValidationMessage For="() => Certificate.CourseId" class="text-danger" />
             </div>        
             <div class="mb-3">
-                <label for="courseid" class="form-label">CourseId:</label> 
-                <InputNumber id="courseid" @bind-Value="Certificate.CourseId" class="form-control" /> 
-                <ValidationMessage For="() => Certificate.CourseId" class="text-danger" /> 
-            </div>        
-            <div class="mb-3">
-                <label for="certificatenumber" class="form-label">CertificateNumber:</label> 
-                <InputText id="certificatenumber" @bind-Value="Certificate.CertificateNumber" class="form-control" aria-required="true"/> 
-                <ValidationMessage For="() => Certificate.CertificateNumber" class="text-danger" /> 
-            </div>        
-            <div class="mb-3">
-                <label for="issuedat" class="form-label">IssuedAt:</label> 
-                <InputDate id="issuedat" @bind-Value="Certificate.IssuedAt" class="form-control" /> 
-                <ValidationMessage For="() => Certificate.IssuedAt" class="text-danger" /> 
-            </div>        
-            <div class="mb-3">
-                <label for="expiresat" class="form-label">ExpiresAt:</label> 
-                <InputDate id="expiresat" @bind-Value="Certificate.ExpiresAt" class="form-control" /> 
-                <ValidationMessage For="() => Certificate.ExpiresAt" class="text-danger" /> 
-            </div>        
-            <div class="mb-3">
-                <label for="finalgrade" class="form-label">FinalGrade:</label> 
-                <InputNumber id="finalgrade" @bind-Value="Certificate.FinalGrade" class="form-control" /> 
+                <label for="finalgrade" class="form-label">Final Grade <span class="text-danger">*</span></label> 
+                <InputNumber id="finalgrade" @bind-Value="Certificate.FinalGrade" class="form-control" step="0.01" aria-required="true"
+                    placeholder="Enter final grade" /> 
                 <ValidationMessage For="() => Certificate.FinalGrade" class="text-danger" /> 
             </div>        
             <div class="mb-3">
-                <label for="certificateurl" class="form-label">CertificateUrl:</label> 
-                <InputText id="certificateurl" @bind-Value="Certificate.CertificateUrl" class="form-control" /> 
-                <ValidationMessage For="() => Certificate.CertificateUrl" class="text-danger" /> 
+                <label for="expiresat" class="form-label">Expires At (Optional)</label> 
+                <InputDate id="expiresat" @bind-Value="Certificate.ExpiresAt" class="form-control" /> 
+                <ValidationMessage For="() => Certificate.ExpiresAt" class="text-danger" /> 
             </div>        
-            <div class="mb-3">
-                <label for="isvalid" class="form-label">IsValid:</label> 
-                <InputCheckbox id="isvalid" @bind-Value="Certificate.IsValid" class="form-check-input" /> 
-                <ValidationMessage For="() => Certificate.IsValid" class="text-danger" /> 
-            </div>        
-            <button type="submit" class="btn btn-primary">Create</button>
+            <button type="submit" class="btn btn-primary">Issue Certificate</button>
         </EditForm>
     </div>
 </div>
 
 <div>
-    <a href="/certificates">Back to List</a>
+    <a href="/admin/certificates">Back to List</a>
 </div>
 
 @code {
     [SupplyParameterFromForm]
-    private Certificate Certificate { get; set; } = new();
+    private CreateCertificateRequest Certificate { get; set; } = new();
 
-    // To protect from overposting attacks, see https://learn.microsoft.com/aspnet/core/blazor/forms/#mitigate-overposting-attacks.
+    private List<DropdownOption> userOptions = new();
+    private List<DropdownOption> courseOptions = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Load initial options
+        userOptions = await DropdownService.GetUsersAsync(search: "", take: 20);
+        courseOptions = await DropdownService.GetCoursesAsync(search: "", take: 20);
+    }
+
+    private async Task<IEnumerable<DropdownOption>> SearchUsers(string searchTerm)
+    {
+        return await DropdownService.GetUsersAsync(searchTerm, take: 20);
+    }
+
+    private async Task<IEnumerable<DropdownOption>> SearchCourses(string searchTerm)
+    {
+        return await DropdownService.GetCoursesAsync(searchTerm, take: 20);
+    }
+
     private async Task AddCertificate()
     {
-        using var context = DbFactory.CreateDbContext();
-        context.Certificates.Add(Certificate);
-        await context.SaveChangesAsync();
-        NavigationManager.NavigateTo("/certificates");
+        try
+        {
+            var result = await CertificateService.IssueCertificateAsync(Certificate);
+            if (result != null)
+            {
+                NavigationManager.NavigateTo("/admin/certificates");
+            }
+        }
+        catch (Exception ex)
+        {
+            // Handle error - could add error display logic here
+            Console.WriteLine($"Error issuing certificate: {ex.Message}");
+        }
     }
 }
