@@ -1,0 +1,55 @@
+﻿@page "/admin/achievements"
+@layout LMS.Components.Layout.AdminLayout
+@using Microsoft.EntityFrameworkCore
+@using Microsoft.AspNetCore.Components.QuickGrid
+@using LMS.Data
+@implements IAsyncDisposable
+@inject IDbContextFactory<LMS.Data.AuthDbContext> DbFactory
+
+<PageTitle>Achievements - Admin</PageTitle>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="mb-0">Achievements</h1>
+    <a href="/admin/achievements/create" class="btn btn-primary">
+        <i class="bi bi-plus-circle me-2"></i>Add New Achievement
+    </a>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <QuickGrid Class="table table-striped table-hover" Items="context.Achievements">
+            <PropertyColumn Property="achievement => achievement.Name" Title="Name" />
+            <PropertyColumn Property="achievement => achievement.Description" Title="Description" />
+            <PropertyColumn Property="achievement => achievement.Points" Title="Points" />
+            <PropertyColumn Property="achievement => achievement.Type" Title="Type" />
+            <PropertyColumn Property="achievement => achievement.IsActive" Title="Active" />
+            <PropertyColumn Property="achievement => achievement.CreatedAt" Title="Created" Format="yyyy-MM-dd" />
+
+            <TemplateColumn Title="Actions" Context="achievement">
+                <div class="btn-group" role="group">
+                    <a href="@($"/admin/achievements/edit?id={achievement.Id}")" class="btn btn-sm btn-outline-primary">
+                        <i class="bi bi-pencil"></i> Edit
+                    </a>
+                    <a href="@($"/admin/achievements/details?id={achievement.Id}")" class="btn btn-sm btn-outline-info">
+                        <i class="bi bi-eye"></i> Details
+                    </a>
+                    <a href="@($"/admin/achievements/delete?id={achievement.Id}")"
+                        class="btn btn-sm btn-outline-danger">
+                        <i class="bi bi-trash"></i> Delete
+                    </a>
+                </div>
+            </TemplateColumn>
+        </QuickGrid>
+    </div>
+</div>
+
+@code {
+    private AuthDbContext context = default!;
+
+    protected override void OnInitialized()
+    {
+        context = DbFactory.CreateDbContext();
+    }
+
+    public async ValueTask DisposeAsync() => await context.DisposeAsync();
+}

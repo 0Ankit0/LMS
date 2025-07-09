@@ -1,0 +1,54 @@
+﻿@page "/admin/forums"
+@layout LMS.Components.Layout.AdminLayout
+@using Microsoft.EntityFrameworkCore
+@using Microsoft.AspNetCore.Components.QuickGrid
+@using LMS.Data
+@implements IAsyncDisposable
+@inject IDbContextFactory<LMS.Data.AuthDbContext> DbFactory
+
+<PageTitle>Forums - Admin</PageTitle>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="mb-0">Forums</h1>
+    <a href="/admin/forums/create" class="btn btn-primary">
+        <i class="bi bi-plus-circle me-2"></i>Add New Forum
+    </a>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <QuickGrid Class="table table-striped table-hover" Items="context.Forums">
+            <PropertyColumn Property="forum => forum.Title" Title="Title" />
+            <PropertyColumn Property="forum => forum.Description" Title="Description" />
+            <PropertyColumn Property="forum => forum.CourseId" Title="Course ID" />
+            <PropertyColumn Property="forum => forum.IsGeneral" Title="General" />
+            <PropertyColumn Property="forum => forum.IsActive" Title="Active" />
+            <PropertyColumn Property="forum => forum.CreatedAt" Title="Created" Format="yyyy-MM-dd" />
+
+            <TemplateColumn Title="Actions" Context="forum">
+                <div class="btn-group" role="group">
+                    <a href="@($"/admin/forums/edit?id={forum.Id}")" class="btn btn-sm btn-outline-primary">
+                        <i class="bi bi-pencil"></i> Edit
+                    </a>
+                    <a href="@($"/admin/forums/details?id={forum.Id}")" class="btn btn-sm btn-outline-info">
+                        <i class="bi bi-eye"></i> Details
+                    </a>
+                    <a href="@($"/admin/forums/delete?id={forum.Id}")" class="btn btn-sm btn-outline-danger">
+                        <i class="bi bi-trash"></i> Delete
+                    </a>
+                </div>
+            </TemplateColumn>
+        </QuickGrid>
+    </div>
+</div>
+
+@code {
+    private AuthDbContext context = default!;
+
+    protected override void OnInitialized()
+    {
+        context = DbFactory.CreateDbContext();
+    }
+
+    public async ValueTask DisposeAsync() => await context.DisposeAsync();
+}
