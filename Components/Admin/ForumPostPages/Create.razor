@@ -1,7 +1,9 @@
-﻿@page "/forumposts/create"
-@using Microsoft.EntityFrameworkCore
-@using LMS.Data
-@inject IDbContextFactory<LMS.Data.AuthDbContext> DbFactory
+﻿@page "/admin/forumposts/create"
+@layout LMS.Components.Layout.AdminLayout
+@using LMS.Services
+@using LMS.Components.Shared
+@inject IForumService ForumService
+@inject IDropdownService DropdownService
 @inject NavigationManager NavigationManager
 
 <PageTitle>Create</PageTitle>
@@ -12,43 +14,36 @@
 <hr />
 <div class="row">
     <div class="col-md-4">
-        <EditForm method="post" Model="ForumPost" OnValidSubmit="AddForumPost" FormName="create" Enhance>
+        <EditForm Model="ForumPost" OnValidSubmit="AddForumPost">
+            <AntiforgeryToken />
             <DataAnnotationsValidator />
             <ValidationSummary class="text-danger" role="alert"/>
             <div class="mb-3">
-                <label for="content" class="form-label">Content:</label> 
-                <InputText id="content" @bind-Value="ForumPost.Content" class="form-control" aria-required="true"/> 
+                <label for="content" class="form-label">Content <span class="text-danger">*</span></label> 
+                <InputTextArea id="content" @bind-Value="ForumPost.Content" class="form-control" rows="4" aria-required="true" 
+                    placeholder="Enter post content"/> 
                 <ValidationMessage For="() => ForumPost.Content" class="text-danger" /> 
             </div>        
             <div class="mb-3">
-                <label for="topicid" class="form-label">TopicId:</label> 
-                <InputNumber id="topicid" @bind-Value="ForumPost.TopicId" class="form-control" /> 
-                <ValidationMessage For="() => ForumPost.TopicId" class="text-danger" /> 
+                <label for="topicid" class="form-label">Topic <span class="text-danger">*</span></label>
+                <SearchableSelectComponent 
+                    TItem="DropdownOption"
+                    TValue="int"
+                    Items="@forumOptions"
+                    ValueSelector="@(item => item.Value)"
+                    DisplaySelector="@(item => item.Text)"
+                    SearchFunction="@SearchForums"
+                    SelectedValue="@ForumPost.TopicId"
+                    OnSelectedValueChanged="@((int value) => ForumPost.TopicId = value)"
+                    Placeholder="Select a topic..."
+                    class="form-control" />
+                <ValidationMessage For="() => ForumPost.TopicId" class="text-danger" />
             </div>        
             <div class="mb-3">
-                <label for="authorid" class="form-label">AuthorId:</label> 
-                <InputText id="authorid" @bind-Value="ForumPost.AuthorId" class="form-control" aria-required="true"/> 
-                <ValidationMessage For="() => ForumPost.AuthorId" class="text-danger" /> 
-            </div>        
-            <div class="mb-3">
-                <label for="parentpostid" class="form-label">ParentPostId:</label> 
-                <InputNumber id="parentpostid" @bind-Value="ForumPost.ParentPostId" class="form-control" /> 
+                <label for="parentpostid" class="form-label">Parent Post ID (Optional)</label> 
+                <InputNumber id="parentpostid" @bind-Value="ForumPost.ParentPostId" class="form-control" 
+                    placeholder="Enter parent post ID for replies" /> 
                 <ValidationMessage For="() => ForumPost.ParentPostId" class="text-danger" /> 
-            </div>        
-            <div class="mb-3">
-                <label for="createdat" class="form-label">CreatedAt:</label> 
-                <InputDate id="createdat" @bind-Value="ForumPost.CreatedAt" class="form-control" /> 
-                <ValidationMessage For="() => ForumPost.CreatedAt" class="text-danger" /> 
-            </div>        
-            <div class="mb-3">
-                <label for="updatedat" class="form-label">UpdatedAt:</label> 
-                <InputDate id="updatedat" @bind-Value="ForumPost.UpdatedAt" class="form-control" /> 
-                <ValidationMessage For="() => ForumPost.UpdatedAt" class="text-danger" /> 
-            </div>        
-            <div class="mb-3">
-                <label for="isdeleted" class="form-label">IsDeleted:</label> 
-                <InputCheckbox id="isdeleted" @bind-Value="ForumPost.IsDeleted" class="form-check-input" /> 
-                <ValidationMessage For="() => ForumPost.IsDeleted" class="text-danger" /> 
             </div>        
             <button type="submit" class="btn btn-primary">Create</button>
         </EditForm>
@@ -56,19 +51,44 @@
 </div>
 
 <div>
-    <a href="/forumposts">Back to List</a>
+    <a href="/admin/forumposts">Back to List</a>
 </div>
 
 @code {
     [SupplyParameterFromForm]
-    private ForumPost ForumPost { get; set; } = new();
+    private CreateForumPostRequest ForumPost { get; set; } = new();
 
-    // To protect from overposting attacks, see https://learn.microsoft.com/aspnet/core/blazor/forms/#mitigate-overposting-attacks.
+    private List<DropdownOption> forumOptions = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Load initial options - using forums as topics for now
+        forumOptions = await DropdownService.GetForumsAsync(search: "", take: 20);
+    }
+
+    private async Task<IEnumerable<DropdownOption>> SearchForums(string searchTerm)
+    {
+        return await DropdownService.GetForumsAsync(searchTerm, take: 20);
+    }
+
     private async Task AddForumPost()
     {
-        using var context = DbFactory.CreateDbContext();
-        context.ForumPosts.Add(ForumPost);
-        await context.SaveChangesAsync();
-        NavigationManager.NavigateTo("/forumposts");
+        try
+        {
+            // For admin pages, we'll use a placeholder admin user ID
+            // In a real application, you'd get this from the authentication context
+            var adminUserId = "admin-user-id"; // This should come from authentication
+            
+            var result = await ForumService.CreatePostAsync(ForumPost, adminUserId);
+            if (result != null)
+            {
+                NavigationManager.NavigateTo("/admin/forumposts");
+            }
+        }
+        catch (Exception ex)
+        {
+            // Handle error - could add error display logic here
+            Console.WriteLine($"Error creating forum post: {ex.Message}");
+        }
     }
 }
