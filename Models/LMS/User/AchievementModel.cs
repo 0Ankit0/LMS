@@ -11,7 +11,7 @@ namespace LMS.Models.User
         public int Points { get; set; }
         public string BadgeColor { get; set; } = "#ffd700";
         public string Type { get; set; } = string.Empty;
-        public ICollection<AchievementCriteria> Criteria { get; set; }
+        public List<AchievementCriteria> Criteria { get; set; } = new();
         public bool IsActive { get; set; }
         public DateTime CreatedAt { get; set; }
         public int UsersEarnedCount { get; set; }
@@ -25,6 +25,6 @@ namespace LMS.Models.User
         public int Points { get; set; }
         public string BadgeColor { get; set; } = "#ffd700";
         public string Type { get; set; } = "Course";
-        public ICollection<AchievementCriteria> Criteria { get; set; }
+        public List<AchievementCriteria> Criteria { get; set; } = new();
     }
 }
