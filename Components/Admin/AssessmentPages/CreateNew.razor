@@ -2,9 +2,8 @@
 @layout LMS.Components.Layout.AdminLayout
 @using LMS.Services
 @using LMS.Components.Shared
-@using Microsoft.AspNetCore.Components.Forms
-@inject IAssessmentService AssessmentService
-@inject IDropdownService DropdownService
+@inject AssessmentService AssessmentService
+@inject DropdownService DropdownService
 @inject NavigationManager NavigationManager
 
 <PageTitle>Create Assessment - Admin</PageTitle>
@@ -24,7 +23,6 @@
             </div>
             <div class="card-body">
                 <EditForm Model="Assessment" OnValidSubmit="AddAssessment">
-                    <AntiforgeryToken />
                     <DataAnnotationsValidator />
                     <ValidationSummary class="alert alert-danger" role="alert" />
 
@@ -94,7 +92,7 @@
                             <InputSelect id="type" @bind-Value="Assessment.Type" class="form-select">
                                 @foreach (var enumValue in Enum.GetValues(typeof(AssessmentType)).Cast<AssessmentType>())
                                 {
-                                    <option value="@((int)enumValue)">@enumValue.ToString()</option>
+                                    <option value="@enumValue">@enumValue.ToString()</option>
                                 }
                             </InputSelect>
                             <ValidationMessage For="() => Assessment.Type" class="text-danger" />
@@ -113,8 +111,8 @@
                             <ValidationMessage For="() => TimeLimitMinutes" class="text-danger" />
                         </div>
                         <div class="col-md-6 mb-3">
-                            <label for="passingscore" class="form-label">Passing Score (%)</label>
-                            <InputNumber id="passingscore" @bind-Value="Assessment.PassingScore" class="form-control" step="0.01" />
+                            <label for="passinggrade" class="form-label">Passing Score (%)</label>
+                            <InputNumber id="passinggrade" @bind-Value="Assessment.PassingScore" class="form-control" step="0.01" />
                             <ValidationMessage For="() => Assessment.PassingScore" class="text-danger" />
                         </div>
                     </div>
@@ -123,7 +121,7 @@
                         <div class="col-md-6 mb-3">
                             <div class="form-check">
                                 <InputCheckbox id="israndomized" @bind-Value="Assessment.IsRandomized" class="form-check-input" />
-                                <label for="israndomized" class="form-check-label">Randomize Questions</label>
+                                <label for="israndomized" class="form-check-label">Is Randomized</label>
                             </div>
                         </div>
                         <div class="col-md-6 mb-3">
@@ -131,28 +129,6 @@
                                 <InputCheckbox id="showcorrectanswers" @bind-Value="Assessment.ShowCorrectAnswers" class="form-check-input" />
                                 <label for="showcorrectanswers" class="form-check-label">Show Correct Answers</label>
                             </div>
-                        </div>
-                    </div>
-
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <div class="form-check">
-                                <InputCheckbox id="showscoreimmediately" @bind-Value="Assessment.ShowScoreImmediately" class="form-check-input" />
-                                <label for="showscoreimmediately" class="form-check-label">Show Score Immediately</label>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label for="availablefrom" class="form-label">Available From</label>
-                            <InputDate id="availablefrom" @bind-Value="Assessment.AvailableFrom" class="form-control" />
-                            <ValidationMessage For="() => Assessment.AvailableFrom" class="text-danger" />
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label for="availableuntil" class="form-label">Available Until</label>
-                            <InputDate id="availableuntil" @bind-Value="Assessment.AvailableUntil" class="form-control" />
-                            <ValidationMessage For="() => Assessment.AvailableUntil" class="text-danger" />
                         </div>
                     </div>
 
