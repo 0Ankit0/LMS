@@ -10,8 +10,8 @@ namespace LMS.Services
         Task<List<DropdownOption>> GetCoursesAsync(string? search = null, int take = 20);
         Task<List<DropdownOption>> GetModulesAsync(string? search = null, int take = 20);
         Task<List<DropdownOption>> GetModulesByCourseAsync(int courseId, string? search = null, int take = 20);
-        Task<List<DropdownOption>> GetUsersAsync(string? search = null, int take = 20);
-        Task<List<DropdownOption>> GetInstructorsAsync(string? search = null, int take = 20);
+        Task<List<DropdownOption<string>>> GetUsersAsync(string? search = null, int take = 20);
+        Task<List<DropdownOption<string>>> GetInstructorsAsync(string? search = null, int take = 20);
         Task<List<DropdownOption>> GetTagsAsync(string? search = null, int take = 20);
         Task<List<DropdownOption>> GetForumsAsync(string? search = null, int take = 20);
         Task<List<DropdownOption>> GetAssessmentsAsync(string? search = null, int take = 20);
@@ -117,7 +117,7 @@ namespace LMS.Services
                 .ToListAsync();
         }
 
-        public async Task<List<DropdownOption>> GetUsersAsync(string? search = null, int take = 20)
+        public async Task<List<DropdownOption<string>>> GetUsersAsync(string? search = null, int take = 20)
         {
             using var context = _contextFactory.CreateDbContext();
             var query = context.Users.AsQueryable();
@@ -132,16 +132,16 @@ namespace LMS.Services
             return await query
                 .OrderBy(u => u.Email)
                 .Take(take)
-                .Select(u => new DropdownOption
+                .Select(u => new DropdownOption<string>
                 {
-                    Value = int.Parse(u.Id), // Convert string ID to int for consistency
+                    Value = u.Id,
                     Text = $"{u.FirstName} {u.LastName} ({u.Email})",
                     Description = u.Email
                 })
                 .ToListAsync();
         }
 
-        public async Task<List<DropdownOption>> GetInstructorsAsync(string? search = null, int take = 20)
+        public async Task<List<DropdownOption<string>>> GetInstructorsAsync(string? search = null, int take = 20)
         {
             using var context = _contextFactory.CreateDbContext();
             // Get users who have created courses (instructors)
@@ -157,9 +157,9 @@ namespace LMS.Services
             return await query
                 .OrderBy(u => u.Email)
                 .Take(take)
-                .Select(u => new DropdownOption
+                .Select(u => new DropdownOption<string>
                 {
-                    Value = int.Parse(u.Id),
+                    Value = u.Id,
                     Text = $"{u.FirstName} {u.LastName}",
                     Description = u.Email
                 })
