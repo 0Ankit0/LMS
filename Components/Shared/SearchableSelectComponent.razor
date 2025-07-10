@@ -5,22 +5,15 @@
 
 <div class="searchable-select @CssClass" @ref="containerRef">
     <div class="input-group">
-        <input type="text" 
-               class="form-control @(IsInvalid ? "is-invalid" : "")" 
-               placeholder="@Placeholder"
-               @bind="searchTerm" 
-               @bind:event="oninput"
-               @onfocus="OnInputFocus"
-               @onblur="OnInputBlur"
-               readonly="@IsReadOnly" />
-        <button class="btn btn-outline-secondary dropdown-toggle" 
-                type="button" 
-                @onclick="ToggleDropdown"
-                disabled="@IsDisabled">
+        <input type="text" class="form-control @(IsInvalid ? "is-invalid" : "")" placeholder="@Placeholder"
+            @bind="searchTerm" @bind:event="oninput" @onfocus="OnInputFocus" @onblur="OnInputBlur"
+            readonly="@IsReadOnly" />
+        <button class="btn btn-outline-secondary dropdown-toggle" type="button" @onclick="ToggleDropdown"
+            disabled="@IsDisabled">
             <i class="bi bi-chevron-down"></i>
         </button>
     </div>
-    
+
     @if (showDropdown)
     {
         <div class="searchable-select-dropdown" @onmousedown:preventDefault="true">
@@ -29,7 +22,7 @@
                     <i class="bi bi-x-circle me-1"></i>Clear Selection
                 </button>
             </div>
-            
+
             @if (isLoading)
             {
                 <div class="dropdown-item text-center">
@@ -52,13 +45,13 @@
                     {
                         var itemValue = ValueSelector(item);
                         var isSelected = SelectedValue?.Equals(itemValue) == true;
-                        
-                        <div class="dropdown-item searchable-select-item @(isSelected ? "active" : "")" 
-                             @onclick="() => SelectItem(item)">
+
+                        <div class="dropdown-item searchable-select-item @(isSelected ? "active" : "")"
+                            @onclick="() => SelectItem(item)">
                             @DisplaySelector(item)
                         </div>
                     }
-                    
+
                     @if (filteredItems.Count() > displayCount)
                     {
                         <div class="dropdown-item text-center">
@@ -154,7 +147,7 @@
         debounceTimer = new System.Timers.Timer(300);
         debounceTimer.Elapsed += OnSearchDebounced;
         debounceTimer.AutoReset = false;
-        
+
         UpdateDisplayText();
         FilterItems();
     }
@@ -231,10 +224,10 @@
         }
         else
         {
-            filteredItems = Items.Where(item => 
-                DisplaySelector(item).Contains(searchTerm, StringComparison.OrdinalIgnoreCase));
+            filteredItems = Items.Where(item =>
+            DisplaySelector(item).Contains(searchTerm, StringComparison.OrdinalIgnoreCase));
         }
-        
+
         displayCount = PageSize;
     }
 
@@ -279,7 +272,7 @@
         SelectedValue = value;
         searchTerm = DisplaySelector(item);
         showDropdown = false;
-        
+
         await SelectedValueChanged.InvokeAsync(value);
         StateHasChanged();
     }
@@ -311,6 +304,3 @@
         debounceTimer?.Dispose();
     }
 }
-}
-
-@implements IDisposable
