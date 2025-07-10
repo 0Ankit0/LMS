@@ -76,7 +76,7 @@
         transition: width 0.3s ease;
     }
 
-    .admin-sidebar:has(.admin-nav-scrollable.collapsed) {
+    .admin-sidebar:has(.nav-scrollable.collapsed) {
         width: 70px;
     }
 
