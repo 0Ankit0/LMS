@@ -42,9 +42,7 @@
                     </TemplateColumn>
                 </QuickGrid>
 
-                <PaginationComponent 
-                    PaginatedResult="paginatedForums"
-                    OnPageChanged="OnPageChanged"
+                <PaginationComponent TItem="ForumModel" PaginatedResult="paginatedForums" OnPageChanged="OnPageChanged"
                     OnPageSizeChanged="OnPageSizeChanged" />
             }
             else

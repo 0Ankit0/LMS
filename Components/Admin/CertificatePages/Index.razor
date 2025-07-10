@@ -46,10 +46,8 @@
                     </TemplateColumn>
                 </QuickGrid>
 
-                <PaginationComponent 
-                    PaginatedResult="paginatedCertificates"
-                    OnPageChanged="OnPageChanged"
-                    OnPageSizeChanged="OnPageSizeChanged" />
+                <PaginationComponent TItem="CertificateModel" PaginatedResult="paginatedCertificates"
+                    OnPageChanged="OnPageChanged" OnPageSizeChanged="OnPageSizeChanged" />
             }
             else
             {

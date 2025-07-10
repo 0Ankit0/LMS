@@ -2,7 +2,7 @@
 @layout LMS.Components.Layout.AdminLayout
 @using Microsoft.AspNetCore.Components.QuickGrid
 @using LMS.Services
-@inject LessonService LessonService
+@inject ILessonService LessonService
 
 <PageTitle>Lessons - Admin</PageTitle>
 
@@ -27,7 +27,7 @@
                     <PropertyColumn Property="lesson => lesson.EstimatedDuration" Title="Duration" />
                     <PropertyColumn Property="lesson => lesson.OrderIndex" Title="Order" />
                     <PropertyColumn Property="lesson => lesson.IsRequired" Title="Required" />
-                    
+
                     <TemplateColumn Title="Actions" Context="lesson">
                         <div class="btn-group" role="group">
                             <a href="@($"/admin/lessons/edit?id={lesson.Id}")" class="btn btn-sm btn-outline-primary">
@@ -43,9 +43,7 @@
                     </TemplateColumn>
                 </QuickGrid>
 
-                <PaginationComponent 
-                    PaginatedResult="paginatedLessons"
-                    OnPageChanged="OnPageChanged"
+                <PaginationComponent TItem="LessonModel" PaginatedResult="paginatedLessons" OnPageChanged="OnPageChanged"
                     OnPageSizeChanged="OnPageSizeChanged" />
             }
             else

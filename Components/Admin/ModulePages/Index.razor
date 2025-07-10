@@ -43,10 +43,8 @@
                     </TemplateColumn>
                 </QuickGrid>
 
-                <PaginationComponent 
-                    PaginatedResult="paginatedModules"
-                    OnPageChanged="OnPageChanged"
-                    OnPageSizeChanged="OnPageSizeChanged" />
+                <PaginationComponent TItem="LMS.Models.Course.ModuleModel" PaginatedResult="paginatedModules"
+                    OnPageChanged="OnPageChanged" OnPageSizeChanged="OnPageSizeChanged" />
             }
             else
             {

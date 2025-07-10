@@ -44,10 +44,8 @@
                     </TemplateColumn>
                 </QuickGrid>
 
-                <PaginationComponent 
-                    PaginatedResult="paginatedEnrollments"
-                    OnPageChanged="OnPageChanged"
-                    OnPageSizeChanged="OnPageSizeChanged" />
+                <PaginationComponent TItem="EnrollmentModel" PaginatedResult="paginatedEnrollments"
+                    OnPageChanged="OnPageChanged" OnPageSizeChanged="OnPageSizeChanged" />
             }
             else
             {

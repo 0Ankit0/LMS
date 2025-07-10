@@ -17,12 +17,9 @@
     <div class="card-body">
         @if (paginatedResult != null)
         {
-            <PaginationComponent CurrentPage="@currentPage" 
-                               PageSize="@pageSize"
-                               TotalCount="@paginatedResult.TotalCount"
-                               TotalPages="@paginatedResult.TotalPages"
-                               OnPageChanged="OnPageChanged"
-                               OnPageSizeChanged="OnPageSizeChanged" />
+            <PaginationComponent TItem="CourseModel" CurrentPage="@currentPage" PageSize="@pageSize"
+                TotalCount="@paginatedResult.TotalCount" TotalPages="@paginatedResult.TotalPages"
+                OnPageChanged="OnPageChanged" OnPageSizeChanged="OnPageSizeChanged" />
 
             @if (paginatedResult.Items.Any())
             {

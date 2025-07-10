@@ -5,6 +5,7 @@
 @inject ICategoryService CategoryService
 @inject IDropdownService DropdownService
 @inject NavigationManager NavigationManager
+@rendermode @(new InteractiveServerRenderMode())
 
 <PageTitle>Create Category - Admin</PageTitle>
 
@@ -22,7 +23,8 @@
                 <h5 class="card-title mb-0">Category Information</h5>
             </div>
             <div class="card-body">
-                <EditForm Model="Category" OnValidSubmit="AddCategory">
+                <EditForm Model="Category" onsubmit="AddCategory">
+                    <AntiforgeryToken/>
                     <DataAnnotationsValidator />
                     <ValidationSummary class="alert alert-danger" role="alert" />
 

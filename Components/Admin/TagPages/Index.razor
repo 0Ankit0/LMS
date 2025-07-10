@@ -38,9 +38,7 @@
                     </TemplateColumn>
                 </QuickGrid>
 
-                <PaginationComponent 
-                    PaginatedResult="paginatedTags"
-                    OnPageChanged="OnPageChanged"
+                <PaginationComponent TItem="TagModel" PaginatedResult="paginatedTags" OnPageChanged="OnPageChanged"
                     OnPageSizeChanged="OnPageSizeChanged" />
             }
             else

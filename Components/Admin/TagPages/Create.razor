@@ -12,20 +12,20 @@
 <hr />
 <div class="row">
     <div class="col-md-4">
-        <EditForm method="post" Model="Tag" OnValidSubmit="AddTag" FormName="create" Enhance>
+        <EditForm Model="Tag" onsubmit="AddTag">
             <AntiforgeryToken />
             <DataAnnotationsValidator />
-            <ValidationSummary class="text-danger" role="alert"/>
+            <ValidationSummary class="text-danger" role="alert" />
             <div class="mb-3">
-                <label for="name" class="form-label">Name:</label> 
-                <InputText id="name" @bind-Value="Tag.Name" class="form-control" aria-required="true"/> 
-                <ValidationMessage For="() => Tag.Name" class="text-danger" /> 
-            </div>        
+                <label for="name" class="form-label">Name:</label>
+                <InputText id="name" @bind-Value="Tag.Name" class="form-control" aria-required="true" />
+                <ValidationMessage For="() => Tag.Name" class="text-danger" />
+            </div>
             <div class="mb-3">
-                <label for="color" class="form-label">Color:</label> 
-                <InputText id="color" @bind-Value="Tag.Color" class="form-control" /> 
-                <ValidationMessage For="() => Tag.Color" class="text-danger" /> 
-            </div>        
+                <label for="color" class="form-label">Color:</label>
+                <InputText id="color" @bind-Value="Tag.Color" class="form-control" />
+                <ValidationMessage For="() => Tag.Color" class="text-danger" />
+            </div>
             <button type="submit" class="btn btn-primary">Create</button>
         </EditForm>
     </div>
@@ -36,9 +36,7 @@
 </div>
 
 @code {
-    [SupplyParameterFromForm]
     private CreateTagRequest Tag { get; set; } = new();
-
     private async Task AddTag()
     {
         try
