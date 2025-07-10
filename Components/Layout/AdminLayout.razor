@@ -1,6 +1,7 @@
 @using LMS.Components.Users.Account
 @using LMS.Components.Layout
 @inherits LayoutComponentBase
+@attribute [Authorize(Roles = "Admin")]
 
 <div class="admin-page">
     <div class="admin-sidebar">
