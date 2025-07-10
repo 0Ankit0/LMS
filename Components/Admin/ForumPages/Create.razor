@@ -5,6 +5,7 @@
 @inject IForumService ForumService
 @inject IDropdownService DropdownService
 @inject NavigationManager NavigationManager
+@rendermode @(new InteractiveServerRenderMode())
 
 <PageTitle>Create</PageTitle>
 
@@ -17,37 +18,31 @@
         <EditForm method="post" Model="Forum" OnValidSubmit="AddForum" FormName="create" Enhance>
             <AntiforgeryToken />
             <DataAnnotationsValidator />
-            <ValidationSummary class="text-danger" role="alert"/>
+            <ValidationSummary class="text-danger" role="alert" />
             <div class="mb-3">
-                <label for="title" class="form-label">Title:</label> 
-                <InputText id="title" @bind-Value="Forum.Title" class="form-control" aria-required="true"/> 
-                <ValidationMessage For="() => Forum.Title" class="text-danger" /> 
-            </div>        
+                <label for="title" class="form-label">Title:</label>
+                <InputText id="title" @bind-Value="Forum.Title" class="form-control" aria-required="true" />
+                <ValidationMessage For="() => Forum.Title" class="text-danger" />
+            </div>
             <div class="mb-3">
-                <label for="description" class="form-label">Description:</label> 
-                <InputText id="description" @bind-Value="Forum.Description" class="form-control" /> 
-                <ValidationMessage For="() => Forum.Description" class="text-danger" /> 
-            </div>        
+                <label for="description" class="form-label">Description:</label>
+                <InputText id="description" @bind-Value="Forum.Description" class="form-control" />
+                <ValidationMessage For="() => Forum.Description" class="text-danger" />
+            </div>
             <div class="mb-3">
                 <label for="courseid" class="form-label">Course</label>
-                <SearchableSelectComponent 
-                    TItem="DropdownOption"
-                    TValue="int?"
-                    Items="@courseOptions"
-                    ValueSelector="@(item => (int?)item.Value)"
-                    DisplaySelector="@(item => item.Text)"
-                    SearchFunction="@SearchCourses"
-                    SelectedValue="@Forum.CourseId"
+                <SearchableSelectComponent TItem="DropdownOption" TValue="int?" Items="@courseOptions"
+                    ValueSelector="@(item => (int?)item.Value)" DisplaySelector="@(item => item.Text)"
+                    SearchFunction="@SearchCourses" SelectedValue="@Forum.CourseId"
                     OnSelectedValueChanged="@((int? value) => Forum.CourseId = value)"
-                    Placeholder="Select a course (optional)..."
-                    class="form-control" />
+                    Placeholder="Select a course (optional)..." class="form-control" />
                 <ValidationMessage For="() => Forum.CourseId" class="text-danger" />
-            </div>        
+            </div>
             <div class="mb-3">
-                <label for="isgeneral" class="form-label">IsGeneral:</label> 
-                <InputCheckbox id="isgeneral" @bind-Value="Forum.IsGeneral" class="form-check-input" /> 
-                <ValidationMessage For="() => Forum.IsGeneral" class="text-danger" /> 
-            </div>        
+                <label for="isgeneral" class="form-label">IsGeneral:</label>
+                <InputCheckbox id="isgeneral" @bind-Value="Forum.IsGeneral" class="form-check-input" />
+                <ValidationMessage For="() => Forum.IsGeneral" class="text-danger" />
+            </div>
             <button type="submit" class="btn btn-primary">Create</button>
         </EditForm>
     </div>

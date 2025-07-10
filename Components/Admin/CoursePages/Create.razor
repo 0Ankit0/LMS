@@ -4,6 +4,7 @@
 @inject ICourseService CourseService
 @inject IDropdownService DropdownService
 @inject NavigationManager NavigationManager
+@rendermode @(new InteractiveServerRenderMode())
 
 <PageTitle>Create Course - Admin</PageTitle>
 
@@ -15,7 +16,7 @@
 </div>
 
 <div class="row">
-    <div class="col-lg-8">
+    <div class="col-12">
         <div class="card">
             <div class="card-header">
                 <h5 class="card-title mb-0">Course Information</h5>
@@ -36,10 +37,10 @@
                         <div class="col-md-4 mb-3">
                             <label for="level" class="form-label">Level</label>
                             <InputSelect id="level" @bind-Value="Course.Level" class="form-select">
-                                <option value="1">Beginner</option>
-                                <option value="2">Intermediate</option>
-                                <option value="3">Advanced</option>
-                                <option value="4">Expert</option>
+                               @foreach (int level in Enum.GetValues(typeof(CourseLevel)))
+                                {
+                                    <option value="@level">@Enum.GetName(typeof(CourseLevel),@level)</option>
+                                }
                             </InputSelect>
                             <ValidationMessage For="() => Course.Level" class="text-danger" />
                         </div>
@@ -61,15 +62,13 @@
                             <ValidationMessage For="() => Course.ThumbnailUrl" class="text-danger" />
                         </div>
                         <div class="col-md-6 mb-3">
-                            <label for="instructorid" class="form-label">Instructor <span class="text-danger">*</span></label>
-                            <SearchableSelectComponent TItem="DropdownOption" TValue="int?"
-                                                     Items="instructorOptions"
-                                                     ValueSelector="option => option.Value"
-                                                     DisplaySelector="option => option.Text"
-                                                     @bind-SelectedValue="SelectedInstructorId"
-                                                     Placeholder="Search and select instructor..."
-                                                     SearchFunction="SearchInstructors"
-                                                     IsInvalid="@(!string.IsNullOrEmpty(Course.InstructorId) && !IsValidInstructor())" />
+                            <label for="instructorid" class="form-label">Instructor <span
+                                    class="text-danger">*</span></label>
+                            <SearchableSelectComponent TItem="DropdownOption<string>" TValue="string" Items="instructorOptions"
+                                ValueSelector="option => option.Value" DisplaySelector="option => option.Text"
+                                @bind-SelectedValue="SelectedInstructorId" Placeholder="Search and select instructor..."
+                                SearchFunction="SearchInstructors"
+                                IsInvalid="@(!string.IsNullOrEmpty(Course.InstructorId) && !IsValidInstructor())" />
                             <ValidationMessage For="() => Course.InstructorId" class="text-danger" />
                         </div>
                     </div>
@@ -78,10 +77,10 @@
                         <div class="col-md-4 mb-3">
                             <label for="status" class="form-label">Status</label>
                             <InputSelect id="status" @bind-Value="Course.Status" class="form-select">
-                                <option value="1">Draft</option>
-                                <option value="2">Published</option>
-                                <option value="3">Archived</option>
-                                <option value="4">Suspended</option>
+                                @foreach (int status in Enum.GetValues(typeof(CourseStatus)))
+                                {
+                                    <option value="@status">@Enum.GetName(typeof(CourseStatus),@status)</option>
+                                }
                             </InputSelect>
                             <ValidationMessage For="() => Course.Status" class="text-danger" />
                         </div>
@@ -150,25 +149,24 @@
     [SupplyParameterFromForm]
     private CreateCourseRequest Course { get; set; } = new();
 
-    private List<DropdownOption> instructorOptions = new();
-    private int? selectedInstructorId;
+    private List<DropdownOption<string>> instructorOptions = new();
+    private string selectedInstructorId;
+
+    private string SelectedInstructorId
+    {
+        get => Course.InstructorId;
+        set
+        {
+            selectedInstructorId = value;
+            Course.InstructorId = value ?? "";
+        }
+    }
 
     // Helper property for binding EstimatedDuration as hours
     private int EstimatedDurationHours
     {
         get => (int)Course.EstimatedDuration.TotalHours;
         set => Course.EstimatedDuration = TimeSpan.FromHours(value);
-    }
-
-    // Property to sync instructor selection with Course model
-    private int? SelectedInstructorId
-    {
-        get => string.IsNullOrEmpty(Course.InstructorId) ? null : int.TryParse(Course.InstructorId, out var id) ? id : null;
-        set
-        {
-            selectedInstructorId = value;
-            Course.InstructorId = value?.ToString() ?? "";
-        }
     }
 
     protected override async Task OnInitializedAsync()
@@ -188,7 +186,7 @@
         }
     }
 
-    private async Task<IEnumerable<DropdownOption>> SearchInstructors(string searchTerm)
+    private async Task<IEnumerable<DropdownOption<string>>> SearchInstructors(string searchTerm)
     {
         try
         {
@@ -197,14 +195,14 @@
         catch (Exception ex)
         {
             Console.WriteLine($"Error searching instructors: {ex.Message}");
-            return Enumerable.Empty<DropdownOption>();
+            return Enumerable.Empty<DropdownOption<string>>();
         }
     }
 
-    private bool IsValidInstructor()
-    {
-        return selectedInstructorId.HasValue && instructorOptions.Any(i => i.Value == selectedInstructorId.Value);
-    }
+   private bool IsValidInstructor()
+{
+    return !string.IsNullOrEmpty(selectedInstructorId) && instructorOptions.Any(i => i.Value == selectedInstructorId);
+}
 
     private async Task AddCourse()
     {
@@ -223,4 +221,3 @@
         }
     }
 }
-       

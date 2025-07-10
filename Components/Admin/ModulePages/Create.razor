@@ -5,6 +5,7 @@
 @inject ICourseService CourseService
 @inject IDropdownService DropdownService
 @inject NavigationManager NavigationManager
+@rendermode @(new InteractiveServerRenderMode())
 
 <PageTitle>Create</PageTitle>
 
@@ -17,42 +18,36 @@
         <EditForm method="post" Model="Module" OnValidSubmit="AddModule" FormName="create" Enhance>
             <AntiforgeryToken />
             <DataAnnotationsValidator />
-            <ValidationSummary class="text-danger" role="alert"/>
+            <ValidationSummary class="text-danger" role="alert" />
             <div class="mb-3">
-                <label for="title" class="form-label">Title:</label> 
-                <InputText id="title" @bind-Value="Module.Title" class="form-control" aria-required="true"/> 
-                <ValidationMessage For="() => Module.Title" class="text-danger" /> 
-            </div>        
+                <label for="title" class="form-label">Title:</label>
+                <InputText id="title" @bind-Value="Module.Title" class="form-control" aria-required="true" />
+                <ValidationMessage For="() => Module.Title" class="text-danger" />
+            </div>
             <div class="mb-3">
-                <label for="description" class="form-label">Description:</label> 
-                <InputText id="description" @bind-Value="Module.Description" class="form-control" /> 
-                <ValidationMessage For="() => Module.Description" class="text-danger" /> 
-            </div>        
+                <label for="description" class="form-label">Description:</label>
+                <InputText id="description" @bind-Value="Module.Description" class="form-control" />
+                <ValidationMessage For="() => Module.Description" class="text-danger" />
+            </div>
             <div class="mb-3">
                 <label for="courseid" class="form-label">Course <span class="text-danger">*</span></label>
-                <SearchableSelectComponent 
-                    TItem="DropdownOption"
-                    TValue="int"
-                    Items="@courseOptions"
-                    ValueSelector="@(item => item.Value)"
-                    DisplaySelector="@(item => item.Text)"
-                    SearchFunction="@SearchCourses"
-                    SelectedValue="@Module.CourseId"
-                    OnSelectedValueChanged="@((int value) => Module.CourseId = value)"
-                    Placeholder="Select a course..."
+                <SearchableSelectComponent TItem="DropdownOption" TValue="int" Items="@courseOptions"
+                    ValueSelector="@(item => item.Value)" DisplaySelector="@(item => item.Text)"
+                    SearchFunction="@SearchCourses" SelectedValue="@Module.CourseId"
+                    OnSelectedValueChanged="@((int value) => Module.CourseId = value)" Placeholder="Select a course..."
                     class="form-control" />
                 <ValidationMessage For="() => Module.CourseId" class="text-danger" />
-            </div>        
+            </div>
             <div class="mb-3">
-                <label for="orderindex" class="form-label">OrderIndex:</label> 
-                <InputNumber id="orderindex" @bind-Value="Module.OrderIndex" class="form-control" /> 
-                <ValidationMessage For="() => Module.OrderIndex" class="text-danger" /> 
-            </div>        
+                <label for="orderindex" class="form-label">OrderIndex:</label>
+                <InputNumber id="orderindex" @bind-Value="Module.OrderIndex" class="form-control" />
+                <ValidationMessage For="() => Module.OrderIndex" class="text-danger" />
+            </div>
             <div class="mb-3">
-                <label for="isrequired" class="form-label">IsRequired:</label> 
-                <InputCheckbox id="isrequired" @bind-Value="Module.IsRequired" class="form-check-input" /> 
-                <ValidationMessage For="() => Module.IsRequired" class="text-danger" /> 
-            </div>        
+                <label for="isrequired" class="form-label">IsRequired:</label>
+                <InputCheckbox id="isrequired" @bind-Value="Module.IsRequired" class="form-check-input" />
+                <ValidationMessage For="() => Module.IsRequired" class="text-danger" />
+            </div>
             <button type="submit" class="btn btn-primary">Create</button>
         </EditForm>
     </div>

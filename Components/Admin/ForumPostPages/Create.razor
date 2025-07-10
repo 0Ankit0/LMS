@@ -5,6 +5,7 @@
 @inject IForumService ForumService
 @inject IDropdownService DropdownService
 @inject NavigationManager NavigationManager
+@rendermode @(new InteractiveServerRenderMode())
 
 <PageTitle>Create</PageTitle>
 
@@ -17,34 +18,28 @@
         <EditForm Model="ForumPost" OnValidSubmit="AddForumPost">
             <AntiforgeryToken />
             <DataAnnotationsValidator />
-            <ValidationSummary class="text-danger" role="alert"/>
+            <ValidationSummary class="text-danger" role="alert" />
             <div class="mb-3">
-                <label for="content" class="form-label">Content <span class="text-danger">*</span></label> 
-                <InputTextArea id="content" @bind-Value="ForumPost.Content" class="form-control" rows="4" aria-required="true" 
-                    placeholder="Enter post content"/> 
-                <ValidationMessage For="() => ForumPost.Content" class="text-danger" /> 
-            </div>        
+                <label for="content" class="form-label">Content <span class="text-danger">*</span></label>
+                <InputTextArea id="content" @bind-Value="ForumPost.Content" class="form-control" rows="4"
+                    aria-required="true" placeholder="Enter post content" />
+                <ValidationMessage For="() => ForumPost.Content" class="text-danger" />
+            </div>
             <div class="mb-3">
                 <label for="topicid" class="form-label">Topic <span class="text-danger">*</span></label>
-                <SearchableSelectComponent 
-                    TItem="DropdownOption"
-                    TValue="int"
-                    Items="@forumOptions"
-                    ValueSelector="@(item => item.Value)"
-                    DisplaySelector="@(item => item.Text)"
-                    SearchFunction="@SearchForums"
-                    SelectedValue="@ForumPost.TopicId"
-                    OnSelectedValueChanged="@((int value) => ForumPost.TopicId = value)"
-                    Placeholder="Select a topic..."
+                <SearchableSelectComponent TItem="DropdownOption" TValue="int" Items="@forumOptions"
+                    ValueSelector="@(item => item.Value)" DisplaySelector="@(item => item.Text)"
+                    SearchFunction="@SearchForums" SelectedValue="@ForumPost.TopicId"
+                    OnSelectedValueChanged="@((int value) => ForumPost.TopicId = value)" Placeholder="Select a topic..."
                     class="form-control" />
                 <ValidationMessage For="() => ForumPost.TopicId" class="text-danger" />
-            </div>        
+            </div>
             <div class="mb-3">
-                <label for="parentpostid" class="form-label">Parent Post ID (Optional)</label> 
-                <InputNumber id="parentpostid" @bind-Value="ForumPost.ParentPostId" class="form-control" 
-                    placeholder="Enter parent post ID for replies" /> 
-                <ValidationMessage For="() => ForumPost.ParentPostId" class="text-danger" /> 
-            </div>        
+                <label for="parentpostid" class="form-label">Parent Post ID (Optional)</label>
+                <InputNumber id="parentpostid" @bind-Value="ForumPost.ParentPostId" class="form-control"
+                    placeholder="Enter parent post ID for replies" />
+                <ValidationMessage For="() => ForumPost.ParentPostId" class="text-danger" />
+            </div>
             <button type="submit" class="btn btn-primary">Create</button>
         </EditForm>
     </div>
@@ -78,7 +73,7 @@
             // For admin pages, we'll use a placeholder admin user ID
             // In a real application, you'd get this from the authentication context
             var adminUserId = "admin-user-id"; // This should come from authentication
-            
+
             var result = await ForumService.CreatePostAsync(ForumPost, adminUserId);
             if (result != null)
             {

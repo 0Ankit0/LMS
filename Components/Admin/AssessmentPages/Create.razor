@@ -6,6 +6,7 @@
 @inject IAssessmentService AssessmentService
 @inject IDropdownService DropdownService
 @inject NavigationManager NavigationManager
+@rendermode @(new InteractiveServerRenderMode())
 
 <PageTitle>Create Assessment - Admin</PageTitle>
 
@@ -31,59 +32,44 @@
                     <div class="mb-3">
                         <label for="title" class="form-label">Title <span class="text-danger">*</span></label>
                         <InputText id="title" @bind-Value="Assessment.Title" class="form-control" aria-required="true"
-                                   placeholder="Enter assessment title" />
+                            placeholder="Enter assessment title" />
                         <ValidationMessage For="() => Assessment.Title" class="text-danger" />
                     </div>
 
                     <div class="mb-3">
                         <label for="description" class="form-label">Description</label>
-                        <InputTextArea id="description" @bind-Value="Assessment.Description" class="form-control" rows="3"
-                                       placeholder="Enter assessment description" />
+                        <InputTextArea id="description" @bind-Value="Assessment.Description" class="form-control"
+                            rows="3" placeholder="Enter assessment description" />
                         <ValidationMessage For="() => Assessment.Description" class="text-danger" />
                     </div>
 
                     <div class="mb-3">
                         <label for="courseid" class="form-label">Course <span class="text-danger">*</span></label>
-                        <SearchableSelectComponent TItem="DropdownOption"
-                                                   TValue="int?"
-                                                   Items="@courseOptions"
-                                                   ValueSelector="@(item => (int?)item.Value)"
-                                                   DisplaySelector="@(item => item.Text)"
-                                                   SearchFunction="@SearchCourses"
-                                                   SelectedValue="@Assessment.CourseId"
-                                                   OnSelectedValueChanged="@((int? value) => Assessment.CourseId = value)"
-                                                   Placeholder="Select a course..."
-                                                   class="form-control" />
+                        <SearchableSelectComponent TItem="DropdownOption" TValue="int?" Items="@courseOptions"
+                            ValueSelector="@(item => (int?)item.Value)" DisplaySelector="@(item => item.Text)"
+                            SearchFunction="@SearchCourses" SelectedValue="@Assessment.CourseId"
+                            OnSelectedValueChanged="@((int? value) => Assessment.CourseId = value)"
+                            Placeholder="Select a course..." class="form-control" />
                         <ValidationMessage For="() => Assessment.CourseId" class="text-danger" />
                     </div>
 
                     <div class="row">
                         <div class="col-md-6 mb-3">
                             <label for="moduleid" class="form-label">Module (Optional)</label>
-                            <SearchableSelectComponent TItem="DropdownOption"
-                                                       TValue="int?"
-                                                       Items="@moduleOptions"
-                                                       ValueSelector="@(item => (int?)item.Value)"
-                                                       DisplaySelector="@(item => item.Text)"
-                                                       SearchFunction="@SearchModules"
-                                                       SelectedValue="@Assessment.ModuleId"
-                                                       OnSelectedValueChanged="@((int? value) => Assessment.ModuleId = value)"
-                                                       Placeholder="Select a module (optional)..."
-                                                       class="form-control" />
+                            <SearchableSelectComponent TItem="DropdownOption" TValue="int?" Items="@moduleOptions"
+                                ValueSelector="@(item => (int?)item.Value)" DisplaySelector="@(item => item.Text)"
+                                SearchFunction="@SearchModules" SelectedValue="@Assessment.ModuleId"
+                                OnSelectedValueChanged="@((int? value) => Assessment.ModuleId = value)"
+                                Placeholder="Select a module (optional)..." class="form-control" />
                             <ValidationMessage For="() => Assessment.ModuleId" class="text-danger" />
                         </div>
                         <div class="col-md-6 mb-3">
                             <label for="lessonid" class="form-label">Lesson (Optional)</label>
-                            <SearchableSelectComponent TItem="DropdownOption"
-                                                       TValue="int?"
-                                                       Items="@lessonOptions"
-                                                       ValueSelector="@(item => (int?)item.Value)"
-                                                       DisplaySelector="@(item => item.Text)"
-                                                       SearchFunction="@SearchLessons"
-                                                       SelectedValue="@Assessment.LessonId"
-                                                       OnSelectedValueChanged="@((int? value) => Assessment.LessonId = value)"
-                                                       Placeholder="Select a lesson (optional)..."
-                                                       class="form-control" />
+                            <SearchableSelectComponent TItem="DropdownOption" TValue="int?" Items="@lessonOptions"
+                                ValueSelector="@(item => (int?)item.Value)" DisplaySelector="@(item => item.Text)"
+                                SearchFunction="@SearchLessons" SelectedValue="@Assessment.LessonId"
+                                OnSelectedValueChanged="@((int? value) => Assessment.LessonId = value)"
+                                Placeholder="Select a lesson (optional)..." class="form-control" />
                             <ValidationMessage For="() => Assessment.LessonId" class="text-danger" />
                         </div>
                     </div>
@@ -92,7 +78,8 @@
                         <div class="col-md-6 mb-3">
                             <label for="type" class="form-label">Assessment Type</label>
                             <InputSelect id="type" @bind-Value="Assessment.Type" class="form-select">
-                                @foreach (var enumValue in Enum.GetValues(typeof(AssessmentType)).Cast<AssessmentType>())
+                                @foreach (var enumValue in
+                                                                Enum.GetValues(typeof(AssessmentType)).Cast<AssessmentType>())
                                 {
                                     <option value="@((int)enumValue)">@enumValue.ToString()</option>
                                 }
@@ -114,7 +101,8 @@
                         </div>
                         <div class="col-md-6 mb-3">
                             <label for="passingscore" class="form-label">Passing Score (%)</label>
-                            <InputNumber id="passingscore" @bind-Value="Assessment.PassingScore" class="form-control" step="0.01" />
+                            <InputNumber id="passingscore" @bind-Value="Assessment.PassingScore" class="form-control"
+                                step="0.01" />
                             <ValidationMessage For="() => Assessment.PassingScore" class="text-danger" />
                         </div>
                     </div>
@@ -122,13 +110,15 @@
                     <div class="row">
                         <div class="col-md-6 mb-3">
                             <div class="form-check">
-                                <InputCheckbox id="israndomized" @bind-Value="Assessment.IsRandomized" class="form-check-input" />
+                                <InputCheckbox id="israndomized" @bind-Value="Assessment.IsRandomized"
+                                    class="form-check-input" />
                                 <label for="israndomized" class="form-check-label">Randomize Questions</label>
                             </div>
                         </div>
                         <div class="col-md-6 mb-3">
                             <div class="form-check">
-                                <InputCheckbox id="showcorrectanswers" @bind-Value="Assessment.ShowCorrectAnswers" class="form-check-input" />
+                                <InputCheckbox id="showcorrectanswers" @bind-Value="Assessment.ShowCorrectAnswers"
+                                    class="form-check-input" />
                                 <label for="showcorrectanswers" class="form-check-label">Show Correct Answers</label>
                             </div>
                         </div>
@@ -137,8 +127,10 @@
                     <div class="row">
                         <div class="col-md-6 mb-3">
                             <div class="form-check">
-                                <InputCheckbox id="showscoreimmediately" @bind-Value="Assessment.ShowScoreImmediately" class="form-check-input" />
-                                <label for="showscoreimmediately" class="form-check-label">Show Score Immediately</label>
+                                <InputCheckbox id="showscoreimmediately" @bind-Value="Assessment.ShowScoreImmediately"
+                                    class="form-check-input" />
+                                <label for="showscoreimmediately" class="form-check-label">Show Score
+                                    Immediately</label>
                             </div>
                         </div>
                     </div>
@@ -151,7 +143,8 @@
                         </div>
                         <div class="col-md-6 mb-3">
                             <label for="availableuntil" class="form-label">Available Until</label>
-                            <InputDate id="availableuntil" @bind-Value="Assessment.AvailableUntil" class="form-control" />
+                            <InputDate id="availableuntil" @bind-Value="Assessment.AvailableUntil"
+                                class="form-control" />
                             <ValidationMessage For="() => Assessment.AvailableUntil" class="text-danger" />
                         </div>
                     </div>

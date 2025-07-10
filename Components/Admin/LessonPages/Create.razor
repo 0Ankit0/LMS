@@ -4,6 +4,7 @@
 @inject ICourseService CourseService
 @inject IDropdownService DropdownService
 @inject NavigationManager NavigationManager
+@rendermode @(new InteractiveServerRenderMode())
 
 <PageTitle>Create Lesson - Admin</PageTitle>
 
@@ -28,27 +29,24 @@
 
                     <div class="mb-3">
                         <label for="title" class="form-label">Title <span class="text-danger">*</span></label>
-                        <InputText id="title" @bind-Value="Lesson.Title" class="form-control" aria-required="true" 
-                                  placeholder="Enter lesson title" />
+                        <InputText id="title" @bind-Value="Lesson.Title" class="form-control" aria-required="true"
+                            placeholder="Enter lesson title" />
                         <ValidationMessage For="() => Lesson.Title" class="text-danger" />
                     </div>
 
                     <div class="mb-3">
                         <label for="description" class="form-label">Description</label>
                         <InputTextArea id="description" @bind-Value="Lesson.Description" class="form-control" rows="3"
-                                      placeholder="Enter lesson description" />
+                            placeholder="Enter lesson description" />
                         <ValidationMessage For="() => Lesson.Description" class="text-danger" />
                     </div>
 
                     <div class="mb-3">
                         <label for="moduleid" class="form-label">Module <span class="text-danger">*</span></label>
-                        <SearchableSelectComponent TItem="DropdownOption" TValue="int?"
-                                                 Items="moduleOptions"
-                                                 ValueSelector="option => option.Value"
-                                                 DisplaySelector="option => option.Text"
-                                                 @bind-SelectedValue="SelectedModuleId"
-                                                 Placeholder="Search and select module..."
-                                                 SearchFunction="SearchModules" />
+                        <SearchableSelectComponent TItem="DropdownOption" TValue="int?" Items="moduleOptions"
+                            ValueSelector="option => option.Value" DisplaySelector="option => option.Text"
+                            @bind-SelectedValue="SelectedModuleId" Placeholder="Search and select module..."
+                            SearchFunction="SearchModules" />
                         <ValidationMessage For="() => Lesson.ModuleId" class="text-danger" />
                     </div>
 
@@ -65,15 +63,15 @@
                         </div>
                         <div class="col-md-6 mb-3">
                             <label for="estimatedduration" class="form-label">Duration (minutes)</label>
-                            <InputNumber id="estimatedduration" @bind-Value="EstimatedDurationMinutes" class="form-control" 
-                                        placeholder="30" />
+                            <InputNumber id="estimatedduration" @bind-Value="EstimatedDurationMinutes"
+                                class="form-control" placeholder="30" />
                             <ValidationMessage For="() => EstimatedDurationMinutes" class="text-danger" />
                         </div>
                     </div>
                     <div class="mb-3">
                         <label for="content" class="form-label">Content</label>
                         <InputTextArea id="content" @bind-Value="Lesson.Content" class="form-control" rows="5"
-                                      placeholder="Enter lesson content..." />
+                            placeholder="Enter lesson content..." />
                         <ValidationMessage For="() => Lesson.Content" class="text-danger" />
                     </div>
 
@@ -81,13 +79,13 @@
                         <div class="col-md-6 mb-3">
                             <label for="videourl" class="form-label">Video URL</label>
                             <InputText id="videourl" @bind-Value="Lesson.VideoUrl" class="form-control"
-                                      placeholder="https://example.com/video.mp4" />
+                                placeholder="https://example.com/video.mp4" />
                             <ValidationMessage For="() => Lesson.VideoUrl" class="text-danger" />
                         </div>
                         <div class="col-md-6 mb-3">
                             <label for="documenturl" class="form-label">Document URL</label>
                             <InputText id="documenturl" @bind-Value="Lesson.DocumentUrl" class="form-control"
-                                      placeholder="https://example.com/document.pdf" />
+                                placeholder="https://example.com/document.pdf" />
                             <ValidationMessage For="() => Lesson.DocumentUrl" class="text-danger" />
                         </div>
                     </div>
@@ -96,12 +94,13 @@
                         <div class="col-md-6 mb-3">
                             <label for="externalurl" class="form-label">External URL</label>
                             <InputText id="externalurl" @bind-Value="Lesson.ExternalUrl" class="form-control"
-                                      placeholder="https://external-resource.com" />
+                                placeholder="https://external-resource.com" />
                             <ValidationMessage For="() => Lesson.ExternalUrl" class="text-danger" />
                         </div>
                         <div class="col-md-6 mb-3">
                             <label for="orderindex" class="form-label">Order Index</label>
-                            <InputNumber id="orderindex" @bind-Value="Lesson.OrderIndex" class="form-control" placeholder="1" />
+                            <InputNumber id="orderindex" @bind-Value="Lesson.OrderIndex" class="form-control"
+                                placeholder="1" />
                             <ValidationMessage For="() => Lesson.OrderIndex" class="text-danger" />
                         </div>
                     </div>
