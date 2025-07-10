@@ -27,7 +27,8 @@
                     <PropertyColumn Property="assessment => assessment.MaxAttempts" Title="Max Attempts" />
                     <PropertyColumn Property="assessment => assessment.PassingScore" Title="Passing Score" />
                     <PropertyColumn Property="assessment => assessment.IsRandomized" Title="Randomized" />
-                    <PropertyColumn Property="assessment => assessment.AvailableFrom" Title="Available From" Format="yyyy-MM-dd" />
+                    <PropertyColumn Property="assessment => assessment.AvailableFrom" Title="Available From"
+                        Format="yyyy-MM-dd" />
 
                     <TemplateColumn Title="Actions" Context="assessment">
                         <div class="btn-group" role="group">
@@ -44,10 +45,8 @@
                     </TemplateColumn>
                 </QuickGrid>
 
-                <PaginationComponent 
-                    PaginatedResult="paginatedAssessments"
-                    OnPageChanged="OnPageChanged"
-                    OnPageSizeChanged="OnPageSizeChanged" />
+                <PaginationComponent TItem="AssessmentModel" PaginatedResult="paginatedAssessments"
+                    OnPageChanged="OnPageChanged" OnPageSizeChanged="OnPageSizeChanged" />
             }
             else
             {
