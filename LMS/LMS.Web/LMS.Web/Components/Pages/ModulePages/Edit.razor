@@ -1,0 +1,124 @@
+﻿@page "/modules/edit"
+@using Microsoft.EntityFrameworkCore
+@using LMS.Data.Entities
+@inject IDbContextFactory<LMS.Data.Entities.AuthDbContext> DbFactory
+@inject NavigationManager NavigationManager
+
+<PageTitle>Edit</PageTitle>
+
+<h1>Edit</h1>
+
+<h2>Module</h2>
+<hr />
+@if (Module is null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <div class="row">
+        <div class="col-md-4">
+            <EditForm method="post" Model="Module" OnValidSubmit="UpdateModule" FormName="edit" Enhance>
+                <DataAnnotationsValidator />
+                <ValidationSummary role="alert"/>
+                <input type="hidden" name="Module.Id" value="@Module.Id" />
+                <div class="mb-3">
+                    <label for="title" class="form-label">Title:</label>
+                    <InputText id="title" @bind-Value="Module.Title" class="form-control" aria-required="true"/>
+                    <ValidationMessage For="() => Module.Title" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <label for="description" class="form-label">Description:</label>
+                    <InputText id="description" @bind-Value="Module.Description" class="form-control" />
+                    <ValidationMessage For="() => Module.Description" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <label for="courseid" class="form-label">CourseId:</label>
+                    <InputNumber id="courseid" @bind-Value="Module.CourseId" class="form-control" />
+                    <ValidationMessage For="() => Module.CourseId" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <label for="orderindex" class="form-label">OrderIndex:</label>
+                    <InputNumber id="orderindex" @bind-Value="Module.OrderIndex" class="form-control" />
+                    <ValidationMessage For="() => Module.OrderIndex" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <label for="isrequired" class="form-label">IsRequired:</label>
+                    <InputCheckbox id="isrequired" @bind-Value="Module.IsRequired" class="form-check-input" />
+                    <ValidationMessage For="() => Module.IsRequired" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <label for="isactive" class="form-label">IsActive:</label>
+                    <InputCheckbox id="isactive" @bind-Value="Module.IsActive" class="form-check-input" />
+                    <ValidationMessage For="() => Module.IsActive" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <label for="createdat" class="form-label">CreatedAt:</label>
+                    <InputDate id="createdat" @bind-Value="Module.CreatedAt" class="form-control" />
+                    <ValidationMessage For="() => Module.CreatedAt" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <label for="updatedat" class="form-label">UpdatedAt:</label>
+                    <InputDate id="updatedat" @bind-Value="Module.UpdatedAt" class="form-control" />
+                    <ValidationMessage For="() => Module.UpdatedAt" class="text-danger" />
+                </div>
+                <button type="submit" class="btn btn-primary">Save</button>
+            </EditForm>
+        </div>
+    </div>
+}
+
+<div>
+    <a href="/modules">Back to List</a>
+</div>
+
+@code {
+    [SupplyParameterFromQuery]
+    private int Id { get; set; }
+
+    [SupplyParameterFromForm]
+    private Module? Module { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        using var context = DbFactory.CreateDbContext();
+        Module ??= await context.Modules.FirstOrDefaultAsync(m => m.Id == Id);
+
+        if (Module is null)
+        {
+            NavigationManager.NavigateTo("notfound");
+        }
+    }
+
+    // To protect from overposting attacks, enable the specific properties you want to bind to.
+    // For more information, see https://learn.microsoft.com/aspnet/core/blazor/forms/#mitigate-overposting-attacks.
+    private async Task UpdateModule()
+    {
+        using var context = DbFactory.CreateDbContext();
+        context.Attach(Module!).State = EntityState.Modified;
+
+        try
+        {
+            await context.SaveChangesAsync();
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            if (!ModuleExists(Module!.Id))
+            {
+                NavigationManager.NavigateTo("notfound");
+            }
+            else
+            {
+                throw;
+            }
+        }
+
+        NavigationManager.NavigateTo("/modules");
+    }
+
+    private bool ModuleExists(int id)
+    {
+        using var context = DbFactory.CreateDbContext();
+        return context.Modules.Any(e => e.Id == id);
+    }
+}

@@ -1,0 +1,127 @@
+@rendermode InteractiveServer
+
+
+<div class="top-row ps-3 navbar navbar-dark">
+    <div class="container-fluid d-flex align-items-center justify-content-end">
+        <button class="navbar-collapse-toggle" @onclick="ToggleNavbar"
+            title="@(isNavbarCollapsed ? "Expand sidebar" : "Collapse sidebar")">
+            <span class="bi @(isNavbarCollapsed ? "bi-chevron-right" : "bi-chevron-left")"></span>
+        </button>
+        <button class="navbar-toggler" @onclick="ToggleMobileMenu" title="Toggle navigation menu"
+            aria-label="Toggle navigation menu">
+            <span class="bar"></span>
+            <span class="bar"></span>
+            <span class="bar"></span>
+        </button>
+    </div>
+</div>
+
+<div class="nav-scrollable @(GetNavScrollableClasses())" style="@(isMobileMenuOpen ? "display: block;" : "")">
+    <nav class="nav">
+        <div class="nav-item" data-tooltip="Dashboard">
+            <NavLink class="nav-link" href="/admin" Match="NavLinkMatch.All" title="Dashboard">
+                <span class="bi bi-speedometer2" aria-hidden="true"></span>
+                <span class="nav-text" style="line-height: 1.2; font-size: 0.97rem;">Dashboard</span>
+            </NavLink>
+        </div>
+        <div class="nav-item" data-tooltip="Achievements">
+            <NavLink class="nav-link" href="/admin/achievements" title="Achievements">
+                <span class="bi bi-trophy" aria-hidden="true"></span>
+                <span class="nav-text" style="line-height: 1.2; font-size: 0.97rem;">Achievements</span>
+            </NavLink>
+        </div>
+        <div class="nav-item" data-tooltip="Assessments">
+            <NavLink class="nav-link" href="/admin/assessments" title="Assessments">
+                <span class="bi bi-clipboard-check" aria-hidden="true"></span>
+                <span class="nav-text" style="line-height: 1.2; font-size: 0.97rem;">Assessments</span>
+            </NavLink>
+        </div>
+        <div class="nav-item" data-tooltip="Categories">
+            <NavLink class="nav-link" href="/admin/categories" title="Categories">
+                <span class="bi bi-tags" aria-hidden="true"></span>
+                <span class="nav-text" style="line-height: 1.2; font-size: 0.97rem;">Categories</span>
+            </NavLink>
+        </div>
+        <div class="nav-item" data-tooltip="Certificates">
+            <NavLink class="nav-link" href="/admin/certificates" title="Certificates">
+                <span class="bi bi-award" aria-hidden="true"></span>
+                <span class="nav-text" style="line-height: 1.2; font-size: 0.97rem;">Certificates</span>
+            </NavLink>
+        </div>
+        <div class="nav-item" data-tooltip="Courses">
+            <NavLink class="nav-link" href="/admin/courses" title="Courses">
+                <span class="bi bi-book" aria-hidden="true"></span>
+                <span class="nav-text" style="line-height: 1.2; font-size: 0.97rem;">Courses</span>
+            </NavLink>
+        </div>
+        <div class="nav-item" data-tooltip="Enrollments">
+            <NavLink class="nav-link" href="/admin/enrollments" title="Enrollments">
+                <span class="bi bi-person-plus" aria-hidden="true"></span>
+                <span class="nav-text" style="line-height: 1.2; font-size: 0.97rem;">Enrollments</span>
+            </NavLink>
+        </div>
+        <div class="nav-item" data-tooltip="Forums">
+            <NavLink class="nav-link" href="/admin/forums" title="Forums">
+                <span class="bi bi-chat-square-text" aria-hidden="true"></span>
+                <span class="nav-text" style="line-height: 1.2; font-size: 0.97rem;">Forums</span>
+            </NavLink>
+        </div>
+        <div class="nav-item" data-tooltip="Forum Posts">
+            <NavLink class="nav-link" href="/admin/forumposts" title="Forum Posts">
+                <span class="bi bi-chat-dots" aria-hidden="true"></span>
+                <span class="nav-text" style="line-height: 1.2; font-size: 0.97rem;">Forum Posts</span>
+            </NavLink>
+        </div>
+        <div class="nav-item" data-tooltip="Lessons">
+            <NavLink class="nav-link" href="/admin/lessons" title="Lessons">
+                <span class="bi bi-play-circle" aria-hidden="true"></span>
+                <span class="nav-text" style="line-height: 1.2; font-size: 0.97rem;">Lessons</span>
+            </NavLink>
+        </div>
+        <div class="nav-item" data-tooltip="Modules">
+            <NavLink class="nav-link" href="/admin/modules" title="Modules">
+                <span class="bi bi-collection" aria-hidden="true"></span>
+                <span class="nav-text" style="line-height: 1.2; font-size: 0.97rem;">Modules</span>
+            </NavLink>
+        </div>
+        <div class="nav-item" data-tooltip="Questions">
+            <NavLink class="nav-link" href="/admin/questions" title="Questions">
+                <span class="bi bi-question-circle" aria-hidden="true"></span>
+                <span class="nav-text" style="line-height: 1.2; font-size: 0.97rem;">Questions</span>
+            </NavLink>
+        </div>
+        <div class="nav-item" data-tooltip="Tags">
+            <NavLink class="nav-link" href="/admin/tags" title="Tags">
+                <span class="bi bi-hash" aria-hidden="true"></span>
+                <span class="nav-text" style="line-height: 1.2; font-size: 0.97rem;">Tags</span>
+            </NavLink>
+        </div>
+    </nav>
+</div>
+
+@code {
+    private bool isNavbarCollapsed = false; // Start expanded by default for admin
+    private bool isMobileMenuOpen = false; // Mobile menu state
+
+    private void ToggleNavbar()
+    {
+        isNavbarCollapsed = !isNavbarCollapsed;
+    }
+
+    private void ToggleMobileMenu()
+    {
+        isMobileMenuOpen = !isMobileMenuOpen;
+    }
+
+    private string GetNavScrollableClasses()
+    {
+        var classes = new List<string>();
+
+        if (isNavbarCollapsed)
+        {
+            classes.Add("collapsed");
+        }
+
+        return string.Join(" ", classes);
+    }
+}

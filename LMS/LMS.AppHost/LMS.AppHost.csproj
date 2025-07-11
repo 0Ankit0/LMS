@@ -12,12 +12,13 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\LMS.ApiService\LMS.ApiService.csproj" />
-    <ProjectReference Include="..\LMS.Web\LMS.Web.csproj" />
+    <PackageReference Include="Aspire.Hosting.AppHost" Version="9.0.0" />
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Aspire.Hosting.AppHost" Version="9.0.0" />
+    <ProjectReference Include="..\LMS.ApiService\LMS.ApiService.csproj" />
+    <ProjectReference Include="..\LMS.Web\LMS.Web.Client\LMS.Web.Client.csproj" />
+    <ProjectReference Include="..\LMS.Web\LMS.Web\LMS.Web.csproj" />
   </ItemGroup>
 
 </Project>

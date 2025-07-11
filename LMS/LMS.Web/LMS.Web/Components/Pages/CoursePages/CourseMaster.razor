@@ -1,0 +1,359 @@
+@page "/courses/master"
+@using Microsoft.EntityFrameworkCore
+@using LMS.Data.Entities
+@using LMS.Models.Course
+@using LMS.Models.Communication
+@using LMS.Models.Assessment
+@inject IDbContextFactory<LMS.Data.Entities.AuthDbContext> DbFactory
+@inject NavigationManager NavigationManager
+@rendermode InteractiveServer
+
+<PageTitle>Course Master</PageTitle>
+
+@if (course == null)
+{
+    <div class="d-flex justify-content-center align-items-center" style="min-height: 100vh;">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+    </div>
+}
+else
+{
+    <div class="d-flex" style="min-height: 100vh; background: #36393f;">
+        <!-- Discord-like Sidebar (Only visible when Forum tab is active) -->
+        @if (activeTab == "Forum")
+        {
+            <div class="sidebar bg-dark text-light" style="width: 240px; min-height: 100vh; padding: 20px 0;">
+                <div class="px-3 mb-4">
+                    <h6 class="text-uppercase text-muted small fw-bold mb-3" style="letter-spacing: 1px;">Course Forums</h6>
+                    <div class="list-group list-group-flush">
+                        <a href="#" class="list-group-item list-group-item-action bg-transparent text-light border-0 rounded mb-1 @(selectedForumChannel == "general" ? "active" : "")" 
+                           @onclick="@(() => SelectForumChannel("general"))" @onclick:preventDefault="true">
+                            <i class="bi bi-hash me-2"></i> general
+                        </a>
+                        <a href="#" class="list-group-item list-group-item-action bg-transparent text-light border-0 rounded mb-1 @(selectedForumChannel == "announcements" ? "active" : "")"
+                           @onclick="@(() => SelectForumChannel("announcements"))" @onclick:preventDefault="true">
+                            <i class="bi bi-megaphone me-2"></i> announcements
+                        </a>
+                        <a href="#" class="list-group-item list-group-item-action bg-transparent text-light border-0 rounded mb-1 @(selectedForumChannel == "questions" ? "active" : "")"
+                           @onclick="@(() => SelectForumChannel("questions"))" @onclick:preventDefault="true">
+                            <i class="bi bi-question-circle me-2"></i> questions
+                        </a>
+                        <a href="#" class="list-group-item list-group-item-action bg-transparent text-light border-0 rounded mb-1 @(selectedForumChannel == "assignments" ? "active" : "")"
+                           @onclick="@(() => SelectForumChannel("assignments"))" @onclick:preventDefault="true">
+                            <i class="bi bi-clipboard me-2"></i> assignments
+                        </a>
+                    </div>
+                </div>
+                <div class="px-3">
+                    <h6 class="text-uppercase text-muted small fw-bold mb-3" style="letter-spacing: 1px;">Study Groups</h6>
+                    <div class="list-group list-group-flush">
+                        <a href="#" class="list-group-item list-group-item-action bg-transparent text-light border-0 rounded mb-1">
+                            <i class="bi bi-people me-2"></i> Study Group 1
+                        </a>
+                        <a href="#" class="list-group-item list-group-item-action bg-transparent text-light border-0 rounded mb-1">
+                            <i class="bi bi-people me-2"></i> Study Group 2
+                        </a>
+                    </div>
+                </div>
+            </div>
+        }
+
+        <!-- Main Content Area -->
+        <div class="flex-grow-1 d-flex flex-column">
+            <!-- Top Navigation Bar -->
+            <div class="bg-white border-bottom px-4 py-3">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h4 class="fw-bold mb-1">@course.Title</h4>
+                        <p class="text-muted small mb-0">@course.Description</p>
+                    </div>
+                    <div class="d-flex align-items-center">
+                        <span class="badge bg-primary me-2">@course.Level</span>
+                        <span class="text-muted small">@course.EstimatedDuration</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab Navigation -->
+            <div class="bg-white border-bottom">
+                <nav class="nav nav-tabs border-0 px-4">
+                    <button class="nav-link @(activeTab == "Forum" ? "active" : "")" @onclick="@(() => SetActiveTab("Forum"))">
+                        <i class="bi bi-chat-dots me-2"></i> Forum
+                    </button>
+                    <button class="nav-link @(activeTab == "Resources" ? "active" : "")" @onclick="@(() => SetActiveTab("Resources"))">
+                        <i class="bi bi-folder me-2"></i> Resources
+                    </button>
+                    <button class="nav-link @(activeTab == "Assessment" ? "active" : "")" @onclick="@(() => SetActiveTab("Assessment"))">>
+                        <i class="bi bi-clipboard-check me-2"></i> Assessment
+                    </button>
+                </nav>
+            </div>
+
+            <!-- Tab Content -->
+            <div class="flex-grow-1 p-4" style="background: #f8f9fa;">
+                @if (activeTab == "Forum")
+                {
+                    <div class="container-fluid">
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="card border-0 shadow-sm">
+                                    <div class="card-header bg-white">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <h5 class="mb-0">
+                                                <i class="bi bi-hash me-2"></i>@selectedForumChannel
+                                            </h5>
+                                            <button class="btn btn-primary btn-sm">
+                                                <i class="bi bi-plus me-1"></i> New Post
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div class="card-body">
+                                        @if (forumPosts.Any())
+                                        {
+                                            @foreach (var post in forumPosts)
+                                            {
+                                                <div class="border-bottom pb-3 mb-3">
+                                                    <div class="d-flex align-items-start">
+                                                        <img src="/favicon.png" class="rounded-circle me-3" style="width: 40px; height: 40px;" alt="User">
+                                                        <div class="flex-grow-1">
+                                                            <div class="d-flex align-items-center mb-1">
+                                                                <span class="fw-semibold me-2">@post.AuthorName</span>
+                                                                <span class="text-muted small">@post.CreatedAt.ToString("MMM dd, yyyy")</span>
+                                                            </div>
+                                                            <p class="mb-2">@post.Content</p>
+                                                            <div class="d-flex align-items-center">
+                                                                <button class="btn btn-sm btn-outline-primary me-2">
+                                                                    <i class="bi bi-heart me-1"></i> Like
+                                                                </button>
+                                                                <button class="btn btn-sm btn-outline-secondary">
+                                                                    <i class="bi bi-reply me-1"></i> Reply
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            }
+                                        }
+                                        else
+                                        {
+                                            <div class="text-center py-5">
+                                                <i class="bi bi-chat-dots text-muted" style="font-size: 3rem;"></i>
+                                                <p class="text-muted mt-3">No posts yet. Be the first to start a discussion!</p>
+                                            </div>
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                }
+                else if (activeTab == "Resources")
+                {
+                    <div class="container-fluid">
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="card border-0 shadow-sm">
+                                    <div class="card-header bg-white">
+                                        <h5 class="mb-0">
+                                            <i class="bi bi-folder me-2"></i>Course Resources
+                                        </h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="row g-4">
+                                            @foreach (var resource in courseResources)
+                                            {
+                                                <div class="col-md-6 col-lg-4">
+                                                    <div class="card border h-100">
+                                                        <div class="card-body">
+                                                            <div class="d-flex align-items-center mb-3">
+                                                                <i class="bi bi-file-earmark-pdf text-danger me-2" style="font-size: 1.5rem;"></i>
+                                                                <div>
+                                                                    <h6 class="mb-0">@resource.Name</h6>
+                                                                    <small class="text-muted">@resource.Type</small>
+                                                                </div>
+                                                            </div>
+                                                            <p class="small text-muted mb-3">@resource.Description</p>
+                                                            <a href="@resource.ExternalUrl" class="btn btn-outline-primary btn-sm w-100" target="_blank">
+                                                                <i class="bi bi-download me-1"></i> Download
+                                                            </a>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            }
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                }
+                else if (activeTab == "Assessment")
+                {
+                    <div class="container-fluid">
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="card border-0 shadow-sm">
+                                    <div class="card-header bg-white">
+                                        <h5 class="mb-0">
+                                            <i class="bi bi-clipboard-check me-2"></i>Assessments
+                                        </h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="row g-4">
+                                            @foreach (var assessment in assessments)
+                                            {
+                                                <div class="col-md-6">
+                                                    <div class="card border h-100">
+                                                        <div class="card-body">
+                                                            <div class="d-flex justify-content-between align-items-start mb-3">
+                                                                <div>
+                                                                    <h6 class="mb-1">@assessment.Title</h6>
+                                                                    <span class="badge bg-info">@assessment.Type</span>
+                                                                </div>
+                                                                <span class="text-muted small">100 pts</span>
+                                                            </div>
+                                                            <p class="small text-muted mb-3">@assessment.Description</p>
+                                                            <div class="mb-3">
+                                                                <small class="text-muted">Due: @assessment.AvailableUntil?.ToString("MMM dd, yyyy")</small>
+                                                            </div>
+                                                            <button class="btn btn-primary btn-sm w-100">
+                                                                <i class="bi bi-play-circle me-1"></i> Start Assessment
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            }
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private CourseModel? course;
+    private string activeTab = "Forum";
+    private string selectedForumChannel = "general";
+    
+    [SupplyParameterFromQuery]
+    private int Id { get; set; }
+
+    // Data lists
+    private List<ForumPostModel> forumPosts = new();
+    private List<LessonResourceModel> courseResources = new();
+    private List<AssessmentModel> assessments = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        using var context = DbFactory.CreateDbContext();
+        var courseEntity = await context.Courses.FirstOrDefaultAsync(m => m.Id == Id);
+
+        if (courseEntity is null)
+        {
+            NavigationManager.NavigateTo("notfound");
+            return;
+        }
+
+        // Map from Data.Course to Models.Course.CourseModel
+        course = new CourseModel
+        {
+            Id = courseEntity.Id,
+            Title = courseEntity.Title,
+            Description = courseEntity.Description,
+            ThumbnailUrl = courseEntity.ThumbnailUrl,
+            InstructorId = courseEntity.InstructorId,
+            Level = courseEntity.Level.ToString(),
+            Status = courseEntity.Status.ToString(),
+            MaxEnrollments = courseEntity.MaxEnrollments,
+            StartDate = courseEntity.StartDate,
+            EndDate = courseEntity.EndDate,
+            EstimatedDuration = courseEntity.EstimatedDuration,
+            Prerequisites = courseEntity.Prerequisites,
+            LearningObjectives = courseEntity.LearningObjectives
+        };
+
+        // Initialize mock data
+        InitializeMockData();
+    }
+
+    private void SetActiveTab(string tab)
+    {
+        activeTab = tab;
+    }
+
+    private void SelectForumChannel(string channel)
+    {
+        selectedForumChannel = channel;
+        LoadForumPosts();
+    }
+
+    private void InitializeMockData()
+    {
+        forumPosts = new List<ForumPostModel>
+        {
+            new ForumPostModel { Id = 1, AuthorName = "John Doe", Content = "Welcome to the course! Looking forward to learning with everyone.", CreatedAt = DateTime.Now.AddDays(-2) },
+            new ForumPostModel { Id = 2, AuthorName = "Jane Smith", Content = "Has anyone started the first assignment yet? I'm having trouble with the setup.", CreatedAt = DateTime.Now.AddDays(-1) }
+        };
+
+        courseResources = new List<LessonResourceModel>
+        {
+            new LessonResourceModel { Id = 1, Name = "Course Syllabus", Type = "PDF", Description = "Complete course outline and schedule", ExternalUrl = "#" },
+            new LessonResourceModel { Id = 2, Name = "Getting Started Guide", Type = "PDF", Description = "Setup instructions and prerequisites", ExternalUrl = "#" },
+            new LessonResourceModel { Id = 3, Name = "Sample Code", Type = "ZIP", Description = "Code examples and templates", ExternalUrl = "#" }
+        };
+
+        assessments = new List<AssessmentModel>
+        {
+            new AssessmentModel { Id = 1, Title = "Quiz 1: Fundamentals", Type = "Quiz", Description = "Basic concepts and terminology", AvailableUntil = DateTime.Now.AddDays(7) },
+            new AssessmentModel { Id = 2, Title = "Assignment 1: Hello World", Type = "Assignment", Description = "Create your first application", AvailableUntil = DateTime.Now.AddDays(14) }
+        };
+    }
+
+    private void LoadForumPosts()
+    {
+        // Mock implementation - replace with actual data loading based on selectedForumChannel
+        forumPosts = new List<ForumPostModel>
+        {
+            new ForumPostModel { Id = 1, AuthorName = "John Doe", Content = $"This is a post in {selectedForumChannel} channel", CreatedAt = DateTime.Now.AddDays(-1) }
+        };
+    }
+}
+
+<style>
+    .nav-tabs .nav-link {
+        border: none;
+        border-bottom: 2px solid transparent;
+        color: #6c757d;
+        padding: 1rem 1.5rem;
+    }
+
+    .nav-tabs .nav-link:hover {
+        border-bottom-color: #dee2e6;
+        color: #495057;
+    }
+
+    .nav-tabs .nav-link.active {
+        border-bottom-color: #0d6efd;
+        color: #0d6efd;
+        background: none;
+    }
+
+    .sidebar .list-group-item {
+        transition: all 0.2s;
+    }
+
+    .sidebar .list-group-item:hover {
+        background-color: #40444b !important;
+    }
+
+    .sidebar .list-group-item.active {
+        background-color: #5865f2 !important;
+    }
+</style>

@@ -1,0 +1,26 @@
+@using LMS.Components.Users.Account
+@using LMS.Components.Layout
+@inherits LayoutComponentBase
+@attribute [Authorize(Roles = "Admin")]
+
+<div class="admin-page">
+    <div class="admin-sidebar">
+        <AdminNavMenu />
+    </div>
+
+    <main class="admin-main">
+        <div class="admin-top-row">
+            <ManageNav></ManageNav>
+        </div>
+
+        <div class="admin-container">
+            @Body
+        </div>
+    </main>
+</div>
+
+<div id="blazor-error-ui" data-nosnippet>
+    An unhandled error has occurred.
+    <a href="." class="reload">Reload</a>
+    <span class="dismiss">🗙</span>
+</div>

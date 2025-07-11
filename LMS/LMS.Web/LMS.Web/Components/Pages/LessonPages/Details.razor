@@ -1,0 +1,78 @@
+﻿@page "/lessons/details"
+@using Microsoft.EntityFrameworkCore
+@using LMS.Data.Entities
+@inject IDbContextFactory<LMS.Data.Entities.AuthDbContext> DbFactory
+@inject NavigationManager NavigationManager
+
+<PageTitle>Details</PageTitle>
+
+<h1>Details</h1>
+
+<div>
+    <h2>Lesson</h2>
+    <hr />
+    @if (lesson is null)
+    {
+        <p><em>Loading...</em></p>
+    }
+    else {
+        <dl class="row">
+            <dt class="col-sm-2">Title</dt>
+            <dd class="col-sm-10">@lesson.Title</dd>
+            <dt class="col-sm-2">Description</dt>
+            <dd class="col-sm-10">@lesson.Description</dd>
+            <dt class="col-sm-2">Content</dt>
+            <dd class="col-sm-10">@lesson.Content</dd>
+            <dt class="col-sm-2">ModuleId</dt>
+            <dd class="col-sm-10">@lesson.ModuleId</dd>
+            <dt class="col-sm-2">Type</dt>
+            <dd class="col-sm-10">@lesson.Type</dd>
+            <dt class="col-sm-2">VideoUrl</dt>
+            <dd class="col-sm-10">@lesson.VideoUrl</dd>
+            <dt class="col-sm-2">DocumentUrl</dt>
+            <dd class="col-sm-10">@lesson.DocumentUrl</dd>
+            <dt class="col-sm-2">ExternalUrl</dt>
+            <dd class="col-sm-10">@lesson.ExternalUrl</dd>
+            <dt class="col-sm-2">EstimatedDuration</dt>
+            <dd class="col-sm-10">@lesson.EstimatedDuration</dd>
+            <dt class="col-sm-2">OrderIndex</dt>
+            <dd class="col-sm-10">@lesson.OrderIndex</dd>
+            <dt class="col-sm-2">IsRequired</dt>
+            <dd class="col-sm-10">@lesson.IsRequired</dd>
+            <dt class="col-sm-2">IsActive</dt>
+            <dd class="col-sm-10">@lesson.IsActive</dd>
+            <dt class="col-sm-2">CreatedAt</dt>
+            <dd class="col-sm-10">@lesson.CreatedAt</dd>
+            <dt class="col-sm-2">UpdatedAt</dt>
+            <dd class="col-sm-10">@lesson.UpdatedAt</dd>
+            <dt class="col-sm-2">IsScormContent</dt>
+            <dd class="col-sm-10">@lesson.IsScormContent</dd>
+            <dt class="col-sm-2">ScormLaunchUrl</dt>
+            <dd class="col-sm-10">@lesson.ScormLaunchUrl</dd>
+            <dt class="col-sm-2">XApiActivityId</dt>
+            <dd class="col-sm-10">@lesson.XApiActivityId</dd>
+        </dl>
+        <div>
+            <a href="@($"/lessons/edit?id={lesson.Id}")">Edit</a> |
+            <a href="@($"/lessons")">Back to List</a>
+        </div>
+    }
+</div>
+
+@code {
+    private Lesson? lesson;
+
+    [SupplyParameterFromQuery]
+    private int Id { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        using var context = DbFactory.CreateDbContext();
+        lesson = await context.Lessons.FirstOrDefaultAsync(m => m.Id == Id);
+
+        if (lesson is null)
+        {
+            NavigationManager.NavigateTo("notfound");
+        }
+    }
+}

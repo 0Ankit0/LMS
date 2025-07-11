@@ -1,0 +1,89 @@
+﻿@page "/admin/achievements/create"
+@layout LMS.Components.Layout.AdminLayout
+@using LMS.Services
+@inject IAchievementService AchievementService
+@inject NavigationManager NavigationManager
+@rendermode @(new InteractiveServerRenderMode())
+
+<PageTitle>Create</PageTitle>
+
+<h1>Create</h1>
+
+<h2>Achievement</h2>
+<hr />
+<div class="row">
+    <div class="col-md-4">
+        <EditForm Model="Achievement" OnValidSubmit="AddAchievement">
+            <AntiforgeryToken />
+            <DataAnnotationsValidator />
+            <ValidationSummary class="text-danger" role="alert" />
+            <div class="mb-3">
+                <label for="name" class="form-label">Name <span class="text-danger">*</span></label>
+                <InputText id="name" @bind-Value="Achievement.Name" class="form-control" aria-required="true"
+                    placeholder="Enter achievement name" />
+                <ValidationMessage For="() => Achievement.Name" class="text-danger" />
+            </div>
+            <div class="mb-3">
+                <label for="description" class="form-label">Description</label>
+                <InputTextArea id="description" @bind-Value="Achievement.Description" class="form-control" rows="3"
+                    placeholder="Enter achievement description" />
+                <ValidationMessage For="() => Achievement.Description" class="text-danger" />
+            </div>
+            <div class="mb-3">
+                <label for="iconurl" class="form-label">Icon URL</label>
+                <InputText id="iconurl" @bind-Value="Achievement.IconUrl" class="form-control"
+                    placeholder="Enter icon URL" />
+                <ValidationMessage For="() => Achievement.IconUrl" class="text-danger" />
+            </div>
+            <div class="mb-3">
+                <label for="points" class="form-label">Points</label>
+                <InputNumber id="points" @bind-Value="Achievement.Points" class="form-control"
+                    placeholder="Enter points value" />
+                <ValidationMessage For="() => Achievement.Points" class="text-danger" />
+            </div>
+            <div class="mb-3">
+                <label for="badgecolor" class="form-label">Badge Color</label>
+                <InputText id="badgecolor" @bind-Value="Achievement.BadgeColor" class="form-control"
+                    placeholder="Enter badge color (e.g., #ffd700)" />
+                <ValidationMessage For="() => Achievement.BadgeColor" class="text-danger" />
+            </div>
+            <div class="mb-3">
+                <label for="type" class="form-label">Type</label>
+                <InputSelect id="type" @bind-Value="Achievement.Type" class="form-control">
+                    @foreach (var enumValue in Enum.GetValues(typeof(AchievementType)).Cast<AchievementType>())
+                    {
+                        <option value="@enumValue">@enumValue.ToString()</option>
+                    }
+                </InputSelect>
+                <ValidationMessage For="() => Achievement.Type" class="text-danger" />
+            </div>
+            <button type="submit" class="btn btn-primary">Create Achievement</button>
+        </EditForm>
+    </div>
+</div>
+
+<div>
+    <a href="/admin/achievements">Back to List</a>
+</div>
+
+@code {
+    [SupplyParameterFromForm]
+    private CreateAchievementRequest Achievement { get; set; } = new();
+
+    private async Task AddAchievement()
+    {
+        try
+        {
+            var result = await AchievementService.CreateAchievementAsync(Achievement);
+            if (result != null)
+            {
+                NavigationManager.NavigateTo("/admin/achievements");
+            }
+        }
+        catch (Exception ex)
+        {
+            // Handle error - could add error display logic here
+            Console.WriteLine($"Error creating achievement: {ex.Message}");
+        }
+    }
+}

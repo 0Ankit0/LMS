@@ -1,0 +1,60 @@
+﻿@page "/certificates/details"
+@using Microsoft.EntityFrameworkCore
+@using LMS.Data.Entities
+@inject IDbContextFactory<LMS.Data.Entities.AuthDbContext> DbFactory
+@inject NavigationManager NavigationManager
+
+<PageTitle>Details</PageTitle>
+
+<h1>Details</h1>
+
+<div>
+    <h2>Certificate</h2>
+    <hr />
+    @if (certificate is null)
+    {
+        <p><em>Loading...</em></p>
+    }
+    else {
+        <dl class="row">
+            <dt class="col-sm-2">UserId</dt>
+            <dd class="col-sm-10">@certificate.UserId</dd>
+            <dt class="col-sm-2">CourseId</dt>
+            <dd class="col-sm-10">@certificate.CourseId</dd>
+            <dt class="col-sm-2">CertificateNumber</dt>
+            <dd class="col-sm-10">@certificate.CertificateNumber</dd>
+            <dt class="col-sm-2">IssuedAt</dt>
+            <dd class="col-sm-10">@certificate.IssuedAt</dd>
+            <dt class="col-sm-2">ExpiresAt</dt>
+            <dd class="col-sm-10">@certificate.ExpiresAt</dd>
+            <dt class="col-sm-2">FinalGrade</dt>
+            <dd class="col-sm-10">@certificate.FinalGrade</dd>
+            <dt class="col-sm-2">CertificateUrl</dt>
+            <dd class="col-sm-10">@certificate.CertificateUrl</dd>
+            <dt class="col-sm-2">IsValid</dt>
+            <dd class="col-sm-10">@certificate.IsValid</dd>
+        </dl>
+        <div>
+            <a href="@($"/certificates/edit?id={certificate.Id}")">Edit</a> |
+            <a href="@($"/certificates")">Back to List</a>
+        </div>
+    }
+</div>
+
+@code {
+    private Certificate? certificate;
+
+    [SupplyParameterFromQuery]
+    private int Id { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        using var context = DbFactory.CreateDbContext();
+        certificate = await context.Certificates.FirstOrDefaultAsync(m => m.Id == Id);
+
+        if (certificate is null)
+        {
+            NavigationManager.NavigateTo("notfound");
+        }
+    }
+}

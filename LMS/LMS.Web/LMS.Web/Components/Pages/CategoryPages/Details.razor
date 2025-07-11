@@ -1,0 +1,56 @@
+﻿@page "/categories/details"
+@using Microsoft.EntityFrameworkCore
+@using LMS.Data.Entities
+@inject IDbContextFactory<LMS.Data.Entities.AuthDbContext> DbFactory
+@inject NavigationManager NavigationManager
+
+<PageTitle>Details</PageTitle>
+
+<h1>Details</h1>
+
+<div>
+    <h2>Category</h2>
+    <hr />
+    @if (category is null)
+    {
+        <p><em>Loading...</em></p>
+    }
+    else {
+        <dl class="row">
+            <dt class="col-sm-2">Name</dt>
+            <dd class="col-sm-10">@category.Name</dd>
+            <dt class="col-sm-2">Description</dt>
+            <dd class="col-sm-10">@category.Description</dd>
+            <dt class="col-sm-2">IconUrl</dt>
+            <dd class="col-sm-10">@category.IconUrl</dd>
+            <dt class="col-sm-2">Color</dt>
+            <dd class="col-sm-10">@category.Color</dd>
+            <dt class="col-sm-2">IsActive</dt>
+            <dd class="col-sm-10">@category.IsActive</dd>
+            <dt class="col-sm-2">ParentCategoryId</dt>
+            <dd class="col-sm-10">@category.ParentCategoryId</dd>
+        </dl>
+        <div>
+            <a href="@($"/categories/edit?id={category.Id}")">Edit</a> |
+            <a href="@($"/categories")">Back to List</a>
+        </div>
+    }
+</div>
+
+@code {
+    private Category? category;
+
+    [SupplyParameterFromQuery]
+    private int Id { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        using var context = DbFactory.CreateDbContext();
+        category = await context.Categories.FirstOrDefaultAsync(m => m.Id == Id);
+
+        if (category is null)
+        {
+            NavigationManager.NavigateTo("notfound");
+        }
+    }
+}

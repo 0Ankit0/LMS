@@ -1,0 +1,179 @@
+﻿@page "/lessons/edit"
+@using Microsoft.EntityFrameworkCore
+@using LMS.Data.Entities
+@inject IDbContextFactory<LMS.Data.Entities.AuthDbContext> DbFactory
+@inject NavigationManager NavigationManager
+
+<PageTitle>Edit</PageTitle>
+
+<h1>Edit</h1>
+
+<h2>Lesson</h2>
+<hr />
+@if (Lesson is null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <div class="row">
+        <div class="col-md-4">
+            <EditForm Model="Lesson" OnValidSubmit="UpdateLesson">
+                <DataAnnotationsValidator />
+                <ValidationSummary role="alert" />
+                <input type="hidden" name="Lesson.Id" value="@Lesson.Id" />
+                <div class="mb-3">
+                    <label for="title" class="form-label">Title:</label>
+                    <InputText id="title" @bind-Value="Lesson.Title" class="form-control" aria-required="true" />
+                    <ValidationMessage For="() => Lesson.Title" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <label for="description" class="form-label">Description:</label>
+                    <InputText id="description" @bind-Value="Lesson.Description" class="form-control" />
+                    <ValidationMessage For="() => Lesson.Description" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <label for="content" class="form-label">Content:</label>
+                    <InputText id="content" @bind-Value="Lesson.Content" class="form-control" />
+                    <ValidationMessage For="() => Lesson.Content" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <label for="moduleid" class="form-label">ModuleId:</label>
+                    <InputNumber id="moduleid" @bind-Value="Lesson.ModuleId" class="form-control" />
+                    <ValidationMessage For="() => Lesson.ModuleId" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <label for="type" class="form-label">Type:</label>
+                    <InputSelect id="type" @bind-Value="Lesson.Type" class="form-control">
+                        @foreach (var enumValue in Enum.GetValues(typeof(LessonType)))
+                        {
+                            <option value="@enumValue">@enumValue.ToString()</option>
+                        }
+                    </InputSelect>
+                    <ValidationMessage For="() => Lesson.Type" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <label for="videourl" class="form-label">VideoUrl:</label>
+                    <InputText id="videourl" @bind-Value="Lesson.VideoUrl" class="form-control" />
+                    <ValidationMessage For="() => Lesson.VideoUrl" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <label for="documenturl" class="form-label">DocumentUrl:</label>
+                    <InputText id="documenturl" @bind-Value="Lesson.DocumentUrl" class="form-control" />
+                    <ValidationMessage For="() => Lesson.DocumentUrl" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <label for="externalurl" class="form-label">ExternalUrl:</label>
+                    <InputText id="externalurl" @bind-Value="Lesson.ExternalUrl" class="form-control" />
+                    <ValidationMessage For="() => Lesson.ExternalUrl" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <label for="estimatedduration" class="form-label">EstimatedDuration (minutes):</label>
+                    <InputNumber id="estimatedduration" @bind-Value="EstimatedDurationMinutes" class="form-control" />
+                    <ValidationMessage For="() => EstimatedDurationMinutes" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <label for="orderindex" class="form-label">OrderIndex:</label>
+                    <InputNumber id="orderindex" @bind-Value="Lesson.OrderIndex" class="form-control" />
+                    <ValidationMessage For="() => Lesson.OrderIndex" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <label for="isrequired" class="form-label">IsRequired:</label>
+                    <InputCheckbox id="isrequired" @bind-Value="Lesson.IsRequired" class="form-check-input" />
+                    <ValidationMessage For="() => Lesson.IsRequired" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <label for="isactive" class="form-label">IsActive:</label>
+                    <InputCheckbox id="isactive" @bind-Value="Lesson.IsActive" class="form-check-input" />
+                    <ValidationMessage For="() => Lesson.IsActive" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <label for="createdat" class="form-label">CreatedAt:</label>
+                    <InputDate id="createdat" @bind-Value="Lesson.CreatedAt" class="form-control" />
+                    <ValidationMessage For="() => Lesson.CreatedAt" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <label for="updatedat" class="form-label">UpdatedAt:</label>
+                    <InputDate id="updatedat" @bind-Value="Lesson.UpdatedAt" class="form-control" />
+                    <ValidationMessage For="() => Lesson.UpdatedAt" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <label for="isscormcontent" class="form-label">IsScormContent:</label>
+                    <InputCheckbox id="isscormcontent" @bind-Value="Lesson.IsScormContent" class="form-check-input" />
+                    <ValidationMessage For="() => Lesson.IsScormContent" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <label for="scormlaunchurl" class="form-label">ScormLaunchUrl:</label>
+                    <InputText id="scormlaunchurl" @bind-Value="Lesson.ScormLaunchUrl" class="form-control" />
+                    <ValidationMessage For="() => Lesson.ScormLaunchUrl" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <label for="xapiactivityid" class="form-label">XApiActivityId:</label>
+                    <InputText id="xapiactivityid" @bind-Value="Lesson.XApiActivityId" class="form-control" />
+                    <ValidationMessage For="() => Lesson.XApiActivityId" class="text-danger" />
+                </div>
+                <button type="submit" class="btn btn-primary">Save</button>
+            </EditForm>
+        </div>
+    </div>
+}
+
+<div>
+    <a href="/lessons">Back to List</a>
+</div>
+
+@code {
+    [SupplyParameterFromQuery]
+    private int Id { get; set; }
+
+    [SupplyParameterFromForm]
+    private Lesson? Lesson { get; set; }
+
+    // Helper property for binding EstimatedDuration as minutes
+    private int EstimatedDurationMinutes
+    {
+        get => (int)(Lesson?.EstimatedDuration.TotalMinutes ?? 0);
+        set { if (Lesson != null) Lesson.EstimatedDuration = TimeSpan.FromMinutes(value); }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        using var context = DbFactory.CreateDbContext();
+        Lesson ??= await context.Lessons.FirstOrDefaultAsync(m => m.Id == Id);
+
+        if (Lesson is null)
+        {
+            NavigationManager.NavigateTo("notfound");
+        }
+    }
+
+    private async Task UpdateLesson()
+    {
+        using var context = DbFactory.CreateDbContext();
+        context.Attach(Lesson!).State = EntityState.Modified;
+
+        try
+        {
+            await context.SaveChangesAsync();
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            if (!LessonExists(Lesson!.Id))
+            {
+                NavigationManager.NavigateTo("notfound");
+            }
+            else
+            {
+                throw;
+            }
+        }
+
+        NavigationManager.NavigateTo("/lessons");
+    }
+
+    private bool LessonExists(int id)
+    {
+        using var context = DbFactory.CreateDbContext();
+        return context.Lessons.Any(e => e.Id == id);
+    }
+}
