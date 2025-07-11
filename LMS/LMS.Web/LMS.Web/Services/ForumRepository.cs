@@ -4,9 +4,9 @@ using Microsoft.EntityFrameworkCore.Infrastructure;
 using LMS.Data.DTOs;
 using LMS.Infrastructure.Data;
 
-namespace LMS.Services
+namespace LMS.Repositories
 {
-    public interface IForumService
+    public interface IForumRepository
     {
         Task<List<ForumModel>> GetForumsAsync();
         Task<PaginatedResult<ForumModel>> GetForumsPaginatedAsync(PaginationRequest request);
@@ -31,11 +31,11 @@ namespace LMS.Services
         Task<bool> DeletePostAsync(int id);
     }
 
-    public class ForumService : IForumService
+    public class ForumRepository : IForumRepository
     {
         private readonly IDbContextFactory<ApplicationDbContext> _contextFactory;
 
-        public ForumService(IDbContextFactory<ApplicationDbContext> contextFactory)
+        public ForumRepository(IDbContextFactory<ApplicationDbContext> contextFactory)
         {
             _contextFactory = contextFactory;
         }

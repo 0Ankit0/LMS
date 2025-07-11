@@ -3,9 +3,9 @@ using LMS.Data.Entities;
 using LMS.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 
-namespace LMS.Services
+namespace LMS.Repositories
 {
-    public interface IAnnouncementService
+    public interface IAnnouncementRepository
     {
         Task<List<AnnouncementModel>> GetAnnouncementsAsync();
         Task<List<AnnouncementModel>> GetLatestAnnouncementsAsync();
@@ -19,11 +19,11 @@ namespace LMS.Services
         Task<List<AnnouncementModel>> GetFilteredAnnouncementsAsync(string? searchTerm, string? priority, string? sortBy);
     }
 
-    public class AnnouncementService : IAnnouncementService
+    public class AnnouncementRepository : IAnnouncementRepository
     {
         private readonly IDbContextFactory<ApplicationDbContext> _contextFactory;
 
-        public AnnouncementService(IDbContextFactory<ApplicationDbContext> contextFactory)
+        public AnnouncementRepository(IDbContextFactory<ApplicationDbContext> contextFactory)
         {
             _contextFactory = contextFactory;
         }

@@ -3,9 +3,9 @@ using LMS.Data.Entities;
 using LMS.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 
-namespace LMS.Services
+namespace LMS.Repositories
 {
-    public interface IDropdownService
+    public interface IDropdownRepository
     {
         Task<List<DropdownOption>> GetCategoriesAsync(string? search = null, int take = 20);
         Task<List<DropdownOption>> GetCoursesAsync(string? search = null, int take = 20);
@@ -20,11 +20,11 @@ namespace LMS.Services
         Task<List<DropdownOption>> GetLessonsByModuleAsync(int moduleId, string? search = null, int take = 20);
     }
 
-    public class DropdownService : IDropdownService
+    public class DropdownRepository : IDropdownRepository
     {
         private readonly IDbContextFactory<ApplicationDbContext> _contextFactory;
 
-        public DropdownService(IDbContextFactory<ApplicationDbContext> contextFactory)
+        public DropdownRepository(IDbContextFactory<ApplicationDbContext> contextFactory)
         {
             _contextFactory = contextFactory;
         }

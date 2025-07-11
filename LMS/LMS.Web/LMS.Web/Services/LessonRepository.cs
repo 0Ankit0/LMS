@@ -3,9 +3,9 @@ using Microsoft.EntityFrameworkCore;
 using LMS.Data.DTOs;
 using LMS.Infrastructure.Data;
 
-namespace LMS.Services
+namespace LMS.Repositories
 {
-    public interface ILessonService
+    public interface ILessonRepository
     {
         Task<List<LessonModel>> GetLessonsAsync();
         Task<PaginatedResult<LessonModel>> GetLessonsPaginatedAsync(PaginationRequest request);
@@ -17,11 +17,11 @@ namespace LMS.Services
         Task<bool> UpdateLessonOrderAsync(int lessonId, int newOrder);
     }
 
-    public class LessonService : ILessonService
+    public class LessonRepository : ILessonRepository
     {
         private readonly ApplicationDbContext _context;
 
-        public LessonService(ApplicationDbContext context)
+        public LessonRepository(ApplicationDbContext context)
         {
             _context = context;
         }

@@ -3,9 +3,9 @@ using Microsoft.EntityFrameworkCore;
 using LMS.Data.DTOs;
 using LMS.Infrastructure.Data;
 
-namespace LMS.Services
+namespace LMS.Repositories
 {
-    public interface IEnrollmentService
+    public interface IEnrollmentRepository
     {
         Task<List<EnrollmentModel>> GetEnrollmentsAsync();
         Task<PaginatedResult<EnrollmentModel>> GetEnrollmentsPaginatedAsync(PaginationRequest request);
@@ -22,11 +22,11 @@ namespace LMS.Services
         Task<int> GetCourseEnrollmentCountAsync(int courseId);
     }
 
-    public class EnrollmentService : IEnrollmentService
+    public class EnrollmentRepository : IEnrollmentRepository
     {
         private readonly ApplicationDbContext _context;
 
-        public EnrollmentService(ApplicationDbContext context)
+        public EnrollmentRepository(ApplicationDbContext context)
         {
             _context = context;
         }

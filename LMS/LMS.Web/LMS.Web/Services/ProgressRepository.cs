@@ -4,8 +4,9 @@ using Microsoft.EntityFrameworkCore.Infrastructure;
 using LMS.Infrastructure.Data;
 using LMS.Data.DTOs;
 
-namespace LMS.Services;
-public interface IProgressService
+namespace LMS.Repositories;
+
+public interface IProgressRepository
 {
     Task<IEnumerable<ModuleProgress>> GetModuleProgressAsync(int enrollmentId);
     Task<IEnumerable<LessonProgress>> GetLessonProgressAsync(int enrollmentId);
@@ -20,11 +21,11 @@ public interface IProgressService
     Task UpdateLeaderboardAsync();
     Task<Dictionary<string, object>> GetProgressSummaryAsync(int enrollmentId);
 }
-public class ProgressService : IProgressService
+public class ProgressRepository : IProgressRepository
 {
     private readonly IDbContextFactory<ApplicationDbContext> _contextFactory;
 
-    public ProgressService(IDbContextFactory<ApplicationDbContext> contextFactory)
+    public ProgressRepository(IDbContextFactory<ApplicationDbContext> contextFactory)
     {
         _contextFactory = contextFactory;
     }

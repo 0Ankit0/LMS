@@ -4,9 +4,9 @@ using Microsoft.EntityFrameworkCore.Infrastructure;
 using LMS.Data.DTOs;
 using LMS.Infrastructure.Data;
 
-namespace LMS.Services
+namespace LMS.Repositories
 {
-    public interface ICertificateService
+    public interface ICertificateRepository
     {
         Task<List<CertificateModel>> GetCertificatesAsync();
         Task<PaginatedResult<CertificateModel>> GetCertificatesPaginatedAsync(PaginationRequest request);
@@ -19,11 +19,11 @@ namespace LMS.Services
         Task<CertificateModel?> GetCertificateByNumberAsync(string certificateNumber);
     }
 
-    public class CertificateService : ICertificateService
+    public class CertificateRepository : ICertificateRepository
     {
         private readonly IDbContextFactory<ApplicationDbContext> _contextFactory;
 
-        public CertificateService(IDbContextFactory<ApplicationDbContext> contextFactory)
+        public CertificateRepository(IDbContextFactory<ApplicationDbContext> contextFactory)
         {
             _contextFactory = contextFactory;
         }

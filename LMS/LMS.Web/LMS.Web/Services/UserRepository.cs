@@ -5,9 +5,9 @@ using LMS.Infrastructure.Data;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
-namespace LMS.Services
+namespace LMS.Repositories
 {
-    public interface IUserService
+    public interface IUserRepository
     {
         Task<List<UserModel>> GetUsersAsync();
         Task<UserModel?> GetUserByIdAsync(string id);
@@ -21,12 +21,12 @@ namespace LMS.Services
         Task<bool> UpdateProgressAsync(string userId, UpdateProgressRequest request);
     }
 
-    public class UserService : IUserService
+    public class UserRepository : IUserRepository
     {
         private readonly ApplicationDbContext _context;
         private readonly UserManager<User> _userManager;
 
-        public UserService(ApplicationDbContext context, UserManager<User> userManager)
+        public UserRepository(ApplicationDbContext context, UserManager<User> userManager)
         {
             _context = context;
             _userManager = userManager;

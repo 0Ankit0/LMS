@@ -3,9 +3,9 @@ using LMS.Data.Entities;
 using LMS.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 
-namespace LMS.Services
+namespace LMS.Repositories
 {
-    public interface IMessageService
+    public interface IMessageRepository
     {
         Task<List<MessageModel>> GetMessagesAsync(string userId);
         Task<List<MessageModel>> GetInboxMessagesAsync(string userId);
@@ -17,11 +17,11 @@ namespace LMS.Services
         Task<int> GetUnreadMessageCountAsync(string userId);
     }
 
-    public class MessageService : IMessageService
+    public class MessageRepository : IMessageRepository
     {
         private readonly ApplicationDbContext _context;
 
-        public MessageService(ApplicationDbContext context)
+        public MessageRepository(ApplicationDbContext context)
         {
             _context = context;
         }

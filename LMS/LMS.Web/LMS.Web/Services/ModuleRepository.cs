@@ -4,9 +4,9 @@ using Microsoft.EntityFrameworkCore.Infrastructure;
 using LMS.Data.DTOs;
 using LMS.Infrastructure.Data;
 
-namespace LMS.Services
+namespace LMS.Repositories
 {
-    public interface IModuleService
+    public interface IModuleRepository
     {
         Task<List<ModuleModel>> GetModulesAsync();
         Task<PaginatedResult<ModuleModel>> GetModulesPaginatedAsync(PaginationRequest request);
@@ -18,11 +18,11 @@ namespace LMS.Services
         Task<bool> UpdateModuleOrderAsync(int moduleId, int newOrder);
     }
 
-    public class ModuleService : IModuleService
+    public class ModuleRepository : IModuleRepository
     {
         private readonly IDbContextFactory<ApplicationDbContext> _contextFactory;
 
-        public ModuleService(IDbContextFactory<ApplicationDbContext> contextFactory)
+        public ModuleRepository(IDbContextFactory<ApplicationDbContext> contextFactory)
         {
             _contextFactory = contextFactory;
         }

@@ -3,9 +3,9 @@ using Microsoft.EntityFrameworkCore;
 using LMS.Data.DTOs;
 using LMS.Infrastructure.Data;
 
-namespace LMS.Services
+namespace LMS.Repositories
 {
-    public interface ICourseService
+    public interface ICourseRepository
     {
         Task<List<CourseModel>> GetCoursesAsync();
         Task<PaginatedResult<CourseModel>> GetCoursesPaginatedAsync(PaginationRequest request);
@@ -19,11 +19,11 @@ namespace LMS.Services
         Task<LessonModel> CreateLessonAsync(CreateLessonRequest request);
     }
 
-    public class CourseService : ICourseService
+    public class CourseRepository : ICourseRepository
     {
         private readonly IDbContextFactory<ApplicationDbContext> _contextFactory;
 
-        public CourseService(IDbContextFactory<ApplicationDbContext> contextFactory)
+        public CourseRepository(IDbContextFactory<ApplicationDbContext> contextFactory)
         {
             _contextFactory = contextFactory;
         }

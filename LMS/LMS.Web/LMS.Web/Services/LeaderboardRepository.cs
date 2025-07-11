@@ -3,9 +3,9 @@ using LMS.Data.Entities;
 using LMS.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 
-namespace LMS.Services
+namespace LMS.Repositories
 {
-    public interface ILeaderboardService
+    public interface ILeaderboardRepository
     {
         Task<List<LeaderboardModel>> GetLeaderboardsAsync();
         Task<LeaderboardModel?> GetLeaderboardByIdAsync(int id);
@@ -20,11 +20,11 @@ namespace LMS.Services
         Task<int?> GetUserRankAsync(string userId, int? courseId = null);
     }
 
-    public class LeaderboardService : ILeaderboardService
+    public class LeaderboardRepository : ILeaderboardRepository
     {
         private readonly ApplicationDbContext _context;
 
-        public LeaderboardService(ApplicationDbContext context)
+        public LeaderboardRepository(ApplicationDbContext context)
         {
             _context = context;
         }

@@ -3,9 +3,9 @@ using Microsoft.EntityFrameworkCore;
 using LMS.Data.DTOs;
 using LMS.Infrastructure.Data;
 
-namespace LMS.Services
+namespace LMS.Repositories
 {
-    public interface ITagService
+    public interface ITagRepository
     {
         Task<List<TagModel>> GetTagsAsync();
         Task<PaginatedResult<TagModel>> GetTagsPaginatedAsync(PaginationRequest request);
@@ -15,11 +15,11 @@ namespace LMS.Services
         Task<bool> DeleteTagAsync(int id);
     }
 
-    public class TagService : ITagService
+    public class TagRepository : ITagRepository
     {
         private readonly IDbContextFactory<ApplicationDbContext> _contextFactory;
 
-        public TagService(IDbContextFactory<ApplicationDbContext> contextFactory)
+        public TagRepository(IDbContextFactory<ApplicationDbContext> contextFactory)
         {
             _contextFactory = contextFactory;
         }

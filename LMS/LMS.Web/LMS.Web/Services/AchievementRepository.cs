@@ -4,9 +4,9 @@ using LMS.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 
-namespace LMS.Services
+namespace LMS.Repositories
 {
-    public interface IAchievementService
+    public interface IAchievementRepository
     {
         Task<List<AchievementModel>> GetAchievementsAsync();
         Task<List<AchievementModel>> GetAllAchievementsAsync();
@@ -21,11 +21,11 @@ namespace LMS.Services
         Task<int> GetUserTotalPointsAsync(string userId);
     }
 
-    public class AchievementService : IAchievementService
+    public class AchievementRepository : IAchievementRepository
     {
         private readonly IDbContextFactory<ApplicationDbContext> _contextFactory;
 
-        public AchievementService(IDbContextFactory<ApplicationDbContext> contextFactory)
+        public AchievementRepository(IDbContextFactory<ApplicationDbContext> contextFactory)
         {
             _contextFactory = contextFactory;
         }

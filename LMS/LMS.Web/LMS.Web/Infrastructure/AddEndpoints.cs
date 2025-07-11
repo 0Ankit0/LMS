@@ -21,6 +21,18 @@ public static class EndpointExtensions
 
         services.TryAddEnumerable(serviceDescriptors);
 
+        // Register all repository interfaces and their implementations
+        var repoTypes = assembly.DefinedTypes
+            .Where(t => t.IsClass && !t.IsAbstract && t.Name.EndsWith("Repository"));
+        foreach (var repoType in repoTypes)
+        {
+            var iface = repoType.GetInterfaces().FirstOrDefault(i => i.Name == "I" + repoType.Name);
+            if (iface != null)
+            {
+                services.TryAddScoped(iface, repoType);
+            }
+        }
+
         return services;
     }
 }

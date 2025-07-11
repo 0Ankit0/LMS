@@ -4,7 +4,7 @@ using Microsoft.Extensions.Logging;
 using System.Net;
 using System.Text.Json;
 
-namespace LMS.Services
+namespace LMS.Repositories
 {
     public class GlobalExceptionHandler : IExceptionHandler
     {
@@ -48,6 +48,6 @@ namespace LMS.Services
             return true;
         }
 
-       
+
     }
 }

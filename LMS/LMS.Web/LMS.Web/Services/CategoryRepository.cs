@@ -3,9 +3,9 @@ using Microsoft.EntityFrameworkCore;
 using LMS.Data.DTOs;
 using LMS.Infrastructure.Data;
 
-namespace LMS.Services
+namespace LMS.Repositories
 {
-    public interface ICategoryService
+    public interface ICategoryRepository
     {
         Task<List<CategoryModel>> GetCategoriesAsync();
         Task<PaginatedResult<CategoryModel>> GetCategoriesPaginatedAsync(PaginationRequest request);
@@ -18,11 +18,11 @@ namespace LMS.Services
         Task<List<CategoryModel>> GetCategoriesByCourseIdAsync(int courseId);
     }
 
-    public class CategoryService : ICategoryService
+    public class CategoryRepository : ICategoryRepository
     {
         private readonly ApplicationDbContext _context;
 
-        public CategoryService(ApplicationDbContext context)
+        public CategoryRepository(ApplicationDbContext context)
         {
             _context = context;
         }

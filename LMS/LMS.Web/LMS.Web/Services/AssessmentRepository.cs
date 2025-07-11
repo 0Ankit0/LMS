@@ -4,9 +4,9 @@ using LMS.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 
-namespace LMS.Services;
+namespace LMS.Repositories;
 
-public interface IAssessmentService
+public interface IAssessmentRepository
 {
     Task<IEnumerable<AssessmentModel>> GetAssessmentsAsync();
     Task<PaginatedResult<AssessmentModel>> GetAssessmentsPaginatedAsync(PaginationRequest request);
@@ -19,11 +19,11 @@ public interface IAssessmentService
     Task<IEnumerable<QuestionModel>> GetAllQuestionsAsync();
     Task<PaginatedResult<QuestionModel>> GetAllQuestionsPaginatedAsync(PaginationRequest request);
 }
-public class AssessmentService : IAssessmentService
+public class AssessmentRepository : IAssessmentRepository
 {
     private readonly IDbContextFactory<ApplicationDbContext> _contextFactory;
 
-    public AssessmentService(IDbContextFactory<ApplicationDbContext> contextFactory)
+    public AssessmentRepository(IDbContextFactory<ApplicationDbContext> contextFactory)
     {
         _contextFactory = contextFactory;
     }
