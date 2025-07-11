@@ -22,7 +22,7 @@ namespace LMS.Data.Entities
 
         public string BadgeColor { get; set; } = "#ffd700";
 
-        public AchievementType Type { get; set; } = AchievementType;
+        public AchievementType Type { get; set; }= default;
 
         public bool IsActive { get; set; } = true;
 

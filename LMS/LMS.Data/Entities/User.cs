@@ -1,8 +1,10 @@
+using LMS.Data.Entities;
 using Microsoft.AspNetCore.Identity;
 using System.ComponentModel.DataAnnotations;
 
 namespace LMS.Data.Entities
 {
+    // Add profile data for application users by adding properties to the ApplicationUser class
     public class User : IdentityUser
     {
         [StringLength(100)]
@@ -39,4 +41,5 @@ namespace LMS.Data.Entities
         public virtual ICollection<Message> SentMessages { get; set; } = new List<Message>();
         public virtual ICollection<Message> ReceivedMessages { get; set; } = new List<Message>();
     }
+
 }
