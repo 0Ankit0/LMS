@@ -1,4 +1,5 @@
 @using LMS.Data.Entities
+@using LMS.Infrastructure.Data
 @using LMS.Services
 @using Microsoft.AspNetCore.Identity
 @using Microsoft.AspNetCore.Components.Authorization
@@ -99,7 +100,7 @@
         try
         {
             var connectionString = Configuration.GetConnectionString("DefaultConnection");
-            var dbContext = ServiceProvider.GetService<AuthDbContext>();
+            var dbContext = ServiceProvider.GetService<ApplicationDbContext>();
 
             if (dbContext != null)
             {
@@ -137,7 +138,7 @@
     {
         var servicesToCheck = new[]
         {
-typeof(AuthDbContext),
+typeof(ApplicationDbContext),
 typeof(UserManager<User>),
 typeof(CourseService),
 typeof(UserService),

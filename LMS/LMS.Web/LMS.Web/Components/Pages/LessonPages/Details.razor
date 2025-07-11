@@ -1,7 +1,7 @@
 ﻿@page "/lessons/details"
 @using Microsoft.EntityFrameworkCore
 @using LMS.Data.Entities
-@inject IDbContextFactory<LMS.Data.Entities.AuthDbContext> DbFactory
+@inject IDbContextFactory<LMS.Infrastructure.Data.ApplicationDbContext> DbFactory
 @inject NavigationManager NavigationManager
 
 <PageTitle>Details</PageTitle>

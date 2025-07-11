@@ -1,6 +1,6 @@
 ﻿@page "/admin/modules"
-@layout LMS.Components.Layout.AdminLayout
-@using Microsoft.AspNetCore.Components.QuickGrid
+
+
 @using LMS.Services
 @inject IModuleService ModuleService
 
@@ -43,7 +43,7 @@
                     </TemplateColumn>
                 </QuickGrid>
 
-                <PaginationComponent TItem="LMS.Models.Course.ModuleModel" PaginatedResult="paginatedModules"
+                <PaginationComponent TItem="ModuleModel" PaginatedResult="paginatedModules"
                     OnPageChanged="OnPageChanged" OnPageSizeChanged="OnPageSizeChanged" />
             }
             else
@@ -65,7 +65,7 @@
 </div>
 
 @code {
-    private PaginatedResult<LMS.Models.Course.ModuleModel>? paginatedModules;
+    private PaginatedResult<ModuleModel>? paginatedModules;
     private int currentPage = 1;
     private int pageSize = 10;
 

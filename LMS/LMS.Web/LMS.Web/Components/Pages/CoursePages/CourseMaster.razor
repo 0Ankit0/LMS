@@ -1,10 +1,10 @@
 @page "/courses/master"
 @using Microsoft.EntityFrameworkCore
 @using LMS.Data.Entities
-@using LMS.Models.Course
-@using LMS.Models.Communication
-@using LMS.Models.Assessment
-@inject IDbContextFactory<LMS.Data.Entities.AuthDbContext> DbFactory
+
+
+
+@inject IDbContextFactory<LMS.Infrastructure.Data.ApplicationDbContext> DbFactory
 @inject NavigationManager NavigationManager
 @rendermode InteractiveServer
 

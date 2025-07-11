@@ -1,7 +1,8 @@
 ﻿@page "/assessments/delete"
+@using LMS.Infrastructure.Data
 @using Microsoft.EntityFrameworkCore
 @using LMS.Data.Entities
-@inject IDbContextFactory<LMS.Data.Entities.AuthDbContext> DbFactory
+@inject IDbContextFactory<ApplicationDbContext> DbFactory
 @inject NavigationManager NavigationManager
 
 <PageTitle>Delete</PageTitle>
