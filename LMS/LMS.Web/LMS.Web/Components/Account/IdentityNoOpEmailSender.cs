@@ -1,5 +1,4 @@
 using LMS.Data.Entities;
-using LMS.Web.Data;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI.Services;
 

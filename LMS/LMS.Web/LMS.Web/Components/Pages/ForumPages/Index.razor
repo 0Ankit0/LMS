@@ -22,7 +22,7 @@
         {
             if (paginatedForums.Items.Any())
             {
-                <QuickGrid TItem="ForumModel" Items="@(paginatedForums.Items)">
+                <QuickGrid TItem="ForumModel" Items="@(paginatedForums.Items.AsQueryable())">
                     <PropertyColumn Property="@(f => f.Title)" Title="Title" />
                     <PropertyColumn Property="@(f => f.Description)" Title="Description" />
                     <PropertyColumn Property="@(f => f.CourseId)" Title="Course ID" />
