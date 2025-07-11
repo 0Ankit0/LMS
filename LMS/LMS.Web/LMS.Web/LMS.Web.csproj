@@ -9,7 +9,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\LMS.Data\LMS.Data.csproj" />
-    <ProjectReference Include="..\..\LMS.Infrastructure\LMS.Infrastructure.csproj" />
     <ProjectReference Include="..\LMS.Web.Client\LMS.Web.Client.csproj" />
 	<PackageReference Include="Microsoft.AspNetCore.Components.QuickGrid.EntityFrameworkAdapter" Version="9.0.0" />
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Server" Version="9.0.7" />
@@ -17,6 +16,10 @@
     <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="9.0.7" />
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="9.0.4" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="9.0.7" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Routes\" />
   </ItemGroup>
 
 </Project>
