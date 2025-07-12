@@ -1,18 +1,21 @@
-﻿@inherits LayoutComponentBase
+﻿@using Microsoft.AspNetCore.Authorization
+@inherits LayoutComponentBase
+@attribute [Authorize]
 
 <div class="page">
     <div class="sidebar">
-        <NavMenu />
+        <Sidebar />
+
     </div>
 
     <main>
-        <div class="top-row px-4">
-            <a href="https://learn.microsoft.com/aspnet/core/" target="_blank">About</a>
+        <div class="top-row">
+            <Navbar></Navbar>
         </div>
 
-        <article class="content px-4">
+        <div class="container-fluid">
             @Body
-        </article>
+        </div>
     </main>
 </div>
 
