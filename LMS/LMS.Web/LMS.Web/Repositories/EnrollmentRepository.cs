@@ -2,6 +2,7 @@ using LMS.Data.Entities;
 using Microsoft.EntityFrameworkCore;
 using LMS.Data.DTOs;
 using LMS.Infrastructure.Data;
+using Microsoft.Extensions.Logging;
 
 namespace LMS.Repositories
 {
@@ -25,21 +26,31 @@ namespace LMS.Repositories
     public class EnrollmentRepository : IEnrollmentRepository
     {
         private readonly ApplicationDbContext _context;
+        private readonly ILogger<EnrollmentRepository> _logger;
 
-        public EnrollmentRepository(ApplicationDbContext context)
+        public EnrollmentRepository(ApplicationDbContext context, ILogger<EnrollmentRepository> logger)
         {
             _context = context;
+            _logger = logger;
         }
 
         public async Task<List<EnrollmentModel>> GetEnrollmentsAsync()
         {
-            var enrollments = await _context.Enrollments
-                .Include(e => e.User)
-                .Include(e => e.Course)
-                .OrderByDescending(e => e.EnrolledAt)
-                .ToListAsync();
+            try
+            {
+                var enrollments = await _context.Enrollments
+                    .Include(e => e.User)
+                    .Include(e => e.Course)
+                    .OrderByDescending(e => e.EnrolledAt)
+                    .ToListAsync();
 
-            return enrollments.Select(MapToEnrollmentModel).ToList();
+                return enrollments.Select(MapToEnrollmentModel).ToList();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error fetching enrollments");
+                throw;
+            }
         }
 
         public async Task<PaginatedResult<EnrollmentModel>> GetEnrollmentsPaginatedAsync(PaginationRequest request)

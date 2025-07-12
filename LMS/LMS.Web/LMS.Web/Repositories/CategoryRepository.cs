@@ -2,6 +2,7 @@ using LMS.Data.Entities;
 using Microsoft.EntityFrameworkCore;
 using LMS.Data.DTOs;
 using LMS.Infrastructure.Data;
+using Microsoft.Extensions.Logging;
 
 namespace LMS.Repositories
 {
@@ -21,22 +22,32 @@ namespace LMS.Repositories
     public class CategoryRepository : ICategoryRepository
     {
         private readonly ApplicationDbContext _context;
+        private readonly ILogger<CategoryRepository> _logger;
 
-        public CategoryRepository(ApplicationDbContext context)
+        public CategoryRepository(ApplicationDbContext context, ILogger<CategoryRepository> logger)
         {
             _context = context;
+            _logger = logger;
         }
 
         public async Task<List<CategoryModel>> GetCategoriesAsync()
         {
-            var categories = await _context.Categories
-                .Include(c => c.ParentCategory)
-                .Include(c => c.SubCategories)
-                .Include(c => c.CourseCategories)
-                .OrderBy(c => c.Name)
-                .ToListAsync();
+            try
+            {
+                var categories = await _context.Categories
+                    .Include(c => c.ParentCategory)
+                    .Include(c => c.SubCategories)
+                    .Include(c => c.CourseCategories)
+                    .OrderBy(c => c.Name)
+                    .ToListAsync();
 
-            return categories.Select(MapToCategoryModel).ToList();
+                return categories.Select(MapToCategoryModel).ToList();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error fetching categories");
+                throw;
+            }
         }
 
         public async Task<PaginatedResult<CategoryModel>> GetCategoriesPaginatedAsync(PaginationRequest request)

@@ -2,6 +2,7 @@ using LMS.Data.Entities;
 using Microsoft.EntityFrameworkCore;
 using LMS.Data.DTOs;
 using LMS.Infrastructure.Data;
+using Microsoft.Extensions.Logging;
 
 namespace LMS.Repositories
 {
@@ -20,22 +21,32 @@ namespace LMS.Repositories
     public class LessonRepository : ILessonRepository
     {
         private readonly ApplicationDbContext _context;
+        private readonly ILogger<LessonRepository> _logger;
 
-        public LessonRepository(ApplicationDbContext context)
+        public LessonRepository(ApplicationDbContext context, ILogger<LessonRepository> logger)
         {
             _context = context;
+            _logger = logger;
         }
 
         public async Task<List<LessonModel>> GetLessonsAsync()
         {
-            var lessons = await _context.Lessons
-                .Include(l => l.Module)
-                .Include(l => l.Resources)
-                .OrderBy(l => l.ModuleId)
-                .ThenBy(l => l.OrderIndex)
-                .ToListAsync();
+            try
+            {
+                var lessons = await _context.Lessons
+                    .Include(l => l.Module)
+                    .Include(l => l.Resources)
+                    .OrderBy(l => l.ModuleId)
+                    .ThenBy(l => l.OrderIndex)
+                    .ToListAsync();
 
-            return lessons.Select(MapToLessonModel).ToList();
+                return lessons.Select(MapToLessonModel).ToList();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error fetching lessons");
+                throw;
+            }
         }
 
         public async Task<PaginatedResult<LessonModel>> GetLessonsPaginatedAsync(PaginationRequest request)
