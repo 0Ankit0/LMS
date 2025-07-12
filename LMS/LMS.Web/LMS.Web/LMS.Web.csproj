@@ -19,7 +19,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Routes\" />
+    <Folder Include="Repositories\" />
   </ItemGroup>
 
 </Project>
