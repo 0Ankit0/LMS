@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using LMS.Infrastructure.Data;
+using LMS.Web.Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -38,7 +39,8 @@ builder.Services.AddIdentityCore<User>(options => options.SignIn.RequireConfirme
     .AddDefaultTokenProviders();
 
 builder.Services.AddSingleton<IEmailSender<User>, IdentityNoOpEmailSender>();
-
+builder.Services.AddHttpClient();
+builder.Services.AddEndpoints(typeof(Program).Assembly);
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -56,6 +58,7 @@ else
 
 app.UseHttpsRedirection();
 
+app.MapEndpoints();
 
 app.UseAntiforgery();
 

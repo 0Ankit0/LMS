@@ -23,7 +23,7 @@ public class EnrollmentEndpoints : IEndpoint
         group.MapGet("/user/{userId}", async (string userId, IEnrollmentRepository repo) => await repo.GetEnrollmentsByUserIdAsync(userId))
             .WithName("GetEnrollmentsByUserId").WithSummary("Get enrollments by user ID");
         group.MapGet("/user/{userId}/enrollments", async (string userId, IEnrollmentRepository repo) => await repo.GetUserEnrollmentsAsync(userId))
-            .WithName("GetUserEnrollments").WithSummary("Get all enrollments for a user");
+            .WithName("GetEnrollmentsForUser").WithSummary("Get all enrollments for a user");
         group.MapGet("/course/{courseId}", async (int courseId, IEnrollmentRepository repo) => await repo.GetEnrollmentsByCourseIdAsync(courseId))
             .WithName("GetEnrollmentsByCourseId").WithSummary("Get enrollments by course ID");
         group.MapGet("/user/{userId}/course/{courseId}", async (string userId, int courseId, IEnrollmentRepository repo) => await repo.GetEnrollmentByUserAndCourseAsync(userId, courseId))

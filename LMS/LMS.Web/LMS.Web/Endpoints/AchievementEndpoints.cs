@@ -29,7 +29,7 @@ public class AchievementEndpoints : IEndpoint
         group.MapDelete("/{id}", async (int id, IAchievementRepository repo) => await repo.DeleteAchievementAsync(id))
             .WithName("DeleteAchievement").WithSummary("Delete an achievement by ID");
         group.MapGet("/user/{userId}", async (string userId, IAchievementRepository repo) => await repo.GetUserAchievementsAsync(userId))
-            .WithName("GetUserAchievements").WithSummary("Get all achievements for a specific user");
+            .WithName("GetAchievementsForUser").WithSummary("Get all achievements for a specific user");
         group.MapPost("/user/{userId}/award", async (string userId, int achievementId, int? courseId, IAchievementRepository repo) => await repo.AwardAchievementAsync(userId, achievementId, courseId))
             .WithName("AwardAchievement").WithSummary("Award an achievement to a user");
         group.MapDelete("/user/achievement/{userAchievementId}", async (int userAchievementId, IAchievementRepository repo) => await repo.RemoveUserAchievementAsync(userAchievementId))
