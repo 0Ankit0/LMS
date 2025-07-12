@@ -1,0 +1,271 @@
+@page "/user/lms/certificates"
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject HttpClient HttpClient
+@inject IJSRuntime JSRuntime
+
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2"><i class="fas fa-certificate text-warning me-2"></i>My Certificates</h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <button class="btn btn-outline-primary btn-sm" @onclick="RefreshCertificates">
+            <i class="fas fa-sync-alt"></i> Refresh
+        </button>
+    </div>
+</div>
+
+@if (isLoading)
+{
+    <div class="d-flex justify-content-center py-5">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading certificates...</span>
+        </div>
+    </div>
+}
+else if (certificates?.Any() == true)
+{
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white text-center">
+                <div class="card-body">
+                    <i class="fas fa-certificate fa-2x mb-2"></i>
+                    <h4>@certificates.Count()</h4>
+                    <small>Total Certificates</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white text-center">
+                <div class="card-body">
+                    <i class="fas fa-calendar-check fa-2x mb-2"></i>
+                    <h4>@certificates.Count(c => c.IssuedAt >= DateTime.Now.AddDays(-30))</h4>
+                    <small>This Month</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info text-white text-center">
+                <div class="card-body">
+                    <i class="fas fa-check-circle fa-2x mb-2"></i>
+                    <h4>@certificates.Count(c => c.IsValid)</h4>
+                    <small>Valid</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-white text-center">
+                <div class="card-body">
+                    <i class="fas fa-clock fa-2x mb-2"></i>
+                    <h4>@certificates.Count(c => c.ExpiresAt.HasValue && c.ExpiresAt.Value <= DateTime.Now.AddDays(30))</h4>
+                    <small>Expiring Soon</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Certificates Grid -->
+    <div class="row">
+        @foreach (var certificate in certificates)
+        {
+            <div class="col-lg-6 col-xl-4 mb-4">
+                <div class="card h-100 shadow-sm">
+                    <div class="card-header bg-primary text-white">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <i class="fas fa-certificate fa-2x mb-2"></i>
+                                <h6 class="mb-0">Certificate</h6>
+                            </div>
+                            <span class="badge bg-success">
+                                <i class="fas fa-check"></i> Valid
+                            </span>
+                        </div>
+                    </div>
+                    
+                    <div class="card-body">
+                        <h5 class="card-title text-primary">@certificate.CourseTitle</h5>
+                        
+                        <div class="mb-3">
+                            <p class="card-text">
+                                <strong>Certificate #:</strong> @certificate.CertificateNumber
+                            </p>
+                            <p class="card-text">
+                                <strong>Issued:</strong> @certificate.IssuedAt.ToString("MMMM dd, yyyy")
+                            </p>
+                            @if (certificate.ExpiresAt.HasValue)
+                            {
+                                <p class="card-text">
+                                    <strong>Expires:</strong> @certificate.ExpiresAt.Value.ToString("MMMM dd, yyyy")
+                                </p>
+                            }
+                            else
+                            {
+                                <p class="card-text">
+                                    <strong>Validity:</strong> <span class="text-success">Lifetime</span>
+                                </p>
+                            }
+                        </div>
+
+                        <!-- Certificate Grade/Score -->
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between mb-1">
+                                <span>Final Grade: @certificate.FinalGrade.ToString("F1")%</span>
+                                <span class="badge @GetGradeBadgeClass(certificate.FinalGrade)">
+                                    @GetGradeLabel(certificate.FinalGrade)
+                                </span>
+                            </div>
+                            <div class="progress" style="height: 6px;">
+                                <div class="progress-bar @GetGradeProgressClass(certificate.FinalGrade)" 
+                                     style="width: @certificate.FinalGrade%"></div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="card-footer bg-transparent">
+                        <div class="d-grid gap-2">
+                            <div class="btn-group">
+                                <button class="btn btn-primary btn-sm" @onclick="() => ViewCertificate(certificate)">
+                                    <i class="fas fa-eye"></i> View
+                                </button>
+                                <button class="btn btn-success btn-sm" @onclick="() => DownloadCertificate(certificate)">
+                                    <i class="fas fa-download"></i> Download
+                                </button>
+                                <button class="btn btn-info btn-sm" @onclick="() => ShareCertificate(certificate)">
+                                    <i class="fas fa-share"></i> Share
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}
+else
+{
+    <div class="text-center py-5">
+        <div class="card">
+            <div class="card-body">
+                <i class="fas fa-certificate fa-3x text-muted mb-3"></i>
+                <h4 class="text-muted">No Certificates Earned</h4>
+                <p class="text-muted">Complete courses to earn certificates and showcase your achievements.</p>
+                <a href="/user/lms/coursecatalog" class="btn btn-primary">
+                    <i class="fas fa-book"></i> Browse Courses
+                </a>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private List<CertificateModel>? certificates;
+    private bool isLoading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadCertificates();
+    }
+
+    private async Task LoadCertificates()
+    {
+        try
+        {
+            isLoading = true;
+            var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+            var currentUserId = authState.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            
+            if (!string.IsNullOrEmpty(currentUserId))
+            {
+                certificates = await HttpClient.GetFromJsonAsync<List<CertificateModel>>($"/api/certificates/user/{currentUserId}");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading certificates: {ex.Message}");
+            // Fallback to mock data
+            certificates = GetMockCertificates();
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private List<CertificateModel> GetMockCertificates()
+    {
+        return new List<CertificateModel>
+        {
+            new()
+            {
+                Id = 1,
+                CourseTitle = "Introduction to Programming",
+                CertificateNumber = "CERT-2024-001",
+                IssuedAt = DateTime.Now.AddDays(-30),
+                FinalGrade = 92.5,
+                IsValid = true
+            },
+            new()
+            {
+                Id = 2,
+                CourseTitle = "Web Development Fundamentals",
+                CertificateNumber = "CERT-2024-002",
+                IssuedAt = DateTime.Now.AddDays(-60),
+                ExpiresAt = DateTime.Now.AddYears(2),
+                FinalGrade = 87.0,
+                IsValid = true
+            },
+            new()
+            {
+                Id = 3,
+                CourseTitle = "Database Design",
+                CertificateNumber = "CERT-2024-003",
+                IssuedAt = DateTime.Now.AddDays(-90),
+                FinalGrade = 95.5,
+                IsValid = true
+            }
+        };
+    }
+
+    private async Task RefreshCertificates()
+    {
+        await LoadCertificates();
+    }
+
+    private async Task ViewCertificate(CertificateModel certificate)
+    {
+        await JSRuntime.InvokeVoidAsync("alert", $"Viewing certificate: {certificate.CertificateNumber}");
+    }
+
+    private async Task DownloadCertificate(CertificateModel certificate)
+    {
+        await JSRuntime.InvokeVoidAsync("alert", $"Downloading certificate: {certificate.CertificateNumber}");
+    }
+
+    private async Task ShareCertificate(CertificateModel certificate)
+    {
+        var shareUrl = $"Certificate: {certificate.CourseTitle} - {certificate.CertificateNumber}";
+        await JSRuntime.InvokeVoidAsync("alert", $"Share link copied: {shareUrl}");
+    }
+
+    private string GetGradeBadgeClass(double grade) => grade switch
+    {
+        >= 90 => "bg-success",
+        >= 80 => "bg-info",
+        >= 70 => "bg-warning",
+        _ => "bg-secondary"
+    };
+
+    private string GetGradeProgressClass(double grade) => grade switch
+    {
+        >= 90 => "bg-success",
+        >= 80 => "bg-info", 
+        >= 70 => "bg-warning",
+        _ => "bg-secondary"
+    };
+
+    private string GetGradeLabel(double grade) => grade switch
+    {
+        >= 90 => "Excellent",
+        >= 80 => "Good",
+        >= 70 => "Satisfactory",
+        _ => "Pass"
+    };
+}

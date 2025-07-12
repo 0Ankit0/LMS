@@ -1,0 +1,327 @@
+@page "/user/lms/course/{courseId:int}"
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject NavigationManager Navigation
+@inject HttpClient HttpClient
+
+<PageTitle>Course Details - LMS</PageTitle>
+
+<div class="course-details-layout">
+    <!-- Main Content Area -->
+    <div class="course-main-content">
+
+        <!-- Content -->
+        <div class="course-content">
+            @if (isLoading)
+            {
+                <div class="loading-container">
+                    <div class="spinner">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                    </div>
+                    <p class="loading-text">Loading course content...</p>
+                </div>
+            }
+            else
+            {
+                <!-- Course Overview -->
+                <div class="tab-content">
+                    <div class="course-overview">
+                        <div class="overview-header">
+                            <div class="course-image">
+                                <img src="/course.png" alt="@courseTitle" />
+                            </div>
+                            <div class="course-info">
+                                <h4>@courseTitle</h4>
+                                <p class="course-description">@courseDescription</p>
+                                <div class="course-meta">
+                                    <div class="meta-item">
+                                        <i class="bi bi-person"></i>
+                                        <span>@instructorName</span>
+                                    </div>
+                                    <div class="meta-item">
+                                        <i class="bi bi-calendar"></i>
+                                        <span>@DateTime.Now.AddDays(-30).ToString("MMM dd, yyyy")</span>
+                                    </div>
+                                    <div class="meta-item">
+                                        <i class="bi bi-clock"></i>
+                                        <span>@GetTotalDuration() hours</span>
+                                    </div>
+                                    <div class="meta-item">
+                                        <i class="bi bi-people"></i>
+                                        <span>1250 students</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="course-stats">
+                            <div class="stat-card">
+                                <div class="stat-icon">
+                                    <i class="bi bi-collection"></i>
+                                </div>
+                                <div class="stat-info">
+                                    <div class="stat-value">@(modules?.Count ?? 0)</div>
+                                    <div class="stat-label">Modules</div>
+                                </div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-icon">
+                                    <i class="bi bi-play-circle"></i>
+                                </div>
+                                <div class="stat-info">
+                                    <div class="stat-value">@GetTotalLessons()</div>
+                                    <div class="stat-label">Lessons</div>
+                                </div>
+                            </div>
+
+                            <div class="stat-card">
+                                <div class="stat-icon">
+                                    <i class="bi bi-star"></i>
+                                </div>
+                                <div class="stat-info">
+                                    <div class="stat-value">4.7</div>
+                                    <div class="stat-label">Rating</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="enrollment-section">
+                            @if (!isEnrolled)
+                            {
+                                <button class="btn btn-primary btn-lg" @onclick="EnrollInCourse" disabled="@isEnrolling">
+                                    @if (isEnrolling)
+                                    {
+                                        <span class="spinner-border spinner-border-sm me-2"></span>
+                                    }
+                                    <span>Enroll in Course</span>
+                                </button>
+                            }
+                            else
+                            {
+                                <button class="btn btn-outline-success btn-lg" disabled>
+                                    <i class="bi bi-check-circle me-2"></i>
+                                    <span>Enrolled</span>
+                                </button>
+                            }
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Course Modules -->
+                <div class="tab-content modules-section">
+                    <div class="section-header">
+                        <h4>Course Modules</h4>
+                        <p>Explore the course content organized by modules</p>
+                    </div>
+                    <div class="modules-content">
+                        @if (modules?.Any() == true)
+                        {
+                            @foreach (var module in modules)
+                            {
+                                <div class="module-accordion">
+                                    <div class="module-header @(expandedModules.Contains(module.Id) ? "expanded" : "")"
+                                        @onclick="() => ToggleModule(module.Id)">
+                                        <div class="module-info">
+                                            <h5 class="module-title">@module.Title</h5>
+                                            <p class="module-description">@module.Description</p>
+                                        </div>
+                                        <div class="module-toggle">
+                                            <i
+                                                class="bi @(expandedModules.Contains(module.Id) ? "bi-chevron-up" : "bi-chevron-down")"></i>
+                                        </div>
+                                    </div>
+
+                                    @if (expandedModules.Contains(module.Id))
+                                    {
+                                        <div class="module-lessons">
+                                            @foreach (var lesson in module.Lessons)
+                                            {
+                                                <div class="lesson-card">
+                                                    <div class="lesson-info">
+                                                        <i class="bi bi-play-circle"></i>
+                                                        <div class="lesson-details">
+                                                            <h6>@lesson.Title</h6>
+                                                            <p>@lesson.Description</p>
+                                                        </div>
+                                                    </div>
+                                                    <div class="lesson-meta">
+                                                        @if (lesson.EstimatedDuration.TotalMinutes > 0)
+                                                        {
+                                                            <span class="duration">@((int)lesson.EstimatedDuration.TotalMinutes) min</span>
+                                                        }
+                                                        <button class="btn btn-sm btn-outline-primary">
+                                                            Start Lesson
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            }
+                                        </div>
+                                    }
+                                </div>
+                            }
+                        }
+                        else
+                        {
+                            <div class="empty-state">
+                                <i class="bi bi-collection"></i>
+                                <h5>No modules available</h5>
+                                <p>This course doesn't have any modules yet.</p>
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter] public int CourseId { get; set; }
+
+    // Data properties
+    private CourseModel? course;
+    private List<ModuleModel> modules = new();
+    private bool isEnrolled = false;
+    private bool isLoading = false;
+    private bool isEnrolling = false;
+    private string? currentUserId;
+
+    // UI state
+    private int completionPercentage = 0;
+    private HashSet<int> expandedModules = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadCourseData();
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (CourseId > 0)
+        {
+            await LoadCourseData();
+        }
+    }
+
+    private async Task LoadCourseData()
+    {
+        try
+        {
+            isLoading = true;
+
+            var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+            if (authState.User.Identity?.IsAuthenticated == true)
+            {
+                currentUserId = authState.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            }
+
+            // Load course details via HTTP endpoint
+            var courseResponse = await HttpClient.GetAsync($"/api/courses/{CourseId}");
+            if (courseResponse.IsSuccessStatusCode)
+            {
+                course = await courseResponse.Content.ReadFromJsonAsync<CourseModel>();
+            }
+
+            // Load course modules via HTTP endpoint
+            var modulesResponse = await HttpClient.GetAsync($"/api/courses/{CourseId}/modules");
+            if (modulesResponse.IsSuccessStatusCode)
+            {
+                modules = await modulesResponse.Content.ReadFromJsonAsync<List<ModuleModel>>() ?? new();
+
+                // Expand first module by default
+                if (modules.Any())
+                {
+                    expandedModules.Add(modules.First().Id);
+                }
+            }
+
+            // Check if user is enrolled via HTTP endpoint
+            if (!string.IsNullOrEmpty(currentUserId))
+            {
+                var enrollmentResponse = await
+                HttpClient.GetAsync($"/api/enrollments/user/{currentUserId}/course/{CourseId}/isenrolled");
+                if (enrollmentResponse.IsSuccessStatusCode)
+                {
+                    isEnrolled = await enrollmentResponse.Content.ReadFromJsonAsync<bool>();
+                }
+
+                // Get completion percentage if enrolled (mock for now)
+                if (isEnrolled)
+                {
+                    completionPercentage = 65; // Mock data - would come from progress endpoint
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading course: {ex.Message}");
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private void ToggleModule(int moduleId)
+    {
+        if (expandedModules.Contains(moduleId))
+        {
+            expandedModules.Remove(moduleId);
+        }
+        else
+        {
+            expandedModules.Add(moduleId);
+        }
+    }
+
+    private async Task EnrollInCourse()
+    {
+        try
+        {
+            isEnrolling = true;
+
+            if (!string.IsNullOrEmpty(currentUserId))
+            {
+                var enrollmentRequest = new CreateEnrollmentRequest { CourseId = CourseId };
+                var response = await HttpClient.PostAsJsonAsync($"/api/enrollments/user/{currentUserId}", enrollmentRequest);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    isEnrolled = true;
+                    completionPercentage = 0;
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error enrolling in course: {ex.Message}");
+        }
+        finally
+        {
+            isEnrolling = false;
+        }
+    }
+
+    private int GetTotalLessons()
+    {
+        return modules.Sum(m => m.Lessons?.Count ?? 0);
+    }
+
+    private double GetTotalDuration()
+    {
+        var totalMinutes = modules.Sum(m => m.Lessons?.Sum(l => l.EstimatedDuration.TotalMinutes) ?? 0);
+        return Math.Round(totalMinutes / 60.0, 1);
+    }
+
+    private int GetModuleCompletionPercentage(int moduleId)
+    {
+        // Mock completion percentage - would come from progress endpoint
+        return new Random(moduleId).Next(0, 101);
+    }
+
+    // Properties for backward compatibility with the UI
+    private string courseTitle => course?.Title ?? "Loading...";
+    private string courseDescription => course?.Description ?? "Loading course description...";
+    private string instructorName => course?.InstructorName ?? "Unknown Instructor";
+}

@@ -1,0 +1,667 @@
+@page "/user/lms/settings"
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject HttpClient HttpClient
+@inject IJSRuntime JSRuntime
+
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2"><i class="fas fa-cog text-secondary me-2"></i>Settings</h1>
+</div>
+
+@if (isLoading)
+{
+    <div class="d-flex justify-content-center py-5">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading settings...</span>
+        </div>
+    </div>
+}
+else
+{
+    <div class="row">
+        <!-- Settings Navigation -->
+        <div class="col-md-3">
+            <div class="list-group list-group-flush">
+                <button class="list-group-item list-group-item-action @(activeTab == "profile" ? "active" : "")" 
+                        @onclick='() => SetActiveTab("profile")'>
+                    <i class="fas fa-user me-2"></i> Profile
+                </button>
+                <button class="list-group-item list-group-item-action @(activeTab == "preferences" ? "active" : "")" 
+                        @onclick='() => SetActiveTab("preferences")'>
+                    <i class="fas fa-sliders-h me-2"></i> Learning Preferences
+                </button>
+                <button class="list-group-item list-group-item-action @(activeTab == "notifications" ? "active" : "")" 
+                        @onclick='() => SetActiveTab("notifications")'>
+                    <i class="fas fa-bell me-2"></i> Notifications
+                </button>
+                <button class="list-group-item list-group-item-action @(activeTab == "privacy" ? "active" : "")" 
+                        @onclick='() => SetActiveTab("privacy")'>
+                    <i class="fas fa-shield-alt me-2"></i> Privacy & Security
+                </button>
+                <button class="list-group-item list-group-item-action @(activeTab == "account" ? "active" : "")" 
+                        @onclick='() => SetActiveTab("account")'>
+                    <i class="fas fa-user-cog me-2"></i> Account Settings
+                </button>
+            </div>
+        </div>
+
+        <!-- Settings Content -->
+        <div class="col-md-9">
+            @if (activeTab == "profile")
+            {
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="fas fa-user me-2"></i>Profile Information</h5>
+                    </div>
+                    <div class="card-body">
+                        <form @onsubmit="SaveProfile" @onsubmit:preventDefault="true">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label class="form-label">First Name</label>
+                                        <input type="text" class="form-control" @bind="profileModel.FirstName" />
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label class="form-label">Last Name</label>
+                                        <input type="text" class="form-control" @bind="profileModel.LastName" />
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label">Email</label>
+                                <input type="email" class="form-control" @bind="profileModel.Email" readonly />
+                                <small class="text-muted">Email cannot be changed from this page.</small>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label">Bio</label>
+                                <textarea class="form-control" rows="3" @bind="profileModel.Bio" 
+                                          placeholder="Tell us about yourself..."></textarea>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label class="form-label">Phone Number</label>
+                                        <input type="tel" class="form-control" @bind="profileModel.PhoneNumber" />
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label class="form-label">Date of Birth</label>
+                                        <input type="date" class="form-control" @bind="profileModel.DateOfBirth" />
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label class="form-label">Country</label>
+                                        <select class="form-select" @bind="profileModel.Country">
+                                            <option value="">Select Country</option>
+                                            <option value="US">United States</option>
+                                            <option value="CA">Canada</option>
+                                            <option value="UK">United Kingdom</option>
+                                            <option value="AU">Australia</option>
+                                            <option value="DE">Germany</option>
+                                            <option value="FR">France</option>
+                                            <option value="JP">Japan</option>
+                                            <option value="IN">India</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label class="form-label">Time Zone</label>
+                                        <select class="form-select" @bind="profileModel.TimeZone">
+                                            <option value="">Select Time Zone</option>
+                                            <option value="UTC-8">Pacific Time (UTC-8)</option>
+                                            <option value="UTC-7">Mountain Time (UTC-7)</option>
+                                            <option value="UTC-6">Central Time (UTC-6)</option>
+                                            <option value="UTC-5">Eastern Time (UTC-5)</option>
+                                            <option value="UTC+0">GMT (UTC+0)</option>
+                                            <option value="UTC+1">Central European Time (UTC+1)</option>
+                                            <option value="UTC+9">Japan Standard Time (UTC+9)</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save"></i> Save Profile
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            }
+            else if (activeTab == "preferences")
+            {
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="fas fa-sliders-h me-2"></i>Learning Preferences</h5>
+                    </div>
+                    <div class="card-body">
+                        <form @onsubmit="SavePreferences" @onsubmit:preventDefault="true">
+                            <div class="mb-4">
+                                <h6>Course Display</h6>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="courseView" id="grid-view" 
+                                           @onchange='() => preferencesModel.CourseDisplayMode = "grid"' 
+                                           checked="@(preferencesModel.CourseDisplayMode == "grid")" />
+                                    <label class="form-check-label" for="grid-view">
+                                        Grid View
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="courseView" id="list-view" 
+                                           @onchange='() => preferencesModel.CourseDisplayMode = "list"' 
+                                           checked="@(preferencesModel.CourseDisplayMode == "list")" />
+                                    <label class="form-check-label" for="list-view">
+                                        List View
+                                    </label>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-4">
+                                <h6>Default Language</h6>
+                                <select class="form-select" @bind="preferencesModel.PreferredLanguage">
+                                    <option value="en">English</option>
+                                    <option value="es">Spanish</option>
+                                    <option value="fr">French</option>
+                                    <option value="de">German</option>
+                                    <option value="ja">Japanese</option>
+                                    <option value="zh">Chinese</option>
+                                </select>
+                            </div>
+                            
+                            <div class="mb-4">
+                                <h6>Learning Reminders</h6>
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="daily-reminders" 
+                                           @bind="preferencesModel.DailyReminders" />
+                                    <label class="form-check-label" for="daily-reminders">
+                                        Send daily learning reminders
+                                    </label>
+                                </div>
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="deadline-reminders" 
+                                           @bind="preferencesModel.DeadlineReminders" />
+                                    <label class="form-check-label" for="deadline-reminders">
+                                        Remind me of upcoming deadlines
+                                    </label>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-4">
+                                <h6>Accessibility</h6>
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="high-contrast" 
+                                           @bind="preferencesModel.HighContrastMode" />
+                                    <label class="form-check-label" for="high-contrast">
+                                        High contrast mode
+                                    </label>
+                                </div>
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="large-text" 
+                                           @bind="preferencesModel.LargeTextMode" />
+                                    <label class="form-check-label" for="large-text">
+                                        Large text mode
+                                    </label>
+                                </div>
+                            </div>
+                            
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save"></i> Save Preferences
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            }
+            else if (activeTab == "notifications")
+            {
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="fas fa-bell me-2"></i>Notification Settings</h5>
+                    </div>
+                    <div class="card-body">
+                        <form @onsubmit="SaveNotifications" @onsubmit:preventDefault="true">
+                            <div class="mb-4">
+                                <h6>Email Notifications</h6>
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="course-updates" 
+                                           @bind="notificationModel.CourseUpdates" />
+                                    <label class="form-check-label" for="course-updates">
+                                        Course updates and announcements
+                                    </label>
+                                </div>
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="assignment-due" 
+                                           @bind="notificationModel.AssignmentReminders" />
+                                    <label class="form-check-label" for="assignment-due">
+                                        Assignment and quiz reminders
+                                    </label>
+                                </div>
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="progress-reports" 
+                                           @bind="notificationModel.ProgressReports" />
+                                    <label class="form-check-label" for="progress-reports">
+                                        Weekly progress reports
+                                    </label>
+                                </div>
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="achievement-notifications" 
+                                           @bind="notificationModel.AchievementNotifications" />
+                                    <label class="form-check-label" for="achievement-notifications">
+                                        Achievement and certificate notifications
+                                    </label>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-4">
+                                <h6>Push Notifications</h6>
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="browser-notifications" 
+                                           @bind="notificationModel.BrowserNotifications" />
+                                    <label class="form-check-label" for="browser-notifications">
+                                        Browser notifications
+                                    </label>
+                                </div>
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="mobile-notifications" 
+                                           @bind="notificationModel.MobileNotifications" />
+                                    <label class="form-check-label" for="mobile-notifications">
+                                        Mobile app notifications
+                                    </label>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-4">
+                                <h6>Notification Frequency</h6>
+                                <select class="form-select" @bind="notificationModel.EmailFrequency">
+                                    <option value="immediate">Immediate</option>
+                                    <option value="daily">Daily digest</option>
+                                    <option value="weekly">Weekly digest</option>
+                                    <option value="never">Never</option>
+                                </select>
+                            </div>
+                            
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save"></i> Save Notification Settings
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            }
+            else if (activeTab == "privacy")
+            {
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="fas fa-shield-alt me-2"></i>Privacy & Security</h5>
+                    </div>
+                    <div class="card-body">
+                        <form @onsubmit="SavePrivacy" @onsubmit:preventDefault="true">
+                            <div class="mb-4">
+                                <h6>Profile Visibility</h6>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="profileVisibility" id="public-profile" 
+                                           @onchange='() => privacyModel.ProfileVisibility = "public"' 
+                                           checked="@(privacyModel.ProfileVisibility == "public")" />
+                                    <label class="form-check-label" for="public-profile">
+                                        Public - Anyone can see my profile
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="profileVisibility" id="students-only" 
+                                           @onchange='() => privacyModel.ProfileVisibility = "students"' 
+                                           checked="@(privacyModel.ProfileVisibility == "students")" />
+                                    <label class="form-check-label" for="students-only">
+                                        Students only - Only other students can see my profile
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="profileVisibility" id="private-profile" 
+                                           @onchange='() => privacyModel.ProfileVisibility = "private"' 
+                                           checked="@(privacyModel.ProfileVisibility == "private")" />
+                                    <label class="form-check-label" for="private-profile">
+                                        Private - Only I can see my profile
+                                    </label>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-4">
+                                <h6>Data Sharing</h6>
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="share-progress" 
+                                           @bind="privacyModel.ShareProgress" />
+                                    <label class="form-check-label" for="share-progress">
+                                        Share my progress with instructors
+                                    </label>
+                                </div>
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="analytics-data" 
+                                           @bind="privacyModel.AllowAnalytics" />
+                                    <label class="form-check-label" for="analytics-data">
+                                        Allow analytics data collection for course improvement
+                                    </label>
+                                </div>
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="marketing-communications" 
+                                           @bind="privacyModel.MarketingCommunications" />
+                                    <label class="form-check-label" for="marketing-communications">
+                                        Receive marketing communications and course recommendations
+                                    </label>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-4">
+                                <h6>Two-Factor Authentication</h6>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <strong>Status: </strong>
+                                        <span class="badge @(privacyModel.TwoFactorEnabled ? "bg-success" : "bg-warning")">
+                                            @(privacyModel.TwoFactorEnabled ? "Enabled" : "Disabled")
+                                        </span>
+                                    </div>
+                                    <button type="button" class="btn @(privacyModel.TwoFactorEnabled ? "btn-danger" : "btn-primary") btn-sm" 
+                                            @onclick="ToggleTwoFactor">
+                                        @(privacyModel.TwoFactorEnabled ? "Disable" : "Enable") 2FA
+                                    </button>
+                                </div>
+                                <small class="text-muted">
+                                    Two-factor authentication adds an extra layer of security to your account.
+                                </small>
+                            </div>
+                            
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save"></i> Save Privacy Settings
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            }
+            else if (activeTab == "account")
+            {
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="fas fa-user-cog me-2"></i>Account Settings</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-4">
+                            <h6>Change Password</h6>
+                            <form @onsubmit="ChangePassword" @onsubmit:preventDefault="true">
+                                <div class="mb-3">
+                                    <label class="form-label">Current Password</label>
+                                    <input type="password" class="form-control" @bind="passwordModel.CurrentPassword" />
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">New Password</label>
+                                    <input type="password" class="form-control" @bind="passwordModel.NewPassword" />
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Confirm New Password</label>
+                                    <input type="password" class="form-control" @bind="passwordModel.ConfirmPassword" />
+                                </div>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-key"></i> Change Password
+                                </button>
+                            </form>
+                        </div>
+                        
+                        <hr />
+                        
+                        <div class="mb-4">
+                            <h6>Export Data</h6>
+                            <p class="text-muted">Download a copy of your learning data and progress.</p>
+                            <button type="button" class="btn btn-outline-primary" @onclick="ExportData">
+                                <i class="fas fa-download"></i> Export My Data
+                            </button>
+                        </div>
+                        
+                        <hr />
+                        
+                        <div class="mb-4">
+                            <h6 class="text-danger">Danger Zone</h6>
+                            <p class="text-muted">Permanently delete your account and all associated data.</p>
+                            <button type="button" class="btn btn-outline-danger" @onclick="ConfirmDeleteAccount">
+                                <i class="fas fa-trash"></i> Delete Account
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+}
+
+@code {
+    private bool isLoading = true;
+    private string activeTab = "profile";
+    
+    private UserProfileModel profileModel = new();
+    private PreferencesModel preferencesModel = new();
+    private NotificationModel notificationModel = new();
+    private PrivacyModel privacyModel = new();
+    private PasswordChangeModel passwordModel = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadUserSettings();
+    }
+
+    private async Task LoadUserSettings()
+    {
+        try
+        {
+            isLoading = true;
+            var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+            var currentUserId = authState.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            
+            if (!string.IsNullOrEmpty(currentUserId))
+            {
+                var user = await HttpClient.GetFromJsonAsync<UserModel>($"/api/users/{currentUserId}");
+                
+                if (user != null)
+                {
+                    // Load profile data
+                    profileModel.FirstName = user.FirstName ?? string.Empty;
+                    profileModel.LastName = user.LastName ?? string.Empty;
+                    profileModel.Email = user.Email ?? string.Empty;
+                    profileModel.Bio = user.Bio ?? string.Empty;
+                    
+                    // Load other settings (mock data for now)
+                    LoadDefaultSettings();
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading user settings: {ex.Message}");
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private void LoadDefaultSettings()
+    {
+        // Load default preferences
+        preferencesModel.CourseDisplayMode = "grid";
+        preferencesModel.PreferredLanguage = "en";
+        preferencesModel.DailyReminders = true;
+        preferencesModel.DeadlineReminders = true;
+        
+        // Load default notifications
+        notificationModel.CourseUpdates = true;
+        notificationModel.AssignmentReminders = true;
+        notificationModel.ProgressReports = false;
+        notificationModel.AchievementNotifications = true;
+        notificationModel.EmailFrequency = "daily";
+        
+        // Load default privacy settings
+        privacyModel.ProfileVisibility = "students";
+        privacyModel.ShareProgress = true;
+        privacyModel.AllowAnalytics = true;
+        privacyModel.TwoFactorEnabled = false;
+    }
+
+    private void SetActiveTab(string tab)
+    {
+        activeTab = tab;
+    }
+
+    private async Task SaveProfile()
+    {
+        try
+        {
+            // In real implementation, save to database via UserService
+            await JSRuntime.InvokeVoidAsync("alert", "Profile saved successfully!");
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("alert", $"Error saving profile: {ex.Message}");
+        }
+    }
+
+    private async Task SavePreferences()
+    {
+        try
+        {
+            // In real implementation, save to database
+            await JSRuntime.InvokeVoidAsync("alert", "Preferences saved successfully!");
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("alert", $"Error saving preferences: {ex.Message}");
+        }
+    }
+
+    private async Task SaveNotifications()
+    {
+        try
+        {
+            // In real implementation, save to database
+            await JSRuntime.InvokeVoidAsync("alert", "Notification settings saved successfully!");
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("alert", $"Error saving notification settings: {ex.Message}");
+        }
+    }
+
+    private async Task SavePrivacy()
+    {
+        try
+        {
+            // In real implementation, save to database
+            await JSRuntime.InvokeVoidAsync("alert", "Privacy settings saved successfully!");
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("alert", $"Error saving privacy settings: {ex.Message}");
+        }
+    }
+
+    private async Task ChangePassword()
+    {
+        try
+        {
+            if (passwordModel.NewPassword != passwordModel.ConfirmPassword)
+            {
+                await JSRuntime.InvokeVoidAsync("alert", "New passwords do not match!");
+                return;
+            }
+            
+            // In real implementation, change password via UserManager
+            await JSRuntime.InvokeVoidAsync("alert", "Password changed successfully!");
+            passwordModel = new PasswordChangeModel();
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("alert", $"Error changing password: {ex.Message}");
+        }
+    }
+
+    private async Task ToggleTwoFactor()
+    {
+        try
+        {
+            privacyModel.TwoFactorEnabled = !privacyModel.TwoFactorEnabled;
+            var status = privacyModel.TwoFactorEnabled ? "enabled" : "disabled";
+            await JSRuntime.InvokeVoidAsync("alert", $"Two-factor authentication {status}!");
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("alert", $"Error toggling 2FA: {ex.Message}");
+        }
+    }
+
+    private async Task ExportData()
+    {
+        await JSRuntime.InvokeVoidAsync("alert", "Data export initiated. You will receive an email when ready.");
+    }
+
+    private async Task ConfirmDeleteAccount()
+    {
+        var confirmed = await JSRuntime.InvokeAsync<bool>("confirm", 
+            "Are you sure you want to permanently delete your account? This action cannot be undone.");
+        
+        if (confirmed)
+        {
+            await JSRuntime.InvokeVoidAsync("alert", "Account deletion process initiated. Please check your email for confirmation.");
+        }
+    }
+
+    // Settings Models
+    public class UserProfileModel
+    {
+        public string FirstName { get; set; } = string.Empty;
+        public string LastName { get; set; } = string.Empty;
+        public string Email { get; set; } = string.Empty;
+        public string Bio { get; set; } = string.Empty;
+        public string PhoneNumber { get; set; } = string.Empty;
+        public DateTime? DateOfBirth { get; set; }
+        public string Country { get; set; } = string.Empty;
+        public string TimeZone { get; set; } = string.Empty;
+    }
+
+    public class PreferencesModel
+    {
+        public string CourseDisplayMode { get; set; } = "grid";
+        public string PreferredLanguage { get; set; } = "en";
+        public bool DailyReminders { get; set; } = true;
+        public bool DeadlineReminders { get; set; } = true;
+        public bool HighContrastMode { get; set; } = false;
+        public bool LargeTextMode { get; set; } = false;
+    }
+
+    public class NotificationModel
+    {
+        public bool CourseUpdates { get; set; } = true;
+        public bool AssignmentReminders { get; set; } = true;
+        public bool ProgressReports { get; set; } = false;
+        public bool AchievementNotifications { get; set; } = true;
+        public bool BrowserNotifications { get; set; } = false;
+        public bool MobileNotifications { get; set; } = false;
+        public string EmailFrequency { get; set; } = "daily";
+    }
+
+    public class PrivacyModel
+    {
+        public string ProfileVisibility { get; set; } = "students";
+        public bool ShareProgress { get; set; } = true;
+        public bool AllowAnalytics { get; set; } = true;
+        public bool MarketingCommunications { get; set; } = false;
+        public bool TwoFactorEnabled { get; set; } = false;
+    }
+
+    public class PasswordChangeModel
+    {
+        public string CurrentPassword { get; set; } = string.Empty;
+        public string NewPassword { get; set; } = string.Empty;
+        public string ConfirmPassword { get; set; } = string.Empty;
+    }
+}

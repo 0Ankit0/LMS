@@ -1,0 +1,394 @@
+@page "/user/lms/leaderboard"
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject HttpClient HttpClient
+@inject IJSRuntime JSRuntime
+
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2"><i class="fas fa-trophy text-warning me-2"></i>Leaderboard</h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <div class="btn-group me-2" role="group">
+            <button type="button" class="btn @(selectedPeriod == "all" ? "btn-primary" : "btn-outline-primary") btn-sm" 
+                    @onclick='() => SelectPeriod("all")'>
+                All Time
+            </button>
+            <button type="button" class="btn @(selectedPeriod == "month" ? "btn-primary" : "btn-outline-primary") btn-sm" 
+                    @onclick='() => SelectPeriod("month")'>
+                This Month
+            </button>
+            <button type="button" class="btn @(selectedPeriod == "week" ? "btn-primary" : "btn-outline-primary") btn-sm" 
+                    @onclick='() => SelectPeriod("week")'>
+                This Week
+            </button>
+        </div>
+        <button class="btn btn-outline-primary btn-sm" @onclick="RefreshLeaderboard">
+            <i class="fas fa-sync-alt"></i> Refresh
+        </button>
+    </div>
+</div>
+
+@if (isLoading)
+{
+    <div class="d-flex justify-content-center py-5">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading leaderboard...</span>
+        </div>
+    </div>
+}
+else
+{
+    <!-- Current User Stats -->
+    @if (currentUserRank != null)
+    {
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card bg-gradient-primary text-white">
+                    <div class="card-body">
+                        <div class="row align-items-center">
+                            <div class="col-md-3 text-center">
+                                <div class="position-relative d-inline-block">
+                                    <img src="@GetAvatarUrl(currentUserRank.UserId)" 
+                                         alt="@currentUserRank.UserName" 
+                                         class="rounded-circle border border-3 border-white" 
+                                         style="width: 80px; height: 80px; object-fit: cover;" />
+                                    <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-warning text-dark">
+                                        #@currentUserRank.Rank
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="col-md-9">
+                                <h4 class="mb-2">Your Ranking</h4>
+                                <div class="row">
+                                    <div class="col-md-3">
+                                        <div class="text-center">
+                                            <h5 class="mb-1">@currentUserRank.Rank</h5>
+                                            <small>Rank</small>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="text-center">
+                                            <h5 class="mb-1">@currentUserRank.Score</h5>
+                                            <small>Points</small>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="text-center">
+                                            <h5 class="mb-1">@currentUserRank.CompletedCourses</h5>
+                                            <small>Courses</small>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="text-center">
+                                            <h5 class="mb-1">@currentUserRank.Achievements</h5>
+                                            <small>Achievements</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+
+    <!-- Top 3 Podium -->
+    @if (topRanks?.Count >= 3)
+    {
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title text-center mb-4">
+                            <i class="fas fa-medal text-warning"></i> Top Performers
+                        </h5>
+                        <div class="row justify-content-center">
+                            <!-- 2nd Place -->
+                            <div class="col-md-3 text-center order-md-1">
+                                <div class="position-relative mb-3">
+                                    <img src="@GetAvatarUrl(topRanks[1].UserId)" 
+                                         alt="@topRanks[1].UserName" 
+                                         class="rounded-circle border border-3 border-secondary" 
+                                         style="width: 80px; height: 80px; object-fit: cover;" />
+                                    <div class="position-absolute top-0 start-100 translate-middle">
+                                        <i class="fas fa-medal fa-2x text-secondary"></i>
+                                        <span class="position-absolute top-50 start-50 translate-middle text-white fw-bold">2</span>
+                                    </div>
+                                </div>
+                                <h6 class="fw-bold">@topRanks[1].UserName</h6>
+                                <p class="text-secondary mb-1">@topRanks[1].Score pts</p>
+                                <small class="text-muted">@topRanks[1].CompletedCourses courses</small>
+                            </div>
+
+                            <!-- 1st Place -->
+                            <div class="col-md-3 text-center order-md-2">
+                                <div class="position-relative mb-3">
+                                    <img src="@GetAvatarUrl(topRanks[0].UserId)" 
+                                         alt="@topRanks[0].UserName" 
+                                         class="rounded-circle border border-3 border-warning" 
+                                         style="width: 100px; height: 100px; object-fit: cover;" />
+                                    <div class="position-absolute top-0 start-100 translate-middle">
+                                        <i class="fas fa-crown fa-3x text-warning"></i>
+                                        <span class="position-absolute top-50 start-50 translate-middle text-white fw-bold">1</span>
+                                    </div>
+                                </div>
+                                <h5 class="fw-bold text-warning">@topRanks[0].UserName</h5>
+                                <p class="text-warning mb-1 fs-5">@topRanks[0].Score pts</p>
+                                <small class="text-muted">@topRanks[0].CompletedCourses courses</small>
+                            </div>
+
+                            <!-- 3rd Place -->
+                            <div class="col-md-3 text-center order-md-3">
+                                <div class="position-relative mb-3">
+                                    <img src="@GetAvatarUrl(topRanks[2].UserId)" 
+                                         alt="@topRanks[2].UserName" 
+                                         class="rounded-circle border border-3 border-danger" 
+                                         style="width: 80px; height: 80px; object-fit: cover;" />
+                                    <div class="position-absolute top-0 start-100 translate-middle">
+                                        <i class="fas fa-medal fa-2x text-danger"></i>
+                                        <span class="position-absolute top-50 start-50 translate-middle text-white fw-bold">3</span>
+                                    </div>
+                                </div>
+                                <h6 class="fw-bold">@topRanks[2].UserName</h6>
+                                <p class="text-danger mb-1">@topRanks[2].Score pts</p>
+                                <small class="text-muted">@topRanks[2].CompletedCourses courses</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+
+    <!-- Full Leaderboard Table -->
+    @if (leaderboard?.Any() == true)
+    {
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">
+                            <i class="fas fa-list-ol"></i> Full Rankings
+                        </h5>
+                        <div class="d-flex gap-2">
+                            <div class="input-group input-group-sm" style="width: 200px;">
+                                <span class="input-group-text"><i class="fas fa-search"></i></span>
+                                <input type="text" class="form-control" placeholder="Search users..." 
+                                       @bind="searchTerm" @oninput="OnSearchTermChanged" />
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Rank</th>
+                                        <th>User</th>
+                                        <th class="text-center">Points</th>
+                                        <th class="text-center">Courses</th>
+                                        <th class="text-center">Achievements</th>
+                                        <th class="text-center">Avg. Score</th>
+                                        <th class="text-center">Streak</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var user in filteredLeaderboard)
+                                    {
+                                        <tr class="@(user.UserId == currentUserId ? "table-primary" : "")">
+                                            <td>
+                                                <div class="d-flex align-items-center">
+                                                    @if (user.Rank <= 3)
+                                                    {
+                                                        <i class="fas fa-medal @GetRankColor(user.Rank) me-2"></i>
+                                                    }
+                                                    <span class="fw-bold">@user.Rank</span>
+                                                    @if (user.UserId == currentUserId)
+                                                    {
+                                                        <span class="badge bg-primary ms-2">You</span>
+                                                    }
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <div class="d-flex align-items-center">
+                                                    <img src="@GetAvatarUrl(user.UserId)" 
+                                                         alt="@user.UserName" 
+                                                         class="rounded-circle me-3" 
+                                                         style="width: 40px; height: 40px; object-fit: cover;" />
+                                                    <div>
+                                                        <div class="fw-bold">@user.UserName</div>
+                                                        <small class="text-muted">@user.UserName</small>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td class="text-center">
+                                                <span class="badge bg-primary fs-6">@user.Score</span>
+                                            </td>
+                                            <td class="text-center">
+                                                <span class="badge bg-success">@user.CompletedCourses</span>
+                                            </td>
+                                            <td class="text-center">
+                                                <span class="badge bg-warning">@user.Achievements</span>
+                                            </td>
+                                            <td class="text-center">
+                                                <span class="badge @GetScoreBadgeClass(user.AverageScore)">
+                                                    @user.AverageScore.ToString("F1")%
+                                                </span>
+                                            </td>
+                                            <td class="text-center">
+                                                @if (user.CurrentStreak > 0)
+                                                {
+                                                    <span class="badge bg-info">
+                                                        <i class="fas fa-fire"></i> @user.CurrentStreak
+                                                    </span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="text-muted">-</span>
+                                                }
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        @if (filteredLeaderboard.Count == 0 && !string.IsNullOrEmpty(searchTerm))
+                        {
+                            <div class="text-center py-4">
+                                <p class="text-muted">No users found matching "@searchTerm"</p>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="text-center py-5">
+            <div class="card">
+                <div class="card-body">
+                    <i class="fas fa-trophy fa-3x text-muted mb-3"></i>
+                    <h4 class="text-muted">No Leaderboard Data</h4>
+                    <p class="text-muted">Complete courses and earn points to appear on the leaderboard.</p>
+                    <a href="/user/lms/coursecatalog" class="btn btn-primary">
+                        <i class="fas fa-book"></i> Start Learning
+                    </a>
+                </div>
+            </div>
+        </div>
+    }
+}
+
+@code {
+    private List<LeaderboardEntryModel>? leaderboard;
+    private List<LeaderboardEntryModel> filteredLeaderboard = new();
+    private List<LeaderboardEntryModel>? topRanks;
+    private LeaderboardEntryModel? currentUserRank;
+    private bool isLoading = true;
+    private string searchTerm = string.Empty;
+    private string selectedPeriod = "all";
+    private string? currentUserId;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        if (authState.User.Identity?.IsAuthenticated == true)
+        {
+            currentUserId = authState.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        }
+        
+        await LoadLeaderboard();
+    }
+
+    private async Task LoadLeaderboard()
+    {
+        try
+        {
+            isLoading = true;
+
+            // Load leaderboard data based on selected period via HTTP endpoints
+            var endpoint = selectedPeriod switch
+            {
+                "week" => "/api/leaderboards/weekly",
+                "month" => "/api/leaderboards/monthly",
+                _ => "/api/leaderboards/overall"
+            };
+            
+            var response = await HttpClient.GetAsync(endpoint);
+            if (response.IsSuccessStatusCode)
+            {
+                leaderboard = await response.Content.ReadFromJsonAsync<List<LeaderboardEntryModel>>() ?? new List<LeaderboardEntryModel>();
+            }
+
+            topRanks = leaderboard?.Take(3).ToList() ?? new List<LeaderboardEntryModel>();
+            currentUserRank = leaderboard?.FirstOrDefault(l => l.UserId == currentUserId);
+            
+            FilterLeaderboard();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading leaderboard: {ex.Message}");
+            leaderboard = new List<LeaderboardEntryModel>();
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private async Task RefreshLeaderboard()
+    {
+        await LoadLeaderboard();
+    }
+
+    private async Task SelectPeriod(string period)
+    {
+        selectedPeriod = period;
+        await LoadLeaderboard();
+    }
+
+    private void OnSearchTermChanged(ChangeEventArgs e)
+    {
+        searchTerm = e.Value?.ToString() ?? string.Empty;
+        FilterLeaderboard();
+    }
+
+    private void FilterLeaderboard()
+    {
+        if (leaderboard == null) return;
+
+        var filtered = leaderboard.AsEnumerable();
+
+        // Apply search filter
+        if (!string.IsNullOrWhiteSpace(searchTerm))
+        {
+            filtered = filtered.Where(l => 
+                l.UserName.Contains(searchTerm, StringComparison.OrdinalIgnoreCase));
+        }
+
+        filteredLeaderboard = filtered.ToList();
+    }
+
+    private string GetAvatarUrl(string userId)
+    {
+        // In a real implementation, this would return the actual user avatar URL
+        return $"https://ui-avatars.com/api/?name={Uri.EscapeDataString(userId)}&background=007bff&color=fff&size=100";
+    }
+
+    private string GetRankColor(int rank) => rank switch
+    {
+        1 => "text-warning", // Gold
+        2 => "text-secondary", // Silver  
+        3 => "text-danger", // Bronze
+        _ => "text-muted"
+    };
+
+    private string GetScoreBadgeClass(double score) => score switch
+    {
+        >= 90 => "bg-success",
+        >= 80 => "bg-info",
+        >= 70 => "bg-warning",
+        _ => "bg-secondary"
+    };
+}

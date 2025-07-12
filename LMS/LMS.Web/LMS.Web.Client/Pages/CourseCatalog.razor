@@ -1,0 +1,294 @@
+@page "/user/lms/courses/catalog"
+@inject HttpClient HttpClient
+
+<div class="course-catalog-layout">
+    <!-- Categories Sidebar -->
+    <div class="catalog-sidebar">
+        <div class="sidebar-header">
+            <h5 class="sidebar-title">Categories</h5>
+        </div>
+        <div class="sidebar-content">
+            <div class="category-list">
+                <div class="category-item @(selectedCategory == "all" ? "active" : "")"
+                    @onclick='() => SelectCategory("all")'>
+                    <div class="category-icon">
+                        <i class="bi bi-bookmark-fill"></i>
+                    </div>
+                    <span class="category-text">All Courses</span>
+                </div>
+                <div class="category-item @(selectedCategory == "development" ? "active" : "")"
+                    @onclick='() => SelectCategory("development")'>
+                    <div class="category-icon">
+                        <i class="bi bi-laptop"></i>
+                    </div>
+                    <span class="category-text">Development</span>
+                </div>
+                <div class="category-item @(selectedCategory == "business" ? "active" : "")"
+                    @onclick='() => SelectCategory("business")'>
+                    <div class="category-icon">
+                        <i class="bi bi-graph-up"></i>
+                    </div>
+                    <span class="category-text">Business</span>
+                </div>
+                <div class="category-item @(selectedCategory == "design" ? "active" : "")"
+                    @onclick='() => SelectCategory("design")'>
+                    <div class="category-icon">
+                        <i class="bi bi-paint-bucket"></i>
+                    </div>
+                    <span class="category-text">Design</span>
+                </div>
+                <div class="category-item @(selectedCategory == "security" ? "active" : "")"
+                    @onclick='() => SelectCategory("security")'>
+                    <div class="category-icon">
+                        <i class="bi bi-shield-check"></i>
+                    </div>
+                    <span class="category-text">Security</span>
+                </div>
+            </div>
+
+            <div class="filters-section">
+                <h6 class="filter-title">Filters</h6>
+                <div class="filter-group">
+                    <span class="filter-label">Level</span>
+                    <div class="filter-options">
+                        <label class="filter-option">
+                            <input type="checkbox" @bind="filters.Beginner" @bind:after="ApplyFilters">
+                            <span>Beginner</span>
+                        </label>
+                        <label class="filter-option">
+                            <input type="checkbox" @bind="filters.Intermediate" @bind:after="ApplyFilters">
+                            <span>Intermediate</span>
+                        </label>
+                        <label class="filter-option">
+                            <input type="checkbox" @bind="filters.Advanced" @bind:after="ApplyFilters">
+                            <span>Advanced</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content Area -->
+    <div class="catalog-main">
+        <!-- Header -->
+        <div class="catalog-header">
+            <div class="header-info">
+                <h3 class="page-title">Course Catalog</h3>
+                <p class="page-subtitle">Discover and learn new skills</p>
+            </div>
+            <div class="header-actions">
+                <div class="search-container">
+                    <i class="bi bi-search search-icon"></i>
+                    <input type="text" class="search-input" placeholder="Search courses, instructors, topics..."
+                        @bind="searchQuery" @oninput="OnSearchInput">
+                </div>
+                <div class="sort-dropdown">
+                    <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                        <i class="bi bi-funnel me-1"></i> @GetSortDisplayText()
+                    </button>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item @(sortBy == "popular" ? "active" : "")" href="#"
+                                @onclick='() => SetSort("popular")'>Most Popular</a></li>
+                        <li><a class="dropdown-item @(sortBy == "newest" ? "active" : "")" href="#"
+                                @onclick='() => SetSort("newest")'>Newest</a></li>
+                        <li><a class="dropdown-item @(sortBy == "alphabetical" ? "active" : "")" href="#"
+                                @onclick='() => SetSort("alphabetical")'>A-Z</a></li>
+                        <li><a class="dropdown-item @(sortBy == "level" ? "active" : "")" href="#"
+                                @onclick='() => SetSort("level")'>By Level</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Course Grid -->
+        <div class="courses-content">
+            <div class="course-grid">
+                @if (filteredCourses.Any())
+                {
+                    @foreach (var course in filteredCourses)
+                    {
+                        <div class="course-card">
+                            <div class="course-image-container">
+                                <img src="@course.ThumbnailUrl" class="course-image" alt="Course image" />
+                                <button class="bookmark-btn" @onclick="() => ToggleBookmark(course.Id)">
+                                    <i
+                                        class="bi @(bookmarkedCourses.Contains(course.Id) ? "bi-bookmark-fill" : "bi-bookmark")"></i>
+                                </button>
+                            </div>
+                            <div class="course-info">
+                                <div class="course-meta">
+                                    <span class="course-level">@course.Level</span>
+                                    <span class="course-duration">@FormatDuration(course.EstimatedDuration)</span>
+                                </div>
+                                <h6 class="course-title">@course.Title</h6>
+                                <p class="course-description">@course.Description</p>
+                                <div class="course-footer">
+                                    <div class="instructor-info">
+                                        <img src="/favicon.png" class="instructor-avatar" alt="Instructor">
+                                        <span class="instructor-name">@course.InstructorName</span>
+                                    </div>
+                                    <a class="btn btn-primary btn-sm view-btn"
+                                        href="@($"/user/lms/course/{course.Id}")">View</a>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                }
+                else
+                {
+                    <div class="no-courses-found">
+                        <i class="bi bi-search"></i>
+                        <h5>No courses found</h5>
+                        <p>Try adjusting your search criteria or filters.</p>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    // State variables
+    private string selectedCategory = "all";
+    private string searchQuery = "";
+    private string sortBy = "popular";
+    private FilterModel filters = new();
+    private HashSet<int> bookmarkedCourses = new();
+    private List<CourseModel> filteredCourses = new();
+    private List<CourseModel> allCourses = new();
+    private bool isLoading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadCourses();
+    }
+
+    private async Task LoadCourses()
+    {
+        try
+        {
+            isLoading = true;
+            var response = await HttpClient.GetAsync("/api/courses");
+            if (response.IsSuccessStatusCode)
+            {
+                allCourses = await response.Content.ReadFromJsonAsync<List<CourseModel>>() ?? new();
+                ApplyFilters();
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading courses: {ex.Message}");
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private void SelectCategory(string category)
+    {
+        selectedCategory = category;
+        ApplyFilters();
+    }
+
+    private void OnSearchInput(ChangeEventArgs e)
+    {
+        searchQuery = e.Value?.ToString() ?? "";
+        ApplyFilters();
+    }
+
+    private void SetSort(string sortType)
+    {
+        sortBy = sortType;
+        ApplyFilters();
+    }
+
+    private void ApplyFilters()
+    {
+        var courses = allCourses.AsQueryable();
+
+        // Apply category filter
+        if (selectedCategory != "all")
+        {
+            courses = courses.Where(c => c.Categories != null && c.Categories.Contains(selectedCategory));
+        }
+
+        // Apply search filter
+        if (!string.IsNullOrWhiteSpace(searchQuery))
+        {
+            courses = courses.Where(c =>
+                c.Title.Contains(searchQuery, StringComparison.OrdinalIgnoreCase) ||
+                c.Description.Contains(searchQuery, StringComparison.OrdinalIgnoreCase) ||
+                c.InstructorName.Contains(searchQuery, StringComparison.OrdinalIgnoreCase));
+        }
+
+        // Apply level filters
+        if (filters.HasAnyLevelFilter())
+        {
+            courses = courses.Where(c =>
+                (filters.Beginner && c.Level == "Beginner") ||
+                (filters.Intermediate && c.Level == "Intermediate") ||
+                (filters.Advanced && c.Level == "Advanced"));
+        }
+
+        // Apply sorting
+        courses = sortBy switch
+        {
+            "popular" => courses.OrderByDescending(c => c.EnrollmentCount),
+            "newest" => courses.OrderByDescending(c => c.StartDate),
+            "alphabetical" => courses.OrderBy(c => c.Title),
+            "level" => courses.OrderBy(c => c.Level == "Beginner" ? 1 : c.Level == "Intermediate" ? 2 : 3),
+            _ => courses.OrderByDescending(c => c.EnrollmentCount)
+        };
+
+        filteredCourses = courses.ToList();
+        StateHasChanged();
+    }
+
+    private void ToggleBookmark(int courseId)
+    {
+        if (bookmarkedCourses.Contains(courseId))
+        {
+            bookmarkedCourses.Remove(courseId);
+        }
+        else
+        {
+            bookmarkedCourses.Add(courseId);
+        }
+    }
+
+    private string FormatDuration(TimeSpan duration)
+    {
+        var hours = (int)duration.TotalHours;
+        var minutes = duration.Minutes;
+
+        if (hours > 0)
+        {
+            return minutes > 0 ? $"{hours}h {minutes}m" : $"{hours}h";
+        }
+        return $"{minutes}m";
+    }
+
+    private string GetSortDisplayText()
+    {
+        return sortBy switch
+        {
+            "popular" => "Most Popular",
+            "newest" => "Newest",
+            "alphabetical" => "A-Z",
+            "level" => "By Level",
+            _ => "Sort by"
+        };
+    }
+
+    // Helper classes
+    public class FilterModel
+    {
+        public bool Beginner { get; set; }
+        public bool Intermediate { get; set; }
+        public bool Advanced { get; set; }
+
+        public bool HasAnyLevelFilter() => Beginner || Intermediate || Advanced;
+    }
+}
