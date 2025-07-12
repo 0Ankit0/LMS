@@ -1,0 +1,217 @@
+@page "/admin/assessments/create"
+
+@using LMS.Repositories
+
+@using Microsoft.AspNetCore.Components.Forms
+@inject IAssessmentRepository AssessmentRepository
+@inject IDropdownRepository DropdownRepository
+@inject NavigationManager NavigationManager
+@rendermode @(new InteractiveServerRenderMode())
+
+<PageTitle>Create Assessment - Admin</PageTitle>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="mb-0">Create New Assessment</h1>
+    <a href="/admin/assessments" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left me-2"></i>Back to Assessments
+    </a>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Assessment Information</h5>
+            </div>
+            <div class="card-body">
+                <EditForm Model="Assessment" OnValidSubmit="AddAssessment">
+                    <AntiforgeryToken />
+                    <DataAnnotationsValidator />
+                    <ValidationSummary class="alert alert-danger" role="alert" />
+
+                    <div class="mb-3">
+                        <label for="title" class="form-label">Title <span class="text-danger">*</span></label>
+                        <InputText id="title" @bind-Value="Assessment.Title" class="form-control" aria-required="true"
+                            placeholder="Enter assessment title" />
+                        <ValidationMessage For="() => Assessment.Title" class="text-danger" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="description" class="form-label">Description</label>
+                        <InputTextArea id="description" @bind-Value="Assessment.Description" class="form-control"
+                            rows="3" placeholder="Enter assessment description" />
+                        <ValidationMessage For="() => Assessment.Description" class="text-danger" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="courseid" class="form-label">Course <span class="text-danger">*</span></label>
+                        <SearchableSelectComponent TItem="DropdownOption" TValue="int?" Items="@courseOptions"
+                            ValueSelector="@(item => (int?)item.Value)" DisplaySelector="@(item => item.Text)"
+                            SearchFunction="@SearchCourses" SelectedValue="@Assessment.CourseId"
+                            OnSelectedValueChanged="@((int? value) => Assessment.CourseId = value)"
+                            Placeholder="Select a course..." class="form-control" />
+                        <ValidationMessage For="() => Assessment.CourseId" class="text-danger" />
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="moduleid" class="form-label">Module (Optional)</label>
+                            <SearchableSelectComponent TItem="DropdownOption" TValue="int?" Items="@moduleOptions"
+                                ValueSelector="@(item => (int?)item.Value)" DisplaySelector="@(item => item.Text)"
+                                SearchFunction="@SearchModules" SelectedValue="@Assessment.ModuleId"
+                                OnSelectedValueChanged="@((int? value) => Assessment.ModuleId = value)"
+                                Placeholder="Select a module (optional)..." class="form-control" />
+                            <ValidationMessage For="() => Assessment.ModuleId" class="text-danger" />
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="lessonid" class="form-label">Lesson (Optional)</label>
+                            <SearchableSelectComponent TItem="DropdownOption" TValue="int?" Items="@lessonOptions"
+                                ValueSelector="@(item => (int?)item.Value)" DisplaySelector="@(item => item.Text)"
+                                SearchFunction="@SearchLessons" SelectedValue="@Assessment.LessonId"
+                                OnSelectedValueChanged="@((int? value) => Assessment.LessonId = value)"
+                                Placeholder="Select a lesson (optional)..." class="form-control" />
+                            <ValidationMessage For="() => Assessment.LessonId" class="text-danger" />
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="type" class="form-label">Assessment Type</label>
+                            <InputSelect id="type" @bind-Value="Assessment.Type" class="form-select">
+                                @foreach (var enumValue in
+                                                                Enum.GetValues(typeof(AssessmentType)).Cast<AssessmentType>())
+                                {
+                                    <option value="@((int)enumValue)">@enumValue.ToString()</option>
+                                }
+                            </InputSelect>
+                            <ValidationMessage For="() => Assessment.Type" class="text-danger" />
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="maxattempts" class="form-label">Max Attempts</label>
+                            <InputNumber id="maxattempts" @bind-Value="Assessment.MaxAttempts" class="form-control" />
+                            <ValidationMessage For="() => Assessment.MaxAttempts" class="text-danger" />
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="timelimit" class="form-label">Time Limit (minutes)</label>
+                            <InputNumber id="timelimit" @bind-Value="TimeLimitMinutes" class="form-control" />
+                            <ValidationMessage For="() => TimeLimitMinutes" class="text-danger" />
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="passingscore" class="form-label">Passing Score (%)</label>
+                            <InputNumber id="passingscore" @bind-Value="Assessment.PassingScore" class="form-control"
+                                step="0.01" />
+                            <ValidationMessage For="() => Assessment.PassingScore" class="text-danger" />
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <div class="form-check">
+                                <InputCheckbox id="israndomized" @bind-Value="Assessment.IsRandomized"
+                                    class="form-check-input" />
+                                <label for="israndomized" class="form-check-label">Randomize Questions</label>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="form-check">
+                                <InputCheckbox id="showcorrectanswers" @bind-Value="Assessment.ShowCorrectAnswers"
+                                    class="form-check-input" />
+                                <label for="showcorrectanswers" class="form-check-label">Show Correct Answers</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <div class="form-check">
+                                <InputCheckbox id="showscoreimmediately" @bind-Value="Assessment.ShowScoreImmediately"
+                                    class="form-check-input" />
+                                <label for="showscoreimmediately" class="form-check-label">Show Score
+                                    Immediately</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="availablefrom" class="form-label">Available From</label>
+                            <InputDate id="availablefrom" @bind-Value="Assessment.AvailableFrom" class="form-control" />
+                            <ValidationMessage For="() => Assessment.AvailableFrom" class="text-danger" />
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="availableuntil" class="form-label">Available Until</label>
+                            <InputDate id="availableuntil" @bind-Value="Assessment.AvailableUntil"
+                                class="form-control" />
+                            <ValidationMessage For="() => Assessment.AvailableUntil" class="text-danger" />
+                        </div>
+                    </div>
+
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check-circle me-2"></i>Create Assessment
+                        </button>
+                        <a href="/admin/assessments" class="btn btn-secondary">Cancel</a>
+                    </div>
+                </EditForm>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    [SupplyParameterFromForm]
+    private CreateAssessmentRequest Assessment { get; set; } = new();
+
+    private List<DropdownOption> courseOptions = new();
+    private List<DropdownOption> moduleOptions = new();
+    private List<DropdownOption> lessonOptions = new();
+
+    private int? TimeLimitMinutes
+    {
+        get => Assessment.TimeLimit.TotalMinutes > 0 ? (int)Assessment.TimeLimit.TotalMinutes : null;
+        set => Assessment.TimeLimit = value.HasValue ? TimeSpan.FromMinutes(value.Value) : TimeSpan.Zero;
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Load initial options
+        courseOptions = await DropdownRepository.GetCoursesAsync(search: "", take: 20);
+        moduleOptions = await DropdownRepository.GetModulesAsync(search: "", take: 20);
+        lessonOptions = await DropdownRepository.GetLessonsAsync(search: "", take: 20);
+    }
+
+    private async Task<IEnumerable<DropdownOption>> SearchCourses(string searchTerm)
+    {
+        return await DropdownRepository.GetCoursesAsync(searchTerm, take: 20);
+    }
+
+    private async Task<IEnumerable<DropdownOption>> SearchModules(string searchTerm)
+    {
+        return await DropdownRepository.GetModulesAsync(searchTerm, take: 20);
+    }
+
+    private async Task<IEnumerable<DropdownOption>> SearchLessons(string searchTerm)
+    {
+        return await DropdownRepository.GetLessonsAsync(searchTerm, take: 20);
+    }
+
+    private async Task AddAssessment()
+    {
+        try
+        {
+            var result = await AssessmentRepository.CreateAssessmentAsync(Assessment);
+            if (result != null)
+            {
+                NavigationManager.NavigateTo("/admin/assessments");
+            }
+        }
+        catch (Exception ex)
+        {
+            // Handle error - could add error display logic here
+            Console.WriteLine($"Error creating assessment: {ex.Message}");
+        }
+    }
+}
