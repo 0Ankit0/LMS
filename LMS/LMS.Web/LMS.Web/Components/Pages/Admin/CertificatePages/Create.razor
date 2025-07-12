@@ -1,0 +1,100 @@
+﻿@page "/admin/certificates/create"
+
+@using LMS.Repositories
+
+@inject ICertificateRepository CertificateRepository
+@inject IDropdownRepository DropdownRepository
+@inject NavigationManager NavigationManager
+@rendermode @(new InteractiveServerRenderMode())
+
+<PageTitle>Create</PageTitle>
+
+<h1>Create</h1>
+
+<h2>Certificate</h2>
+<hr />
+<div class="row">
+    <div class="col-md-4">
+        <EditForm Model="Certificate" OnValidSubmit="AddCertificate">
+            <AntiforgeryToken />
+            <DataAnnotationsValidator />
+            <ValidationSummary class="text-danger" role="alert" />
+            <div class="mb-3">
+                <label for="userid" class="form-label">User <span class="text-danger">*</span></label>
+                <SearchableSelectComponent TItem="DropdownOption<string>" TValue="string" Items="@userOptions"
+                    ValueSelector="@(item => item.Value.ToString())" DisplaySelector="@(item => item.Text)"
+                    SearchFunction="@SearchUsers" SelectedValue="@Certificate.UserId"
+                    OnSelectedValueChanged="@((string value) => Certificate.UserId = value)"
+                    Placeholder="Select a user..." class="form-control" />
+                <ValidationMessage For="() => Certificate.UserId" class="text-danger" />
+            </div>
+            <div class="mb-3">
+                <label for="courseid" class="form-label">Course <span class="text-danger">*</span></label>
+                <SearchableSelectComponent TItem="DropdownOption" TValue="int" Items="@courseOptions"
+                    ValueSelector="@(item => item.Value)" DisplaySelector="@(item => item.Text)"
+                    SearchFunction="@SearchCourses" SelectedValue="@Certificate.CourseId"
+                    OnSelectedValueChanged="@((int value) => Certificate.CourseId = value)"
+                    Placeholder="Select a course..." class="form-control" />
+                <ValidationMessage For="() => Certificate.CourseId" class="text-danger" />
+            </div>
+            <div class="mb-3">
+                <label for="finalgrade" class="form-label">Final Grade <span class="text-danger">*</span></label>
+                <InputNumber id="finalgrade" @bind-Value="Certificate.FinalGrade" class="form-control" step="0.01"
+                    aria-required="true" placeholder="Enter final grade" />
+                <ValidationMessage For="() => Certificate.FinalGrade" class="text-danger" />
+            </div>
+            <div class="mb-3">
+                <label for="expiresat" class="form-label">Expires At (Optional)</label>
+                <InputDate id="expiresat" @bind-Value="Certificate.ExpiresAt" class="form-control" />
+                <ValidationMessage For="() => Certificate.ExpiresAt" class="text-danger" />
+            </div>
+            <button type="submit" class="btn btn-primary">Issue Certificate</button>
+        </EditForm>
+    </div>
+</div>
+
+<div>
+    <a href="/admin/certificates">Back to List</a>
+</div>
+
+@code {
+    [SupplyParameterFromForm]
+    private CreateCertificateRequest Certificate { get; set; } = new();
+
+    private List<DropdownOption<string>> userOptions = new();
+    private List<DropdownOption> courseOptions = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Load initial options
+        userOptions = await DropdownRepository.GetUsersAsync(search: "", take: 20);
+        courseOptions = await DropdownRepository.GetCoursesAsync(search: "", take: 20);
+    }
+
+    private async Task<IEnumerable<DropdownOption<string>>> SearchUsers(string searchTerm)
+    {
+        return await DropdownRepository.GetUsersAsync(searchTerm, take: 20);
+    }
+
+    private async Task<IEnumerable<DropdownOption>> SearchCourses(string searchTerm)
+    {
+        return await DropdownRepository.GetCoursesAsync(searchTerm, take: 20);
+    }
+
+    private async Task AddCertificate()
+    {
+        try
+        {
+            var result = await CertificateRepository.IssueCertificateAsync(Certificate);
+            if (result != null)
+            {
+                NavigationManager.NavigateTo("/admin/certificates");
+            }
+        }
+        catch (Exception ex)
+        {
+            // Handle error - could add error display logic here
+            Console.WriteLine($"Error issuing certificate: {ex.Message}");
+        }
+    }
+}

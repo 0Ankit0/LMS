@@ -1,6 +1,6 @@
 @using LMS.Data.Entities
 @using LMS.Infrastructure.Data
-@using LMS.Services
+@using LMS.Repositories
 @using Microsoft.AspNetCore.Identity
 @using Microsoft.AspNetCore.Components.Authorization
 @inject ILogger<DiagnosticInfo> Logger
@@ -140,10 +140,10 @@
         {
 typeof(ApplicationDbContext),
 typeof(UserManager<User>),
-typeof(CourseService),
-typeof(UserService),
-typeof(AssessmentService),
-typeof(ProgressService),
+typeof(CourseRepository),
+typeof(UserRepository),
+typeof(AssessmentRepository),
+typeof(ProgressRepository),
 typeof(AuthenticationStateProvider)
 };
 

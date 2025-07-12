@@ -1,0 +1,61 @@
+﻿@page "/questions/details"
+@using LMS.Infrastructure.Data
+@using Microsoft.EntityFrameworkCore
+@using LMS.Data.Entities
+@inject ApplicationDbContext context
+@inject NavigationManager NavigationManager
+
+<PageTitle>Details</PageTitle>
+
+<h1>Details</h1>
+
+<div>
+    <h2>Question</h2>
+    <hr />
+    @if (question is null)
+    {
+        <p><em>Loading...</em></p>
+    }
+    else
+    {
+        <dl class="row">
+            <dt class="col-sm-2">Text</dt>
+            <dd class="col-sm-10">@question.Text</dd>
+            <dt class="col-sm-2">AssessmentId</dt>
+            <dd class="col-sm-10">@question.AssessmentId</dd>
+            <dt class="col-sm-2">Type</dt>
+            <dd class="col-sm-10">@question.Type</dd>
+            <dt class="col-sm-2">Points</dt>
+            <dd class="col-sm-10">@question.Points</dd>
+            <dt class="col-sm-2">OrderIndex</dt>
+            <dd class="col-sm-10">@question.OrderIndex</dd>
+            <dt class="col-sm-2">Explanation</dt>
+            <dd class="col-sm-10">@question.Explanation</dd>
+            <dt class="col-sm-2">IsRequired</dt>
+            <dd class="col-sm-10">@question.IsRequired</dd>
+            <dt class="col-sm-2">CreatedAt</dt>
+            <dd class="col-sm-10">@question.CreatedAt</dd>
+        </dl>
+        <div>
+            <a href="@($"/questions/edit?id={question.Id}")">Edit</a> |
+            <a href="@($"/questions")">Back to List</a>
+        </div>
+    }
+</div>
+
+@code {
+    private Question? question;
+
+    [SupplyParameterFromQuery]
+    private int Id { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        question = await context.Questions.FirstOrDefaultAsync(m => m.Id == Id);
+
+        if (question is null)
+        {
+            NavigationManager.NavigateTo("notfound");
+        }
+    }
+}

@@ -1,0 +1,88 @@
+@page "/admin/forums/create"
+
+@using LMS.Repositories
+
+@inject IForumRepository ForumRepository
+@inject IDropdownRepository DropdownRepository
+@inject NavigationManager NavigationManager
+@rendermode @(new InteractiveServerRenderMode())
+
+<PageTitle>Create</PageTitle>
+
+<h1>Create</h1>
+
+<h2>Forum</h2>
+<hr />
+<div class="row">
+    <div class="col-md-4">
+        <EditForm method="post" Model="Forum" OnValidSubmit="AddForum" FormName="create" Enhance>
+            <AntiforgeryToken />
+            <DataAnnotationsValidator />
+            <ValidationSummary class="text-danger" role="alert" />
+            <div class="mb-3">
+                <label for="title" class="form-label">Title:</label>
+                <InputText id="title" @bind-Value="Forum.Title" class="form-control" aria-required="true" />
+                <ValidationMessage For="() => Forum.Title" class="text-danger" />
+            </div>
+            <div class="mb-3">
+                <label for="description" class="form-label">Description:</label>
+                <InputText id="description" @bind-Value="Forum.Description" class="form-control" />
+                <ValidationMessage For="() => Forum.Description" class="text-danger" />
+            </div>
+            <div class="mb-3">
+                <label for="courseid" class="form-label">Course</label>
+                <SearchableSelectComponent TItem="DropdownOption" TValue="int?" Items="@courseOptions"
+                    ValueSelector="@(item => (int?)item.Value)" DisplaySelector="@(item => item.Text)"
+                    SearchFunction="@SearchCourses" SelectedValue="@Forum.CourseId"
+                    OnSelectedValueChanged="@((int? value) => Forum.CourseId = value)"
+                    Placeholder="Select a course (optional)..." class="form-control" />
+                <ValidationMessage For="() => Forum.CourseId" class="text-danger" />
+            </div>
+            <div class="mb-3">
+                <label for="isgeneral" class="form-label">IsGeneral:</label>
+                <InputCheckbox id="isgeneral" @bind-Value="Forum.IsGeneral" class="form-check-input" />
+                <ValidationMessage For="() => Forum.IsGeneral" class="text-danger" />
+            </div>
+            <button type="submit" class="btn btn-primary">Create</button>
+        </EditForm>
+    </div>
+</div>
+
+<div>
+    <a href="/admin/forums">Back to List</a>
+</div>
+
+@code {
+    [SupplyParameterFromForm]
+    private CreateForumRequest Forum { get; set; } = new();
+
+    private List<DropdownOption> courseOptions = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Load initial options
+        courseOptions = await DropdownRepository.GetCoursesAsync(search: "", take: 20);
+    }
+
+    private async Task<IEnumerable<DropdownOption>> SearchCourses(string searchTerm)
+    {
+        return await DropdownRepository.GetCoursesAsync(searchTerm, take: 20);
+    }
+
+    private async Task AddForum()
+    {
+        try
+        {
+            var result = await ForumRepository.CreateForumAsync(Forum);
+            if (result != null)
+            {
+                NavigationManager.NavigateTo("/admin/forums");
+            }
+        }
+        catch (Exception ex)
+        {
+            // Handle error - could add error display logic here
+            Console.WriteLine($"Error creating forum: {ex.Message}");
+        }
+    }
+}
