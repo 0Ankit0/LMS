@@ -8,50 +8,50 @@ using LMS.Data.Entities;
 
 namespace LMS.Repositories
 {
-    public interface IReportRepository
-    {
-        // LMS Reports
-        Task<IEnumerable<StudentProgressReportDto>> GetStudentProgressReportAsync(string? studentId = null);
-        Task<IEnumerable<StudentProgressReportDto>> GetStudentProgressByCoursesAsync(string studentId);
-        Task<CourseCompletionReportDto> GetCourseCompletionReportAsync(int courseId);
-        Task<IEnumerable<CourseCompletionReportDto>> GetAllCoursesCompletionReportAsync();
-        Task<AssessmentPerformanceReportDto> GetAssessmentPerformanceReportAsync(int assessmentId);
-        Task<IEnumerable<AssessmentPerformanceReportDto>> GetCourseAssessmentsPerformanceReportAsync(int courseId);
-        Task<IEnumerable<EnrollmentSummaryReportDto>> GetEnrollmentSummaryReportAsync(DateTime startDate, DateTime endDate, string period = "Daily");
-        Task<IEnumerable<EnrollmentSummaryReportDto>> GetEnrollmentTrendsReportAsync(int months = 12);
-        Task<ForumActivityReportDto> GetForumActivityReportAsync(int forumId);
-        Task<IEnumerable<ForumActivityReportDto>> GetAllForumsActivityReportAsync();
+   public interface IReportRepository
+{
+    // LMS Reports
+    Task<IEnumerable<StudentProgressReportDto>> GetStudentProgressReportAsync(User user, string? studentId = null);
+    Task<IEnumerable<StudentProgressReportDto>> GetStudentProgressByCoursesAsync(User user, string studentId);
+    Task<CourseCompletionReportDto> GetCourseCompletionReportAsync(User user, int courseId);
+    Task<IEnumerable<CourseCompletionReportDto>> GetAllCoursesCompletionReportAsync(User user);
+    Task<AssessmentPerformanceReportDto> GetAssessmentPerformanceReportAsync(User user, int assessmentId);
+    Task<IEnumerable<AssessmentPerformanceReportDto>> GetCourseAssessmentsPerformanceReportAsync(User user, int courseId);
+    Task<IEnumerable<EnrollmentSummaryReportDto>> GetEnrollmentSummaryReportAsync(User user, DateTime startDate, DateTime endDate, string period = "Daily");
+    Task<IEnumerable<EnrollmentSummaryReportDto>> GetEnrollmentTrendsReportAsync(User user, int months = 12);
+    Task<ForumActivityReportDto> GetForumActivityReportAsync(User user, int forumId);
+    Task<IEnumerable<ForumActivityReportDto>> GetAllForumsActivityReportAsync(User user);
 
-        // Advanced LMS Reports
-        Task<IEnumerable<StudentProgressReportDto>> GetLowPerformanceStudentsReportAsync(double threshold = 50.0);
-        Task<IEnumerable<CourseCompletionReportDto>> GetPopularCoursesReportAsync(int topN = 10);
-        Task<IEnumerable<AssessmentPerformanceReportDto>> GetDifficultAssessmentsReportAsync(double passRateThreshold = 70.0);
-        Task<object> GetLearningAnalyticsReportAsync(int courseId);
-        Task<object> GetStudentEngagementReportAsync(string studentId);
+    // Advanced LMS Reports
+    Task<IEnumerable<StudentProgressReportDto>> GetLowPerformanceStudentsReportAsync(User user, double threshold = 50.0);
+    Task<IEnumerable<CourseCompletionReportDto>> GetPopularCoursesReportAsync(User user, int topN = 10);
+    Task<IEnumerable<AssessmentPerformanceReportDto>> GetDifficultAssessmentsReportAsync(User user, double passRateThreshold = 70.0);
+    Task<object> GetLearningAnalyticsReportAsync(User user, int courseId);
+    Task<object> GetStudentEngagementReportAsync(User user, string studentId);
 
-        // SIS Reports
-        Task<StudentInformationReportDto> GetStudentInformationReportAsync(string studentId);
-        Task<IEnumerable<StudentInformationReportDto>> GetAllStudentsInformationReportAsync();
-        Task<IEnumerable<StudentInformationReportDto>> GetStudentsByStatusReportAsync(string status);
-        Task<IEnumerable<AttendanceReportDto>> GetAttendanceReportAsync(int classId, DateTime startDate, DateTime endDate);
-        Task<IEnumerable<AttendanceReportDto>> GetStudentAttendanceReportAsync(string studentId, DateTime startDate, DateTime endDate);
-        Task<GradeDistributionReportDto> GetGradeDistributionReportAsync(int classId);
-        Task<IEnumerable<GradeDistributionReportDto>> GetAllClassesGradeDistributionReportAsync();
-        Task<TeacherPerformanceReportDto> GetTeacherPerformanceReportAsync(string teacherId);
-        Task<IEnumerable<TeacherPerformanceReportDto>> GetAllTeachersPerformanceReportAsync();
+    // SIS Reports
+    Task<StudentInformationReportDto> GetStudentInformationReportAsync(User user, string studentId);
+    Task<IEnumerable<StudentInformationReportDto>> GetAllStudentsInformationReportAsync(User user);
+    Task<IEnumerable<StudentInformationReportDto>> GetStudentsByStatusReportAsync(User user, string status);
+    Task<IEnumerable<AttendanceReportDto>> GetAttendanceReportAsync(User user, int classId, DateTime startDate, DateTime endDate);
+    Task<IEnumerable<AttendanceReportDto>> GetStudentAttendanceReportAsync(User user, string studentId, DateTime startDate, DateTime endDate);
+    Task<GradeDistributionReportDto> GetGradeDistributionReportAsync(User user, int classId);
+    Task<IEnumerable<GradeDistributionReportDto>> GetAllClassesGradeDistributionReportAsync(User user);
+    Task<TeacherPerformanceReportDto> GetTeacherPerformanceReportAsync(User user, string teacherId);
+    Task<IEnumerable<TeacherPerformanceReportDto>> GetAllTeachersPerformanceReportAsync(User user);
 
-        // Advanced SIS Reports
-        Task<object> GetAcademicPerformanceTrendsReportAsync(string studentId, int months = 12);
-        Task<IEnumerable<object>> GetRiskStudentsReportAsync();
-        Task<object> GetInstitutionalEffectivenessReportAsync();
-        Task<object> GetResourceUtilizationReportAsync();
-        Task<object> GetRetentionAnalysisReportAsync();
+    // Advanced SIS Reports
+    Task<object> GetAcademicPerformanceTrendsReportAsync(User user, string studentId, int months = 12);
+    Task<IEnumerable<object>> GetRiskStudentsReportAsync(User user);
+    Task<object> GetInstitutionalEffectivenessReportAsync(User user);
+    Task<object> GetResourceUtilizationReportAsync(User user);
+    Task<object> GetRetentionAnalysisReportAsync(User user);
 
-        // Export Reports
-        Task<byte[]> ExportReportToPdfAsync(string reportType, object parameters);
-        Task<byte[]> ExportReportToExcelAsync(string reportType, object parameters);
-        Task<string> ExportReportToCsvAsync(string reportType, object parameters);
-    }
+    // Export Reports
+    Task<byte[]> ExportReportToPdfAsync(User user, string reportType, object parameters);
+    Task<byte[]> ExportReportToExcelAsync(User user, string reportType, object parameters);
+    Task<string> ExportReportToCsvAsync(User user, string reportType, object parameters);
+}
 
     public class ReportRepository : IReportRepository
     {
@@ -66,7 +66,7 @@ namespace LMS.Repositories
 
         #region LMS Reports
 
-        public async Task<IEnumerable<StudentProgressReportDto>> GetStudentProgressReportAsync(string? studentId = null)
+        public async Task<IEnumerable<StudentProgressReportDto>> GetStudentProgressReportAsync(User user,string? studentId = null)
         {
             try
             {
@@ -148,7 +148,7 @@ namespace LMS.Repositories
             }
         }
 
-        public async Task<IEnumerable<StudentProgressReportDto>> GetStudentProgressByCoursesAsync(string studentId)
+        public async Task<IEnumerable<StudentProgressReportDto>> GetStudentProgressByCoursesAsync(User user,string studentId)
         {
             try
             {
@@ -225,7 +225,7 @@ namespace LMS.Repositories
             }
         }
 
-        public async Task<CourseCompletionReportDto> GetCourseCompletionReportAsync(int courseId)
+        public async Task<CourseCompletionReportDto> GetCourseCompletionReportAsync(User user,int courseId)
         {
             try
             {
@@ -276,7 +276,7 @@ namespace LMS.Repositories
             }
         }
 
-        public async Task<IEnumerable<CourseCompletionReportDto>> GetAllCoursesCompletionReportAsync()
+        public async Task<IEnumerable<CourseCompletionReportDto>> GetAllCoursesCompletionReportAsync(User user)
         {
             try
             {
@@ -329,7 +329,7 @@ namespace LMS.Repositories
             }
         }
 
-        public async Task<AssessmentPerformanceReportDto> GetAssessmentPerformanceReportAsync(int assessmentId)
+        public async Task<AssessmentPerformanceReportDto> GetAssessmentPerformanceReportAsync(User user,int assessmentId)
         {
             try
             {
@@ -379,7 +379,7 @@ namespace LMS.Repositories
             }
         }
 
-        public async Task<IEnumerable<AssessmentPerformanceReportDto>> GetCourseAssessmentsPerformanceReportAsync(int courseId)
+        public async Task<IEnumerable<AssessmentPerformanceReportDto>> GetCourseAssessmentsPerformanceReportAsync(User user,int courseId)
         {
             try
             {
@@ -430,7 +430,7 @@ namespace LMS.Repositories
             }
         }
 
-        public async Task<IEnumerable<EnrollmentSummaryReportDto>> GetEnrollmentSummaryReportAsync(DateTime startDate, DateTime endDate, string period = "Daily")
+        public async Task<IEnumerable<EnrollmentSummaryReportDto>> GetEnrollmentSummaryReportAsync(User user,DateTime startDate, DateTime endDate, string period = "Daily")
         {
             try
             {
@@ -521,7 +521,7 @@ namespace LMS.Repositories
             };
         }
 
-        public async Task<IEnumerable<EnrollmentSummaryReportDto>> GetEnrollmentTrendsReportAsync(int months = 12)
+        public async Task<IEnumerable<EnrollmentSummaryReportDto>> GetEnrollmentTrendsReportAsync(User user,int months = 12)
         {
             try
             {
@@ -529,7 +529,7 @@ namespace LMS.Repositories
                 var endDate = DateTime.UtcNow;
                 var startDate = endDate.AddMonths(-months);
 
-                return await GetEnrollmentSummaryReportAsync(startDate, endDate, "Monthly");
+                return await GetEnrollmentSummaryReportAsync(user,startDate, endDate, "Monthly");
             }
             catch (Exception ex)
             {
@@ -538,7 +538,7 @@ namespace LMS.Repositories
             }
         }
 
-        public async Task<ForumActivityReportDto> GetForumActivityReportAsync(int forumId)
+        public async Task<ForumActivityReportDto> GetForumActivityReportAsync(User user,int forumId)
         {
             try
             {
@@ -597,7 +597,7 @@ namespace LMS.Repositories
             }
         }
 
-        public async Task<IEnumerable<ForumActivityReportDto>> GetAllForumsActivityReportAsync()
+        public async Task<IEnumerable<ForumActivityReportDto>> GetAllForumsActivityReportAsync(User user)
         {
             try
             {
@@ -659,7 +659,7 @@ namespace LMS.Repositories
             }
         }
 
-        public async Task<IEnumerable<StudentProgressReportDto>> GetLowPerformanceStudentsReportAsync(double threshold = 50.0)
+        public async Task<IEnumerable<StudentProgressReportDto>> GetLowPerformanceStudentsReportAsync(User user,double threshold = 50.0)
         {
             try
             {
@@ -710,7 +710,7 @@ namespace LMS.Repositories
             }
         }
 
-        public async Task<IEnumerable<CourseCompletionReportDto>> GetPopularCoursesReportAsync(int topN = 10)
+        public async Task<IEnumerable<CourseCompletionReportDto>> GetPopularCoursesReportAsync(User user,int topN = 10)
         {
             try
             {
@@ -758,7 +758,7 @@ namespace LMS.Repositories
             }
         }
 
-        public async Task<IEnumerable<AssessmentPerformanceReportDto>> GetDifficultAssessmentsReportAsync(double passRateThreshold = 70.0)
+        public async Task<IEnumerable<AssessmentPerformanceReportDto>> GetDifficultAssessmentsReportAsync(User user,double passRateThreshold = 70.0)
         {
             try
             {
@@ -814,7 +814,7 @@ namespace LMS.Repositories
             }
         }
 
-        public async Task<object> GetLearningAnalyticsReportAsync(int courseId)
+        public async Task<object> GetLearningAnalyticsReportAsync(User user,int courseId)
         {
             try
             {
@@ -858,7 +858,7 @@ namespace LMS.Repositories
             }
         }
 
-        public async Task<object> GetStudentEngagementReportAsync(string studentId)
+        public async Task<object> GetStudentEngagementReportAsync(User user,string studentId)
         {
             try
             {
@@ -920,7 +920,7 @@ namespace LMS.Repositories
 
         #region SIS Reports
 
-        public async Task<StudentInformationReportDto> GetStudentInformationReportAsync(string studentId)
+        public async Task<StudentInformationReportDto> GetStudentInformationReportAsync(User user,string studentId)
         {
             try
             {
@@ -973,7 +973,7 @@ namespace LMS.Repositories
             }
         }
 
-        public async Task<IEnumerable<StudentInformationReportDto>> GetAllStudentsInformationReportAsync()
+        public async Task<IEnumerable<StudentInformationReportDto>> GetAllStudentsInformationReportAsync(User user)
         {
             try
             {
@@ -1028,7 +1028,7 @@ namespace LMS.Repositories
             }
         }
 
-        public async Task<IEnumerable<StudentInformationReportDto>> GetStudentsByStatusReportAsync(string status)
+        public async Task<IEnumerable<StudentInformationReportDto>> GetStudentsByStatusReportAsync(User user,string status)
         {
             try
             {
@@ -1085,7 +1085,7 @@ namespace LMS.Repositories
             }
         }
 
-        public async Task<IEnumerable<AttendanceReportDto>> GetAttendanceReportAsync(int classId, DateTime startDate, DateTime endDate)
+        public async Task<IEnumerable<AttendanceReportDto>> GetAttendanceReportAsync(User user,int classId, DateTime startDate, DateTime endDate)
         {
             try
             {
@@ -1163,7 +1163,7 @@ namespace LMS.Repositories
                    randomValue < attendanceRate + 5 ? "Late" : "Absent";
         }
 
-        public async Task<IEnumerable<AttendanceReportDto>> GetStudentAttendanceReportAsync(string studentId, DateTime startDate, DateTime endDate)
+        public async Task<IEnumerable<AttendanceReportDto>> GetStudentAttendanceReportAsync(User user,string studentId, DateTime startDate, DateTime endDate)
         {
             try
             {
@@ -1222,7 +1222,7 @@ namespace LMS.Repositories
             }
         }
 
-        public async Task<GradeDistributionReportDto> GetGradeDistributionReportAsync(int classId)
+        public async Task<GradeDistributionReportDto> GetGradeDistributionReportAsync(User user,int classId)
         {
             try
             {
@@ -1312,7 +1312,7 @@ namespace LMS.Repositories
             return Math.Sqrt(sumSquaredDifferences / (values.Count - 1));
         }
 
-        public async Task<IEnumerable<GradeDistributionReportDto>> GetAllClassesGradeDistributionReportAsync()
+        public async Task<IEnumerable<GradeDistributionReportDto>> GetAllClassesGradeDistributionReportAsync(User user)
         {
             try
             {
@@ -1375,7 +1375,7 @@ namespace LMS.Repositories
             }
         }
 
-        public async Task<TeacherPerformanceReportDto> GetTeacherPerformanceReportAsync(string teacherId)
+        public async Task<TeacherPerformanceReportDto> GetTeacherPerformanceReportAsync(User user,string teacherId)
         {
             try
             {
@@ -1461,7 +1461,7 @@ namespace LMS.Repositories
             };
         }
 
-        public async Task<IEnumerable<TeacherPerformanceReportDto>> GetAllTeachersPerformanceReportAsync()
+        public async Task<IEnumerable<TeacherPerformanceReportDto>> GetAllTeachersPerformanceReportAsync(User user)
         {
             try
             {
@@ -1525,7 +1525,7 @@ namespace LMS.Repositories
 
         #region Advanced Analytics Reports
 
-        public async Task<object> GetAcademicPerformanceTrendsReportAsync(string studentId, int months = 12)
+        public async Task<object> GetAcademicPerformanceTrendsReportAsync(User user,string studentId, int months = 12)
         {
             try
             {
@@ -1687,7 +1687,7 @@ namespace LMS.Repositories
             return actions;
         }
 
-        public async Task<IEnumerable<object>> GetRiskStudentsReportAsync()
+        public async Task<IEnumerable<object>> GetRiskStudentsReportAsync(User user)
         {
             try
             {
@@ -1744,7 +1744,7 @@ namespace LMS.Repositories
             }
         }
 
-        public async Task<object> GetInstitutionalEffectivenessReportAsync()
+        public async Task<object> GetInstitutionalEffectivenessReportAsync(User user)
         {
             try
             {
@@ -1873,7 +1873,7 @@ namespace LMS.Repositories
             return (averageGrade * 0.6) + (completionRate * 0.4);
         }
 
-        public async Task<object> GetResourceUtilizationReportAsync()
+        public async Task<object> GetResourceUtilizationReportAsync(User user)
         {
             try
             {
@@ -1979,7 +1979,7 @@ namespace LMS.Repositories
             return recommendations;
         }
 
-        public async Task<object> GetRetentionAnalysisReportAsync()
+        public async Task<object> GetRetentionAnalysisReportAsync(User user)
         {
             try
             {
@@ -2139,14 +2139,14 @@ namespace LMS.Repositories
 
         #region Export Methods
 
-        public async Task<byte[]> ExportReportToPdfAsync(string reportType, object parameters)
+        public async Task<byte[]> ExportReportToPdfAsync(User user, string reportType, object parameters)
         {
             try
             {
                 // Basic PDF export implementation
                 // Note: This is a simplified implementation. In production, you would use libraries like iTextSharp, PdfSharp, or similar
 
-                var reportData = await GetReportDataByType(reportType, parameters);
+                var reportData = await GetReportDataByType(user,reportType, parameters);
                 var pdfContent = GeneratePdfContent(reportType, reportData);
 
                 // Convert to bytes (this is a mock implementation)
@@ -2167,14 +2167,14 @@ namespace LMS.Repositories
             }
         }
 
-        public async Task<byte[]> ExportReportToExcelAsync(string reportType, object parameters)
+        public async Task<byte[]> ExportReportToExcelAsync(User user,string reportType, object parameters)
         {
             try
             {
                 // Basic Excel export implementation
                 // Note: This is a simplified implementation. In production, you would use libraries like EPPlus, ClosedXML, or similar
 
-                var reportData = await GetReportDataByType(reportType, parameters);
+                var reportData = await GetReportDataByType(user,reportType, parameters);
                 var excelContent = GenerateExcelContent(reportType, reportData);
 
                 // Convert to bytes (this is a mock implementation)
@@ -2196,11 +2196,11 @@ namespace LMS.Repositories
             }
         }
 
-        public async Task<string> ExportReportToCsvAsync(string reportType, object parameters)
+        public async Task<string> ExportReportToCsvAsync(User user,string reportType, object parameters)
         {
             try
             {
-                var reportData = await GetReportDataByType(reportType, parameters);
+                var reportData = await GetReportDataByType(user,reportType, parameters);
                 var csvContent = GenerateCsvContent(reportType, reportData);
 
                 // In a real implementation, you might save this to a file and return the file path
@@ -2216,19 +2216,19 @@ namespace LMS.Repositories
             }
         }
 
-        private async Task<object> GetReportDataByType(string reportType, object parameters)
+        private async Task<object> GetReportDataByType(User user,string reportType, object parameters)
         {
             // Route to appropriate report method based on type
             return reportType.ToLower() switch
             {
-                "studentprogress" => await GetStudentProgressReportAsync(),
-                "coursecompletion" => await GetAllCoursesCompletionReportAsync(),
-                "assessmentperformance" => await GetDifficultAssessmentsReportAsync(),
-                "enrollment" => await GetEnrollmentSummaryReportAsync(DateTime.UtcNow.AddMonths(-12), DateTime.UtcNow),
-                "forum" => await GetAllForumsActivityReportAsync(),
-                "students" => await GetAllStudentsInformationReportAsync(),
-                "teachers" => await GetAllTeachersPerformanceReportAsync(),
-                "gradedistribution" => await GetAllClassesGradeDistributionReportAsync(),
+                "studentprogress" => await GetStudentProgressReportAsync(user),
+                "coursecompletion" => await GetAllCoursesCompletionReportAsync(user),
+                "assessmentperformance" => await GetDifficultAssessmentsReportAsync(user),
+                "enrollment" => await GetEnrollmentSummaryReportAsync(user,DateTime.UtcNow.AddMonths(-12), DateTime.UtcNow),
+                "forum" => await GetAllForumsActivityReportAsync(user),
+                "students" => await GetAllStudentsInformationReportAsync(user),
+                "teachers" => await GetAllTeachersPerformanceReportAsync(user),
+                "gradedistribution" => await GetAllClassesGradeDistributionReportAsync(user),
                 _ => new { Message = "Report type not supported", Type = reportType }
             };
         }
