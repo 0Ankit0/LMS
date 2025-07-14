@@ -1,0 +1,386 @@
+@page "/user/account/users"
+@using Microsoft.AspNetCore.Identity
+@using System.Security.Claims
+@using LMS.Data
+@inject UserManager<User> userManager
+@inject NavigationManager NavigationManager
+@attribute [Authorize(Roles = "Admin")]
+
+<h1 class="display-6 mb-4">User Management</h1>
+
+@if (!string.IsNullOrEmpty(statusMessage))
+{
+    <div class="alert alert-info alert-dismissible fade show" role="alert">
+        @statusMessage
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+@if (isLoading)
+{
+    <div class="text-center my-4">
+        <div class="spinner-border" role="status"></div>
+        <span class="ms-2">Loading users...</span>
+    </div>
+}
+else
+{
+    <div class="card shadow-sm">
+        <div class="card-body p-0">
+            <table class="table table-hover mb-0 align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>Email</th>
+                        <th>User Name</th>
+                        <th>Email Confirmed</th>
+                        <th>Roles</th>
+                        <th style="width: 300px;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var user in users)
+                    {
+                        <tr>
+                            <td>@user.Email</td>
+                            <td>@user.UserName</td>
+                            <td>
+                                @if (user.EmailConfirmed)
+                                {
+                                    <span class="badge bg-success">Yes</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-secondary">No</span>
+                                }
+                            </td>
+                            <td>
+                                @if (userRoles.TryGetValue(user.Id, out var roles) && roles.Any())
+                                {
+                                    @foreach (var role in roles)
+                                    {
+                                        <span class="badge bg-info text-dark me-1">@role</span>
+                                    }
+                                }
+                                else
+                                {
+                                    <span class="text-muted">None</span>
+                                }
+                            </td>
+                            <td>
+                                <div class="d-flex flex-row align-items-center gap-2">
+                                    <button class="btn btn-sm btn-outline-primary" @onclick="() => ShowManageClaims(user)">
+                                        <i class="bi bi-shield-lock"></i> Manage Claims
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-warning" @onclick="() => ShowResetPassword(user)">
+                                        <i class="bi bi-key"></i> Reset Password
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-danger" @onclick="() => ConfirmDelete(user)">
+                                        <i class="bi bi-trash"></i> Delete
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+}
+
+<!-- Manage Claims Modal -->
+@if (showManageClaimsId != null && userToManageClaims != null)
+{
+    <div class="modal fade show d-block" tabindex="-1" style="background:rgba(0,0,0,0.5);" role="dialog">
+        <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title text-primary">
+                        <i class="bi bi-shield-lock"></i> Manage Claims for @userToManageClaims.Email
+                    </h5>
+                    <button type="button" class="btn-close" aria-label="Close" @onclick="CancelManageClaims"></button>
+                </div>
+                <div class="modal-body">
+                    <EditForm Model="newUserClaim" OnValidSubmit="AddUserClaimAsync">
+                        <div class="row g-2 align-items-end mb-3">
+                            <div class="col">
+                                <label class="form-label mb-1">Claim Type</label>
+                                <InputText @bind-Value="newUserClaim.Type" class="form-control" placeholder="Type" />
+                            </div>
+                            <div class="col">
+                                <label class="form-label mb-1">Claim Value</label>
+                                <InputText @bind-Value="newUserClaim.Value" class="form-control" placeholder="Value" />
+                            </div>
+                            <div class="col-auto d-grid">
+                                <button class="btn btn-success" type="submit">Add</button>
+                            </div>
+                        </div>
+                    </EditForm>
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-hover table-sm mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Type</th>
+                                    <th>Value</th>
+                                    <th style="width: 90px;">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @if (userClaims is null || userClaims.Count == 0)
+                                {
+                                    <tr>
+                                        <td colspan="3" class="text-center text-muted">No claims for this user.</td>
+                                    </tr>
+                                }
+                                else
+                                {
+                                    @foreach (var claim in userClaims)
+                                    {
+                                        <tr>
+                                            <td>@claim.Type</td>
+                                            <td>@claim.Value</td>
+                                            <td>
+                                                <button
+                                                    class="btn btn-danger btn-sm d-flex align-items-center justify-content-center gap-1"
+                                                    @onclick="() => RemoveUserClaimAsync(claim)">
+                                                    <i class="bi bi-x-circle"></i>
+                                                    <span>Remove</span>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    }
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" @onclick="CancelManageClaims">
+                        Close
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal-backdrop fade show"></div>
+}
+
+<!-- Delete Confirmation Modal -->
+@if (showDeleteConfirmId != null && userToDelete != null)
+{
+    <div class="modal fade show d-block" tabindex="-1" style="background:rgba(0,0,0,0.5);" role="dialog">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title text-danger">
+                        <i class="bi bi-exclamation-triangle"></i> Confirm Delete
+                    </h5>
+                    <button type="button" class="btn-close" aria-label="Close" @onclick="CancelDelete"></button>
+                </div>
+                <div class="modal-body">
+                    <p>
+                        Are you sure you want to delete user <strong>@userToDelete.Email</strong>?
+                    </p>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-danger" @onclick="() => DeleteUser(userToDelete)">
+                        <i class="bi bi-trash"></i> Delete
+                    </button>
+                    <button class="btn btn-secondary" @onclick="CancelDelete">
+                        Cancel
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal-backdrop fade show"></div>
+}
+
+<!-- Reset Password Modal -->
+@if (showResetPasswordId != null && userToReset != null)
+{
+    <div class="modal fade show d-block" tabindex="-1" style="background:rgba(0,0,0,0.5);" role="dialog">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title text-warning">
+                        <i class="bi bi-key"></i> Reset Password
+                    </h5>
+                    <button type="button" class="btn-close" aria-label="Close" @onclick="CancelResetPassword"></button>
+                </div>
+                <div class="modal-body">
+                    <label>New Password for <strong>@userToReset.Email</strong>:</label>
+                    <input type="password" class="form-control mt-2" @bind="newPassword" />
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-warning" @onclick="() => ResetPassword(userToReset)">
+                        <i class="bi bi-key"></i> Set Password
+                    </button>
+                    <button class="btn btn-secondary" @onclick="CancelResetPassword">
+                        Cancel
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal-backdrop fade show"></div>
+}
+
+@code {
+    private List<User> users = new();
+    private Dictionary<string, List<string>> userRoles = new();
+    private string? statusMessage;
+    private string? showDeleteConfirmId;
+    private User? userToDelete;
+
+    private string? showResetPasswordId;
+    private User? userToReset;
+    private string newPassword = string.Empty;
+    private bool isLoading = true;
+
+    // Claims management
+    private string? showManageClaimsId;
+    private User? userToManageClaims;
+    private List<Claim> userClaims = new();
+    private ClaimModel newUserClaim = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        users = userManager.Users.ToList();
+        userRoles = new Dictionary<string, List<string>>();
+        foreach (var user in users)
+        {
+            var roles = await userManager.GetRolesAsync(user);
+            userRoles[user.Id] = roles.ToList();
+        }
+        isLoading = false;
+    }
+
+    private void ConfirmDelete(User user)
+    {
+        showDeleteConfirmId = user.Id;
+        userToDelete = user;
+    }
+
+    private void CancelDelete()
+    {
+        showDeleteConfirmId = null;
+        userToDelete = null;
+    }
+
+    private async Task DeleteUser(User user)
+    {
+        var result = await userManager.DeleteAsync(user);
+        if (result.Succeeded)
+        {
+            statusMessage = $"User '{user.Email}' deleted.";
+            users = userManager.Users.ToList();
+            userRoles = new Dictionary<string, List<string>>();
+            foreach (var u in users)
+            {
+                var roles = await userManager.GetRolesAsync(u);
+                userRoles[u.Id] = roles.ToList();
+            }
+        }
+        else
+        {
+            statusMessage = string.Join("; ", result.Errors.Select(e => e.Description));
+        }
+        showDeleteConfirmId = null;
+        userToDelete = null;
+    }
+
+    private void ShowResetPassword(User user)
+    {
+        showResetPasswordId = user.Id;
+        userToReset = user;
+        newPassword = string.Empty;
+    }
+
+    private void CancelResetPassword()
+    {
+        showResetPasswordId = null;
+        userToReset = null;
+        newPassword = string.Empty;
+    }
+
+    private async Task ResetPassword(User user)
+    {
+        if (string.IsNullOrWhiteSpace(newPassword))
+        {
+            statusMessage = "Password cannot be empty.";
+            return;
+        }
+
+        var token = await userManager.GeneratePasswordResetTokenAsync(user);
+        var result = await userManager.ResetPasswordAsync(user, token, newPassword);
+        if (result.Succeeded)
+        {
+            statusMessage = $"Password for '{user.Email}' has been reset.";
+        }
+        else
+        {
+            statusMessage = string.Join("; ", result.Errors.Select(e => e.Description));
+        }
+        showResetPasswordId = null;
+        userToReset = null;
+        newPassword = string.Empty;
+    }
+
+    // User Claims Management
+    private async void ShowManageClaims(User user)
+    {
+        showManageClaimsId = user.Id;
+        userToManageClaims = user;
+        newUserClaim = new();
+        userClaims = (await userManager.GetClaimsAsync(user)).ToList();
+        StateHasChanged();
+    }
+
+    private void CancelManageClaims()
+    {
+        showManageClaimsId = null;
+        userToManageClaims = null;
+        userClaims = new();
+        newUserClaim = new();
+    }
+
+    private async Task AddUserClaimAsync()
+    {
+        if (userToManageClaims == null) return;
+        if (string.IsNullOrWhiteSpace(newUserClaim.Type) || string.IsNullOrWhiteSpace(newUserClaim.Value))
+        {
+            statusMessage = "Claim type and value are required.";
+            return;
+        }
+        if (userClaims.Any(c => c.Type == newUserClaim.Type && c.Value == newUserClaim.Value))
+        {
+            statusMessage = "This claim already exists for the user.";
+            return;
+        }
+        var result = await userManager.AddClaimAsync(userToManageClaims, new Claim(newUserClaim.Type, newUserClaim.Value));
+        if (result.Succeeded)
+        {
+            userClaims = (await userManager.GetClaimsAsync(userToManageClaims)).ToList();
+            newUserClaim = new();
+            statusMessage = "Claim added.";
+        }
+        else
+        {
+            statusMessage = string.Join("; ", result.Errors.Select(e => e.Description));
+        }
+    }
+
+    private async Task RemoveUserClaimAsync(Claim claim)
+    {
+        if (userToManageClaims == null) return;
+        var result = await userManager.RemoveClaimAsync(userToManageClaims, claim);
+        if (result.Succeeded)
+        {
+            userClaims = (await userManager.GetClaimsAsync(userToManageClaims)).ToList();
+            statusMessage = "Claim removed.";
+        }
+        else
+        {
+            statusMessage = string.Join("; ", result.Errors.Select(e => e.Description));
+        }
+    }
+}
