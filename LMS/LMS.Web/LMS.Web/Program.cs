@@ -39,7 +39,21 @@ builder.Services.AddIdentityCore<User>(options => options.SignIn.RequireConfirme
     .AddDefaultTokenProviders();
 
 builder.Services.AddSingleton<IEmailSender<User>, IdentityNoOpEmailSender>();
-builder.Services.AddHttpClient();
+
+// Configure HttpClient with proper base address for server-side components
+builder.Services.AddScoped(sp =>
+{
+    var httpContext = sp.GetService<IHttpContextAccessor>()?.HttpContext;
+    var baseAddress = httpContext != null 
+        ? $"{httpContext.Request.Scheme}://{httpContext.Request.Host}/"
+        : "https://localhost:5001/"; // Fallback for development
+    
+    return new HttpClient { BaseAddress = new Uri(baseAddress) };
+});
+
+// Add IHttpContextAccessor for the above service
+builder.Services.AddHttpContextAccessor();
+
 builder.Services.AddEndpoints(typeof(Program).Assembly);
 var app = builder.Build();
 

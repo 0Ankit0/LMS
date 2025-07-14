@@ -5,71 +5,169 @@ using LMS.Web.Repositories.DTOs;
 using LMS.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using LMS.Data.Entities;
+using Microsoft.AspNetCore.Identity;
 
 namespace LMS.Repositories
 {
-   public interface IReportRepository
-{
-    // LMS Reports
-    Task<IEnumerable<StudentProgressReportDto>> GetStudentProgressReportAsync(User user, string? studentId = null);
-    Task<IEnumerable<StudentProgressReportDto>> GetStudentProgressByCoursesAsync(User user, string studentId);
-    Task<CourseCompletionReportDto> GetCourseCompletionReportAsync(User user, int courseId);
-    Task<IEnumerable<CourseCompletionReportDto>> GetAllCoursesCompletionReportAsync(User user);
-    Task<AssessmentPerformanceReportDto> GetAssessmentPerformanceReportAsync(User user, int assessmentId);
-    Task<IEnumerable<AssessmentPerformanceReportDto>> GetCourseAssessmentsPerformanceReportAsync(User user, int courseId);
-    Task<IEnumerable<EnrollmentSummaryReportDto>> GetEnrollmentSummaryReportAsync(User user, DateTime startDate, DateTime endDate, string period = "Daily");
-    Task<IEnumerable<EnrollmentSummaryReportDto>> GetEnrollmentTrendsReportAsync(User user, int months = 12);
-    Task<ForumActivityReportDto> GetForumActivityReportAsync(User user, int forumId);
-    Task<IEnumerable<ForumActivityReportDto>> GetAllForumsActivityReportAsync(User user);
+    public interface IReportRepository
+    {
+        // LMS Reports
+        Task<IEnumerable<StudentProgressReportDto>> GetStudentProgressReportAsync(User user, string? studentId = null, DateTime? startDate = null, DateTime? endDate = null, int? courseId = null, string? status = null);
+        Task<IEnumerable<StudentProgressReportDto>> GetStudentProgressByCoursesAsync(User user, string studentId, DateTime? startDate = null, DateTime? endDate = null);
+        Task<CourseCompletionReportDto> GetCourseCompletionReportAsync(User user, int courseId, DateTime? startDate = null, DateTime? endDate = null);
+        Task<IEnumerable<CourseCompletionReportDto>> GetAllCoursesCompletionReportAsync(User user, DateTime? startDate = null, DateTime? endDate = null, string? instructorId = null, string? category = null);
+        Task<AssessmentPerformanceReportDto> GetAssessmentPerformanceReportAsync(User user, int assessmentId, DateTime? startDate = null, DateTime? endDate = null);
+        Task<IEnumerable<AssessmentPerformanceReportDto>> GetCourseAssessmentsPerformanceReportAsync(User user, int courseId, DateTime? startDate = null, DateTime? endDate = null);
+        Task<IEnumerable<EnrollmentSummaryReportDto>> GetEnrollmentSummaryReportAsync(User user, DateTime startDate, DateTime endDate, string period = "Daily", int? courseId = null, string? instructorId = null);
+        Task<IEnumerable<EnrollmentSummaryReportDto>> GetEnrollmentTrendsReportAsync(User user, int months = 12, int? courseId = null, string? instructorId = null);
+        Task<ForumActivityReportDto> GetForumActivityReportAsync(User user, int forumId, DateTime? startDate = null, DateTime? endDate = null);
+        Task<IEnumerable<ForumActivityReportDto>> GetAllForumsActivityReportAsync(User user, DateTime? startDate = null, DateTime? endDate = null, int? courseId = null);
 
-    // Advanced LMS Reports
-    Task<IEnumerable<StudentProgressReportDto>> GetLowPerformanceStudentsReportAsync(User user, double threshold = 50.0);
-    Task<IEnumerable<CourseCompletionReportDto>> GetPopularCoursesReportAsync(User user, int topN = 10);
-    Task<IEnumerable<AssessmentPerformanceReportDto>> GetDifficultAssessmentsReportAsync(User user, double passRateThreshold = 70.0);
-    Task<object> GetLearningAnalyticsReportAsync(User user, int courseId);
-    Task<object> GetStudentEngagementReportAsync(User user, string studentId);
+        // Advanced LMS Reports
+        Task<IEnumerable<StudentProgressReportDto>> GetLowPerformanceStudentsReportAsync(User user, double threshold = 50.0, DateTime? startDate = null, DateTime? endDate = null, int? courseId = null);
+        Task<IEnumerable<CourseCompletionReportDto>> GetPopularCoursesReportAsync(User user, int topN = 10, DateTime? startDate = null, DateTime? endDate = null, string? category = null);
+        Task<IEnumerable<AssessmentPerformanceReportDto>> GetDifficultAssessmentsReportAsync(User user, double passRateThreshold = 70.0, DateTime? startDate = null, DateTime? endDate = null, int? courseId = null);
+        Task<object> GetLearningAnalyticsReportAsync(User user, int courseId, DateTime? startDate = null, DateTime? endDate = null);
+        Task<object> GetStudentEngagementReportAsync(User user, string studentId, DateTime? startDate = null, DateTime? endDate = null);
 
-    // SIS Reports
-    Task<StudentInformationReportDto> GetStudentInformationReportAsync(User user, string studentId);
-    Task<IEnumerable<StudentInformationReportDto>> GetAllStudentsInformationReportAsync(User user);
-    Task<IEnumerable<StudentInformationReportDto>> GetStudentsByStatusReportAsync(User user, string status);
-    Task<IEnumerable<AttendanceReportDto>> GetAttendanceReportAsync(User user, int classId, DateTime startDate, DateTime endDate);
-    Task<IEnumerable<AttendanceReportDto>> GetStudentAttendanceReportAsync(User user, string studentId, DateTime startDate, DateTime endDate);
-    Task<GradeDistributionReportDto> GetGradeDistributionReportAsync(User user, int classId);
-    Task<IEnumerable<GradeDistributionReportDto>> GetAllClassesGradeDistributionReportAsync(User user);
-    Task<TeacherPerformanceReportDto> GetTeacherPerformanceReportAsync(User user, string teacherId);
-    Task<IEnumerable<TeacherPerformanceReportDto>> GetAllTeachersPerformanceReportAsync(User user);
+        // SIS Reports
+        Task<StudentInformationReportDto> GetStudentInformationReportAsync(User user, string studentId);
+        Task<IEnumerable<StudentInformationReportDto>> GetAllStudentsInformationReportAsync(User user, DateTime? startDate = null, DateTime? endDate = null, string? status = null, int? courseId = null);
+        Task<IEnumerable<StudentInformationReportDto>> GetStudentsByStatusReportAsync(User user, string status, DateTime? startDate = null, DateTime? endDate = null);
+        Task<IEnumerable<AttendanceReportDto>> GetAttendanceReportAsync(User user, int classId, DateTime startDate, DateTime endDate, string? studentId = null);
+        Task<IEnumerable<AttendanceReportDto>> GetStudentAttendanceReportAsync(User user, string studentId, DateTime startDate, DateTime endDate, int? classId = null);
+        Task<GradeDistributionReportDto> GetGradeDistributionReportAsync(User user, int classId, DateTime? startDate = null, DateTime? endDate = null);
+        Task<IEnumerable<GradeDistributionReportDto>> GetAllClassesGradeDistributionReportAsync(User user, DateTime? startDate = null, DateTime? endDate = null, string? instructorId = null);
+        Task<TeacherPerformanceReportDto> GetTeacherPerformanceReportAsync(User user, string teacherId, DateTime? startDate = null, DateTime? endDate = null);
+        Task<IEnumerable<TeacherPerformanceReportDto>> GetAllTeachersPerformanceReportAsync(User user, DateTime? startDate = null, DateTime? endDate = null);
 
-    // Advanced SIS Reports
-    Task<object> GetAcademicPerformanceTrendsReportAsync(User user, string studentId, int months = 12);
-    Task<IEnumerable<object>> GetRiskStudentsReportAsync(User user);
-    Task<object> GetInstitutionalEffectivenessReportAsync(User user);
-    Task<object> GetResourceUtilizationReportAsync(User user);
-    Task<object> GetRetentionAnalysisReportAsync(User user);
+        // Advanced SIS Reports
+        Task<object> GetAcademicPerformanceTrendsReportAsync(User user, string studentId, int months = 12, DateTime? endDate = null);
+        Task<IEnumerable<object>> GetRiskStudentsReportAsync(User user, DateTime? startDate = null, DateTime? endDate = null, double threshold = 2.0);
+        Task<object> GetInstitutionalEffectivenessReportAsync(User user, DateTime? startDate = null, DateTime? endDate = null);
+        Task<object> GetResourceUtilizationReportAsync(User user, DateTime? startDate = null, DateTime? endDate = null);
+        Task<object> GetRetentionAnalysisReportAsync(User user, DateTime? startDate = null, DateTime? endDate = null, int cohortMonths = 12);
 
-    // Export Reports
-    Task<byte[]> ExportReportToPdfAsync(User user, string reportType, object parameters);
-    Task<byte[]> ExportReportToExcelAsync(User user, string reportType, object parameters);
-    Task<string> ExportReportToCsvAsync(User user, string reportType, object parameters);
-}
+        // Export Reports
+        Task<byte[]> ExportReportToPdfAsync(User user, string reportType, object parameters);
+        Task<byte[]> ExportReportToExcelAsync(User user, string reportType, object parameters);
+        Task<string> ExportReportToCsvAsync(User user, string reportType, object parameters);
+    }
 
     public class ReportRepository : IReportRepository
     {
         private readonly ILogger<ReportRepository> _logger;
         private readonly ApplicationDbContext _context;
+        private readonly UserManager<User> _userManager;
 
-        public ReportRepository(ILogger<ReportRepository> logger, ApplicationDbContext context)
+        public ReportRepository(ILogger<ReportRepository> logger, ApplicationDbContext context, UserManager<User> userManager)
         {
             _logger = logger;
             _context = context;
+            _userManager = userManager;
         }
 
         #region LMS Reports
 
-        public async Task<IEnumerable<StudentProgressReportDto>> GetStudentProgressReportAsync(User user,string? studentId = null)
+        #region Helper Methods
+
+        private async Task<bool> IsInstructorAsync(User user)
+        {
+            var roles = await _userManager.GetRolesAsync(user);
+            return roles.Contains("Instructor") || roles.Contains("Teacher");
+        }
+
+        private async Task<List<int>> GetInstructorCourseIdsAsync(User user)
+        {
+            return await _context.Courses
+                .Where(c => c.InstructorId == user.Id)
+                .Select(c => c.Id)
+                .ToListAsync();
+        }
+
+        private IQueryable<Enrollment> ApplyEnrollmentFilters(IQueryable<Enrollment> query, User user, string? studentId = null, DateTime? startDate = null, DateTime? endDate = null, int? courseId = null, string? status = null, List<int>? instructorCourseIds = null)
+        {
+            // Apply instructor filtering if user is instructor
+            if (instructorCourseIds != null && instructorCourseIds.Any())
+            {
+                query = query.Where(e => instructorCourseIds.Contains(e.CourseId));
+            }
+
+            // Apply student filter
+            if (!string.IsNullOrEmpty(studentId))
+            {
+                query = query.Where(e => e.UserId == studentId);
+            }
+
+            // Apply date filters
+            if (startDate.HasValue)
+            {
+                query = query.Where(e => e.EnrolledAt >= startDate.Value);
+            }
+
+            if (endDate.HasValue)
+            {
+                query = query.Where(e => e.EnrolledAt <= endDate.Value);
+            }
+
+            // Apply course filter
+            if (courseId.HasValue)
+            {
+                query = query.Where(e => e.CourseId == courseId.Value);
+            }
+
+            // Apply status filter
+            if (!string.IsNullOrEmpty(status) && Enum.TryParse<EnrollmentStatus>(status, true, out var enrollmentStatus))
+            {
+                query = query.Where(e => e.Status == enrollmentStatus);
+            }
+
+            return query;
+        }
+
+        private IQueryable<Course> ApplyCourseFilters(IQueryable<Course> query, User user, DateTime? startDate = null, DateTime? endDate = null, string? instructorId = null, string? category = null, List<int>? instructorCourseIds = null)
+        {
+            // Apply instructor filtering if user is instructor
+            if (instructorCourseIds != null && instructorCourseIds.Any())
+            {
+                query = query.Where(c => instructorCourseIds.Contains(c.Id));
+            }
+
+            // Apply date filters
+            if (startDate.HasValue)
+            {
+                query = query.Where(c => c.StartDate >= startDate.Value);
+            }
+
+            if (endDate.HasValue)
+            {
+                query = query.Where(c => c.EndDate <= endDate.Value || c.EndDate == null);
+            }
+
+            // Apply instructor filter
+            if (!string.IsNullOrEmpty(instructorId))
+            {
+                query = query.Where(c => c.InstructorId == instructorId);
+            }
+
+            // Apply category filter
+            if (!string.IsNullOrEmpty(category))
+            {
+                query = query.Where(c => c.CourseCategories.Any(cc => cc.Category.Name.Contains(category)));
+            }
+
+            return query;
+        }
+
+        #endregion
+
+        public async Task<IEnumerable<StudentProgressReportDto>> GetStudentProgressReportAsync(User user, string? studentId = null, DateTime? startDate = null, DateTime? endDate = null, int? courseId = null, string? status = null)
         {
             try
             {
+                // Check user role and get instructor course restrictions
+                var isInstructor = await IsInstructorAsync(user);
+                var instructorCourseIds = isInstructor ? await GetInstructorCourseIdsAsync(user) : null;
 
                 var enrollmentsQuery = _context.Enrollments
                     .Include(e => e.User)
@@ -80,10 +178,8 @@ namespace LMS.Repositories
                             .ThenInclude(m => m.Lessons)
                     .AsQueryable();
 
-                if (!string.IsNullOrEmpty(studentId))
-                {
-                    enrollmentsQuery = enrollmentsQuery.Where(e => e.UserId == studentId);
-                }
+                // Apply filters including role-based restrictions
+                enrollmentsQuery = ApplyEnrollmentFilters(enrollmentsQuery, user, studentId, startDate, endDate, courseId, status, instructorCourseIds);
 
                 var enrollments = await enrollmentsQuery.ToListAsync();
                 var reports = new List<StudentProgressReportDto>();
@@ -148,12 +244,15 @@ namespace LMS.Repositories
             }
         }
 
-        public async Task<IEnumerable<StudentProgressReportDto>> GetStudentProgressByCoursesAsync(User user,string studentId)
+        public async Task<IEnumerable<StudentProgressReportDto>> GetStudentProgressByCoursesAsync(User user, string studentId, DateTime? startDate = null, DateTime? endDate = null)
         {
             try
             {
+                // Check user role and get instructor course restrictions
+                var isInstructor = await IsInstructorAsync(user);
+                var instructorCourseIds = isInstructor ? await GetInstructorCourseIdsAsync(user) : null;
 
-                var enrollments = await _context.Enrollments
+                var enrollmentsQuery = _context.Enrollments
                     .Include(e => e.User)
                     .Include(e => e.Course)
                     .Include(e => e.AssessmentAttempts)
@@ -161,7 +260,25 @@ namespace LMS.Repositories
                         .ThenInclude(mp => mp.Module)
                             .ThenInclude(m => m.Lessons)
                     .Where(e => e.UserId == studentId)
-                    .ToListAsync();
+                    .AsQueryable();
+
+                // Apply date filters and instructor restrictions
+                if (instructorCourseIds != null && instructorCourseIds.Any())
+                {
+                    enrollmentsQuery = enrollmentsQuery.Where(e => instructorCourseIds.Contains(e.CourseId));
+                }
+
+                if (startDate.HasValue)
+                {
+                    enrollmentsQuery = enrollmentsQuery.Where(e => e.EnrolledAt >= startDate.Value);
+                }
+
+                if (endDate.HasValue)
+                {
+                    enrollmentsQuery = enrollmentsQuery.Where(e => e.EnrolledAt <= endDate.Value);
+                }
+
+                var enrollments = await enrollmentsQuery.ToListAsync();
 
                 var reports = new List<StudentProgressReportDto>();
 
@@ -225,27 +342,50 @@ namespace LMS.Repositories
             }
         }
 
-        public async Task<CourseCompletionReportDto> GetCourseCompletionReportAsync(User user,int courseId)
+        public async Task<CourseCompletionReportDto> GetCourseCompletionReportAsync(User user, int courseId, DateTime? startDate = null, DateTime? endDate = null)
         {
             try
             {
+                // Check user role and course access
+                var isInstructor = await IsInstructorAsync(user);
+                var instructorCourseIds = isInstructor ? await GetInstructorCourseIdsAsync(user) : null;
 
-                var course = await _context.Courses
+                // Check if instructor has access to this course
+                if (instructorCourseIds != null && !instructorCourseIds.Contains(courseId))
+                {
+                    throw new UnauthorizedAccessException("You don't have access to this course's data");
+                }
+
+                var courseQuery = _context.Courses
                     .Include(c => c.Instructor)
                     .Include(c => c.Enrollments)
-                    .FirstOrDefaultAsync(c => c.Id == courseId);
+                    .Where(c => c.Id == courseId);
+
+                var course = await courseQuery.FirstOrDefaultAsync();
 
                 if (course == null)
                 {
                     throw new ArgumentException($"Course with ID {courseId} not found");
                 }
 
-                var totalEnrollments = course.Enrollments.Count;
-                var completedEnrollments = course.Enrollments.Count(e => e.Status == EnrollmentStatus.Completed);
-                var activeEnrollments = course.Enrollments.Count(e => e.Status == EnrollmentStatus.Active);
-                var droppedEnrollments = course.Enrollments.Count(e => e.Status == EnrollmentStatus.Dropped);
+                // Apply date filters to enrollments
+                var enrollments = course.Enrollments.AsQueryable();
+                if (startDate.HasValue)
+                {
+                    enrollments = enrollments.Where(e => e.EnrolledAt >= startDate.Value);
+                }
+                if (endDate.HasValue)
+                {
+                    enrollments = enrollments.Where(e => e.EnrolledAt <= endDate.Value);
+                }
 
-                var averageCompletionTime = course.Enrollments
+                var filteredEnrollments = enrollments.ToList();
+                var totalEnrollments = filteredEnrollments.Count;
+                var completedEnrollments = filteredEnrollments.Count(e => e.Status == EnrollmentStatus.Completed);
+                var activeEnrollments = filteredEnrollments.Count(e => e.Status == EnrollmentStatus.Active);
+                var droppedEnrollments = filteredEnrollments.Count(e => e.Status == EnrollmentStatus.Dropped);
+
+                var averageCompletionTime = filteredEnrollments
                     .Where(e => e.CompletedAt.HasValue && e.StartedAt.HasValue)
                     .Select(e => (e.CompletedAt!.Value - e.StartedAt!.Value).TotalDays)
                     .DefaultIfEmpty(0)
@@ -262,8 +402,8 @@ namespace LMS.Repositories
                     DroppedEnrollments = droppedEnrollments,
                     CompletionRate = totalEnrollments > 0 ? (double)completedEnrollments / totalEnrollments * 100 : 0,
                     AverageCompletionTime = averageCompletionTime,
-                    AverageFinalGrade = course.Enrollments.Where(e => e.FinalGrade.HasValue).Select(e => e.FinalGrade!.Value).DefaultIfEmpty(0).Average(),
-                    CertificatesIssued = course.Enrollments.Count(e => e.IsCertificateIssued),
+                    AverageFinalGrade = filteredEnrollments.Where(e => e.FinalGrade.HasValue).Select(e => e.FinalGrade!.Value).DefaultIfEmpty(0).Average(),
+                    CertificatesIssued = filteredEnrollments.Count(e => e.IsCertificateIssued),
                     CourseStartDate = course.StartDate,
                     CourseEndDate = course.EndDate,
                     CourseStatus = course.Status.ToString()
@@ -276,16 +416,26 @@ namespace LMS.Repositories
             }
         }
 
-        public async Task<IEnumerable<CourseCompletionReportDto>> GetAllCoursesCompletionReportAsync(User user)
+        public async Task<IEnumerable<CourseCompletionReportDto>> GetAllCoursesCompletionReportAsync(User user, DateTime? startDate = null, DateTime? endDate = null, string? instructorId = null, string? category = null)
         {
             try
             {
+                // Check user role and get instructor course restrictions
+                var isInstructor = await IsInstructorAsync(user);
+                var instructorCourseIds = isInstructor ? await GetInstructorCourseIdsAsync(user) : null;
 
-                var courses = await _context.Courses
+                var coursesQuery = _context.Courses
                     .Include(c => c.Instructor)
                     .Include(c => c.Enrollments)
+                    .Include(c => c.CourseCategories)
+                        .ThenInclude(cc => cc.Category)
                     .Where(c => c.IsActive)
-                    .ToListAsync();
+                    .AsQueryable();
+
+                // Apply filters including role-based restrictions
+                coursesQuery = ApplyCourseFilters(coursesQuery, user, startDate, endDate, instructorId, category, instructorCourseIds);
+
+                var courses = await coursesQuery.ToListAsync();
 
                 var reports = new List<CourseCompletionReportDto>();
 
@@ -329,10 +479,13 @@ namespace LMS.Repositories
             }
         }
 
-        public async Task<AssessmentPerformanceReportDto> GetAssessmentPerformanceReportAsync(User user,int assessmentId)
+        public async Task<AssessmentPerformanceReportDto> GetAssessmentPerformanceReportAsync(User user, int assessmentId, DateTime? startDate = null, DateTime? endDate = null)
         {
             try
             {
+                // Check user role and assessment access
+                var isInstructor = await IsInstructorAsync(user);
+                var instructorCourseIds = isInstructor ? await GetInstructorCourseIdsAsync(user) : null;
 
                 var assessment = await _context.Assessments
                     .Include(a => a.Course)
@@ -344,14 +497,33 @@ namespace LMS.Repositories
                     throw new ArgumentException($"Assessment with ID {assessmentId} not found");
                 }
 
-                var attempts = assessment.Attempts.Where(a => a.Status == AssessmentAttemptStatus.Completed).ToList();
-                var totalAttempts = attempts.Count;
-                var passedAttempts = attempts.Count(a => a.IsPassed);
-                var failedAttempts = totalAttempts - passedAttempts;
-                var scores = attempts.Where(a => a.Score.HasValue).Select(a => a.Score!.Value).ToList();
+                // Check if instructor has access to this assessment's course
+                if (instructorCourseIds != null && assessment.CourseId.HasValue && !instructorCourseIds.Contains(assessment.CourseId.Value))
+                {
+                    throw new UnauthorizedAccessException("You don't have access to this assessment's data");
+                }
 
-                var uniqueStudents = attempts.Select(a => a.Enrollment.UserId).Distinct().Count();
-                var completionTimes = attempts.Where(a => a.TimeTaken.HasValue).Select(a => a.TimeTaken!.Value.TotalMinutes).ToList();
+                // Apply date filters to attempts
+                var attempts = assessment.Attempts.Where(a => a.Status == AssessmentAttemptStatus.Completed).AsQueryable();
+
+                if (startDate.HasValue)
+                {
+                    attempts = attempts.Where(a => a.CompletedAt >= startDate.Value);
+                }
+
+                if (endDate.HasValue)
+                {
+                    attempts = attempts.Where(a => a.CompletedAt <= endDate.Value);
+                }
+
+                var filteredAttempts = attempts.ToList();
+                var totalAttempts = filteredAttempts.Count;
+                var passedAttempts = filteredAttempts.Count(a => a.IsPassed);
+                var failedAttempts = totalAttempts - passedAttempts;
+                var scores = filteredAttempts.Where(a => a.Score.HasValue).Select(a => a.Score!.Value).ToList();
+
+                var uniqueStudents = filteredAttempts.Select(a => a.Enrollment.UserId).Distinct().Count();
+                var completionTimes = filteredAttempts.Where(a => a.TimeTaken.HasValue).Select(a => a.TimeTaken!.Value.TotalMinutes).ToList();
 
                 return new AssessmentPerformanceReportDto
                 {
@@ -369,7 +541,7 @@ namespace LMS.Repositories
                     AverageCompletionTime = completionTimes.DefaultIfEmpty(0).Average(),
                     PassingScore = assessment.PassingScore,
                     UniqueStudents = uniqueStudents,
-                    LastAttemptDate = attempts.OrderByDescending(a => a.CompletedAt).FirstOrDefault()?.CompletedAt
+                    LastAttemptDate = filteredAttempts.OrderByDescending(a => a.CompletedAt).FirstOrDefault()?.CompletedAt
                 };
             }
             catch (Exception ex)
@@ -379,10 +551,19 @@ namespace LMS.Repositories
             }
         }
 
-        public async Task<IEnumerable<AssessmentPerformanceReportDto>> GetCourseAssessmentsPerformanceReportAsync(User user,int courseId)
+        public async Task<IEnumerable<AssessmentPerformanceReportDto>> GetCourseAssessmentsPerformanceReportAsync(User user, int courseId, DateTime? startDate = null, DateTime? endDate = null)
         {
             try
             {
+                // Check user role and course access
+                var isInstructor = await IsInstructorAsync(user);
+                var instructorCourseIds = isInstructor ? await GetInstructorCourseIdsAsync(user) : null;
+
+                // Check if instructor has access to this course
+                if (instructorCourseIds != null && !instructorCourseIds.Contains(courseId))
+                {
+                    throw new UnauthorizedAccessException("You don't have access to this course's data");
+                }
 
                 var assessments = await _context.Assessments
                     .Include(a => a.Course)
@@ -394,12 +575,25 @@ namespace LMS.Repositories
 
                 foreach (var assessment in assessments)
                 {
-                    var attempts = assessment.Attempts.Where(a => a.Status == AssessmentAttemptStatus.Completed).ToList();
-                    var totalAttempts = attempts.Count;
-                    var passedAttempts = attempts.Count(a => a.IsPassed);
-                    var scores = attempts.Where(a => a.Score.HasValue).Select(a => a.Score!.Value).ToList();
-                    var uniqueStudents = attempts.Select(a => a.Enrollment.UserId).Distinct().Count();
-                    var completionTimes = attempts.Where(a => a.TimeTaken.HasValue).Select(a => a.TimeTaken!.Value.TotalMinutes).ToList();
+                    // Apply date filters to attempts
+                    var attempts = assessment.Attempts.Where(a => a.Status == AssessmentAttemptStatus.Completed).AsQueryable();
+
+                    if (startDate.HasValue)
+                    {
+                        attempts = attempts.Where(a => a.CompletedAt >= startDate.Value);
+                    }
+
+                    if (endDate.HasValue)
+                    {
+                        attempts = attempts.Where(a => a.CompletedAt <= endDate.Value);
+                    }
+
+                    var filteredAttempts = attempts.ToList();
+                    var totalAttempts = filteredAttempts.Count;
+                    var passedAttempts = filteredAttempts.Count(a => a.IsPassed);
+                    var scores = filteredAttempts.Where(a => a.Score.HasValue).Select(a => a.Score!.Value).ToList();
+                    var uniqueStudents = filteredAttempts.Select(a => a.Enrollment.UserId).Distinct().Count();
+                    var completionTimes = filteredAttempts.Where(a => a.TimeTaken.HasValue).Select(a => a.TimeTaken!.Value.TotalMinutes).ToList();
 
                     reports.Add(new AssessmentPerformanceReportDto
                     {
@@ -417,7 +611,7 @@ namespace LMS.Repositories
                         AverageCompletionTime = completionTimes.DefaultIfEmpty(0).Average(),
                         PassingScore = assessment.PassingScore,
                         UniqueStudents = uniqueStudents,
-                        LastAttemptDate = attempts.OrderByDescending(a => a.CompletedAt).FirstOrDefault()?.CompletedAt
+                        LastAttemptDate = filteredAttempts.OrderByDescending(a => a.CompletedAt).FirstOrDefault()?.CompletedAt
                     });
                 }
 
@@ -430,15 +624,37 @@ namespace LMS.Repositories
             }
         }
 
-        public async Task<IEnumerable<EnrollmentSummaryReportDto>> GetEnrollmentSummaryReportAsync(User user,DateTime startDate, DateTime endDate, string period = "Daily")
+        public async Task<IEnumerable<EnrollmentSummaryReportDto>> GetEnrollmentSummaryReportAsync(User user, DateTime startDate, DateTime endDate, string period = "Daily", int? courseId = null, string? instructorId = null)
         {
             try
             {
+                // Check user role and get instructor course restrictions
+                var isInstructor = await IsInstructorAsync(user);
+                var instructorCourseIds = isInstructor ? await GetInstructorCourseIdsAsync(user) : null;
 
-                var enrollments = await _context.Enrollments
+                var enrollmentsQuery = _context.Enrollments
                     .Include(e => e.Course)
                     .Where(e => e.EnrolledAt >= startDate && e.EnrolledAt <= endDate)
-                    .ToListAsync();
+                    .AsQueryable();
+
+                // Apply role-based filtering
+                if (instructorCourseIds != null && instructorCourseIds.Any())
+                {
+                    enrollmentsQuery = enrollmentsQuery.Where(e => instructorCourseIds.Contains(e.CourseId));
+                }
+
+                // Apply additional filters
+                if (courseId.HasValue)
+                {
+                    enrollmentsQuery = enrollmentsQuery.Where(e => e.CourseId == courseId.Value);
+                }
+
+                if (!string.IsNullOrEmpty(instructorId))
+                {
+                    enrollmentsQuery = enrollmentsQuery.Where(e => e.Course.InstructorId == instructorId);
+                }
+
+                var enrollments = await enrollmentsQuery.ToListAsync();
 
                 var reports = new List<EnrollmentSummaryReportDto>();
 
@@ -521,7 +737,7 @@ namespace LMS.Repositories
             };
         }
 
-        public async Task<IEnumerable<EnrollmentSummaryReportDto>> GetEnrollmentTrendsReportAsync(User user,int months = 12)
+        public async Task<IEnumerable<EnrollmentSummaryReportDto>> GetEnrollmentTrendsReportAsync(User user, int months = 12, int? courseId = null, string? instructorId = null)
         {
             try
             {
@@ -529,7 +745,7 @@ namespace LMS.Repositories
                 var endDate = DateTime.UtcNow;
                 var startDate = endDate.AddMonths(-months);
 
-                return await GetEnrollmentSummaryReportAsync(user,startDate, endDate, "Monthly");
+                return await GetEnrollmentSummaryReportAsync(user, startDate, endDate, "Monthly", courseId, instructorId);
             }
             catch (Exception ex)
             {
@@ -538,10 +754,13 @@ namespace LMS.Repositories
             }
         }
 
-        public async Task<ForumActivityReportDto> GetForumActivityReportAsync(User user,int forumId)
+        public async Task<ForumActivityReportDto> GetForumActivityReportAsync(User user, int forumId, DateTime? startDate = null, DateTime? endDate = null)
         {
             try
             {
+                // Check user role and forum access
+                var isInstructor = await IsInstructorAsync(user);
+                var instructorCourseIds = isInstructor ? await GetInstructorCourseIdsAsync(user) : null;
 
                 var forum = await _context.Forums
                     .Include(f => f.Course)
@@ -555,15 +774,34 @@ namespace LMS.Repositories
                     throw new ArgumentException($"Forum with ID {forumId} not found");
                 }
 
-                var allPosts = forum.Topics.SelectMany(t => t.Posts).ToList();
+                // Check if instructor has access to this forum's course
+                if (instructorCourseIds != null && forum.Course != null && !instructorCourseIds.Contains(forum.Course.Id))
+                {
+                    throw new UnauthorizedAccessException("You don't have access to this forum's data");
+                }
+
+                // Apply date filters to posts
+                var allPosts = forum.Topics.SelectMany(t => t.Posts).AsQueryable();
+
+                if (startDate.HasValue)
+                {
+                    allPosts = allPosts.Where(p => p.CreatedAt >= startDate.Value);
+                }
+
+                if (endDate.HasValue)
+                {
+                    allPosts = allPosts.Where(p => p.CreatedAt <= endDate.Value);
+                }
+
+                var filteredPosts = allPosts.ToList();
                 var totalTopics = forum.Topics.Count;
-                var totalPosts = allPosts.Count;
+                var totalPosts = filteredPosts.Count;
                 var totalViews = forum.Topics.Count; // Since ViewCount is not available, use topic count as approximation
-                var activeUsers = allPosts.Select(p => p.AuthorId).Distinct().Count();
+                var activeUsers = filteredPosts.Select(p => p.AuthorId).Distinct().Count();
 
-                var lastActivity = allPosts.OrderByDescending(p => p.CreatedAt).FirstOrDefault()?.CreatedAt ?? DateTime.MinValue;
+                var lastActivity = filteredPosts.OrderByDescending(p => p.CreatedAt).FirstOrDefault()?.CreatedAt ?? DateTime.MinValue;
 
-                var mostActiveUser = allPosts
+                var mostActiveUser = filteredPosts
                     .GroupBy(p => new { p.AuthorId, p.Author.FullName })
                     .OrderByDescending(g => g.Count())
                     .FirstOrDefault();
@@ -597,32 +835,62 @@ namespace LMS.Repositories
             }
         }
 
-        public async Task<IEnumerable<ForumActivityReportDto>> GetAllForumsActivityReportAsync(User user)
+        public async Task<IEnumerable<ForumActivityReportDto>> GetAllForumsActivityReportAsync(User user, DateTime? startDate = null, DateTime? endDate = null, int? courseId = null)
         {
             try
             {
+                // Check user role and get instructor course restrictions
+                var isInstructor = await IsInstructorAsync(user);
+                var instructorCourseIds = isInstructor ? await GetInstructorCourseIdsAsync(user) : null;
 
-                var forums = await _context.Forums
+                var forumsQuery = _context.Forums
                     .Include(f => f.Course)
                     .Include(f => f.Topics)
                         .ThenInclude(t => t.Posts)
                             .ThenInclude(p => p.Author)
                     .Where(f => f.IsActive)
-                    .ToListAsync();
+                    .AsQueryable();
+
+                // Apply role-based filtering
+                if (instructorCourseIds != null && instructorCourseIds.Any())
+                {
+                    forumsQuery = forumsQuery.Where(f => f.Course != null && instructorCourseIds.Contains(f.Course.Id));
+                }
+
+                // Apply course filter
+                if (courseId.HasValue)
+                {
+                    forumsQuery = forumsQuery.Where(f => f.Course != null && f.Course.Id == courseId.Value);
+                }
+
+                var forums = await forumsQuery.ToListAsync();
 
                 var reports = new List<ForumActivityReportDto>();
 
                 foreach (var forum in forums)
                 {
-                    var allPosts = forum.Topics.SelectMany(t => t.Posts).ToList();
+                    // Apply date filters to posts
+                    var allPosts = forum.Topics.SelectMany(t => t.Posts).AsQueryable();
+
+                    if (startDate.HasValue)
+                    {
+                        allPosts = allPosts.Where(p => p.CreatedAt >= startDate.Value);
+                    }
+
+                    if (endDate.HasValue)
+                    {
+                        allPosts = allPosts.Where(p => p.CreatedAt <= endDate.Value);
+                    }
+
+                    var filteredPosts = allPosts.ToList();
                     var totalTopics = forum.Topics.Count;
-                    var totalPosts = allPosts.Count;
+                    var totalPosts = filteredPosts.Count;
                     var totalViews = forum.Topics.Count; // Approximation
-                    var activeUsers = allPosts.Select(p => p.AuthorId).Distinct().Count();
+                    var activeUsers = filteredPosts.Select(p => p.AuthorId).Distinct().Count();
 
-                    var lastActivity = allPosts.OrderByDescending(p => p.CreatedAt).FirstOrDefault()?.CreatedAt ?? DateTime.MinValue;
+                    var lastActivity = filteredPosts.OrderByDescending(p => p.CreatedAt).FirstOrDefault()?.CreatedAt ?? DateTime.MinValue;
 
-                    var mostActiveUser = allPosts
+                    var mostActiveUser = filteredPosts
                         .GroupBy(p => new { p.AuthorId, p.Author.FullName })
                         .OrderByDescending(g => g.Count())
                         .FirstOrDefault();
@@ -659,18 +927,26 @@ namespace LMS.Repositories
             }
         }
 
-        public async Task<IEnumerable<StudentProgressReportDto>> GetLowPerformanceStudentsReportAsync(User user,double threshold = 50.0)
+        public async Task<IEnumerable<StudentProgressReportDto>> GetLowPerformanceStudentsReportAsync(User user, double threshold = 50.0, DateTime? startDate = null, DateTime? endDate = null, int? courseId = null)
         {
             try
             {
+                // Check user role and get instructor course restrictions
+                var isInstructor = await IsInstructorAsync(user);
+                var instructorCourseIds = isInstructor ? await GetInstructorCourseIdsAsync(user) : null;
 
-                var enrollments = await _context.Enrollments
+                var enrollmentsQuery = _context.Enrollments
                     .Include(e => e.User)
                     .Include(e => e.Course)
                     .Include(e => e.AssessmentAttempts)
                     .Where(e => e.ProgressPercentage < threshold ||
                                (e.FinalGrade.HasValue && e.FinalGrade.Value < threshold))
-                    .ToListAsync();
+                    .AsQueryable();
+
+                // Apply filters including role-based restrictions
+                enrollmentsQuery = ApplyEnrollmentFilters(enrollmentsQuery, user, null, startDate, endDate, courseId, null, instructorCourseIds);
+
+                var enrollments = await enrollmentsQuery.ToListAsync();
 
                 var reports = new List<StudentProgressReportDto>();
 
@@ -710,15 +986,26 @@ namespace LMS.Repositories
             }
         }
 
-        public async Task<IEnumerable<CourseCompletionReportDto>> GetPopularCoursesReportAsync(User user,int topN = 10)
+        public async Task<IEnumerable<CourseCompletionReportDto>> GetPopularCoursesReportAsync(User user, int topN = 10, DateTime? startDate = null, DateTime? endDate = null, string? category = null)
         {
             try
             {
+                // Check user role and get instructor course restrictions
+                var isInstructor = await IsInstructorAsync(user);
+                var instructorCourseIds = isInstructor ? await GetInstructorCourseIdsAsync(user) : null;
 
-                var courses = await _context.Courses
+                var coursesQuery = _context.Courses
                     .Include(c => c.Instructor)
                     .Include(c => c.Enrollments)
+                    .Include(c => c.CourseCategories)
+                        .ThenInclude(cc => cc.Category)
                     .Where(c => c.IsActive)
+                    .AsQueryable();
+
+                // Apply filters including role-based restrictions
+                coursesQuery = ApplyCourseFilters(coursesQuery, user, startDate, endDate, null, category, instructorCourseIds);
+
+                var courses = await coursesQuery
                     .OrderByDescending(c => c.Enrollments.Count)
                     .Take(topN)
                     .ToListAsync();
@@ -758,31 +1045,61 @@ namespace LMS.Repositories
             }
         }
 
-        public async Task<IEnumerable<AssessmentPerformanceReportDto>> GetDifficultAssessmentsReportAsync(User user,double passRateThreshold = 70.0)
+        public async Task<IEnumerable<AssessmentPerformanceReportDto>> GetDifficultAssessmentsReportAsync(User user, double passRateThreshold = 70.0, DateTime? startDate = null, DateTime? endDate = null, int? courseId = null)
         {
             try
             {
+                // Check user role and get instructor course restrictions
+                var isInstructor = await IsInstructorAsync(user);
+                var instructorCourseIds = isInstructor ? await GetInstructorCourseIdsAsync(user) : null;
 
-                var assessments = await _context.Assessments
+                var assessmentsQuery = _context.Assessments
                     .Include(a => a.Course)
                     .Include(a => a.Attempts)
-                    .ToListAsync();
+                    .AsQueryable();
+
+                // Apply role-based filtering
+                if (instructorCourseIds != null && instructorCourseIds.Any())
+                {
+                    assessmentsQuery = assessmentsQuery.Where(a => a.CourseId.HasValue && instructorCourseIds.Contains(a.CourseId.Value));
+                }
+
+                // Apply course filter
+                if (courseId.HasValue)
+                {
+                    assessmentsQuery = assessmentsQuery.Where(a => a.CourseId == courseId.Value);
+                }
+
+                var assessments = await assessmentsQuery.ToListAsync();
 
                 var reports = new List<AssessmentPerformanceReportDto>();
 
                 foreach (var assessment in assessments)
                 {
-                    var attempts = assessment.Attempts.Where(a => a.Status == AssessmentAttemptStatus.Completed).ToList();
-                    if (attempts.Count == 0) continue;
+                    // Apply date filters to attempts
+                    var attempts = assessment.Attempts.Where(a => a.Status == AssessmentAttemptStatus.Completed).AsQueryable();
 
-                    var passedAttempts = attempts.Count(a => a.IsPassed);
-                    var passRate = (double)passedAttempts / attempts.Count * 100;
+                    if (startDate.HasValue)
+                    {
+                        attempts = attempts.Where(a => a.CompletedAt >= startDate.Value);
+                    }
+
+                    if (endDate.HasValue)
+                    {
+                        attempts = attempts.Where(a => a.CompletedAt <= endDate.Value);
+                    }
+
+                    var filteredAttempts = attempts.ToList();
+                    if (filteredAttempts.Count == 0) continue;
+
+                    var passedAttempts = filteredAttempts.Count(a => a.IsPassed);
+                    var passRate = (double)passedAttempts / filteredAttempts.Count * 100;
 
                     if (passRate < passRateThreshold)
                     {
-                        var scores = attempts.Where(a => a.Score.HasValue).Select(a => a.Score!.Value).ToList();
-                        var uniqueStudents = attempts.Select(a => a.Enrollment.UserId).Distinct().Count();
-                        var completionTimes = attempts.Where(a => a.TimeTaken.HasValue).Select(a => a.TimeTaken!.Value.TotalMinutes).ToList();
+                        var scores = filteredAttempts.Where(a => a.Score.HasValue).Select(a => a.Score!.Value).ToList();
+                        var uniqueStudents = filteredAttempts.Select(a => a.Enrollment.UserId).Distinct().Count();
+                        var completionTimes = filteredAttempts.Where(a => a.TimeTaken.HasValue).Select(a => a.TimeTaken!.Value.TotalMinutes).ToList();
 
                         reports.Add(new AssessmentPerformanceReportDto
                         {
@@ -790,9 +1107,9 @@ namespace LMS.Repositories
                             AssessmentTitle = assessment.Title,
                             AssessmentType = assessment.Type.ToString(),
                             CourseName = assessment.Course?.Title ?? "N/A",
-                            TotalAttempts = attempts.Count,
+                            TotalAttempts = filteredAttempts.Count,
                             PassedAttempts = passedAttempts,
-                            FailedAttempts = attempts.Count - passedAttempts,
+                            FailedAttempts = filteredAttempts.Count - passedAttempts,
                             PassRate = passRate,
                             AverageScore = scores.DefaultIfEmpty(0).Average(),
                             HighestScore = scores.DefaultIfEmpty(0).Max(),
@@ -800,7 +1117,7 @@ namespace LMS.Repositories
                             AverageCompletionTime = completionTimes.DefaultIfEmpty(0).Average(),
                             PassingScore = assessment.PassingScore,
                             UniqueStudents = uniqueStudents,
-                            LastAttemptDate = attempts.OrderByDescending(a => a.CompletedAt).FirstOrDefault()?.CompletedAt
+                            LastAttemptDate = filteredAttempts.OrderByDescending(a => a.CompletedAt).FirstOrDefault()?.CompletedAt
                         });
                     }
                 }
@@ -814,38 +1131,62 @@ namespace LMS.Repositories
             }
         }
 
-        public async Task<object> GetLearningAnalyticsReportAsync(User user,int courseId)
+        public async Task<object> GetLearningAnalyticsReportAsync(User user, int courseId, DateTime? startDate = null, DateTime? endDate = null)
         {
             try
             {
+                // Check user role and course access
+                var isInstructor = await IsInstructorAsync(user);
+                var instructorCourseIds = isInstructor ? await GetInstructorCourseIdsAsync(user) : null;
 
-                var course = await _context.Courses
+                // Check if instructor has access to this course
+                if (instructorCourseIds != null && !instructorCourseIds.Contains(courseId))
+                {
+                    throw new UnauthorizedAccessException("You don't have access to this course's data");
+                }
+
+                var courseQuery = _context.Courses
                     .Include(c => c.Enrollments)
                         .ThenInclude(e => e.ModuleProgresses)
                     .Include(c => c.Modules)
                         .ThenInclude(m => m.Lessons)
-                    .FirstOrDefaultAsync(c => c.Id == courseId);
+                    .Where(c => c.Id == courseId);
+
+                var course = await courseQuery.FirstOrDefaultAsync();
 
                 if (course == null)
                 {
                     return new { Message = "Course not found" };
                 }
 
+                // Apply date filters to enrollments
+                var enrollments = course.Enrollments.AsQueryable();
+                if (startDate.HasValue)
+                {
+                    enrollments = enrollments.Where(e => e.EnrolledAt >= startDate.Value);
+                }
+                if (endDate.HasValue)
+                {
+                    enrollments = enrollments.Where(e => e.EnrolledAt <= endDate.Value);
+                }
+
+                var filteredEnrollments = enrollments.ToList();
+
                 var analytics = new
                 {
                     CourseId = courseId,
                     CourseName = course.Title,
-                    TotalStudents = course.Enrollments.Count,
-                    AverageProgress = course.Enrollments.Average(e => e.ProgressPercentage),
-                    CompletionRate = course.Enrollments.Count > 0 ?
-                        (double)course.Enrollments.Count(e => e.Status == EnrollmentStatus.Completed) / course.Enrollments.Count * 100 : 0,
-                    AverageTimeSpent = course.Enrollments.Average(e => e.TimeSpent.TotalHours),
+                    TotalStudents = filteredEnrollments.Count,
+                    AverageProgress = filteredEnrollments.Count > 0 ? filteredEnrollments.Average(e => e.ProgressPercentage) : 0,
+                    CompletionRate = filteredEnrollments.Count > 0 ?
+                        (double)filteredEnrollments.Count(e => e.Status == EnrollmentStatus.Completed) / filteredEnrollments.Count * 100 : 0,
+                    AverageTimeSpent = filteredEnrollments.Count > 0 ? filteredEnrollments.Average(e => e.TimeSpent.TotalHours) : 0,
                     PopularModules = course.Modules.Select(m => new
                     {
                         ModuleId = m.Id,
                         ModuleName = m.Title,
-                        CompletionRate = course.Enrollments.Count > 0 ?
-                            course.Enrollments.Count(e => e.ModuleProgresses.Any(mp => mp.ModuleId == m.Id && mp.IsCompleted)) / (double)course.Enrollments.Count * 100 : 0
+                        CompletionRate = filteredEnrollments.Count > 0 ?
+                            filteredEnrollments.Count(e => e.ModuleProgresses.Any(mp => mp.ModuleId == m.Id && mp.IsCompleted)) / (double)filteredEnrollments.Count * 100 : 0
                     }).OrderByDescending(m => m.CompletionRate).Take(5)
                 };
 
@@ -858,37 +1199,74 @@ namespace LMS.Repositories
             }
         }
 
-        public async Task<object> GetStudentEngagementReportAsync(User user,string studentId)
+        public async Task<object> GetStudentEngagementReportAsync(User user, string studentId, DateTime? startDate = null, DateTime? endDate = null)
         {
             try
             {
+                // Check user role and student access
+                var isInstructor = await IsInstructorAsync(user);
+                var instructorCourseIds = isInstructor ? await GetInstructorCourseIdsAsync(user) : null;
 
-                var student = await _context.Users
+                var studentQuery = _context.Users
                     .Include(u => u.Enrollments)
                         .ThenInclude(e => e.Course)
                     .Include(u => u.ForumPosts)
                     .Include(u => u.Enrollments)
                         .ThenInclude(e => e.AssessmentAttempts)
-                    .FirstOrDefaultAsync(u => u.Id == studentId);
+                    .Where(u => u.Id == studentId);
+
+                var student = await studentQuery.FirstOrDefaultAsync();
 
                 if (student == null)
                 {
                     return new { Message = "Student not found" };
                 }
 
+                // Apply role-based filtering to enrollments
+                var enrollments = student.Enrollments.AsQueryable();
+                if (instructorCourseIds != null && instructorCourseIds.Any())
+                {
+                    enrollments = enrollments.Where(e => instructorCourseIds.Contains(e.CourseId));
+                }
+
+                // Apply date filters
+                if (startDate.HasValue)
+                {
+                    enrollments = enrollments.Where(e => e.EnrolledAt >= startDate.Value);
+                }
+                if (endDate.HasValue)
+                {
+                    enrollments = enrollments.Where(e => e.EnrolledAt <= endDate.Value);
+                }
+
+                var filteredEnrollments = enrollments.ToList();
+
+                // Apply date filters to forum posts
+                var forumPosts = student.ForumPosts.AsQueryable();
+                if (startDate.HasValue)
+                {
+                    forumPosts = forumPosts.Where(p => p.CreatedAt >= startDate.Value);
+                }
+                if (endDate.HasValue)
+                {
+                    forumPosts = forumPosts.Where(p => p.CreatedAt <= endDate.Value);
+                }
+
+                var filteredForumPosts = forumPosts.ToList();
+
                 var engagement = new
                 {
                     StudentId = studentId,
                     StudentName = student.FullName,
                     LastLoginDate = student.LastLoginAt,
-                    TotalTimeSpent = student.Enrollments.Sum(e => e.TimeSpent.TotalHours),
-                    ForumParticipation = student.ForumPosts.Count,
-                    AssessmentAttempts = student.Enrollments.SelectMany(e => e.AssessmentAttempts).Count(),
-                    AverageSessionLength = student.Enrollments.Count > 0 ?
-                        student.Enrollments.Average(e => e.TimeSpent.TotalMinutes) : 0,
-                    EngagementLevel = CalculateEngagementLevel(student),
-                    CoursesInProgress = student.Enrollments.Count(e => e.Status == EnrollmentStatus.Active),
-                    CompletedCourses = student.Enrollments.Count(e => e.Status == EnrollmentStatus.Completed)
+                    TotalTimeSpent = filteredEnrollments.Sum(e => e.TimeSpent.TotalHours),
+                    ForumParticipation = filteredForumPosts.Count,
+                    AssessmentAttempts = filteredEnrollments.SelectMany(e => e.AssessmentAttempts).Count(),
+                    AverageSessionLength = filteredEnrollments.Count > 0 ?
+                        filteredEnrollments.Average(e => e.TimeSpent.TotalMinutes) : 0,
+                    EngagementLevel = CalculateFilteredEngagementLevel(filteredEnrollments, filteredForumPosts),
+                    CoursesInProgress = filteredEnrollments.Count(e => e.Status == EnrollmentStatus.Active),
+                    CompletedCourses = filteredEnrollments.Count(e => e.Status == EnrollmentStatus.Completed)
                 };
 
                 return engagement;
@@ -916,14 +1294,34 @@ namespace LMS.Repositories
             };
         }
 
+        private static string CalculateFilteredEngagementLevel(List<Enrollment> enrollments, List<ForumPost> forumPosts)
+        {
+            var totalTimeHours = enrollments.Sum(e => e.TimeSpent.TotalHours);
+            var forumPostCount = forumPosts.Count;
+            var completedCourses = enrollments.Count(e => e.Status == EnrollmentStatus.Completed);
+
+            var score = (totalTimeHours * 0.3) + (forumPostCount * 0.2) + (completedCourses * 0.5);
+
+            return score switch
+            {
+                >= 10 => "High",
+                >= 5 => "Medium",
+                _ => "Low"
+            };
+        }
+
         #endregion
 
         #region SIS Reports
 
-        public async Task<StudentInformationReportDto> GetStudentInformationReportAsync(User user,string studentId)
+        public async Task<StudentInformationReportDto> GetStudentInformationReportAsync(User user, string studentId)
         {
             try
             {
+                // Check user role and student access
+                var isInstructor = await IsInstructorAsync(user);
+                var instructorCourseIds = isInstructor ? await GetInstructorCourseIdsAsync(user) : null;
+
                 var context = _context;
 
                 var student = await context.Users
@@ -936,11 +1334,20 @@ namespace LMS.Repositories
                     throw new ArgumentException($"Student with ID {studentId} not found");
                 }
 
-                var totalCoursesEnrolled = student.Enrollments.Count;
-                var completedCourses = student.Enrollments.Count(e => e.Status == EnrollmentStatus.Completed);
-                var activeCourses = student.Enrollments.Count(e => e.Status == EnrollmentStatus.Active);
+                // Apply role-based filtering to enrollments
+                var enrollments = student.Enrollments.AsQueryable();
+                if (instructorCourseIds != null && instructorCourseIds.Any())
+                {
+                    enrollments = enrollments.Where(e => instructorCourseIds.Contains(e.CourseId));
+                }
 
-                var allGrades = student.Enrollments.Where(e => e.FinalGrade.HasValue).Select(e => e.FinalGrade!.Value).ToList();
+                var filteredEnrollments = enrollments.ToList();
+
+                var totalCoursesEnrolled = filteredEnrollments.Count;
+                var completedCourses = filteredEnrollments.Count(e => e.Status == EnrollmentStatus.Completed);
+                var activeCourses = filteredEnrollments.Count(e => e.Status == EnrollmentStatus.Active);
+
+                var allGrades = filteredEnrollments.Where(e => e.FinalGrade.HasValue).Select(e => e.FinalGrade!.Value).ToList();
                 var overallGPA = allGrades.DefaultIfEmpty(0).Average();
 
                 return new StudentInformationReportDto
@@ -973,26 +1380,65 @@ namespace LMS.Repositories
             }
         }
 
-        public async Task<IEnumerable<StudentInformationReportDto>> GetAllStudentsInformationReportAsync(User user)
+        public async Task<IEnumerable<StudentInformationReportDto>> GetAllStudentsInformationReportAsync(User user, DateTime? startDate = null, DateTime? endDate = null, string? status = null, int? courseId = null)
         {
             try
             {
+                // Check user role and get instructor course restrictions
+                var isInstructor = await IsInstructorAsync(user);
+                var instructorCourseIds = isInstructor ? await GetInstructorCourseIdsAsync(user) : null;
+
                 var context = _context;
 
-                var students = await context.Users
+                var studentsQuery = context.Users
                     .Include(u => u.Enrollments)
                         .ThenInclude(e => e.Course)
-                    .ToListAsync();
+                    .AsQueryable();
+
+                // Apply status filter
+                if (!string.IsNullOrEmpty(status))
+                {
+                    var isActive = status.ToLower() == "active";
+                    studentsQuery = studentsQuery.Where(u => u.IsActive == isActive);
+                }
+
+                // Apply date filter on registration
+                if (startDate.HasValue)
+                {
+                    studentsQuery = studentsQuery.Where(u => u.CreatedAt >= startDate.Value);
+                }
+
+                if (endDate.HasValue)
+                {
+                    studentsQuery = studentsQuery.Where(u => u.CreatedAt <= endDate.Value);
+                }
+
+                // Apply course filter (students enrolled in specific course)
+                if (courseId.HasValue)
+                {
+                    studentsQuery = studentsQuery.Where(u => u.Enrollments.Any(e => e.CourseId == courseId.Value));
+                }
+
+                var students = await studentsQuery.ToListAsync();
 
                 var reports = new List<StudentInformationReportDto>();
 
                 foreach (var student in students)
                 {
-                    var totalCoursesEnrolled = student.Enrollments.Count;
-                    var completedCourses = student.Enrollments.Count(e => e.Status == EnrollmentStatus.Completed);
-                    var activeCourses = student.Enrollments.Count(e => e.Status == EnrollmentStatus.Active);
+                    // Apply role-based filtering to enrollments
+                    var enrollments = student.Enrollments.AsQueryable();
+                    if (instructorCourseIds != null && instructorCourseIds.Any())
+                    {
+                        enrollments = enrollments.Where(e => instructorCourseIds.Contains(e.CourseId));
+                    }
 
-                    var allGrades = student.Enrollments.Where(e => e.FinalGrade.HasValue).Select(e => e.FinalGrade!.Value).ToList();
+                    var filteredEnrollments = enrollments.ToList();
+
+                    var totalCoursesEnrolled = filteredEnrollments.Count;
+                    var completedCourses = filteredEnrollments.Count(e => e.Status == EnrollmentStatus.Completed);
+                    var activeCourses = filteredEnrollments.Count(e => e.Status == EnrollmentStatus.Active);
+
+                    var allGrades = filteredEnrollments.Where(e => e.FinalGrade.HasValue).Select(e => e.FinalGrade!.Value).ToList();
                     var overallGPA = allGrades.DefaultIfEmpty(0).Average();
 
                     reports.Add(new StudentInformationReportDto
@@ -1028,28 +1474,54 @@ namespace LMS.Repositories
             }
         }
 
-        public async Task<IEnumerable<StudentInformationReportDto>> GetStudentsByStatusReportAsync(User user,string status)
+        public async Task<IEnumerable<StudentInformationReportDto>> GetStudentsByStatusReportAsync(User user, string status, DateTime? startDate = null, DateTime? endDate = null)
         {
             try
             {
+                // Check user role and get instructor course restrictions
+                var isInstructor = await IsInstructorAsync(user);
+                var instructorCourseIds = isInstructor ? await GetInstructorCourseIdsAsync(user) : null;
+
                 var context = _context;
 
                 var isActive = status.ToLower() == "active";
-                var students = await context.Users
+                var studentsQuery = context.Users
                     .Include(u => u.Enrollments)
                         .ThenInclude(e => e.Course)
                     .Where(u => u.IsActive == isActive)
-                    .ToListAsync();
+                    .AsQueryable();
+
+                // Apply date filters on registration
+                if (startDate.HasValue)
+                {
+                    studentsQuery = studentsQuery.Where(u => u.CreatedAt >= startDate.Value);
+                }
+
+                if (endDate.HasValue)
+                {
+                    studentsQuery = studentsQuery.Where(u => u.CreatedAt <= endDate.Value);
+                }
+
+                var students = await studentsQuery.ToListAsync();
 
                 var reports = new List<StudentInformationReportDto>();
 
                 foreach (var student in students)
                 {
-                    var totalCoursesEnrolled = student.Enrollments.Count;
-                    var completedCourses = student.Enrollments.Count(e => e.Status == EnrollmentStatus.Completed);
-                    var activeCourses = student.Enrollments.Count(e => e.Status == EnrollmentStatus.Active);
+                    // Apply role-based filtering to enrollments
+                    var enrollments = student.Enrollments.AsQueryable();
+                    if (instructorCourseIds != null && instructorCourseIds.Any())
+                    {
+                        enrollments = enrollments.Where(e => instructorCourseIds.Contains(e.CourseId));
+                    }
 
-                    var allGrades = student.Enrollments.Where(e => e.FinalGrade.HasValue).Select(e => e.FinalGrade!.Value).ToList();
+                    var filteredEnrollments = enrollments.ToList();
+
+                    var totalCoursesEnrolled = filteredEnrollments.Count;
+                    var completedCourses = filteredEnrollments.Count(e => e.Status == EnrollmentStatus.Completed);
+                    var activeCourses = filteredEnrollments.Count(e => e.Status == EnrollmentStatus.Active);
+
+                    var allGrades = filteredEnrollments.Where(e => e.FinalGrade.HasValue).Select(e => e.FinalGrade!.Value).ToList();
                     var overallGPA = allGrades.DefaultIfEmpty(0).Average();
 
                     reports.Add(new StudentInformationReportDto
@@ -1085,65 +1557,70 @@ namespace LMS.Repositories
             }
         }
 
-        public async Task<IEnumerable<AttendanceReportDto>> GetAttendanceReportAsync(User user,int classId, DateTime startDate, DateTime endDate)
+        public async Task<IEnumerable<AttendanceReportDto>> GetAttendanceReportAsync(User user, int classId, DateTime startDate, DateTime endDate, string? studentId = null)
         {
             try
             {
-                // Note: Since there's no Attendance entity in the current model, 
-                // this will return placeholder data based on enrollments
-                var context = _context;
+                // Check user role and course access
+                var isInstructor = await IsInstructorAsync(user);
+                var instructorCourseIds = isInstructor ? await GetInstructorCourseIdsAsync(user) : null;
 
-                var course = await context.Courses
-                    .Include(c => c.Enrollments)
-                        .ThenInclude(e => e.User)
-                    .FirstOrDefaultAsync(c => c.Id == classId);
-
-                if (course == null)
+                // Check if instructor has access to this course
+                if (instructorCourseIds != null && !instructorCourseIds.Contains(classId))
                 {
-                    return new List<AttendanceReportDto>();
+                    throw new UnauthorizedAccessException("You don't have access to this course's data");
                 }
 
-                var reports = new List<AttendanceReportDto>();
-                var currentDate = startDate;
+                // Query actual attendance records from the Attendance entity
+                var attendanceQuery = _context.Attendances
+                    .Include(a => a.Student)
+                    .Include(a => a.Class)
+                    .Where(a => a.ClassId == classId && a.Date >= startDate && a.Date <= endDate)
+                    .AsQueryable();
 
-                while (currentDate <= endDate)
+                // Apply student filter if provided
+                if (!string.IsNullOrEmpty(studentId))
                 {
-                    foreach (var enrollment in course.Enrollments.Where(e => e.Status == EnrollmentStatus.Active))
+                    attendanceQuery = attendanceQuery.Where(a => a.StudentId == studentId);
+                }
+
+                var attendanceRecords = await attendanceQuery.ToListAsync();
+
+                var reports = attendanceRecords.Select(a => new AttendanceReportDto
+                {
+                    StudentId = a.StudentId ?? string.Empty,
+                    StudentName = a.Student != null ? $"{a.Student.FirstName} {a.Student.LastName}" : "Unknown Student",
+                    ClassId = a.ClassId,
+                    ClassName = a.Class?.Title ?? "Unknown Course",
+                    Date = a.Date,
+                    AttendanceStatus = a.Status.ToString(),
+                    CheckInTime = a.CheckInTime,
+                    CheckOutTime = a.CheckOutTime,
+                    Duration = a.Duration,
+                    Notes = a.Notes ?? string.Empty
+                }).ToList();
+
+                // Calculate summary statistics for each student
+                foreach (var studentGroup in reports.GroupBy(r => r.StudentId))
+                {
+                    var studentReports = studentGroup.ToList();
+                    var totalClasses = studentReports.Count;
+                    var presentCount = studentReports.Count(r => r.AttendanceStatus == "Present");
+                    var absentCount = studentReports.Count(r => r.AttendanceStatus == "Absent");
+                    var lateCount = studentReports.Count(r => r.AttendanceStatus == "Late");
+                    var attendancePercentage = totalClasses > 0 ? (double)(presentCount + lateCount) / totalClasses * 100 : 0;
+
+                    foreach (var report in studentReports)
                     {
-                        // Generate mock attendance data based on engagement
-                        var attendanceStatus = GenerateMockAttendance(enrollment, currentDate);
-
-                        reports.Add(new AttendanceReportDto
-                        {
-                            StudentId = enrollment.UserId,
-                            StudentName = enrollment.User.FullName,
-                            ClassId = classId,
-                            ClassName = course.Title,
-                            Date = currentDate,
-                            AttendanceStatus = attendanceStatus,
-                            CheckInTime = attendanceStatus == "Present" ? TimeSpan.FromHours(9) : null,
-                            CheckOutTime = attendanceStatus == "Present" ? TimeSpan.FromHours(10.5) : null,
-                            Duration = attendanceStatus == "Present" ? TimeSpan.FromHours(1.5) : null,
-                            Notes = "",
-                            TotalClasses = (endDate - startDate).Days + 1,
-                            PresentCount = reports.Count(r => r.StudentId == enrollment.UserId && r.AttendanceStatus == "Present") + (attendanceStatus == "Present" ? 1 : 0),
-                            AbsentCount = reports.Count(r => r.StudentId == enrollment.UserId && r.AttendanceStatus == "Absent") + (attendanceStatus == "Absent" ? 1 : 0),
-                            LateCount = reports.Count(r => r.StudentId == enrollment.UserId && r.AttendanceStatus == "Late") + (attendanceStatus == "Late" ? 1 : 0),
-                            AttendancePercentage = 0 // Will be calculated after all data is gathered
-                        });
+                        report.TotalClasses = totalClasses;
+                        report.PresentCount = presentCount;
+                        report.AbsentCount = absentCount;
+                        report.LateCount = lateCount;
+                        report.AttendancePercentage = Math.Round(attendancePercentage, 2);
                     }
-                    currentDate = currentDate.AddDays(1);
                 }
 
-                // Calculate attendance percentages
-                foreach (var report in reports)
-                {
-                    var totalForStudent = reports.Count(r => r.StudentId == report.StudentId);
-                    var presentForStudent = reports.Count(r => r.StudentId == report.StudentId && r.AttendanceStatus == "Present");
-                    report.AttendancePercentage = totalForStudent > 0 ? (double)presentForStudent / totalForStudent * 100 : 0;
-                }
-
-                return reports;
+                return reports.OrderBy(r => r.StudentName).ThenBy(r => r.Date);
             }
             catch (Exception ex)
             {
@@ -1152,68 +1629,70 @@ namespace LMS.Repositories
             }
         }
 
-        private static string GenerateMockAttendance(Enrollment enrollment, DateTime date)
-        {
-            // Generate mock attendance based on student progress and engagement
-            var random = new Random(enrollment.UserId.GetHashCode() + date.DayOfYear);
-            var attendanceRate = Math.Min(95, 60 + enrollment.ProgressPercentage * 0.3); // Higher progress = better attendance
-
-            var randomValue = random.Next(100);
-            return randomValue < attendanceRate ? "Present" :
-                   randomValue < attendanceRate + 5 ? "Late" : "Absent";
-        }
-
-        public async Task<IEnumerable<AttendanceReportDto>> GetStudentAttendanceReportAsync(User user,string studentId, DateTime startDate, DateTime endDate)
+        public async Task<IEnumerable<AttendanceReportDto>> GetStudentAttendanceReportAsync(User user, string studentId, DateTime startDate, DateTime endDate, int? classId = null)
         {
             try
             {
-                var context = _context;
+                // Check user role and student access
+                var isInstructor = await IsInstructorAsync(user);
+                var instructorCourseIds = isInstructor ? await GetInstructorCourseIdsAsync(user) : null;
 
-                var enrollments = await context.Enrollments
-                    .Include(e => e.User)
-                    .Include(e => e.Course)
-                    .Where(e => e.UserId == studentId && e.Status == EnrollmentStatus.Active)
-                    .ToListAsync();
+                // Query actual attendance records from the Attendance entity
+                var attendanceQuery = _context.Attendances
+                    .Include(a => a.Student)
+                    .Include(a => a.Class)
+                    .Where(a => a.StudentId == studentId && a.Date >= startDate && a.Date <= endDate)
+                    .AsQueryable();
 
-                var reports = new List<AttendanceReportDto>();
-
-                foreach (var enrollment in enrollments)
+                // Apply role-based filtering for instructors
+                if (instructorCourseIds != null && instructorCourseIds.Any())
                 {
-                    var currentDate = startDate;
-                    while (currentDate <= endDate)
+                    attendanceQuery = attendanceQuery.Where(a => instructorCourseIds.Contains(a.ClassId));
+                }
+
+                // Apply class filter if provided
+                if (classId.HasValue)
+                {
+                    attendanceQuery = attendanceQuery.Where(a => a.ClassId == classId.Value);
+                }
+
+                var attendanceRecords = await attendanceQuery.ToListAsync();
+
+                var reports = attendanceRecords.Select(a => new AttendanceReportDto
+                {
+                    StudentId = a.StudentId ?? string.Empty,
+                    StudentName = a.Student != null ? $"{a.Student.FirstName} {a.Student.LastName}" : "Unknown Student",
+                    ClassId = a.ClassId,
+                    ClassName = a.Class?.Title ?? "Unknown Course",
+                    Date = a.Date,
+                    AttendanceStatus = a.Status.ToString(),
+                    CheckInTime = a.CheckInTime,
+                    CheckOutTime = a.CheckOutTime,
+                    Duration = a.Duration,
+                    Notes = a.Notes ?? string.Empty
+                }).ToList();
+
+                // Calculate summary statistics for each class
+                foreach (var classGroup in reports.GroupBy(r => r.ClassId))
+                {
+                    var classReports = classGroup.ToList();
+                    var totalClasses = classReports.Count;
+                    var presentCount = classReports.Count(r => r.AttendanceStatus == "Present");
+                    var absentCount = classReports.Count(r => r.AttendanceStatus == "Absent");
+                    var lateCount = classReports.Count(r => r.AttendanceStatus == "Late");
+                    var attendancePercentage = totalClasses > 0 ? (double)(presentCount + lateCount) / totalClasses * 100 : 0;
+
+                    foreach (var report in classReports)
                     {
-                        var attendanceStatus = GenerateMockAttendance(enrollment, currentDate);
-
-                        reports.Add(new AttendanceReportDto
-                        {
-                            StudentId = enrollment.UserId,
-                            StudentName = enrollment.User.FullName,
-                            ClassId = enrollment.CourseId,
-                            ClassName = enrollment.Course.Title,
-                            Date = currentDate,
-                            AttendanceStatus = attendanceStatus,
-                            CheckInTime = attendanceStatus == "Present" ? TimeSpan.FromHours(9) : null,
-                            CheckOutTime = attendanceStatus == "Present" ? TimeSpan.FromHours(10.5) : null,
-                            Duration = attendanceStatus == "Present" ? TimeSpan.FromHours(1.5) : null,
-                            Notes = ""
-                        });
-
-                        currentDate = currentDate.AddDays(1);
+                        report.TotalClasses = totalClasses;
+                        report.PresentCount = presentCount;
+                        report.AbsentCount = absentCount;
+                        report.LateCount = lateCount;
+                        report.AttendancePercentage = Math.Round(attendancePercentage, 2);
                     }
                 }
 
-                // Calculate summary statistics
-                foreach (var report in reports)
-                {
-                    var allForClass = reports.Where(r => r.ClassId == report.ClassId).ToList();
-                    report.TotalClasses = allForClass.Count;
-                    report.PresentCount = allForClass.Count(r => r.AttendanceStatus == "Present");
-                    report.AbsentCount = allForClass.Count(r => r.AttendanceStatus == "Absent");
-                    report.LateCount = allForClass.Count(r => r.AttendanceStatus == "Late");
-                    report.AttendancePercentage = report.TotalClasses > 0 ? (double)report.PresentCount / report.TotalClasses * 100 : 0;
-                }
-
-                return reports;
+                return reports.OrderBy(r => r.ClassName).ThenBy(r => r.Date);
             }
             catch (Exception ex)
             {
@@ -1222,10 +1701,20 @@ namespace LMS.Repositories
             }
         }
 
-        public async Task<GradeDistributionReportDto> GetGradeDistributionReportAsync(User user,int classId)
+        public async Task<GradeDistributionReportDto> GetGradeDistributionReportAsync(User user, int classId, DateTime? startDate = null, DateTime? endDate = null)
         {
             try
             {
+                // Check user role and course access
+                var isInstructor = await IsInstructorAsync(user);
+                var instructorCourseIds = isInstructor ? await GetInstructorCourseIdsAsync(user) : null;
+
+                // Check if instructor has access to this course
+                if (instructorCourseIds != null && !instructorCourseIds.Contains(classId))
+                {
+                    throw new UnauthorizedAccessException("You don't have access to this course's data");
+                }
+
                 var context = _context;
 
                 var course = await context.Courses
@@ -1238,7 +1727,20 @@ namespace LMS.Repositories
                     throw new ArgumentException($"Course with ID {classId} not found");
                 }
 
-                var grades = course.Enrollments
+                // Apply date filters to enrollments
+                var enrollments = course.Enrollments.AsQueryable();
+                if (startDate.HasValue)
+                {
+                    enrollments = enrollments.Where(e => e.EnrolledAt >= startDate.Value);
+                }
+
+                if (endDate.HasValue)
+                {
+                    enrollments = enrollments.Where(e => e.EnrolledAt <= endDate.Value);
+                }
+
+                var filteredEnrollments = enrollments.ToList();
+                var grades = filteredEnrollments
                     .Where(e => e.FinalGrade.HasValue)
                     .Select(e => e.FinalGrade!.Value)
                     .ToList();
@@ -1250,7 +1752,7 @@ namespace LMS.Repositories
                         ClassId = classId,
                         ClassName = course.Title,
                         InstructorName = course.Instructor?.FullName ?? "Unknown",
-                        TotalStudents = course.Enrollments.Count,
+                        TotalStudents = filteredEnrollments.Count,
                         ReportGeneratedDate = DateTime.UtcNow
                     };
                 }
@@ -1270,7 +1772,7 @@ namespace LMS.Repositories
                     ClassId = classId,
                     ClassName = course.Title,
                     InstructorName = course.Instructor?.FullName ?? "Unknown",
-                    TotalStudents = course.Enrollments.Count,
+                    TotalStudents = filteredEnrollments.Count,
                     AGrades = aGrades,
                     BGrades = bGrades,
                     CGrades = cGrades,
@@ -1312,17 +1814,46 @@ namespace LMS.Repositories
             return Math.Sqrt(sumSquaredDifferences / (values.Count - 1));
         }
 
-        public async Task<IEnumerable<GradeDistributionReportDto>> GetAllClassesGradeDistributionReportAsync(User user)
+        public async Task<IEnumerable<GradeDistributionReportDto>> GetAllClassesGradeDistributionReportAsync(User user, DateTime? startDate = null, DateTime? endDate = null, string? instructorId = null)
         {
             try
             {
+                // Check user role and get instructor course restrictions
+                var isInstructor = await IsInstructorAsync(user);
+                var instructorCourseIds = isInstructor ? await GetInstructorCourseIdsAsync(user) : null;
+
                 var context = _context;
 
-                var courses = await context.Courses
+                var coursesQuery = context.Courses
                     .Include(c => c.Instructor)
                     .Include(c => c.Enrollments)
                     .Where(c => c.IsActive)
-                    .ToListAsync();
+                    .AsQueryable();
+
+                // Apply role-based filtering
+                if (instructorCourseIds != null && instructorCourseIds.Any())
+                {
+                    coursesQuery = coursesQuery.Where(c => instructorCourseIds.Contains(c.Id));
+                }
+
+                // Apply instructor filter
+                if (!string.IsNullOrEmpty(instructorId))
+                {
+                    coursesQuery = coursesQuery.Where(c => c.InstructorId == instructorId);
+                }
+
+                // Apply date filters
+                if (startDate.HasValue)
+                {
+                    coursesQuery = coursesQuery.Where(c => c.StartDate >= startDate.Value);
+                }
+
+                if (endDate.HasValue)
+                {
+                    coursesQuery = coursesQuery.Where(c => c.EndDate <= endDate.Value || c.EndDate == null);
+                }
+
+                var courses = await coursesQuery.ToListAsync();
 
                 var reports = new List<GradeDistributionReportDto>();
 
@@ -1375,10 +1906,14 @@ namespace LMS.Repositories
             }
         }
 
-        public async Task<TeacherPerformanceReportDto> GetTeacherPerformanceReportAsync(User user,string teacherId)
+        public async Task<TeacherPerformanceReportDto> GetTeacherPerformanceReportAsync(User user, string teacherId, DateTime? startDate = null, DateTime? endDate = null)
         {
             try
             {
+                // Check user role and teacher access
+                var isInstructor = await IsInstructorAsync(user);
+                var instructorCourseIds = isInstructor ? await GetInstructorCourseIdsAsync(user) : null;
+
                 var context = _context;
 
                 var teacher = await context.Users
@@ -1392,15 +1927,33 @@ namespace LMS.Repositories
                     throw new ArgumentException($"Teacher with ID {teacherId} not found");
                 }
 
-                var courses = teacher.CreatedCourses.ToList();
-                var totalStudents = courses.SelectMany(c => c.Enrollments).Count();
-                var allGrades = courses.SelectMany(c => c.Enrollments)
+                // Apply role-based filtering to courses
+                var courses = teacher.CreatedCourses.AsQueryable();
+                if (instructorCourseIds != null && instructorCourseIds.Any())
+                {
+                    courses = courses.Where(c => instructorCourseIds.Contains(c.Id));
+                }
+
+                // Apply date filters
+                if (startDate.HasValue)
+                {
+                    courses = courses.Where(c => c.StartDate >= startDate.Value);
+                }
+
+                if (endDate.HasValue)
+                {
+                    courses = courses.Where(c => c.EndDate <= endDate.Value || c.EndDate == null);
+                }
+
+                var filteredCourses = courses.ToList();
+                var totalStudents = filteredCourses.SelectMany(c => c.Enrollments).Count();
+                var allGrades = filteredCourses.SelectMany(c => c.Enrollments)
                     .Where(e => e.FinalGrade.HasValue)
                     .Select(e => e.FinalGrade!.Value)
                     .ToList();
 
                 var averageGrade = allGrades.DefaultIfEmpty(0).Average();
-                var completedCourses = courses.SelectMany(c => c.Enrollments).Count(e => e.Status == EnrollmentStatus.Completed);
+                var completedCourses = filteredCourses.SelectMany(c => c.Enrollments).Count(e => e.Status == EnrollmentStatus.Completed);
                 var totalEnrollments = totalStudents;
                 var completionRate = totalEnrollments > 0 ? (double)completedCourses / totalEnrollments * 100 : 0;
 
@@ -1414,12 +1967,12 @@ namespace LMS.Repositories
                     TeacherId = teacher.Id,
                     TeacherName = teacher.FullName,
                     Email = teacher.Email ?? "",
-                    TotalCoursesTeaching = courses.Count,
+                    TotalCoursesTeaching = filteredCourses.Count,
                     TotalStudentsTeaching = totalStudents,
                     AverageClassGrade = averageGrade,
                     StudentSatisfactionRating = GenerateMockSatisfactionRating(averageGrade, completionRate),
-                    TotalAssignments = courses.Sum(c => c.Modules.SelectMany(m => m.Lessons).Count()), // Using lessons as assignments
-                    GradedAssignments = (int)(courses.Sum(c => c.Modules.SelectMany(m => m.Lessons).Count()) * 0.85), // 85% graded
+                    TotalAssignments = filteredCourses.Sum(c => c.Modules.SelectMany(m => m.Lessons).Count()), // Using lessons as assignments
+                    GradedAssignments = (int)(filteredCourses.Sum(c => c.Modules.SelectMany(m => m.Lessons).Count()) * 0.85), // 85% graded
                     AverageGradingTime = averageGradingTime,
                     ForumParticipation = forumParticipation,
                     MessagesReplied = messagesReplied,
@@ -1461,32 +2014,56 @@ namespace LMS.Repositories
             };
         }
 
-        public async Task<IEnumerable<TeacherPerformanceReportDto>> GetAllTeachersPerformanceReportAsync(User user)
+        public async Task<IEnumerable<TeacherPerformanceReportDto>> GetAllTeachersPerformanceReportAsync(User user, DateTime? startDate = null, DateTime? endDate = null)
         {
             try
             {
+                // Check user role and get instructor course restrictions
+                var isInstructor = await IsInstructorAsync(user);
+                var instructorCourseIds = isInstructor ? await GetInstructorCourseIdsAsync(user) : null;
+
                 var context = _context;
 
-                var teachers = await context.Users
+                var teachersQuery = context.Users
                     .Include(u => u.CreatedCourses)
                         .ThenInclude(c => c.Enrollments)
                     .Include(u => u.ForumPosts)
                     .Where(u => u.CreatedCourses.Any()) // Only users who have created courses
-                    .ToListAsync();
+                    .AsQueryable();
+
+                var teachers = await teachersQuery.ToListAsync();
 
                 var reports = new List<TeacherPerformanceReportDto>();
 
                 foreach (var teacher in teachers)
                 {
-                    var courses = teacher.CreatedCourses.ToList();
-                    var totalStudents = courses.SelectMany(c => c.Enrollments).Count();
-                    var allGrades = courses.SelectMany(c => c.Enrollments)
+                    // Apply role-based filtering to courses
+                    var courses = teacher.CreatedCourses.AsQueryable();
+                    if (instructorCourseIds != null && instructorCourseIds.Any())
+                    {
+                        courses = courses.Where(c => instructorCourseIds.Contains(c.Id));
+                    }
+
+                    // Apply date filters
+                    if (startDate.HasValue)
+                    {
+                        courses = courses.Where(c => c.StartDate >= startDate.Value);
+                    }
+
+                    if (endDate.HasValue)
+                    {
+                        courses = courses.Where(c => c.EndDate <= endDate.Value || c.EndDate == null);
+                    }
+
+                    var filteredCourses = courses.ToList();
+                    var totalStudents = filteredCourses.SelectMany(c => c.Enrollments).Count();
+                    var allGrades = filteredCourses.SelectMany(c => c.Enrollments)
                         .Where(e => e.FinalGrade.HasValue)
                         .Select(e => e.FinalGrade!.Value)
                         .ToList();
 
                     var averageGrade = allGrades.DefaultIfEmpty(0).Average();
-                    var completedCourses = courses.SelectMany(c => c.Enrollments).Count(e => e.Status == EnrollmentStatus.Completed);
+                    var completedCourses = filteredCourses.SelectMany(c => c.Enrollments).Count(e => e.Status == EnrollmentStatus.Completed);
                     var completionRate = totalStudents > 0 ? (double)completedCourses / totalStudents * 100 : 0;
                     var forumParticipation = teacher.ForumPosts.Count;
 
@@ -1495,12 +2072,12 @@ namespace LMS.Repositories
                         TeacherId = teacher.Id,
                         TeacherName = teacher.FullName,
                         Email = teacher.Email ?? "",
-                        TotalCoursesTeaching = courses.Count,
+                        TotalCoursesTeaching = filteredCourses.Count,
                         TotalStudentsTeaching = totalStudents,
                         AverageClassGrade = averageGrade,
                         StudentSatisfactionRating = GenerateMockSatisfactionRating(averageGrade, completionRate),
-                        TotalAssignments = courses.Sum(c => c.Modules.SelectMany(m => m.Lessons).Count()),
-                        GradedAssignments = (int)(courses.Sum(c => c.Modules.SelectMany(m => m.Lessons).Count()) * 0.85),
+                        TotalAssignments = filteredCourses.Sum(c => c.Modules.SelectMany(m => m.Lessons).Count()),
+                        GradedAssignments = (int)(filteredCourses.Sum(c => c.Modules.SelectMany(m => m.Lessons).Count()) * 0.85),
                         AverageGradingTime = 2.5,
                         ForumParticipation = forumParticipation,
                         MessagesReplied = forumParticipation,
@@ -1525,10 +2102,14 @@ namespace LMS.Repositories
 
         #region Advanced Analytics Reports
 
-        public async Task<object> GetAcademicPerformanceTrendsReportAsync(User user,string studentId, int months = 12)
+        public async Task<object> GetAcademicPerformanceTrendsReportAsync(User user, string studentId, int months = 12, DateTime? endDate = null)
         {
             try
             {
+                // Check user role and student access
+                var isInstructor = await IsInstructorAsync(user);
+                var instructorCourseIds = isInstructor ? await GetInstructorCourseIdsAsync(user) : null;
+
                 var context = _context;
 
                 var student = await context.Users
@@ -1543,30 +2124,38 @@ namespace LMS.Repositories
                     return new { Message = "Student not found" };
                 }
 
-                var startDate = DateTime.UtcNow.AddMonths(-months);
-                var enrollments = student.Enrollments.Where(e => e.EnrolledAt >= startDate).ToList();
+                var startDate = (endDate ?? DateTime.UtcNow).AddMonths(-months);
+                var enrollments = student.Enrollments.Where(e => e.EnrolledAt >= startDate).AsQueryable();
+
+                // Apply role-based filtering to enrollments
+                if (instructorCourseIds != null && instructorCourseIds.Any())
+                {
+                    enrollments = enrollments.Where(e => instructorCourseIds.Contains(e.CourseId));
+                }
+
+                var filteredEnrollments = enrollments.ToList();
 
                 var trends = new
                 {
                     StudentId = studentId,
                     StudentName = student.FullName,
                     Period = $"Last {months} months",
-                    OverallGPATrend = CalculateGPATrend(enrollments),
-                    ProgressTrend = CalculateProgressTrend(enrollments),
-                    AssessmentTrends = CalculateAssessmentTrends(enrollments),
-                    TimeSpentTrend = enrollments.OrderBy(e => e.EnrolledAt).Select(e => new
+                    OverallGPATrend = CalculateGPATrend(filteredEnrollments),
+                    ProgressTrend = CalculateProgressTrend(filteredEnrollments),
+                    AssessmentTrends = CalculateAssessmentTrends(filteredEnrollments),
+                    TimeSpentTrend = filteredEnrollments.OrderBy(e => e.EnrolledAt).Select(e => new
                     {
                         Month = e.EnrolledAt.ToString("yyyy-MM"),
                         TimeSpent = e.TimeSpent.TotalHours,
                         Course = e.Course.Title
                     }),
-                    CompletionRate = enrollments.Count > 0 ?
-                        (double)enrollments.Count(e => e.Status == EnrollmentStatus.Completed) / enrollments.Count * 100 : 0,
+                    CompletionRate = filteredEnrollments.Count > 0 ?
+                        (double)filteredEnrollments.Count(e => e.Status == EnrollmentStatus.Completed) / filteredEnrollments.Count * 100 : 0,
                     PredictiveIndicators = new
                     {
                         RiskLevel = CalculateRiskLevel(student),
-                        ProjectedGPA = CalculateProjectedGPA(enrollments),
-                        RecommendedActions = GetRecommendedActions(student, enrollments)
+                        ProjectedGPA = CalculateProjectedGPA(filteredEnrollments),
+                        RecommendedActions = GetRecommendedActions(student, filteredEnrollments)
                     }
                 };
 
@@ -1687,27 +2276,53 @@ namespace LMS.Repositories
             return actions;
         }
 
-        public async Task<IEnumerable<object>> GetRiskStudentsReportAsync(User user)
+        public async Task<IEnumerable<object>> GetRiskStudentsReportAsync(User user, DateTime? startDate = null, DateTime? endDate = null, double threshold = 2.0)
         {
             try
             {
+                // Check user role and get instructor course restrictions
+                var isInstructor = await IsInstructorAsync(user);
+                var instructorCourseIds = isInstructor ? await GetInstructorCourseIdsAsync(user) : null;
+
                 var context = _context;
 
-                var students = await context.Users
+                var studentsQuery = context.Users
                     .Include(u => u.Enrollments)
                         .ThenInclude(e => e.Course)
                     .Include(u => u.ForumPosts)
                     .Where(u => u.Enrollments.Any(e => e.Status == EnrollmentStatus.Active))
-                    .ToListAsync();
+                    .AsQueryable();
+
+                // Apply date filters
+                if (startDate.HasValue)
+                {
+                    studentsQuery = studentsQuery.Where(u => u.CreatedAt >= startDate.Value);
+                }
+
+                if (endDate.HasValue)
+                {
+                    studentsQuery = studentsQuery.Where(u => u.CreatedAt <= endDate.Value);
+                }
+
+                var students = await studentsQuery.ToListAsync();
 
                 var riskStudents = new List<object>();
 
                 foreach (var student in students)
                 {
+                    // Apply role-based filtering to enrollments
+                    var enrollments = student.Enrollments.Where(e => e.Status == EnrollmentStatus.Active).AsQueryable();
+                    if (instructorCourseIds != null && instructorCourseIds.Any())
+                    {
+                        enrollments = enrollments.Where(e => instructorCourseIds.Contains(e.CourseId));
+                    }
+
+                    var activeEnrollments = enrollments.ToList();
+                    if (!activeEnrollments.Any()) continue; // Skip if no accessible enrollments
+
                     var riskLevel = CalculateRiskLevel(student);
                     if (riskLevel == "High" || riskLevel == "Medium")
                     {
-                        var activeEnrollments = student.Enrollments.Where(e => e.Status == EnrollmentStatus.Active).ToList();
                         var averageProgress = activeEnrollments.Average(e => e.ProgressPercentage);
 
                         riskStudents.Add(new
@@ -1744,25 +2359,50 @@ namespace LMS.Repositories
             }
         }
 
-        public async Task<object> GetInstitutionalEffectivenessReportAsync(User user)
+        public async Task<object> GetInstitutionalEffectivenessReportAsync(User user, DateTime? startDate = null, DateTime? endDate = null)
         {
             try
             {
+                // Check user role and get instructor course restrictions
+                var isInstructor = await IsInstructorAsync(user);
+                var instructorCourseIds = isInstructor ? await GetInstructorCourseIdsAsync(user) : null;
+
                 var context = _context;
 
-                var totalStudents = await context.Users.CountAsync();
-                var totalCourses = await context.Courses.CountAsync();
-                var totalEnrollments = await context.Enrollments.CountAsync();
-                var completedEnrollments = await context.Enrollments.CountAsync(e => e.Status == EnrollmentStatus.Completed);
+                // Apply role-based filtering to queries
+                var coursesQuery = context.Courses.AsQueryable();
+                var enrollmentsQuery = context.Enrollments.AsQueryable();
 
-                var averageGrade = await context.Enrollments
+                if (instructorCourseIds != null && instructorCourseIds.Any())
+                {
+                    coursesQuery = coursesQuery.Where(c => instructorCourseIds.Contains(c.Id));
+                    enrollmentsQuery = enrollmentsQuery.Where(e => instructorCourseIds.Contains(e.CourseId));
+                }
+
+                // Apply date filters
+                if (startDate.HasValue)
+                {
+                    enrollmentsQuery = enrollmentsQuery.Where(e => e.EnrolledAt >= startDate.Value);
+                }
+
+                if (endDate.HasValue)
+                {
+                    enrollmentsQuery = enrollmentsQuery.Where(e => e.EnrolledAt <= endDate.Value);
+                }
+
+                var totalStudents = await context.Users.CountAsync();
+                var totalCourses = await coursesQuery.CountAsync();
+                var totalEnrollments = await enrollmentsQuery.CountAsync();
+                var completedEnrollments = await enrollmentsQuery.CountAsync(e => e.Status == EnrollmentStatus.Completed);
+
+                var averageGrade = await enrollmentsQuery
                     .Where(e => e.FinalGrade.HasValue)
                     .AverageAsync(e => e.FinalGrade!.Value);
 
-                var certificatesIssued = await context.Enrollments.CountAsync(e => e.IsCertificateIssued);
-                var activeCourses = await context.Courses.CountAsync(c => c.IsActive);
+                var certificatesIssued = await enrollmentsQuery.CountAsync(e => e.IsCertificateIssued);
+                var activeCourses = await coursesQuery.CountAsync(c => c.IsActive);
 
-                var monthlyEnrollments = await context.Enrollments
+                var monthlyEnrollments = await enrollmentsQuery
                     .Where(e => e.EnrolledAt >= DateTime.UtcNow.AddMonths(-12))
                     .GroupBy(e => new { e.EnrolledAt.Year, e.EnrolledAt.Month })
                     .Select(g => new
@@ -1873,20 +2513,38 @@ namespace LMS.Repositories
             return (averageGrade * 0.6) + (completionRate * 0.4);
         }
 
-        public async Task<object> GetResourceUtilizationReportAsync(User user)
+        public async Task<object> GetResourceUtilizationReportAsync(User user, DateTime? startDate = null, DateTime? endDate = null)
         {
             try
             {
+                // Check user role and get instructor course restrictions
+                var isInstructor = await IsInstructorAsync(user);
+                var instructorCourseIds = isInstructor ? await GetInstructorCourseIdsAsync(user) : null;
+
                 var context = _context;
 
-                var totalCourses = await context.Courses.CountAsync();
-                var activeCourses = await context.Courses.CountAsync(c => c.IsActive);
+                // Apply role-based filtering to queries
+                var coursesQuery = context.Courses.AsQueryable();
+                var enrollmentsQuery = context.Enrollments.AsQueryable();
+                var assessmentsQuery = context.Assessments.AsQueryable();
+                var forumsQuery = context.Forums.AsQueryable();
+
+                if (instructorCourseIds != null && instructorCourseIds.Any())
+                {
+                    coursesQuery = coursesQuery.Where(c => instructorCourseIds.Contains(c.Id));
+                    enrollmentsQuery = enrollmentsQuery.Where(e => instructorCourseIds.Contains(e.CourseId));
+                    assessmentsQuery = assessmentsQuery.Where(a => a.CourseId.HasValue && instructorCourseIds.Contains(a.CourseId.Value));
+                    forumsQuery = forumsQuery.Where(f => f.Course != null && instructorCourseIds.Contains(f.Course.Id));
+                }
+
+                var totalCourses = await coursesQuery.CountAsync();
+                var activeCourses = await coursesQuery.CountAsync(c => c.IsActive);
                 var totalModules = await context.Modules.CountAsync();
                 var totalLessons = await context.Lessons.CountAsync();
-                var totalAssessments = await context.Assessments.CountAsync();
-                var totalForums = await context.Forums.CountAsync();
+                var totalAssessments = await assessmentsQuery.CountAsync();
+                var totalForums = await forumsQuery.CountAsync();
 
-                var enrollments = await context.Enrollments.Include(e => e.ModuleProgresses).ToListAsync();
+                var enrollments = await enrollmentsQuery.Include(e => e.ModuleProgresses).ToListAsync();
                 var moduleProgresses = enrollments.SelectMany(e => e.ModuleProgresses).ToList();
 
                 var utilization = new
@@ -1911,21 +2569,31 @@ namespace LMS.Repositories
                     AssessmentUtilization = new
                     {
                         TotalAssessments = totalAssessments,
-                        AssessmentsWithAttempts = await context.AssessmentAttempts.Select(aa => aa.AssessmentId).Distinct().CountAsync(),
+                        AssessmentsWithAttempts = await context.AssessmentAttempts
+                            .Where(aa => assessmentsQuery.Select(a => a.Id).Contains(aa.AssessmentId))
+                            .Select(aa => aa.AssessmentId).Distinct().CountAsync(),
                         UtilizationRate = totalAssessments > 0 ?
-                            (double)await context.AssessmentAttempts.Select(aa => aa.AssessmentId).Distinct().CountAsync() / totalAssessments * 100 : 0,
+                            (double)await context.AssessmentAttempts
+                                .Where(aa => assessmentsQuery.Select(a => a.Id).Contains(aa.AssessmentId))
+                                .Select(aa => aa.AssessmentId).Distinct().CountAsync() / totalAssessments * 100 : 0,
                         AverageAttemptsPerAssessment = totalAssessments > 0 ?
-                            (double)await context.AssessmentAttempts.CountAsync() / totalAssessments : 0
+                            (double)await context.AssessmentAttempts
+                                .Where(aa => assessmentsQuery.Select(a => a.Id).Contains(aa.AssessmentId))
+                                .CountAsync() / totalAssessments : 0
                     },
                     ForumUtilization = new
                     {
                         TotalForums = totalForums,
-                        ActiveForums = await context.Forums.CountAsync(f => f.Topics.Any()),
+                        ActiveForums = await forumsQuery.CountAsync(f => f.Topics.Any()),
                         UtilizationRate = totalForums > 0 ?
-                            (double)await context.Forums.CountAsync(f => f.Topics.Any()) / totalForums * 100 : 0,
-                        TotalPosts = await context.ForumPosts.CountAsync(),
+                            (double)await forumsQuery.CountAsync(f => f.Topics.Any()) / totalForums * 100 : 0,
+                        TotalPosts = await context.ForumPosts
+                            .Where(fp => forumsQuery.SelectMany(f => f.Topics).Select(t => t.Id).Contains(fp.TopicId))
+                            .CountAsync(),
                         AveragePostsPerForum = totalForums > 0 ?
-                            (double)await context.ForumPosts.CountAsync() / totalForums : 0
+                            (double)await context.ForumPosts
+                                .Where(fp => forumsQuery.SelectMany(f => f.Topics).Select(t => t.Id).Contains(fp.TopicId))
+                                .CountAsync() / totalForums : 0
                     },
                     SystemMetrics = new
                     {
@@ -1979,16 +2647,39 @@ namespace LMS.Repositories
             return recommendations;
         }
 
-        public async Task<object> GetRetentionAnalysisReportAsync(User user)
+        public async Task<object> GetRetentionAnalysisReportAsync(User user, DateTime? startDate = null, DateTime? endDate = null, int cohortMonths = 12)
         {
             try
             {
+                // Check user role and get instructor course restrictions
+                var isInstructor = await IsInstructorAsync(user);
+                var instructorCourseIds = isInstructor ? await GetInstructorCourseIdsAsync(user) : null;
+
                 var context = _context;
 
-                var enrollments = await context.Enrollments
+                var enrollmentsQuery = context.Enrollments
                     .Include(e => e.User)
                     .Include(e => e.Course)
-                    .ToListAsync();
+                    .AsQueryable();
+
+                // Apply role-based filtering
+                if (instructorCourseIds != null && instructorCourseIds.Any())
+                {
+                    enrollmentsQuery = enrollmentsQuery.Where(e => instructorCourseIds.Contains(e.CourseId));
+                }
+
+                // Apply date filters
+                if (startDate.HasValue)
+                {
+                    enrollmentsQuery = enrollmentsQuery.Where(e => e.EnrolledAt >= startDate.Value);
+                }
+
+                if (endDate.HasValue)
+                {
+                    enrollmentsQuery = enrollmentsQuery.Where(e => e.EnrolledAt <= endDate.Value);
+                }
+
+                var enrollments = await enrollmentsQuery.ToListAsync();
 
                 var sixMonthsAgo = DateTime.UtcNow.AddMonths(-6);
                 var oneYearAgo = DateTime.UtcNow.AddYears(-1);
@@ -2146,7 +2837,7 @@ namespace LMS.Repositories
                 // Basic PDF export implementation
                 // Note: This is a simplified implementation. In production, you would use libraries like iTextSharp, PdfSharp, or similar
 
-                var reportData = await GetReportDataByType(user,reportType, parameters);
+                var reportData = await GetReportDataByType(user, reportType, parameters);
                 var pdfContent = GeneratePdfContent(reportType, reportData);
 
                 // Convert to bytes (this is a mock implementation)
@@ -2167,14 +2858,14 @@ namespace LMS.Repositories
             }
         }
 
-        public async Task<byte[]> ExportReportToExcelAsync(User user,string reportType, object parameters)
+        public async Task<byte[]> ExportReportToExcelAsync(User user, string reportType, object parameters)
         {
             try
             {
                 // Basic Excel export implementation
                 // Note: This is a simplified implementation. In production, you would use libraries like EPPlus, ClosedXML, or similar
 
-                var reportData = await GetReportDataByType(user,reportType, parameters);
+                var reportData = await GetReportDataByType(user, reportType, parameters);
                 var excelContent = GenerateExcelContent(reportType, reportData);
 
                 // Convert to bytes (this is a mock implementation)
@@ -2196,11 +2887,11 @@ namespace LMS.Repositories
             }
         }
 
-        public async Task<string> ExportReportToCsvAsync(User user,string reportType, object parameters)
+        public async Task<string> ExportReportToCsvAsync(User user, string reportType, object parameters)
         {
             try
             {
-                var reportData = await GetReportDataByType(user,reportType, parameters);
+                var reportData = await GetReportDataByType(user, reportType, parameters);
                 var csvContent = GenerateCsvContent(reportType, reportData);
 
                 // In a real implementation, you might save this to a file and return the file path
@@ -2216,7 +2907,7 @@ namespace LMS.Repositories
             }
         }
 
-        private async Task<object> GetReportDataByType(User user,string reportType, object parameters)
+        private async Task<object> GetReportDataByType(User user, string reportType, object parameters)
         {
             // Route to appropriate report method based on type
             return reportType.ToLower() switch
@@ -2224,7 +2915,7 @@ namespace LMS.Repositories
                 "studentprogress" => await GetStudentProgressReportAsync(user),
                 "coursecompletion" => await GetAllCoursesCompletionReportAsync(user),
                 "assessmentperformance" => await GetDifficultAssessmentsReportAsync(user),
-                "enrollment" => await GetEnrollmentSummaryReportAsync(user,DateTime.UtcNow.AddMonths(-12), DateTime.UtcNow),
+                "enrollment" => await GetEnrollmentSummaryReportAsync(user, DateTime.UtcNow.AddMonths(-12), DateTime.UtcNow),
                 "forum" => await GetAllForumsActivityReportAsync(user),
                 "students" => await GetAllStudentsInformationReportAsync(user),
                 "teachers" => await GetAllTeachersPerformanceReportAsync(user),
