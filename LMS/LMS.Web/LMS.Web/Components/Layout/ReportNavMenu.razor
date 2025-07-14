@@ -1,92 +1,200 @@
 @using Microsoft.AspNetCore.Components.Authorization
 @inject AuthenticationStateProvider AuthenticationStateProvider
+@rendermode InteractiveServer
 
-<div class="nav-scrollable">
-    <nav class="flex-column">
-        <div class="nav-header">
-            <h4 class="nav-brand">📊 Reports</h4>
-        </div>
+<div class="top-row ps-3 navbar navbar-dark">
+    <div class="container-fluid d-flex align-items-center justify-content-end">
+        <button class="navbar-collapse-toggle" @onclick="ToggleNavbar"
+                title="@(isNavbarCollapsed ? "Expand sidebar" : "Collapse sidebar")">
+            <span class="bi @(isNavbarCollapsed ? "bi-chevron-right" : "bi-chevron-left")"></span>
+        </button>
+        <button class="navbar-toggler" @onclick="ToggleMobileMenu" title="Toggle navigation menu"
+                aria-label="Toggle navigation menu">
+            <span class="bar"></span>
+            <span class="bar"></span>
+            <span class="bar"></span>
+        </button>
+    </div>
+</div>
 
-        <div class="nav-section">
-            <h6 class="nav-section-title">📚 Academic Reports</h6>
-            <NavLink class="nav-link" href="/reports/course-completion" Match="NavLinkMatch.All">
-                <span class="nav-icon">📈</span> Course Completion
-            </NavLink>
-            <NavLink class="nav-link" href="/reports/assessment-performance" Match="NavLinkMatch.All">
-                <span class="nav-icon">📝</span> Assessment Performance
-            </NavLink>
-            <NavLink class="nav-link" href="/reports/enrollment-summary" Match="NavLinkMatch.All">
-                <span class="nav-icon">👥</span> Enrollment Summary
-            </NavLink>
-            <NavLink class="nav-link" href="/reports/enrollment-trends" Match="NavLinkMatch.All">
-                <span class="nav-icon">📊</span> Enrollment Trends
-            </NavLink>
-        </div>
-
-        <div class="nav-section">
-            <h6 class="nav-section-title">👨‍🎓 Student Reports</h6>
-            <NavLink class="nav-link" href="/reports/student-information" Match="NavLinkMatch.All">
-                <span class="nav-icon">👤</span> Student Information
-            </NavLink>
-            <NavLink class="nav-link" href="/reports/student-progress" Match="NavLinkMatch.All">
-                <span class="nav-icon">📈</span> Student Progress
-            </NavLink>
-            <NavLink class="nav-link" href="/reports/low-performance" Match="NavLinkMatch.All">
-                <span class="nav-icon">⚠️</span> Low Performance
-            </NavLink>
-            <NavLink class="nav-link" href="/reports/student-engagement" Match="NavLinkMatch.All">
-                <span class="nav-icon">🎯</span> Student Engagement
+<div class="nav-scrollable @(GetNavScrollableClasses())" style="@(isMobileMenuOpen ? "display: block;" : "")">
+    <nav class="nav">
+        <!-- Dashboard -->
+        <div class="nav-item" data-tooltip="Reports Dashboard">
+            <NavLink class="nav-link" href="/reports" Match="NavLinkMatch.All" title="Reports Dashboard">
+                <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span>
+                <span class="nav-text">Dashboard</span>
             </NavLink>
         </div>
 
-        <div class="nav-section">
-            <h6 class="nav-section-title">📋 Attendance Reports</h6>
-            <NavLink class="nav-link" href="/reports/attendance" Match="NavLinkMatch.All">
-                <span class="nav-icon">📅</span> Class Attendance
-            </NavLink>
-            <NavLink class="nav-link" href="/reports/student-attendance" Match="NavLinkMatch.All">
-                <span class="nav-icon">👤</span> Student Attendance
-            </NavLink>
+        <!-- Academic Reports Section -->
+        <div class="nav-section @(isNavbarCollapsed ? "collapsed" : "")">
+            <div class="nav-section-title">📚 Academic Reports</div>
+            <div class="nav-item" data-tooltip="Course Completion">
+                <NavLink class="nav-link" href="/reports/course-completion" title="Course Completion">
+                    <span class="bi bi-bar-chart-fill" aria-hidden="true"></span>
+                    <span class="nav-text">Course Completion</span>
+                </NavLink>
+            </div>
+            <div class="nav-item" data-tooltip="Assessment Performance">
+                <NavLink class="nav-link" href="/reports/assessment-performance" title="Assessment Performance">
+                    <span class="bi bi-clipboard-check" aria-hidden="true"></span>
+                    <span class="nav-text">Assessment Performance</span>
+                </NavLink>
+            </div>
+            <div class="nav-item" data-tooltip="Enrollment Summary">
+                <NavLink class="nav-link" href="/reports/enrollment-summary" title="Enrollment Summary">
+                    <span class="bi bi-people" aria-hidden="true"></span>
+                    <span class="nav-text">Enrollment Summary</span>
+                </NavLink>
+            </div>
+            <div class="nav-item" data-tooltip="Enrollment Trends">
+                <NavLink class="nav-link" href="/reports/enrollment-trends" title="Enrollment Trends">
+                    <span class="bi bi-graph-up" aria-hidden="true"></span>
+                    <span class="nav-text">Enrollment Trends</span>
+                </NavLink>
+            </div>
         </div>
 
-        <div class="nav-section">
-            <h6 class="nav-section-title">💬 Forum Reports</h6>
-            <NavLink class="nav-link" href="/reports/forum-activity" Match="NavLinkMatch.All">
-                <span class="nav-icon">💬</span> Forum Activity
-            </NavLink>
+        <!-- Student Reports Section -->
+        <div class="nav-section @(isNavbarCollapsed ? "collapsed" : "")">
+            <div class="nav-section-title">👨‍🎓 Student Reports</div>
+            <div class="nav-item" data-tooltip="Student Information">
+                <NavLink class="nav-link" href="/reports/student-information" title="Student Information">
+                    <span class="bi bi-person-badge" aria-hidden="true"></span>
+                    <span class="nav-text">Student Information</span>
+                </NavLink>
+            </div>
+            <div class="nav-item" data-tooltip="Student Progress">
+                <NavLink class="nav-link" href="/reports/student-progress" title="Student Progress">
+                    <span class="bi bi-graph-up-arrow" aria-hidden="true"></span>
+                    <span class="nav-text">Student Progress</span>
+                </NavLink>
+            </div>
+            <div class="nav-item" data-tooltip="Low Performance">
+                <NavLink class="nav-link" href="/reports/low-performance" title="Low Performance">
+                    <span class="bi bi-exclamation-triangle" aria-hidden="true"></span>
+                    <span class="nav-text">Low Performance</span>
+                </NavLink>
+            </div>
+            <div class="nav-item" data-tooltip="Student Engagement">
+                <NavLink class="nav-link" href="/reports/student-engagement" title="Student Engagement">
+                    <span class="bi bi-activity" aria-hidden="true"></span>
+                    <span class="nav-text">Student Engagement</span>
+                </NavLink>
+            </div>
         </div>
 
-        <div class="nav-section">
-            <h6 class="nav-section-title">📊 Analytics</h6>
-            <NavLink class="nav-link" href="/reports/popular-courses" Match="NavLinkMatch.All">
-                <span class="nav-icon">⭐</span> Popular Courses
-            </NavLink>
-            <NavLink class="nav-link" href="/reports/difficult-assessments" Match="NavLinkMatch.All">
-                <span class="nav-icon">🔥</span> Difficult Assessments
-            </NavLink>
-            <NavLink class="nav-link" href="/reports/learning-analytics" Match="NavLinkMatch.All">
-                <span class="nav-icon">🧠</span> Learning Analytics
-            </NavLink>
-            <NavLink class="nav-link" href="/reports/grade-distribution" Match="NavLinkMatch.All">
-                <span class="nav-icon">📊</span> Grade Distribution
-            </NavLink>
+        <!-- Attendance Reports Section -->
+        <div class="nav-section @(isNavbarCollapsed ? "collapsed" : "")">
+            <div class="nav-section-title">📋 Attendance Reports</div>
+            <div class="nav-item" data-tooltip="Class Attendance">
+                <NavLink class="nav-link" href="/reports/attendance" title="Class Attendance">
+                    <span class="bi bi-calendar-check" aria-hidden="true"></span>
+                    <span class="nav-text">Class Attendance</span>
+                </NavLink>
+            </div>
+            <div class="nav-item" data-tooltip="Student Attendance">
+                <NavLink class="nav-link" href="/reports/student-attendance" title="Student Attendance">
+                    <span class="bi bi-person-check" aria-hidden="true"></span>
+                    <span class="nav-text">Student Attendance</span>
+                </NavLink>
+            </div>
         </div>
 
-        <div class="nav-section">
-            <h6 class="nav-section-title">👨‍🏫 Teacher Reports</h6>
-            <NavLink class="nav-link" href="/reports/teacher-performance" Match="NavLinkMatch.All">
-                <span class="nav-icon">🎓</span> Teacher Performance
-            </NavLink>
+        <!-- Forum Reports Section -->
+        <div class="nav-section @(isNavbarCollapsed ? "collapsed" : "")">
+            <div class="nav-section-title">💬 Forum Reports</div>
+            <div class="nav-item" data-tooltip="Forum Activity">
+                <NavLink class="nav-link" href="/reports/forum-activity" title="Forum Activity">
+                    <span class="bi bi-chat-dots" aria-hidden="true"></span>
+                    <span class="nav-text">Forum Activity</span>
+                </NavLink>
+            </div>
         </div>
 
-        <div class="nav-section">
-            <h6 class="nav-section-title">📈 Advanced Analytics</h6>
-            <NavLink class="nav-link" href="/reports/academic-trends" Match="NavLinkMatch.All">
-                <span class="nav-icon">📈</span> Academic Trends
-            </NavLink>
-            <NavLink class="nav-link" href="/reports/risk-students" Match="NavLinkMatch.All">
-                <span class="nav-icon">🚨</span> Risk Students
-            </NavLink>
+        <!-- Analytics Section -->
+        <div class="nav-section @(isNavbarCollapsed ? "collapsed" : "")">
+            <div class="nav-section-title">📊 Analytics</div>
+            <div class="nav-item" data-tooltip="Popular Courses">
+                <NavLink class="nav-link" href="/reports/popular-courses" title="Popular Courses">
+                    <span class="bi bi-star" aria-hidden="true"></span>
+                    <span class="nav-text">Popular Courses</span>
+                </NavLink>
+            </div>
+            <div class="nav-item" data-tooltip="Difficult Assessments">
+                <NavLink class="nav-link" href="/reports/difficult-assessments" title="Difficult Assessments">
+                    <span class="bi bi-fire" aria-hidden="true"></span>
+                    <span class="nav-text">Difficult Assessments</span>
+                </NavLink>
+            </div>
+            <div class="nav-item" data-tooltip="Learning Analytics">
+                <NavLink class="nav-link" href="/reports/learning-analytics" title="Learning Analytics">
+                    <span class="bi bi-lightbulb" aria-hidden="true"></span>
+                    <span class="nav-text">Learning Analytics</span>
+                </NavLink>
+            </div>
+            <div class="nav-item" data-tooltip="Grade Distribution">
+                <NavLink class="nav-link" href="/reports/grade-distribution" title="Grade Distribution">
+                    <span class="bi bi-bar-chart" aria-hidden="true"></span>
+                    <span class="nav-text">Grade Distribution</span>
+                </NavLink>
+            </div>
+        </div>
+
+        <!-- Teacher Reports Section -->
+        <div class="nav-section @(isNavbarCollapsed ? "collapsed" : "")">
+            <div class="nav-section-title">👨‍🏫 Teacher Reports</div>
+            <div class="nav-item" data-tooltip="Teacher Performance">
+                <NavLink class="nav-link" href="/reports/teacher-performance" title="Teacher Performance">
+                    <span class="bi bi-mortarboard" aria-hidden="true"></span>
+                    <span class="nav-text">Teacher Performance</span>
+                </NavLink>
+            </div>
+        </div>
+
+        <!-- Advanced Analytics Section -->
+        <div class="nav-section @(isNavbarCollapsed ? "collapsed" : "")">
+            <div class="nav-section-title">📈 Advanced Analytics</div>
+            <div class="nav-item" data-tooltip="Academic Trends">
+                <NavLink class="nav-link" href="/reports/academic-trends" title="Academic Trends">
+                    <span class="bi bi-trending-up" aria-hidden="true"></span>
+                    <span class="nav-text">Academic Trends</span>
+                </NavLink>
+            </div>
+            <div class="nav-item" data-tooltip="Risk Students">
+                <NavLink class="nav-link" href="/reports/risk-students" title="Risk Students">
+                    <span class="bi bi-shield-exclamation" aria-hidden="true"></span>
+                    <span class="nav-text">Risk Students</span>
+                </NavLink>
+            </div>
         </div>
     </nav>
 </div>
+
+@code {
+    private bool isNavbarCollapsed = true; // Start contracted by default
+    private bool isMobileMenuOpen = false; // Mobile menu state
+
+    private void ToggleNavbar()
+    {
+        isNavbarCollapsed = !isNavbarCollapsed;
+    }
+
+    private void ToggleMobileMenu()
+    {
+        isMobileMenuOpen = !isMobileMenuOpen;
+    }
+
+    private string GetNavScrollableClasses()
+    {
+        var classes = new List<string>();
+
+        if (isNavbarCollapsed)
+        {
+            classes.Add("collapsed");
+        }
+
+        return string.Join(" ", classes);
+    }
+}
