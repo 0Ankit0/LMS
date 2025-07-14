@@ -1,0 +1,437 @@
+@using LMS.Web.Repositories.DTOs
+@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.AspNetCore.Identity
+@inject IReportRepository ReportRepository
+@inject IJSRuntime JSRuntime
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject UserManager<User> UserManager
+@attribute [Authorize]
+@page "/reports/student-engagement"
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="mb-1">🎯 Student Engagement Report</h2>
+        <p class="text-muted mb-0">Analyze student engagement patterns and activity levels</p>
+    </div>
+    <div class="export-buttons">
+        <button class="btn btn-outline-report" @onclick="ExportToPdf">
+            <i class="fas fa-file-pdf"></i> Export PDF
+        </button>
+        <button class="btn btn-outline-report" @onclick="ExportToExcel">
+            <i class="fas fa-file-excel"></i> Export Excel
+        </button>
+    </div>
+</div>
+
+<!-- Filters -->
+<div class="report-filters">
+    <div class="row">
+        <div class="col-md-3">
+            <div class="form-group">
+                <label class="form-label">Student</label>
+                <select class="form-select" @bind="selectedStudentId" @bind:after="LoadData">
+                    <option value="">Select a student</option>
+                    @if (students?.Any() == true)
+                    {
+                        @foreach (var student in students)
+                        {
+                            <option value="@student.Id">@student.FullName</option>
+                        }
+                    }
+                </select>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="form-group">
+                <label class="form-label">Start Date</label>
+                <input type="date" class="form-control" @bind="startDate" @bind:after="LoadData" />
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="form-group">
+                <label class="form-label">End Date</label>
+                <input type="date" class="form-control" @bind="endDate" @bind:after="LoadData" />
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="form-group">
+                <label class="form-label">Report Type</label>
+                <select class="form-select" @bind="reportType" @bind:after="LoadData">
+                    <option value="individual">Individual Student</option>
+                    <option value="all">All Students</option>
+                </select>
+            </div>
+        </div>
+    </div>
+</div>
+
+@if (loading)
+{
+    <div class="report-loading">
+        <div class="spinner-border" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+        <p class="mt-2">Loading engagement data...</p>
+    </div>
+}
+else if (engagementData != null)
+{
+    @if (reportType == "individual" && !string.IsNullOrEmpty(selectedStudentId))
+    {
+        <!-- Individual Student Engagement -->
+        <div class="engagement-summary mb-4">
+            <div class="row">
+                <div class="col-md-8">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0">📊 Engagement Overview</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="engagement-metrics">
+                                <div class="metric">
+                                    <div class="metric-value">@(GetEngagementLevel(engagementData))</div>
+                                    <div class="metric-label">Engagement Level</div>
+                                </div>
+                                <div class="metric">
+                                    <div class="metric-value">@(GetProperty(engagementData, "TotalForumPosts"))</div>
+                                    <div class="metric-label">Forum Posts</div>
+                                </div>
+                                <div class="metric">
+                                    <div class="metric-value">@(GetProperty(engagementData, "TotalCoursesEnrolled"))</div>
+                                    <div class="metric-label">Courses Enrolled</div>
+                                </div>
+                                <div class="metric">
+                                    <div class="metric-value">@(GetProperty(engagementData, "CompletedCourses"))</div>
+                                    <div class="metric-label">Courses Completed</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0">📈 Engagement Score</h5>
+                        </div>
+                        <div class="card-body text-center">
+                            <div class="engagement-gauge">
+                                <canvas id="engagementGauge" width="200" height="200"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Activity Timeline -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">🕒 Activity Timeline</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="activityChart" width="800" height="300"></canvas>
+            </div>
+        </div>
+
+        <!-- Detailed Metrics -->
+        <div class="row">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">📚 Course Progress</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="course-progress-list">
+                            @if (GetCourseProgress(engagementData) is { } courseProgress)
+                            {
+                                @foreach (var course in courseProgress)
+                                {
+                                    <div class="course-item">
+                                        <div class="d-flex justify-content-between">
+                                            <strong>@(GetProperty(course, "CourseName"))</strong>
+                                            <span>@(GetProperty(course, "Progress"))%</span>
+                                        </div>
+                                        <div class="progress mt-1">
+                                            <div class="progress-bar" style="width: @(GetProperty(course, "Progress"))%"></div>
+                                        </div>
+                                    </div>
+                                }
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">💬 Forum Activity</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="forum-stats">
+                            <div class="stat-row">
+                                <span>Total Posts:</span>
+                                <strong>@(GetProperty(engagementData, "TotalForumPosts"))</strong>
+                            </div>
+                            <div class="stat-row">
+                                <span>Topics Created:</span>
+                                <strong>@(GetProperty(engagementData, "TopicsCreated"))</strong>
+                            </div>
+                            <div class="stat-row">
+                                <span>Replies Made:</span>
+                                <strong>@(GetProperty(engagementData, "RepliesMade"))</strong>
+                            </div>
+                            <div class="stat-row">
+                                <span>Last Activity:</span>
+                                <strong>@(GetProperty(engagementData, "LastForumActivity"))</strong>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+    else
+    {
+        <!-- All Students Overview -->
+        <div class="alert alert-info">
+            <i class="fas fa-info-circle"></i>
+            Select an individual student to view detailed engagement metrics, or view the summary below for all students.
+        </div>
+
+        <div class="stats-grid mb-4">
+            <div class="stat-card">
+                <div class="stat-value">@(GetProperty(engagementData, "TotalStudents"))</div>
+                <div class="stat-label">Total Students</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">@(GetProperty(engagementData, "HighEngagement"))</div>
+                <div class="stat-label">High Engagement</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">@(GetProperty(engagementData, "MediumEngagement"))</div>
+                <div class="stat-label">Medium Engagement</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">@(GetProperty(engagementData, "LowEngagement"))</div>
+                <div class="stat-label">Low Engagement</div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">📊 Engagement Distribution</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="engagementDistribution" width="800" height="400"></canvas>
+            </div>
+        </div>
+    }
+}
+else
+{
+    <div class="report-no-data">
+        <div class="text-center">
+            <i class="fas fa-chart-line fa-3x text-muted mb-3"></i>
+            <h5>No Data Available</h5>
+            <p class="text-muted">
+                @if (string.IsNullOrEmpty(selectedStudentId))
+                {
+                    <span>Please select a student to view engagement data.</span>
+                }
+                else
+                {
+                    <span>No engagement data found for the selected criteria.</span>
+                }
+            </p>
+        </div>
+    </div>
+}
+
+@code {
+    private string selectedStudentId = "";
+    private DateTime? startDate = DateTime.Today.AddMonths(-3);
+    private DateTime? endDate = DateTime.Today;
+    private string reportType = "individual";
+    private bool loading = true;
+
+    private object? engagementData;
+    private IEnumerable<User>? students = Enumerable.Empty<User>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadStudents();
+        await LoadData();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && engagementData != null)
+        {
+            await DrawCharts();
+        }
+    }
+
+    private async Task LoadStudents()
+    {
+        try
+        {
+            // Load students list for dropdown
+            // This would typically come from a student repository
+            students = Enumerable.Empty<User>(); // Placeholder
+            await Task.CompletedTask;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading students: {ex.Message}");
+        }
+    }
+
+    private async Task LoadData()
+    {
+        if (string.IsNullOrEmpty(selectedStudentId) && reportType == "individual")
+        {
+            engagementData = null;
+            loading = false;
+            return;
+        }
+
+        try
+        {
+            loading = true;
+
+            // Get the current user
+            var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+            var user = await UserManager.GetUserAsync(authState.User);
+
+            if (user != null)
+            {
+                if (reportType == "individual" && !string.IsNullOrEmpty(selectedStudentId))
+                {
+                    // Load individual student engagement
+                    engagementData = await ReportRepository.GetStudentEngagementReportAsync(
+                        user, selectedStudentId, startDate, endDate);
+                }
+                else
+                {
+                    // Load all students engagement summary
+                    engagementData = new
+                    {
+                        TotalStudents = 150,
+                        HighEngagement = 45,
+                        MediumEngagement = 75,
+                        LowEngagement = 30
+                    };
+                }
+
+                await DrawCharts();
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading engagement data: {ex.Message}");
+        }
+        finally
+        {
+            loading = false;
+        }
+    }
+
+    private async Task DrawCharts()
+    {
+        if (engagementData != null)
+        {
+            if (reportType == "individual")
+            {
+                var engagementScore = CalculateEngagementScore(engagementData);
+                await JSRuntime.InvokeVoidAsync("drawEngagementGauge", "engagementGauge", engagementScore);
+                await JSRuntime.InvokeVoidAsync("drawActivityChart", "activityChart", engagementData);
+            }
+            else
+            {
+                await JSRuntime.InvokeVoidAsync("drawEngagementDistribution", "engagementDistribution", engagementData);
+            }
+        }
+    }
+
+    private string GetEngagementLevel(object data)
+    {
+        var score = CalculateEngagementScore(data);
+        return score switch
+        {
+            >= 80 => "High",
+            >= 60 => "Medium",
+            >= 40 => "Low",
+            _ => "Very Low"
+        };
+    }
+
+    private double CalculateEngagementScore(object data)
+    {
+        // Mock calculation based on available data
+        var forumPosts = Convert.ToInt32(GetProperty(data, "TotalForumPosts") ?? 0);
+        var coursesCompleted = Convert.ToInt32(GetProperty(data, "CompletedCourses") ?? 0);
+        var coursesEnrolled = Convert.ToInt32(GetProperty(data, "TotalCoursesEnrolled") ?? 1);
+
+        var completionRate = coursesEnrolled > 0 ? (double)coursesCompleted / coursesEnrolled * 100 : 0;
+        var forumActivity = Math.Min(forumPosts * 5, 50); // Cap forum contribution at 50%
+
+        return Math.Min(completionRate * 0.7 + forumActivity * 0.3, 100);
+    }
+
+    private object? GetProperty(object obj, string propertyName)
+    {
+        if (obj == null) return null;
+
+        var property = obj.GetType().GetProperty(propertyName);
+        return property?.GetValue(obj);
+    }
+
+    private IEnumerable<object>? GetCourseProgress(object data)
+    {
+        // Mock course progress data
+        return new[]
+        {
+            new { CourseName = "Mathematics 101", Progress = 85 },
+            new { CourseName = "Physics Fundamentals", Progress = 72 },
+            new { CourseName = "Chemistry Basics", Progress = 94 }
+        };
+    }
+
+    private async Task ExportToPdf()
+    {
+        try
+        {
+            var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+            var user = await UserManager.GetUserAsync(authState.User);
+
+            if (user != null)
+            {
+                var pdfBytes = await ReportRepository.ExportReportToPdfAsync(user, "studentengagement", new { selectedStudentId, startDate, endDate });
+                await JSRuntime.InvokeVoidAsync("downloadFile", "StudentEngagement.pdf", Convert.ToBase64String(pdfBytes));
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error exporting to PDF: {ex.Message}");
+        }
+    }
+
+    private async Task ExportToExcel()
+    {
+        try
+        {
+            var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+            var user = await UserManager.GetUserAsync(authState.User);
+
+            if (user != null)
+            {
+                var excelBytes = await ReportRepository.ExportReportToExcelAsync(user, "studentengagement", new { selectedStudentId, startDate, endDate });
+                await JSRuntime.InvokeVoidAsync("downloadFile", "StudentEngagement.xlsx", Convert.ToBase64String(excelBytes));
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error exporting to Excel: {ex.Message}");
+        }
+    }
+}
