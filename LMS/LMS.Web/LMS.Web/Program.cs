@@ -7,14 +7,19 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using LMS.Infrastructure.Data;
 using LMS.Web.Infrastructure;
+using BlazorBootstrap;
 
 var builder = WebApplication.CreateBuilder(args);
+
 
 // Add services to the container.
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents()
     .AddInteractiveWebAssemblyComponents()
     .AddAuthenticationStateSerialization();
+
+// Add Blazor Bootstrap
+builder.Services.AddBlazorBootstrap();
 
 builder.Services.AddCascadingAuthenticationState();
 builder.Services.AddScoped<IdentityUserAccessor>();
@@ -44,10 +49,10 @@ builder.Services.AddSingleton<IEmailSender<User>, IdentityNoOpEmailSender>();
 builder.Services.AddScoped(sp =>
 {
     var httpContext = sp.GetService<IHttpContextAccessor>()?.HttpContext;
-    var baseAddress = httpContext != null 
+    var baseAddress = httpContext != null
         ? $"{httpContext.Request.Scheme}://{httpContext.Request.Host}/"
         : "https://localhost:5001/"; // Fallback for development
-    
+
     return new HttpClient { BaseAddress = new Uri(baseAddress) };
 });
 

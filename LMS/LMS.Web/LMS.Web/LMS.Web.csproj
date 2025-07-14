@@ -3,11 +3,13 @@
   <PropertyGroup>
     <TargetFramework>net9.0</TargetFramework>
     <Nullable>enable</Nullable>
+     <WarningAsError>true</WarningAsError>
     <ImplicitUsings>enable</ImplicitUsings>
     <UserSecretsId>aspnet-LMS.Web-f5994ca7-9d7d-4c9d-b037-5bdf4e02bbb6</UserSecretsId>
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Blazor.Bootstrap" Version="3.4.0" />
     <ProjectReference Include="..\..\LMS.Data\LMS.Data.csproj" />
     <ProjectReference Include="..\LMS.Web.Client\LMS.Web.Client.csproj" />
 	<PackageReference Include="Microsoft.AspNetCore.Components.QuickGrid.EntityFrameworkAdapter" Version="9.0.0" />
