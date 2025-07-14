@@ -1,0 +1,493 @@
+@using LMS.Web.Repositories.DTOs
+@page "/reports/teacher-performance"
+@inject IReportRepository ReportRepository
+@inject IJSRuntime JSRuntime
+
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="mb-1">🎓 Teacher Performance Report</h2>
+        <p class="text-muted mb-0">Evaluate instructor effectiveness and teaching metrics</p>
+    </div>
+    <div class="export-buttons">
+        <button class="btn btn-outline-report" @onclick="ExportToPdf">
+            <i class="fas fa-file-pdf"></i> Export PDF
+        </button>
+        <button class="btn btn-outline-report" @onclick="ExportToExcel">
+            <i class="fas fa-file-excel"></i> Export Excel
+        </button>
+    </div>
+</div>
+
+<!-- Filters -->
+<div class="report-filters">
+    <div class="row">
+        <div class="col-md-3">
+            <div class="form-group">
+                <label class="form-label">Report Type</label>
+                <select class="form-select" @bind="reportType" @bind:after="OnReportTypeChanged">
+                    <option value="single">Single Teacher</option>
+                    <option value="all">All Teachers</option>
+                </select>
+            </div>
+        </div>
+        @if (reportType == "single")
+        {
+            <div class="col-md-3">
+                <div class="form-group">
+                    <label class="form-label">Teacher ID</label>
+                    <input type="text" class="form-control" @bind="teacherId" placeholder="Enter Teacher ID" />
+                </div>
+            </div>
+        }
+        <div class="col-md-2">
+            <div class="form-group">
+                <label class="form-label">Start Date</label>
+                <input type="date" class="form-control" @bind="startDate" />
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="form-group">
+                <label class="form-label">End Date</label>
+                <input type="date" class="form-control" @bind="endDate" />
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="form-group">
+                <label class="form-label">&nbsp;</label>
+                <button class="btn btn-report d-block w-100" @onclick="LoadData">
+                    🎓 Generate Report
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@if (!string.IsNullOrEmpty(errorMessage))
+{
+    <div class="alert alert-warning" role="alert">
+        <i class="fas fa-exclamation-triangle"></i> @errorMessage
+    </div>
+}
+
+@if (loading)
+{
+    <div class="report-loading">
+        <div class="spinner-border" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+        <p class="mt-2">Loading teacher performance data...</p>
+    </div>
+}
+else if (singleReport != null || multipleReports?.Any() == true)
+{
+    @if (reportType == "single" && singleReport != null)
+    {
+        <!-- Single Teacher Detailed Report -->
+        <div class="row mb-4">
+            <!-- Teacher Information -->
+            <div class="col-md-6">
+                <div class="report-card h-100">
+                    <div class="report-card-header">
+                        <h5 class="mb-0">👨‍🏫 Teacher Profile</h5>
+                    </div>
+                    <div class="report-card-body">
+                        <table class="table table-sm">
+                            <tr><td><strong>Name:</strong></td><td>@singleReport.TeacherName</td></tr>
+                            <tr><td><strong>Teacher ID:</strong></td><td>@singleReport.TeacherId</td></tr>
+                            <tr><td><strong>Email:</strong></td><td>@singleReport.Email</td></tr>
+                            <tr><td><strong>Courses Teaching:</strong></td><td>@singleReport.TotalCoursesTeaching</td></tr>
+                            <tr><td><strong>Total Students:</strong></td><td>@singleReport.TotalStudentsTeaching</td></tr>
+                            <tr><td><strong>Last Login:</strong></td><td>@singleReport.LastLoginDate.ToString("MMM dd, yyyy HH:mm")</td></tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Performance Metrics -->
+            <div class="col-md-6">
+                <div class="report-card h-100">
+                    <div class="report-card-header">
+                        <h5 class="mb-0">📊 Performance Metrics</h5>
+                    </div>
+                    <div class="report-card-body">
+                        <table class="table table-sm">
+                            <tr><td><strong>Avg Class Grade:</strong></td><td><span class="badge @GetGradeBadgeClass(singleReport.AverageClassGrade)">@($"{singleReport.AverageClassGrade:F2}")</span></td></tr>
+                            <tr><td><strong>Satisfaction Rating:</strong></td><td><span class="badge bg-warning">@($"{singleReport.StudentSatisfactionRating:F1}/5.0")</span></td></tr>
+                            <tr><td><strong>Course Completion:</strong></td><td>@($"{singleReport.CourseCompletionRate:F1}%")</td></tr>
+                            <tr><td><strong>Forum Participation:</strong></td><td>@singleReport.ForumParticipation posts</td></tr>
+                            <tr><td><strong>Messages Replied:</strong></td><td>@singleReport.MessagesReplied</td></tr>
+                            <tr><td><strong>Performance Status:</strong></td><td><span class="status-badge @GetStatusClass(singleReport.PerformanceStatus)">@singleReport.PerformanceStatus</span></td></tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Detailed Performance Analysis -->
+        <div class="row mb-4">
+            <div class="col-md-4">
+                <div class="report-card h-100">
+                    <div class="report-card-header">
+                        <h6 class="mb-0">📝 Grading Performance</h6>
+                    </div>
+                    <div class="report-card-body">
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between">
+                                <span>Total Assignments:</span>
+                                <strong>@singleReport.TotalAssignments</strong>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between">
+                                <span>Graded:</span>
+                                <strong>@singleReport.GradedAssignments</strong>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Grading Progress</label>
+                            <div class="progress mb-1">
+                                <div class="progress-bar progress-bar-custom" 
+                                     style="width: @(GetGradingProgress())%"></div>
+                            </div>
+                            <small class="text-muted">@($"{GetGradingProgress():F1}% completed")</small>
+                        </div>
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between">
+                                <span>Avg Grading Time:</span>
+                                <strong>@($"{singleReport.AverageGradingTime:F1} days")</strong>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="report-card h-100">
+                    <div class="report-card-header">
+                        <h6 class="mb-0">⏱️ Time Management</h6>
+                    </div>
+                    <div class="report-card-body">
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between">
+                                <span>Total Time Spent:</span>
+                                <strong>@($"{singleReport.TotalTimeSpent.TotalHours:F0}h")</strong>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between">
+                                <span>Avg per Student:</span>
+                                <strong>@($"{(singleReport.TotalTimeSpent.TotalHours / Math.Max(1, singleReport.TotalStudentsTeaching)):F1}h")</strong>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between">
+                                <span>Courses Completed:</span>
+                                <strong>@singleReport.CoursesCompleted</strong>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Efficiency Rating</label>
+                            <div class="progress mb-1">
+                                <div class="progress-bar bg-info" 
+                                     style="width: @(Math.Min(100, singleReport.CourseCompletionRate))%"></div>
+                            </div>
+                            <small class="text-muted">@($"{singleReport.CourseCompletionRate:F1}% completion rate")</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="report-card h-100">
+                    <div class="report-card-header">
+                        <h6 class="mb-0">🎯 Student Outcomes</h6>
+                    </div>
+                    <div class="report-card-body">
+                        <div class="mb-3">
+                            <label class="form-label">Student Satisfaction</label>
+                            <div class="progress mb-1">
+                                <div class="progress-bar bg-warning" 
+                                     style="width: @((singleReport.StudentSatisfactionRating / 5.0) * 100)%"></div>
+                            </div>
+                            <small class="text-muted">@($"{singleReport.StudentSatisfactionRating:F1} out of 5.0")</small>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Class Performance</label>
+                            <div class="progress mb-1">
+                                <div class="progress-bar @GetGradeBadgeClass(singleReport.AverageClassGrade)" 
+                                     style="width: @(singleReport.AverageClassGrade)%"></div>
+                            </div>
+                            <small class="text-muted">@($"{singleReport.AverageClassGrade:F1}% average grade")</small>
+                        </div>
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between">
+                                <span>Forum Engagement:</span>
+                                <strong>@singleReport.ForumParticipation posts</strong>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+    else if (reportType == "all" && multipleReports?.Any() == true)
+    {
+        <!-- Multiple Teachers Summary -->
+        <div class="stats-grid mb-4">
+            <div class="stat-card">
+                <div class="stat-value">@multipleReports.Count()</div>
+                <div class="stat-label">Total Teachers</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">@multipleReports.Sum(r => r.TotalStudentsTeaching)</div>
+                <div class="stat-label">Total Students</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">@($"{multipleReports.Average(r => r.AverageClassGrade):F1}")</div>
+                <div class="stat-label">Avg Class Grade</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">@($"{multipleReports.Average(r => r.StudentSatisfactionRating):F1}")</div>
+                <div class="stat-label">Avg Satisfaction</div>
+            </div>
+        </div>
+
+        <!-- Teachers Table -->
+        <div class="report-table">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Teacher</th>
+                        <th>Courses/Students</th>
+                        <th>Performance</th>
+                        <th>Grading</th>
+                        <th>Engagement</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var teacher in multipleReports.OrderByDescending(r => r.StudentSatisfactionRating))
+                    {
+                        <tr>
+                            <td>
+                                <strong>@teacher.TeacherName</strong>
+                                <br />
+                                <small class="text-muted">@teacher.Email</small>
+                            </td>
+                            <td>
+                                <div class="d-flex flex-column">
+                                    <span class="badge bg-primary mb-1">@teacher.TotalCoursesTeaching courses</span>
+                                    <span class="badge bg-info">@teacher.TotalStudentsTeaching students</span>
+                                </div>
+                            </td>
+                            <td>
+                                <div><strong>Grade:</strong> <span class="badge @GetGradeBadgeClass(teacher.AverageClassGrade)">@($"{teacher.AverageClassGrade:F1}")</span></div>
+                                <div><strong>Satisfaction:</strong> @($"{teacher.StudentSatisfactionRating:F1}/5.0")</div>
+                            </td>
+                            <td>
+                                <div>@teacher.GradedAssignments/@teacher.TotalAssignments</div>
+                                <small class="text-muted">@($"{teacher.AverageGradingTime:F1} days avg")</small>
+                            </td>
+                            <td>
+                                <div>@teacher.ForumParticipation posts</div>
+                                <div>@teacher.MessagesReplied replies</div>
+                            </td>
+                            <td>
+                                <span class="status-badge @GetStatusClass(teacher.PerformanceStatus)">
+                                    @teacher.PerformanceStatus
+                                </span>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+}
+else if (!loading)
+{
+    <div class="report-card">
+        <div class="report-card-body text-center py-5">
+            <h5 class="text-muted">Ready to Generate Report</h5>
+            <p class="text-muted">
+                @if (reportType == "single")
+                {
+                    <span>Please enter a Teacher ID to generate the performance report.</span>
+                }
+                else
+                {
+                    <span>Click "Generate Report" to view performance for all teachers.</span>
+                }
+            </p>
+        </div>
+    </div>
+}
+
+@code {
+    private TeacherPerformanceReportDto? singleReport;
+    private IEnumerable<TeacherPerformanceReportDto>? multipleReports;
+    private bool loading = false;
+    private string reportType = "single";
+    private string teacherId = string.Empty;
+    private DateTime? startDate;
+    private DateTime? endDate;
+    private string errorMessage = string.Empty;
+    private User user = default!;
+
+    [CascadingParameter]
+    private HttpContext HttpContext { get; set; } = default!;
+
+    protected override async Task OnInitializedAsync()
+    {
+        user = await UserAccessor.GetRequiredUserAsync(HttpContext);
+    }
+
+    private void OnReportTypeChanged()
+    {
+        singleReport = null;
+        multipleReports = null;
+        errorMessage = string.Empty;
+    }
+
+    private async Task LoadData()
+    {
+        errorMessage = string.Empty;
+        
+        if (reportType == "single" && string.IsNullOrEmpty(teacherId))
+        {
+            errorMessage = "Please enter a valid Teacher ID.";
+            return;
+        }
+
+        loading = true;
+        StateHasChanged();
+
+        try
+        {
+            if (reportType == "single")
+            {
+                singleReport = await ReportRepository.GetTeacherPerformanceReportAsync(
+                    user, 
+                    teacherId, 
+                    startDate, 
+                    endDate
+                );
+                multipleReports = null;
+            }
+            else
+            {
+                multipleReports = await ReportRepository.GetAllTeachersPerformanceReportAsync(
+                    user, 
+                    startDate, 
+                    endDate
+                );
+                singleReport = null;
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error loading data: {ex.Message}";
+            singleReport = null;
+            multipleReports = null;
+        }
+        finally
+        {
+            loading = false;
+            StateHasChanged();
+        }
+    }
+
+    private string GetGradeBadgeClass(double grade)
+    {
+        return grade switch
+        {
+            >= 90 => "bg-success",
+            >= 80 => "bg-info", 
+            >= 70 => "bg-warning",
+            >= 60 => "bg-secondary",
+            _ => "bg-danger"
+        };
+    }
+
+    private string GetStatusClass(string status)
+    {
+        return status?.ToLower() switch
+        {
+            "excellent" => "status-active",
+            "good" => "status-completed",
+            "satisfactory" => "status-pending",
+            "needs improvement" => "status-inactive",
+            _ => "status-inactive"
+        };
+    }
+
+    private double GetGradingProgress()
+    {
+        if (singleReport == null || singleReport.TotalAssignments == 0) return 0;
+        return (singleReport.GradedAssignments / (double)singleReport.TotalAssignments) * 100;
+    }
+
+    private async Task ExportToPdf()
+    {
+        try
+        {
+            if (reportType == "single" && singleReport != null)
+            {
+                var data = new {
+                    Teacher = singleReport.TeacherName,
+                    Email = singleReport.Email,
+                    TotalCourses = singleReport.TotalCoursesTeaching,
+                    TotalStudents = singleReport.TotalStudentsTeaching,
+                    AverageGrade = singleReport.AverageClassGrade.ToString("F2"),
+                    SatisfactionRating = singleReport.StudentSatisfactionRating.ToString("F1"),
+                    CompletionRate = $"{singleReport.CourseCompletionRate:F1}%",
+                    PerformanceStatus = singleReport.PerformanceStatus
+                };
+
+                var jsonData = System.Text.Json.JsonSerializer.Serialize(data);
+                await JSRuntime.InvokeVoidAsync("downloadPdf", "Teacher Performance Report", jsonData);
+            }
+            else if (reportType == "all" && multipleReports?.Any() == true)
+            {
+                var data = multipleReports.Select(r => new {
+                    Teacher = r.TeacherName,
+                    Email = r.Email,
+                    TotalCourses = r.TotalCoursesTeaching,
+                    TotalStudents = r.TotalStudentsTeaching,
+                    AverageGrade = r.AverageClassGrade.ToString("F2"),
+                    SatisfactionRating = r.StudentSatisfactionRating.ToString("F1"),
+                    PerformanceStatus = r.PerformanceStatus
+                });
+
+                var jsonData = System.Text.Json.JsonSerializer.Serialize(data);
+                await JSRuntime.InvokeVoidAsync("downloadPdf", "Teacher Performance Report - All Teachers", jsonData);
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Export error: {ex.Message}");
+        }
+    }
+
+    private async Task ExportToExcel()
+    {
+        try
+        {
+            if (reportType == "single" && singleReport != null)
+            {
+                var jsonData = System.Text.Json.JsonSerializer.Serialize(singleReport);
+                await JSRuntime.InvokeVoidAsync("downloadExcel", "Teacher Performance Report", jsonData);
+            }
+            else if (reportType == "all" && multipleReports?.Any() == true)
+            {
+                var jsonData = System.Text.Json.JsonSerializer.Serialize(multipleReports);
+                await JSRuntime.InvokeVoidAsync("downloadExcel", "Teacher Performance Report - All Teachers", jsonData);
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Export error: {ex.Message}");
+        }
+    }
+}

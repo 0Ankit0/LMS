@@ -1,0 +1,370 @@
+@using LMS.Web.Repositories.DTOs
+@page "/reports/attendance"
+@inject IReportRepository ReportRepository
+@inject IJSRuntime JSRuntime
+
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="mb-1">📅 Class Attendance Report</h2>
+        <p class="text-muted mb-0">Track attendance patterns and student participation</p>
+    </div>
+    <div class="export-buttons">
+        <button class="btn btn-outline-report" @onclick="ExportToPdf">
+            <i class="fas fa-file-pdf"></i> Export PDF
+        </button>
+        <button class="btn btn-outline-report" @onclick="ExportToExcel">
+            <i class="fas fa-file-excel"></i> Export Excel
+        </button>
+    </div>
+</div>
+
+<!-- Filters -->
+<div class="report-filters">
+    <div class="row">
+        <div class="col-md-2">
+            <div class="form-group">
+                <label class="form-label">Class ID</label>
+                <input type="number" class="form-control" @bind="classId" @bind:after="LoadData" placeholder="Enter Class ID" />
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="form-group">
+                <label class="form-label">Start Date</label>
+                <input type="date" class="form-control" @bind="startDate" @bind:after="LoadData" />
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="form-group">
+                <label class="form-label">End Date</label>
+                <input type="date" class="form-control" @bind="endDate" @bind:after="LoadData" />
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="form-group">
+                <label class="form-label">Student ID</label>
+                <input type="text" class="form-control" @bind="studentId" @bind:after="LoadData" placeholder="Optional" />
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="form-group">
+                <label class="form-label">&nbsp;</label>
+                <button class="btn btn-report d-block w-100" @onclick="LoadData">
+                    🔍 Load Report
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@if (string.IsNullOrEmpty(classIdError) == false)
+{
+    <div class="alert alert-warning" role="alert">
+        <i class="fas fa-exclamation-triangle"></i> @classIdError
+    </div>
+}
+
+@if (loading)
+{
+    <div class="report-loading">
+        <div class="spinner-border" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+        <p class="mt-2">Loading attendance data...</p>
+    </div>
+}
+else if (reports?.Any() == true)
+{
+    <!-- Summary Statistics -->
+    <div class="stats-grid mb-4">
+        <div class="stat-card">
+            <div class="stat-value">@reports.Count()</div>
+            <div class="stat-label">Total Records</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">@reports.Count(r => r.AttendanceStatus == "Present")</div>
+            <div class="stat-label">Present</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">@reports.Count(r => r.AttendanceStatus == "Absent")</div>
+            <div class="stat-label">Absent</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">@reports.Count(r => r.AttendanceStatus == "Late")</div>
+            <div class="stat-label">Late</div>
+        </div>
+    </div>
+
+    <!-- Attendance Overview -->
+    <div class="report-card mb-4">
+        <div class="report-card-header">
+            <h5 class="mb-0">📊 Attendance Overview</h5>
+        </div>
+        <div class="report-card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <h6>Class Information</h6>
+                    <ul class="list-unstyled">
+                        <li><strong>Class:</strong> @reports.FirstOrDefault()?.ClassName</li>
+                        <li><strong>Class ID:</strong> @reports.FirstOrDefault()?.ClassId</li>
+                        <li><strong>Period:</strong> @startDate?.ToString("MMM dd, yyyy") - @endDate?.ToString("MMM dd, yyyy")</li>
+                    </ul>
+                </div>
+                <div class="col-md-6">
+                    <h6>Attendance Summary</h6>
+                    @{
+                        var uniqueStudents = reports.Select(r => r.StudentId).Distinct().Count();
+                        var avgAttendance = reports.GroupBy(r => r.StudentId)
+                            .Average(g => g.Count(r => r.AttendanceStatus == "Present" || r.AttendanceStatus == "Late") / (double)g.Count() * 100);
+                    }
+                    <ul class="list-unstyled">
+                        <li><strong>Unique Students:</strong> @uniqueStudents</li>
+                        <li><strong>Average Attendance:</strong> @($"{avgAttendance:F1}%")</li>
+                        <li><strong>Date Range:</strong> @((endDate - startDate)?.Days + 1) days</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Data Table -->
+    <div class="report-table">
+        <table class="table table-hover">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Student</th>
+                    <th>Status</th>
+                    <th>Check In</th>
+                    <th>Check Out</th>
+                    <th>Duration</th>
+                    <th>Notes</th>
+                    <th>Attendance %</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var report in reports.OrderBy(r => r.Date).ThenBy(r => r.StudentName))
+                {
+                    <tr>
+                        <td>
+                            <strong>@report.Date.ToString("MMM dd, yyyy")</strong>
+                            <br />
+                            <small class="text-muted">@report.Date.DayOfWeek</small>
+                        </td>
+                        <td>
+                            <strong>@report.StudentName</strong>
+                            <br />
+                            <small class="text-muted">ID: @report.StudentId</small>
+                        </td>
+                        <td>
+                            <span class="status-badge @GetStatusClass(report.AttendanceStatus)">
+                                @report.AttendanceStatus
+                            </span>
+                        </td>
+                        <td>
+                            @if (report.CheckInTime.HasValue)
+                            {
+                                <span>@report.CheckInTime.Value.ToString(@"hh\:mm")</span>
+                            }
+                            else
+                            {
+                                <span class="text-muted">--</span>
+                            }
+                        </td>
+                        <td>
+                            @if (report.CheckOutTime.HasValue)
+                            {
+                                <span>@report.CheckOutTime.Value.ToString(@"hh\:mm")</span>
+                            }
+                            else
+                            {
+                                <span class="text-muted">--</span>
+                            }
+                        </td>
+                        <td>
+                            @if (report.Duration.HasValue)
+                            {
+                                <span>@($"{report.Duration.Value.TotalHours:F1}h")</span>
+                            }
+                            else
+                            {
+                                <span class="text-muted">--</span>
+                            }
+                        </td>
+                        <td>
+                            @if (!string.IsNullOrEmpty(report.Notes))
+                            {
+                                <span title="@report.Notes">@(report.Notes.Length > 30 ? report.Notes.Substring(0, 30) + "..." : report.Notes)</span>
+                            }
+                            else
+                            {
+                                <span class="text-muted">--</span>
+                            }
+                        </td>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <div class="progress flex-grow-1 me-2" style="height: 6px;">
+                                    <div class="progress-bar progress-bar-custom" 
+                                         style="width: @(report.AttendancePercentage)%"></div>
+                                </div>
+                                <small class="text-muted">@($"{report.AttendancePercentage:F1}%")</small>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+else if (!loading && classId.HasValue)
+{
+    <div class="report-card">
+        <div class="report-card-body text-center py-5">
+            <h5 class="text-muted">No Attendance Data Found</h5>
+            <p class="text-muted">No attendance records found for the selected criteria.</p>
+            <p class="text-muted">Please verify the class ID and date range.</p>
+        </div>
+    </div>
+}
+else
+{
+    <div class="report-card">
+        <div class="report-card-body text-center py-5">
+            <h5 class="text-muted">Ready to Generate Report</h5>
+            <p class="text-muted">Please enter a Class ID and select date range to generate the attendance report.</p>
+        </div>
+    </div>
+}
+
+@code {
+    private IEnumerable<AttendanceReportDto>? reports;
+    private bool loading = false;
+    private int? classId;
+    private DateTime? startDate = DateTime.Today.AddDays(-30);
+    private DateTime? endDate = DateTime.Today;
+    private string studentId = string.Empty;
+    private string classIdError = string.Empty;
+    private User user = default!;
+
+    [CascadingParameter]
+    private HttpContext HttpContext { get; set; } = default!;
+
+    protected override async Task OnInitializedAsync()
+    {
+        user = await UserAccessor.GetRequiredUserAsync(HttpContext);
+    }
+
+    private async Task LoadData()
+    {
+        classIdError = string.Empty;
+
+        if (!classId.HasValue)
+        {
+            classIdError = "Please enter a valid Class ID.";
+            return;
+        }
+
+        if (!startDate.HasValue || !endDate.HasValue)
+        {
+            classIdError = "Please select both start and end dates.";
+            return;
+        }
+
+        if (startDate > endDate)
+        {
+            classIdError = "Start date cannot be later than end date.";
+            return;
+        }
+
+
+        loading = true;
+        StateHasChanged();
+
+        try
+        {
+            reports = await ReportRepository.GetAttendanceReportAsync(
+                user, 
+                classId.Value, 
+                startDate.Value, 
+                endDate.Value,
+                string.IsNullOrEmpty(studentId) ? null : studentId
+            );
+        }
+        catch (Exception ex)
+        {
+            classIdError = $"Error loading attendance data: {ex.Message}";
+            reports = new List<AttendanceReportDto>();
+        }
+        finally
+        {
+            loading = false;
+            StateHasChanged();
+        }
+    }
+
+    private string GetStatusClass(string status)
+    {
+        return status?.ToLower() switch
+        {
+            "present" => "status-active",
+            "absent" => "status-inactive",
+            "late" => "status-pending",
+            "excused" => "status-completed",
+            _ => "status-inactive"
+        };
+    }
+
+    private async Task ExportToPdf()
+    {
+        try
+        {
+            if (reports?.Any() == true)
+            {
+                var data = reports.Select(r => new {
+                    Date = r.Date.ToString("yyyy-MM-dd"),
+                    Student = r.StudentName,
+                    Status = r.AttendanceStatus,
+                    CheckIn = r.CheckInTime?.ToString(@"hh\:mm") ?? "",
+                    CheckOut = r.CheckOutTime?.ToString(@"hh\:mm") ?? "",
+                    Duration = r.Duration?.TotalHours.ToString("F1") ?? "",
+                    AttendancePercentage = $"{r.AttendancePercentage:F1}%"
+                });
+
+                var jsonData = System.Text.Json.JsonSerializer.Serialize(data);
+                await JSRuntime.InvokeVoidAsync("downloadPdf", "Attendance Report", jsonData);
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Export error: {ex.Message}");
+        }
+    }
+
+    private async Task ExportToExcel()
+    {
+        try
+        {
+            if (reports?.Any() == true)
+            {
+                var data = reports.Select(r => new {
+                    Date = r.Date,
+                    Student = r.StudentName,
+                    StudentId = r.StudentId,
+                    Status = r.AttendanceStatus,
+                    CheckIn = r.CheckInTime,
+                    CheckOut = r.CheckOutTime,
+                    Duration = r.Duration?.TotalHours,
+                    Notes = r.Notes,
+                    AttendancePercentage = r.AttendancePercentage
+                });
+
+                var jsonData = System.Text.Json.JsonSerializer.Serialize(data);
+                await JSRuntime.InvokeVoidAsync("downloadExcel", "Attendance Report", jsonData);
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Export error: {ex.Message}");
+        }
+    }
+}

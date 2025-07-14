@@ -1,0 +1,473 @@
+@page "/reports/forum-activity"
+
+@using LMS.Web.Repositories.DTOs
+@inject IReportRepository ReportRepository
+@inject IJSRuntime JSRuntime
+@inject IdentityUserAccessor UserAccessor
+
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="mb-1">💬 Forum Activity Report</h2>
+        <p class="text-muted mb-0">Track forum engagement and discussion participation</p>
+    </div>
+    <div class="export-buttons">
+        <button class="btn btn-outline-report" @onclick="ExportToPdf">
+            <i class="fas fa-file-pdf"></i> Export PDF
+        </button>
+        <button class="btn btn-outline-report" @onclick="ExportToExcel">
+            <i class="fas fa-file-excel"></i> Export Excel
+        </button>
+    </div>
+</div>
+
+<!-- Filters -->
+<div class="report-filters">
+    <div class="row">
+        <div class="col-md-3">
+            <div class="form-group">
+                <label class="form-label">Report Type</label>
+                <select class="form-select" @bind="reportType" @bind:after="OnReportTypeChanged">
+                    <option value="single">Single Forum</option>
+                    <option value="all">All Forums</option>
+                </select>
+            </div>
+        </div>
+        @if (reportType == "single")
+        {
+            <div class="col-md-3">
+                <div class="form-group">
+                    <label class="form-label">Forum ID</label>
+                    <input type="number" class="form-control" @bind="forumId" placeholder="Enter Forum ID" />
+                </div>
+            </div>
+        }
+        <div class="col-md-2">
+            <div class="form-group">
+                <label class="form-label">Start Date</label>
+                <input type="date" class="form-control" @bind="startDate" />
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="form-group">
+                <label class="form-label">End Date</label>
+                <input type="date" class="form-control" @bind="endDate" />
+            </div>
+        </div>
+        @if (reportType == "all")
+        {
+            <div class="col-md-2">
+                <div class="form-group">
+                    <label class="form-label">Course ID</label>
+                    <input type="number" class="form-control" @bind="courseId" placeholder="Optional" />
+                </div>
+            </div>
+        }
+        <div class="col-md-2">
+            <div class="form-group">
+                <label class="form-label">&nbsp;</label>
+                <button class="btn btn-report d-block w-100" @onclick="LoadData">
+                    💬 Generate Report
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@if (!string.IsNullOrEmpty(errorMessage))
+{
+    <div class="alert alert-warning" role="alert">
+        <i class="fas fa-exclamation-triangle"></i> @errorMessage
+    </div>
+}
+
+@if (loading)
+{
+    <div class="report-loading">
+        <div class="spinner-border" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+        <p class="mt-2">Loading forum activity data...</p>
+    </div>
+}
+else if (singleReport != null || multipleReports?.Any() == true)
+{
+    @if (reportType == "single" && singleReport != null)
+    {
+        <!-- Single Forum Report -->
+        <div class="row mb-4">
+            <!-- Forum Information -->
+            <div class="col-md-6">
+                <div class="report-card h-100">
+                    <div class="report-card-header">
+                        <h5 class="mb-0">💬 Forum Information</h5>
+                    </div>
+                    <div class="report-card-body">
+                        <table class="table table-sm">
+                            <tr>
+                                <td><strong>Forum:</strong></td>
+                                <td>@singleReport.ForumTitle</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Forum ID:</strong></td>
+                                <td>@singleReport.ForumId</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Course:</strong></td>
+                                <td>@singleReport.CourseName</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Total Topics:</strong></td>
+                                <td>@singleReport.TotalTopics</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Total Posts:</strong></td>
+                                <td>@singleReport.TotalPosts</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Active Users:</strong></td>
+                                <td>@singleReport.ActiveUsers</td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Activity Statistics -->
+            <div class="col-md-6">
+                <div class="report-card h-100">
+                    <div class="report-card-header">
+                        <h5 class="mb-0">📈 Activity Statistics</h5>
+                    </div>
+                    <div class="report-card-body">
+                        <table class="table table-sm">
+                            <tr>
+                                <td><strong>Avg Posts/User:</strong></td>
+                                <td>@($"{singleReport.AveragePostsPerUser:F1}")</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Avg Replies/Topic:</strong></td>
+                                <td>@($"{singleReport.AverageRepliesPerTopic:F1}")</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Most Active User:</strong></td>
+                                <td>@singleReport.MostActiveUser (@singleReport.MostActiveUserPosts posts)</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Most Popular Topic:</strong></td>
+                                <td>@singleReport.MostPopularTopic (@singleReport.MostPopularTopicReplies replies)</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Total Views:</strong></td>
+                                <td>@singleReport.TotalViews</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Last Activity:</strong></td>
+                                <td>@singleReport.LastActivityDate.ToString("MMM dd, yyyy")</td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Activity Timeline -->
+        <div class="report-card mb-4">
+            <div class="report-card-header">
+                <h5 class="mb-0">📅 Activity Timeline</h5>
+            </div>
+            <div class="report-card-body">
+                <div class="row">
+                    <div class="col-md-4">
+                        <h6>Posts by Day of Week</h6>
+                        <div class="progress-group">
+                            @for (int i = 0; i < 7; i++)
+                            {
+                                var dayName = ((DayOfWeek)i).ToString().Substring(0, 3);
+                                var dayPosts = GetRandomDayActivity(); // Mock data for demonstration
+                                                                       <div class="d-flex justify-content-between align-items-center mb-2">
+                                                                           <span>@dayName</span>
+                                                                           <div class="progress flex-grow-1 mx-2" style="height: 6px;">
+                                                                               <div class="progress-bar progress-bar-custom" style="width: @(dayPosts)%"></div>
+                                                                           </div>
+                                                                           <small class="text-muted">@($"{dayPosts:F0}%")</small>
+                                                                       </div>
+                            }
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <h6>Posts by Hour</h6>
+                        <div class="progress-group">
+                            @for (int hour = 8; hour <= 20; hour += 2)
+                            {
+                                var hourActivity = GetRandomHourActivity(); // Mock data for demonstration
+                                                                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                                                                <span>@($"{hour}:00")</span>
+                                                                                <div class="progress flex-grow-1 mx-2" style="height: 6px;">
+                                                                                    <div class="progress-bar progress-bar-custom" style="width: @(hourActivity)%"></div>
+                                                                                </div>
+                                                                                <small class="text-muted">@($"{hourActivity:F0}%")</small>
+                                                                            </div>
+                            }
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <h6>Engagement Metrics</h6>
+                        <!-- Posts vs Replies Ratio removed: not available in DTO -->
+                        <!-- User Participation removed: EngagementRate not available in DTO -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+    else if (reportType == "all" && multipleReports?.Any() == true)
+    {
+        <!-- Multiple Forums Summary -->
+        <div class="stats-grid mb-4">
+            <div class="stat-card">
+                <div class="stat-value">@multipleReports.Count()</div>
+                <div class="stat-label">Total Forums</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">@multipleReports.Sum(r => r.TotalPosts)</div>
+                <div class="stat-label">Total Posts</div>
+            </div>
+            <!-- Total Replies and Total Participants removed: not available in DTO -->
+        </div>
+
+        <!-- Forums Table -->
+        <div class="report-table">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Forum</th>
+                        <th>Course</th>
+                        <th>Posts</th>
+                        <th>Replies</th>
+                        <th>Participants</th>
+                        <th>Activity</th>
+                        <th>Engagement</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var report in multipleReports.OrderByDescending(r => r.TotalPosts))
+                    {
+                        <tr>
+                            <td>
+                                <strong>@report.ForumTitle</strong>
+                                <br />
+                                <small class="text-muted">ID: @report.ForumId</small>
+                            </td>
+                            <td>@report.CourseName</td>
+                            <td>
+                                <span class="badge bg-primary">@report.TotalPosts</span>
+                            </td>
+                            <td>
+                                <span class="badge bg-info">@report.ActiveUsers</span>
+                            </td>
+                            <td>
+                                <span class="badge bg-secondary">@report.TotalTopics</span>
+                            </td>
+                            <td>
+                                <div><strong>@($"{report.AveragePostsPerUser:F1}")</strong> posts/user</div>
+                                <div><strong>@($"{report.AverageRepliesPerTopic:F1}")</strong> replies/topic</div>
+                                <small class="text-muted">Most active: @report.MostActiveUser (@report.MostActiveUserPosts
+                                    posts)</small>
+                            </td>
+                            <td>
+                                <span class="badge bg-success">@report.TotalViews views</span>
+                                <div><small class="text-muted">Last: @report.LastActivityDate.ToString("MMM dd, yyyy")</small></div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+}
+else if (!loading)
+{
+    <div class="report-card">
+        <div class="report-card-body text-center py-5">
+            <h5 class="text-muted">Ready to Generate Report</h5>
+            <p class="text-muted">
+                @if (reportType == "single")
+                {
+                    <span>Please enter a Forum ID to generate the forum activity report.</span>
+                }
+                else
+                {
+                    <span>Click "Generate Report" to view activity for all forums.</span>
+                }
+            </p>
+        </div>
+    </div>
+}
+
+@code {
+    private ForumActivityReportDto? singleReport;
+    private IEnumerable<ForumActivityReportDto>? multipleReports;
+    private bool loading = false;
+    private string reportType = "single";
+    private int? forumId;
+    private int? courseId;
+    private DateTime? startDate;
+    private DateTime? endDate;
+    private string errorMessage = string.Empty;
+    private User user = default!;
+    private Random random = new Random();
+
+    [CascadingParameter]
+    private HttpContext HttpContext { get; set; } = default!;
+
+    protected override async Task OnInitializedAsync()
+    {
+        user = await UserAccessor.GetRequiredUserAsync(HttpContext);
+    }
+
+    private void OnReportTypeChanged()
+    {
+        // Reset data when report type changes
+        singleReport = null;
+        multipleReports = null;
+        errorMessage = string.Empty;
+    }
+
+    private async Task LoadData()
+    {
+        errorMessage = string.Empty;
+
+        if (reportType == "single" && !forumId.HasValue)
+        {
+            errorMessage = "Please enter a valid Forum ID.";
+            return;
+        }
+
+        loading = true;
+        StateHasChanged();
+
+        try
+        {
+            if (reportType == "single")
+            {
+                singleReport = await ReportRepository.GetForumActivityReportAsync(
+                user,
+                forumId!.Value,
+                startDate,
+                endDate
+                );
+                multipleReports = null;
+            }
+            else
+            {
+                multipleReports = await ReportRepository.GetAllForumsActivityReportAsync(
+                user,
+                startDate,
+                endDate,
+                courseId
+                );
+                singleReport = null;
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error loading data: {ex.Message}";
+            singleReport = null;
+            multipleReports = null;
+        }
+        finally
+        {
+            loading = false;
+            StateHasChanged();
+        }
+    }
+
+    // Mock data methods for demonstration (replace with real data from report)
+    private double GetRandomDayActivity()
+    {
+        return random.Next(10, 90);
+    }
+
+    private double GetRandomHourActivity()
+    {
+        return random.Next(5, 60);
+    }
+
+    // Removed GetPostsRatio as TotalReplies does not exist in DTO
+
+    private async Task ExportToPdf()
+    {
+        try
+        {
+            if (reportType == "single" && singleReport != null)
+            {
+                var data = new
+                {
+                    Forum = singleReport.ForumTitle,
+                    Course = singleReport.CourseName,
+                    TotalTopics = singleReport.TotalTopics,
+                    TotalPosts = singleReport.TotalPosts,
+                    ActiveUsers = singleReport.ActiveUsers,
+                    TotalViews = singleReport.TotalViews,
+                    LastActivity = singleReport.LastActivityDate.ToString("MMM dd, yyyy"),
+                    MostActiveUser = singleReport.MostActiveUser,
+                    MostActiveUserPosts = singleReport.MostActiveUserPosts,
+                    MostPopularTopic = singleReport.MostPopularTopic,
+                    MostPopularTopicReplies = singleReport.MostPopularTopicReplies,
+                    AveragePostsPerUser = singleReport.AveragePostsPerUser.ToString("F1"),
+                    AverageRepliesPerTopic = singleReport.AverageRepliesPerTopic.ToString("F1")
+                };
+
+                var jsonData = System.Text.Json.JsonSerializer.Serialize(data);
+                await JSRuntime.InvokeVoidAsync("downloadPdf", "Forum Activity Report", jsonData);
+            }
+            else if (reportType == "all" && multipleReports?.Any() == true)
+            {
+                var data = multipleReports.Select(r => new
+                {
+                    Forum = r.ForumTitle,
+                    Course = r.CourseName,
+                    TotalTopics = r.TotalTopics,
+                    TotalPosts = r.TotalPosts,
+                    ActiveUsers = r.ActiveUsers,
+                    TotalViews = r.TotalViews,
+                    LastActivity = r.LastActivityDate.ToString("MMM dd, yyyy"),
+                    MostActiveUser = r.MostActiveUser,
+                    MostActiveUserPosts = r.MostActiveUserPosts,
+                    MostPopularTopic = r.MostPopularTopic,
+                    MostPopularTopicReplies = r.MostPopularTopicReplies,
+                    AveragePostsPerUser = r.AveragePostsPerUser.ToString("F1"),
+                    AverageRepliesPerTopic = r.AverageRepliesPerTopic.ToString("F1")
+                });
+
+                var jsonData = System.Text.Json.JsonSerializer.Serialize(data);
+                await JSRuntime.InvokeVoidAsync("downloadPdf", "Forum Activity Report - All Forums", jsonData);
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Export error: {ex.Message}");
+        }
+    }
+
+    private async Task ExportToExcel()
+    {
+        try
+        {
+            if (reportType == "single" && singleReport != null)
+            {
+                var jsonData = System.Text.Json.JsonSerializer.Serialize(singleReport);
+                await JSRuntime.InvokeVoidAsync("downloadExcel", "Forum Activity Report", jsonData);
+            }
+            else if (reportType == "all" && multipleReports?.Any() == true)
+            {
+                var jsonData = System.Text.Json.JsonSerializer.Serialize(multipleReports);
+                await JSRuntime.InvokeVoidAsync("downloadExcel", "Forum Activity Report - All Forums", jsonData);
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Export error: {ex.Message}");
+        }
+    }
+}

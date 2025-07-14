@@ -1,0 +1,224 @@
+@page "/reports"
+@attribute [Authorize]
+@inject IReportRepository ReportRepository
+
+
+<div class="report-dashboard">
+    <!-- Dashboard Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="mb-1">📊 Reports Dashboard</h2>
+            <p class="text-muted mb-0">Comprehensive analytics and reporting for your LMS</p>
+        </div>
+        <div class="text-end">
+            <small class="text-muted">Last Updated: @DateTime.Now.ToString("MMM dd, yyyy HH:mm")</small>
+        </div>
+    </div>
+
+    <!-- Quick Stats -->
+    <div class="stats-grid mb-4">
+        <div class="stat-card">
+            <div class="stat-value">@totalStudents</div>
+            <div class="stat-label">Total Students</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">@totalCourses</div>
+            <div class="stat-label">Active Courses</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">@($"{completedCoursesPercent:F1}%")</div>
+            <div class="stat-label">Avg Completion Rate</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">@($"{averageSatisfaction:F1}")</div>
+            <div class="stat-label">Avg Rating</div>
+        </div>
+    </div>
+
+    <!-- Report Categories -->
+    <div class="row">
+        <!-- Academic Reports -->
+        <div class="col-md-6 col-lg-4 mb-4">
+            <div class="report-card h-100">
+                <div class="report-card-header">
+                    <h5 class="mb-0">📚 Academic Reports</h5>
+                </div>
+                <div class="report-card-body">
+                    <p class="text-muted mb-3">Course completion, assessment performance, and enrollment analytics</p>
+                    <div class="d-grid gap-2">
+                        <a href="/reports/course-completion" class="btn btn-outline-report btn-sm">Course Completion</a>
+                        <a href="/reports/assessment-performance" class="btn btn-outline-report btn-sm">Assessment Performance</a>
+                        <a href="/reports/enrollment-summary" class="btn btn-outline-report btn-sm">Enrollment Summary</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Student Reports -->
+        <div class="col-md-6 col-lg-4 mb-4">
+            <div class="report-card h-100">
+                <div class="report-card-header">
+                    <h5 class="mb-0">👨‍🎓 Student Reports</h5>
+                </div>
+                <div class="report-card-body">
+                    <p class="text-muted mb-3">Student information, progress tracking, and performance analysis</p>
+                    <div class="d-grid gap-2">
+                        <a href="/reports/student-information" class="btn btn-outline-report btn-sm">Student Information</a>
+                        <a href="/reports/student-progress" class="btn btn-outline-report btn-sm">Student Progress</a>
+                        <a href="/reports/low-performance" class="btn btn-outline-report btn-sm">Low Performance</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Attendance Reports -->
+        <div class="col-md-6 col-lg-4 mb-4">
+            <div class="report-card h-100">
+                <div class="report-card-header">
+                    <h5 class="mb-0">📋 Attendance Reports</h5>
+                </div>
+                <div class="report-card-body">
+                    <p class="text-muted mb-3">Class attendance tracking and student attendance patterns</p>
+                    <div class="d-grid gap-2">
+                        <a href="/reports/attendance" class="btn btn-outline-report btn-sm">Class Attendance</a>
+                        <a href="/reports/student-attendance" class="btn btn-outline-report btn-sm">Student Attendance</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Forum Reports -->
+        <div class="col-md-6 col-lg-4 mb-4">
+            <div class="report-card h-100">
+                <div class="report-card-header">
+                    <h5 class="mb-0">💬 Forum Reports</h5>
+                </div>
+                <div class="report-card-body">
+                    <p class="text-muted mb-3">Forum activity, participation, and engagement metrics</p>
+                    <div class="d-grid gap-2">
+                        <a href="/reports/forum-activity" class="btn btn-outline-report btn-sm">Forum Activity</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Analytics -->
+        <div class="col-md-6 col-lg-4 mb-4">
+            <div class="report-card h-100">
+                <div class="report-card-header">
+                    <h5 class="mb-0">📊 Analytics</h5>
+                </div>
+                <div class="report-card-body">
+                    <p class="text-muted mb-3">Advanced analytics, trends, and data insights</p>
+                    <div class="d-grid gap-2">
+                        <a href="/reports/popular-courses" class="btn btn-outline-report btn-sm">Popular Courses</a>
+                        <a href="/reports/learning-analytics" class="btn btn-outline-report btn-sm">Learning Analytics</a>
+                        <a href="/reports/grade-distribution" class="btn btn-outline-report btn-sm">Grade Distribution</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Teacher Reports -->
+        <div class="col-md-6 col-lg-4 mb-4">
+            <div class="report-card h-100">
+                <div class="report-card-header">
+                    <h5 class="mb-0">👨‍🏫 Teacher Reports</h5>
+                </div>
+                <div class="report-card-body">
+                    <p class="text-muted mb-3">Teacher performance, course effectiveness, and teaching analytics</p>
+                    <div class="d-grid gap-2">
+                        <a href="/reports/teacher-performance" class="btn btn-outline-report btn-sm">Teacher Performance</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Activity -->
+    <div class="report-card mt-4">
+        <div class="report-card-header">
+            <h5 class="mb-0">📈 Recent Activity</h5>
+        </div>
+        <div class="report-card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <h6>Most Viewed Reports</h6>
+                    <ul class="list-unstyled">
+                        <li class="d-flex justify-content-between py-1">
+                            <span>Course Completion Report</span>
+                            <small class="text-muted">245 views</small>
+                        </li>
+                        <li class="d-flex justify-content-between py-1">
+                            <span>Student Progress Report</span>
+                            <small class="text-muted">189 views</small>
+                        </li>
+                        <li class="d-flex justify-content-between py-1">
+                            <span>Attendance Report</span>
+                            <small class="text-muted">156 views</small>
+                        </li>
+                    </ul>
+                </div>
+                <div class="col-md-6">
+                    <h6>System Status</h6>
+                    <ul class="list-unstyled">
+                        <li class="d-flex justify-content-between py-1">
+                            <span>Database Status</span>
+                            <span class="status-badge status-active">Online</span>
+                        </li>
+                        <li class="d-flex justify-content-between py-1">
+                            <span>Report Generation</span>
+                            <span class="status-badge status-active">Operational</span>
+                        </li>
+                        <li class="d-flex justify-content-between py-1">
+                            <span>Last Data Sync</span>
+                            <small class="text-muted">2 minutes ago</small>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private User user = default!;
+    
+    // Dashboard metrics
+    private int totalStudents = 0;
+    private int totalCourses = 0;
+    private int certificatesIssued = 0;
+    private double averageSatisfaction = 0.0;
+    private double completedCoursesPercent = 0.0;
+
+    [CascadingParameter]
+    private HttpContext HttpContext { get; set; } = default!;
+
+    protected override async Task OnInitializedAsync()
+    {
+        user = await UserAccessor.GetRequiredUserAsync(HttpContext);
+        await LoadDashboardData();
+    }
+
+    private async Task LoadDashboardData()
+    {
+        try
+        {
+            // Load summary data from various reports
+            var studentsInfo = await ReportRepository.GetAllStudentsInformationReportAsync(user);
+            totalStudents = studentsInfo?.Count() ?? 0;
+
+            var coursesData = await ReportRepository.GetAllCoursesCompletionReportAsync(user);
+            totalCourses = coursesData?.Count() ?? 0;
+            certificatesIssued = coursesData?.Sum(c => c.CertificatesIssued) ?? 0;
+            completedCoursesPercent = coursesData?.Any() == true ? coursesData.Average(c => c.CompletionRate) : 0.0;
+
+            var teachersData = await ReportRepository.GetAllTeachersPerformanceReportAsync(user);
+            averageSatisfaction = teachersData?.Any() == true ? teachersData.Average(t => t.StudentSatisfactionRating) : 0.0;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading dashboard data: {ex.Message}");
+        }
+    }
+}

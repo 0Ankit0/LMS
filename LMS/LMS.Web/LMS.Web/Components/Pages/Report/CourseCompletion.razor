@@ -1,0 +1,278 @@
+@using LMS.Web.Repositories.DTOs
+@page "/reports/course-completion"
+@inject IReportRepository ReportRepository
+@inject IJSRuntime JSRuntime
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="mb-1">📈 Course Completion Report</h2>
+        <p class="text-muted mb-0">Track course completion rates and student progress</p>
+    </div>
+    <div class="export-buttons">
+        <button class="btn btn-outline-report" @onclick="ExportToPdf">
+            <i class="fas fa-file-pdf"></i> Export PDF
+        </button>
+        <button class="btn btn-outline-report" @onclick="ExportToExcel">
+            <i class="fas fa-file-excel"></i> Export Excel
+        </button>
+    </div>
+</div>
+
+<!-- Filters -->
+<div class="report-filters">
+    <div class="row">
+        <div class="col-md-3">
+            <div class="form-group">
+                <label class="form-label">Start Date</label>
+                <input type="date" class="form-control" @bind="startDate" @bind:after="LoadData" />
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="form-group">
+                <label class="form-label">End Date</label>
+                <input type="date" class="form-control" @bind="endDate" @bind:after="LoadData" />
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="form-group">
+                <label class="form-label">Instructor</label>
+                <select class="form-select" @bind="selectedInstructor" @bind:after="LoadData">
+                    <option value="">All Instructors</option>
+                    <!-- Add instructor options here -->
+                </select>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="form-group">
+                <label class="form-label">Category</label>
+                <select class="form-select" @bind="selectedCategory" @bind:after="LoadData">
+                    <option value="">All Categories</option>
+                    <!-- Add category options here -->
+                </select>
+            </div>
+        </div>
+    </div>
+</div>
+
+@if (loading)
+{
+    <div class="report-loading">
+        <div class="spinner-border" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+        <p class="mt-2">Loading course completion data...</p>
+    </div>
+}
+else if (reports?.Any() == true)
+{
+    <!-- Summary Statistics -->
+    <div class="stats-grid mb-4">
+        <div class="stat-card">
+            <div class="stat-value">@reports.Count()</div>
+            <div class="stat-label">Total Courses</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">@reports.Sum(r => r.TotalEnrollments)</div>
+            <div class="stat-label">Total Enrollments</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">@($"{reports.Average(r => r.CompletionRate):F1}%")</div>
+            <div class="stat-label">Avg Completion Rate</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">@reports.Sum(r => r.CompletedEnrollments)</div>
+            <div class="stat-label">Total Completed</div>
+        </div>
+    </div>
+
+    <!-- Data Table -->
+    <div class="report-table">
+        <table class="table table-hover">
+            <thead>
+                <tr>
+                    <th>Course</th>
+                    <th>Instructor</th>
+                    <th>Total Enrollments</th>
+                    <th>Completed</th>
+                    <th>In Progress</th>
+                    <th>Completion Rate</th>
+                    <th>Avg Grade</th>
+                    <th>Avg Time to Complete</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var report in reports)
+                {
+                    <tr>
+                        <td>
+                            <strong>@report.CourseName</strong>
+                            <br />
+                            <small class="text-muted">ID: @report.CourseId</small>
+                        </td>
+                        <td>@report.InstructorName</td>
+                        <td>
+                            <span class="badge bg-primary">@report.TotalEnrollments</span>
+                        </td>
+                        <td>
+                            <span class="badge bg-success">@report.CompletedEnrollments</span>
+                        </td>
+                        <td>
+                            <span class="badge bg-warning">@report.ActiveEnrollments</span>
+                        </td>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <div class="progress flex-grow-1 me-2" style="height: 6px;">
+                                    <div class="progress-bar progress-bar-custom"
+                                         style="width: @(report.CompletionRate)%"></div>
+                                </div>
+                                <small class="text-muted">@($"{report.CompletionRate:F1}%")</small>
+                            </div>
+                        </td>
+                        <td>
+                            @if (report.AverageFinalGrade > 0)
+                            {
+                                <span class="badge @GetGradeBadgeClass(report.AverageFinalGrade)">
+                                    @($"{report.AverageFinalGrade:F1}")
+                                </span>
+                            }
+                            else
+                            {
+                                <span class="text-muted">N/A</span>
+                            }
+                        </td>
+                        <td>
+                            @if (report.AverageCompletionTime > 0)
+                            {
+                                <span>@($"{report.AverageCompletionTime:F0} days")</span>
+                            }
+                            else
+                            {
+                                <span class="text-muted">N/A</span>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+else
+{
+    <div class="report-card">
+        <div class="report-card-body text-center py-5">
+            <h5 class="text-muted">No Data Available</h5>
+            <p class="text-muted">No course completion data found for the selected criteria.</p>
+        </div>
+    </div>
+}
+
+@code {
+    private List<CourseCompletionReportDto>? reports;
+    private bool loading = true;
+    private DateTime? startDate;
+    private DateTime? endDate;
+    private string selectedInstructor = string.Empty;
+    private string selectedCategory = string.Empty;
+    private User user = default!;
+
+    [CascadingParameter]
+    private HttpContext HttpContext { get; set; } = default!;
+
+    protected override async Task OnInitializedAsync()
+    {
+        user = await UserAccessor.GetRequiredUserAsync(HttpContext);
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        loading = true;
+        StateHasChanged();
+
+        try
+        {
+            reports = (await ReportRepository.GetAllCoursesCompletionReportAsync(
+                user,
+                startDate,
+                endDate,
+                string.IsNullOrEmpty(selectedInstructor) ? null : selectedInstructor,
+                string.IsNullOrEmpty(selectedCategory) ? null : selectedCategory
+            )).ToList();
+        }
+        catch (Exception ex)
+        {
+            // Handle error
+            Console.WriteLine($"Error loading data: {ex.Message}");
+            reports = new List<CourseCompletionReportDto>();
+        }
+        finally
+        {
+            loading = false;
+            StateHasChanged();
+        }
+    }
+
+    private string GetGradeBadgeClass(double grade)
+    {
+        return grade switch
+        {
+            >= 90 => "bg-success",
+            >= 80 => "bg-info",
+            >= 70 => "bg-warning",
+            >= 60 => "bg-secondary",
+            _ => "bg-danger"
+        };
+    }
+
+    private async Task ExportToPdf()
+    {
+        try
+        {
+            if (reports?.Any() == true)
+            {
+                var data = reports.Select(r => new
+                {
+                    Course = r.CourseName,
+                    Instructor = r.InstructorName,
+                    TotalEnrollments = r.TotalEnrollments,
+                    Completed = r.CompletedEnrollments,
+                    CompletionRate = $"{r.CompletionRate:F1}%",
+                    AverageGrade = r.AverageFinalGrade.ToString("F1")
+                });
+
+                var jsonData = System.Text.Json.JsonSerializer.Serialize(data);
+                await JSRuntime.InvokeVoidAsync("downloadPdf", "Course Completion Report", jsonData);
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Export error: {ex.Message}");
+        }
+    }
+
+    private async Task ExportToExcel()
+    {
+        try
+        {
+            if (reports?.Any() == true)
+            {
+                var data = reports.Select(r => new
+                {
+                    Course = r.CourseName,
+                    Instructor = r.InstructorName,
+                    TotalEnrollments = r.TotalEnrollments,
+                    Completed = r.CompletedEnrollments,
+                    CompletionRate = r.CompletionRate,
+                    AverageGrade = r.AverageFinalGrade
+                });
+
+                var jsonData = System.Text.Json.JsonSerializer.Serialize(data);
+                await JSRuntime.InvokeVoidAsync("downloadExcel", "Course Completion Report", jsonData);
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Export error: {ex.Message}");
+        }
+    }
+}

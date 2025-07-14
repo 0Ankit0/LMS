@@ -1,0 +1,534 @@
+@using LMS.Web.Repositories.DTOs
+@page "/reports/grade-distribution"
+
+@inject IReportRepository ReportRepository
+@inject IJSRuntime JSRuntime
+@inject IdentityUserAccessor UserAccessor
+
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="mb-1">📊 Grade Distribution Report</h2>
+        <p class="text-muted mb-0">Analyze grade distributions and class performance metrics</p>
+    </div>
+    <div class="export-buttons">
+        <button class="btn btn-outline-report" @onclick="ExportToPdf">
+            <i class="fas fa-file-pdf"></i> Export PDF
+        </button>
+        <button class="btn btn-outline-report" @onclick="ExportToExcel">
+            <i class="fas fa-file-excel"></i> Export Excel
+        </button>
+    </div>
+</div>
+
+<!-- Filters -->
+<div class="report-filters">
+    <div class="row">
+        <div class="col-md-3">
+            <div class="form-group">
+                <label class="form-label">Report Type</label>
+                <select class="form-select" @bind="reportType" @bind:after="OnReportTypeChanged">
+                    <option value="single">Single Class</option>
+                    <option value="all">All Classes</option>
+                </select>
+            </div>
+        </div>
+        @if (reportType == "single")
+        {
+            <div class="col-md-3">
+                <div class="form-group">
+                    <label class="form-label">Class ID</label>
+                    <input type="number" class="form-control" @bind="classId" placeholder="Enter Class ID" />
+                </div>
+            </div>
+        }
+        <div class="col-md-2">
+            <div class="form-group">
+                <label class="form-label">Start Date</label>
+                <input type="date" class="form-control" @bind="startDate" />
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="form-group">
+                <label class="form-label">End Date</label>
+                <input type="date" class="form-control" @bind="endDate" />
+            </div>
+        </div>
+        @if (reportType == "all")
+        {
+            <div class="col-md-2">
+                <div class="form-group">
+                    <label class="form-label">Instructor</label>
+                    <input type="text" class="form-control" @bind="instructorId" placeholder="Optional" />
+                </div>
+            </div>
+        }
+        <div class="col-md-2">
+            <div class="form-group">
+                <label class="form-label">&nbsp;</label>
+                <button class="btn btn-report d-block w-100" @onclick="LoadData">
+                    📊 Generate Report
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@if (!string.IsNullOrEmpty(errorMessage))
+{
+    <div class="alert alert-warning" role="alert">
+        <i class="fas fa-exclamation-triangle"></i> @errorMessage
+    </div>
+}
+
+@if (loading)
+{
+    <div class="report-loading">
+        <div class="spinner-border" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+        <p class="mt-2">Loading grade distribution data...</p>
+    </div>
+}
+else if (singleReport != null || multipleReports?.Any() == true)
+{
+    @if (reportType == "single" && singleReport != null)
+    {
+        <!-- Single Class Report -->
+        <div class="row mb-4">
+            <!-- Class Information -->
+            <div class="col-md-6">
+                <div class="report-card h-100">
+                    <div class="report-card-header">
+                        <h5 class="mb-0">📚 Class Information</h5>
+                    </div>
+                    <div class="report-card-body">
+                        <table class="table table-sm">
+                            <tr><td><strong>Class:</strong></td><td>@singleReport.ClassName</td></tr>
+                            <tr><td><strong>Class ID:</strong></td><td>@singleReport.ClassId</td></tr>
+                            <tr><td><strong>Instructor:</strong></td><td>@singleReport.InstructorName</td></tr>
+                            <tr><td><strong>Total Students:</strong></td><td>@singleReport.TotalStudents</td></tr>
+                            <tr><td><strong>Report Generated:</strong></td><td>@singleReport.ReportGeneratedDate.ToString("MMM dd, yyyy HH:mm")</td></tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Grade Statistics -->
+            <div class="col-md-6">
+                <div class="report-card h-100">
+                    <div class="report-card-header">
+                        <h5 class="mb-0">📈 Grade Statistics</h5>
+                    </div>
+                    <div class="report-card-body">
+                        <table class="table table-sm">
+                            <tr><td><strong>Average Grade:</strong></td><td><strong>@($"{singleReport.AverageGrade:F2}")</strong></td></tr>
+                            <tr><td><strong>Median Grade:</strong></td><td>@($"{singleReport.MedianGrade:F2}")</td></tr>
+                            <tr><td><strong>Highest Grade:</strong></td><td><span class="badge bg-success">@($"{singleReport.HighestGrade:F2}")</span></td></tr>
+                            <tr><td><strong>Lowest Grade:</strong></td><td><span class="badge bg-danger">@($"{singleReport.LowestGrade:F2}")</span></td></tr>
+                            <tr><td><strong>Standard Deviation:</strong></td><td>@($"{singleReport.StandardDeviation:F2}")</td></tr>
+                            <tr><td><strong>Grade Range:</strong></td><td>@singleReport.GradeRange</td></tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Grade Distribution Chart -->
+        <div class="row mb-4">
+            <div class="col-md-8">
+                <div class="report-card">
+                    <div class="report-card-header">
+                        <h5 class="mb-0">📊 Grade Distribution Chart</h5>
+                    </div>
+                    <div class="report-card-body">
+                        <div class="row text-center">
+                            <div class="col">
+                                <div class="grade-bar">
+                                    <div class="grade-bar-fill bg-success" style="height: @(GetBarHeight(singleReport.AGrades, singleReport.TotalStudents))%"></div>
+                                    <div class="grade-label">A (@singleReport.AGrades)</div>
+                                    <div class="grade-percentage">@(GetPercentage(singleReport.AGrades, singleReport.TotalStudents))%</div>
+                                </div>
+                            </div>
+                            <div class="col">
+                                <div class="grade-bar">
+                                    <div class="grade-bar-fill bg-info" style="height: @(GetBarHeight(singleReport.BGrades, singleReport.TotalStudents))%"></div>
+                                    <div class="grade-label">B (@singleReport.BGrades)</div>
+                                    <div class="grade-percentage">@(GetPercentage(singleReport.BGrades, singleReport.TotalStudents))%</div>
+                                </div>
+                            </div>
+                            <div class="col">
+                                <div class="grade-bar">
+                                    <div class="grade-bar-fill bg-warning" style="height: @(GetBarHeight(singleReport.CGrades, singleReport.TotalStudents))%"></div>
+                                    <div class="grade-label">C (@singleReport.CGrades)</div>
+                                    <div class="grade-percentage">@(GetPercentage(singleReport.CGrades, singleReport.TotalStudents))%</div>
+                                </div>
+                            </div>
+                            <div class="col">
+                                <div class="grade-bar">
+                                    <div class="grade-bar-fill bg-secondary" style="height: @(GetBarHeight(singleReport.DGrades, singleReport.TotalStudents))%"></div>
+                                    <div class="grade-label">D (@singleReport.DGrades)</div>
+                                    <div class="grade-percentage">@(GetPercentage(singleReport.DGrades, singleReport.TotalStudents))%</div>
+                                </div>
+                            </div>
+                            <div class="col">
+                                <div class="grade-bar">
+                                    <div class="grade-bar-fill bg-danger" style="height: @(GetBarHeight(singleReport.FGrades, singleReport.TotalStudents))%"></div>
+                                    <div class="grade-label">F (@singleReport.FGrades)</div>
+                                    <div class="grade-percentage">@(GetPercentage(singleReport.FGrades, singleReport.TotalStudents))%</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="report-card h-100">
+                    <div class="report-card-header">
+                        <h5 class="mb-0">🎯 Performance Summary</h5>
+                    </div>
+                    <div class="report-card-body">
+                        @{
+                            var passRate = GetPercentage(singleReport.AGrades + singleReport.BGrades + singleReport.CGrades + singleReport.DGrades, singleReport.TotalStudents);
+                            var excellentRate = GetPercentage(singleReport.AGrades + singleReport.BGrades, singleReport.TotalStudents);
+                        }
+                        <div class="mb-3">
+                            <label class="form-label">Pass Rate (D or above)</label>
+                            <div class="progress mb-1">
+                                <div class="progress-bar bg-success" style="width: @(passRate)%"></div>
+                            </div>
+                            <small class="text-muted">@($"{passRate:F1}%")</small>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Excellence Rate (B or above)</label>
+                            <div class="progress mb-1">
+                                <div class="progress-bar bg-info" style="width: @(excellentRate)%"></div>
+                            </div>
+                            <small class="text-muted">@($"{excellentRate:F1}%")</small>
+                        </div>
+                        <div class="mt-3">
+                            <strong>Class Performance:</strong>
+                            <span class="badge @GetPerformanceBadgeClass(singleReport.AverageGrade)">
+                                @GetPerformanceLevel(singleReport.AverageGrade)
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+    else if (reportType == "all" && multipleReports?.Any() == true)
+    {
+        <!-- Multiple Classes Summary -->
+        <div class="stats-grid mb-4">
+            <div class="stat-card">
+                <div class="stat-value">@multipleReports.Count()</div>
+                <div class="stat-label">Total Classes</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">@multipleReports.Sum(r => r.TotalStudents)</div>
+                <div class="stat-label">Total Students</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">@($"{multipleReports.Average(r => r.AverageGrade):F2}")</div>
+                <div class="stat-label">Overall Average</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">@($"{GetOverallPassRate():F1}%")</div>
+                <div class="stat-label">Overall Pass Rate</div>
+            </div>
+        </div>
+
+        <!-- Classes Table -->
+        <div class="report-table">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Class</th>
+                        <th>Instructor</th>
+                        <th>Students</th>
+                        <th>Grade Distribution</th>
+                        <th>Statistics</th>
+                        <th>Performance</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var report in multipleReports.OrderBy(r => r.ClassName))
+                    {
+                        <tr>
+                            <td>
+                                <strong>@report.ClassName</strong>
+                                <br />
+                                <small class="text-muted">ID: @report.ClassId</small>
+                            </td>
+                            <td>@report.InstructorName</td>
+                            <td>
+                                <span class="badge bg-primary">@report.TotalStudents</span>
+                            </td>
+                            <td>
+                                <div class="d-flex gap-1">
+                                    <span class="badge bg-success" title="A Grades">A: @report.AGrades</span>
+                                    <span class="badge bg-info" title="B Grades">B: @report.BGrades</span>
+                                    <span class="badge bg-warning" title="C Grades">C: @report.CGrades</span>
+                                    <span class="badge bg-secondary" title="D Grades">D: @report.DGrades</span>
+                                    <span class="badge bg-danger" title="F Grades">F: @report.FGrades</span>
+                                </div>
+                            </td>
+                            <td>
+                                <div><strong>Avg:</strong> @($"{report.AverageGrade:F2}")</div>
+                                <div><small class="text-muted">Range: @report.GradeRange</small></div>
+                            </td>
+                            <td>
+                                @{
+                                    var classPassRate = GetPercentage(report.AGrades + report.BGrades + report.CGrades + report.DGrades, report.TotalStudents);
+                                }
+                                <div class="progress mb-1" style="height: 6px;">
+                                    <div class="progress-bar progress-bar-custom" style="width: @(classPassRate)%"></div>
+                                </div>
+                                <small class="text-muted">@($"{classPassRate:F1}% pass rate")</small>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+}
+else if (!loading)
+{
+    <div class="report-card">
+        <div class="report-card-body text-center py-5">
+            <h5 class="text-muted">Ready to Generate Report</h5>
+            <p class="text-muted">
+                @if (reportType == "single")
+                {
+                    <span>Please enter a Class ID to generate the grade distribution report.</span>
+                }
+                else
+                {
+                    <span>Click "Generate Report" to view grade distribution for all classes.</span>
+                }
+            </p>
+        </div>
+    </div>
+}
+
+<style>
+    .grade-bar {
+        position: relative;
+        height: 200px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: flex-end;
+        margin-bottom: 20px;
+    }
+
+    .grade-bar-fill {
+        width: 60px;
+        transition: height 0.3s ease;
+        border-radius: 4px 4px 0 0;
+        margin-bottom: 10px;
+    }
+
+    .grade-label {
+        font-weight: bold;
+        margin-bottom: 5px;
+    }
+
+    .grade-percentage {
+        font-size: 0.9rem;
+        color: #666;
+    }
+</style>
+
+@code {
+    private GradeDistributionReportDto? singleReport;
+    private IEnumerable<GradeDistributionReportDto>? multipleReports;
+    private bool loading = false;
+    private string reportType = "single";
+    private int? classId;
+    private DateTime? startDate;
+    private DateTime? endDate;
+    private string instructorId = string.Empty;
+    private string errorMessage = string.Empty;
+    private User user = default!;
+
+    [CascadingParameter]
+    private HttpContext HttpContext { get; set; } = default!;
+
+    protected override async Task OnInitializedAsync()
+    {
+        user = await UserAccessor.GetRequiredUserAsync(HttpContext);
+    }
+
+    private void OnReportTypeChanged()
+    {
+        // Reset data when report type changes
+        singleReport = null;
+        multipleReports = null;
+        errorMessage = string.Empty;
+    }
+
+    private async Task LoadData()
+    {
+        errorMessage = string.Empty;
+        
+        if (reportType == "single" && !classId.HasValue)
+        {
+            errorMessage = "Please enter a valid Class ID.";
+            return;
+        }
+
+        loading = true;
+        StateHasChanged();
+
+        try
+        {
+            if (reportType == "single")
+            {
+                singleReport = await ReportRepository.GetGradeDistributionReportAsync(
+                    user, 
+                    classId!.Value, 
+                    startDate, 
+                    endDate
+                );
+                multipleReports = null;
+            }
+            else
+            {
+                multipleReports = await ReportRepository.GetAllClassesGradeDistributionReportAsync(
+                    user, 
+                    startDate, 
+                    endDate, 
+                    string.IsNullOrEmpty(instructorId) ? null : instructorId
+                );
+                singleReport = null;
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error loading data: {ex.Message}";
+            singleReport = null;
+            multipleReports = null;
+        }
+        finally
+        {
+            loading = false;
+            StateHasChanged();
+        }
+    }
+
+    private double GetBarHeight(int gradeCount, int totalStudents)
+    {
+        if (totalStudents == 0) return 0;
+        return Math.Max(5, (gradeCount / (double)totalStudents) * 100);
+    }
+
+    private double GetPercentage(int count, int total)
+    {
+        if (total == 0) return 0;
+        return (count / (double)total) * 100;
+    }
+
+    private string GetPerformanceBadgeClass(double averageGrade)
+    {
+        return averageGrade switch
+        {
+            >= 90 => "bg-success",
+            >= 80 => "bg-info",
+            >= 70 => "bg-warning",
+            >= 60 => "bg-secondary",
+            _ => "bg-danger"
+        };
+    }
+
+    private string GetPerformanceLevel(double averageGrade)
+    {
+        return averageGrade switch
+        {
+            >= 90 => "Excellent",
+            >= 80 => "Good",
+            >= 70 => "Satisfactory",
+            >= 60 => "Below Average",
+            _ => "Poor"
+        };
+    }
+
+    private double GetOverallPassRate()
+    {
+        if (multipleReports?.Any() != true) return 0;
+        
+        var totalStudents = multipleReports.Sum(r => r.TotalStudents);
+        var totalPassing = multipleReports.Sum(r => r.AGrades + r.BGrades + r.CGrades + r.DGrades);
+        
+        return totalStudents > 0 ? (totalPassing / (double)totalStudents) * 100 : 0;
+    }
+
+    private async Task ExportToPdf()
+    {
+        try
+        {
+            if (reportType == "single" && singleReport != null)
+            {
+                var data = new {
+                    Class = singleReport.ClassName,
+                    Instructor = singleReport.InstructorName,
+                    TotalStudents = singleReport.TotalStudents,
+                    AverageGrade = singleReport.AverageGrade.ToString("F2"),
+                    MedianGrade = singleReport.MedianGrade.ToString("F2"),
+                    AGrades = singleReport.AGrades,
+                    BGrades = singleReport.BGrades,
+                    CGrades = singleReport.CGrades,
+                    DGrades = singleReport.DGrades,
+                    FGrades = singleReport.FGrades
+                };
+
+                var jsonData = System.Text.Json.JsonSerializer.Serialize(data);
+                await JSRuntime.InvokeVoidAsync("downloadPdf", "Grade Distribution Report", jsonData);
+            }
+            else if (reportType == "all" && multipleReports?.Any() == true)
+            {
+                var data = multipleReports.Select(r => new {
+                    Class = r.ClassName,
+                    Instructor = r.InstructorName,
+                    TotalStudents = r.TotalStudents,
+                    AverageGrade = r.AverageGrade.ToString("F2"),
+                    AGrades = r.AGrades,
+                    BGrades = r.BGrades,
+                    CGrades = r.CGrades,
+                    DGrades = r.DGrades,
+                    FGrades = r.FGrades
+                });
+
+                var jsonData = System.Text.Json.JsonSerializer.Serialize(data);
+                await JSRuntime.InvokeVoidAsync("downloadPdf", "Grade Distribution Report - All Classes", jsonData);
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Export error: {ex.Message}");
+        }
+    }
+
+    private async Task ExportToExcel()
+    {
+        try
+        {
+            if (reportType == "single" && singleReport != null)
+            {
+                var jsonData = System.Text.Json.JsonSerializer.Serialize(singleReport);
+                await JSRuntime.InvokeVoidAsync("downloadExcel", "Grade Distribution Report", jsonData);
+            }
+            else if (reportType == "all" && multipleReports?.Any() == true)
+            {
+                var jsonData = System.Text.Json.JsonSerializer.Serialize(multipleReports);
+                await JSRuntime.InvokeVoidAsync("downloadExcel", "Grade Distribution Report - All Classes", jsonData);
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Export error: {ex.Message}");
+        }
+    }
+}

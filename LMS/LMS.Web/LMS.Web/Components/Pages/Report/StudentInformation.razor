@@ -1,0 +1,421 @@
+@page "/reports/student-information"
+@inject IReportRepository ReportRepository
+@inject IJSRuntime JSRuntime
+
+<PageTitle>Student Information Report</PageTitle>
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="mb-1">👨‍🎓 Student Information Report</h2>
+        <p class="text-muted mb-0">Comprehensive student profiles and academic records</p>
+    </div>
+    <div class="export-buttons">
+        <button class="btn btn-outline-report" @onclick="ExportToPdf">
+            <i class="fas fa-file-pdf"></i> Export PDF
+        </button>
+        <button class="btn btn-outline-report" @onclick="ExportToExcel">
+            <i class="fas fa-file-excel"></i> Export Excel
+        </button>
+    </div>
+</div>
+
+<!-- Filters -->
+<div class="report-filters">
+    <div class="row">
+        <div class="col-md-3">
+            <div class="form-group">
+                <label class="form-label">Student ID (Optional)</label>
+                <input type="text" class="form-control" @bind="studentId" placeholder="Specific student" />
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="form-group">
+                <label class="form-label">Status</label>
+                <select class="form-select" @bind="selectedStatus">
+                    <option value="">All Status</option>
+                    <option value="active">Active</option>
+                    <option value="inactive">Inactive</option>
+                </select>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="form-group">
+                <label class="form-label">Start Date</label>
+                <input type="date" class="form-control" @bind="startDate" />
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="form-group">
+                <label class="form-label">End Date</label>
+                <input type="date" class="form-control" @bind="endDate" />
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="form-group">
+                <label class="form-label">Course ID</label>
+                <input type="number" class="form-control" @bind="courseId" placeholder="Optional" />
+            </div>
+        </div>
+        <div class="col-md-1">
+            <div class="form-group">
+                <label class="form-label">&nbsp;</label>
+                <button class="btn btn-report d-block w-100" @onclick="LoadData">
+                    🔍 Search
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@if (loading)
+{
+    <div class="report-loading">
+        <div class="spinner-border" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+        <p class="mt-2">Loading student information...</p>
+    </div>
+}
+else if (reports?.Any() == true)
+{
+    <!-- Summary Statistics -->
+    <div class="stats-grid mb-4">
+        <div class="stat-card">
+            <div class="stat-value">@reports.Count()</div>
+            <div class="stat-label">Total Students</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">@reports.Count(r => r.IsActive)</div>
+            <div class="stat-label">Active Students</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">@($"{reports.Average(r => r.OverallGPA):F2}")</div>
+            <div class="stat-label">Average GPA</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">@reports.Sum(r => r.TotalCoursesEnrolled)</div>
+            <div class="stat-label">Total Enrollments</div>
+        </div>
+    </div>
+
+    <!-- Search Results -->
+    @if (!string.IsNullOrEmpty(studentId))
+    {
+        <!-- Single Student Detail View -->
+        var student = reports.FirstOrDefault();
+        if (student != null)
+        {
+            <div class="report-card mb-4">
+                <div class="report-card-header">
+                    <h5 class="mb-0">👤 Student Profile</h5>
+                </div>
+                <div class="report-card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6>Personal Information</h6>
+                            <table class="table table-sm">
+                                <tr>
+                                    <td><strong>Name:</strong></td>
+                                    <td>@student.FirstName @student.LastName</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Student ID:</strong></td>
+                                    <td>@student.StudentId</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Email:</strong></td>
+                                    <td>@student.Email</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Phone:</strong></td>
+                                    <td>@student.PhoneNumber</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Date of Birth:</strong></td>
+                                    <td>@student.DateOfBirth.ToString("MMM dd, yyyy")</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Registration:</strong></td>
+                                    <td>@student.RegistrationDate.ToString("MMM dd, yyyy")</td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>Academic Information</h6>
+                            <table class="table table-sm">
+                                <tr>
+                                    <td><strong>Status:</strong></td>
+                                    <td><span
+                                            class="status-badge @(student.IsActive ? "status-active" : "status-inactive")">@student.Status</span>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Overall GPA:</strong></td>
+                                    <td><strong>@($"{student.OverallGPA:F2}")</strong></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Total Courses:</strong></td>
+                                    <td>@student.TotalCoursesEnrolled</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Completed:</strong></td>
+                                    <td>@student.CompletedCourses</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Active:</strong></td>
+                                    <td>@student.ActiveCourses</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Total Points:</strong></td>
+                                    <td>@student.TotalPoints</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Level:</strong></td>
+                                    <td>@student.Level</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Last Login:</strong></td>
+                                    <td>@student.LastLoginDate?.ToString("MMM dd, yyyy HH:mm")</td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                    @if (!string.IsNullOrEmpty(student.Bio))
+                    {
+                        <div class="mt-3">
+                            <h6>Bio</h6>
+                            <p class="text-muted">@student.Bio</p>
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+    }
+    else
+    {
+        <!-- Multiple Students Table View -->
+        <div class="report-table">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Student</th>
+                        <th>Contact</th>
+                        <th>Status</th>
+                        <th>Registration</th>
+                        <th>Courses</th>
+                        <th>GPA</th>
+                        <th>Progress</th>
+                        <th>Last Login</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var student in reports.OrderBy(s => s.LastName).ThenBy(s => s.FirstName))
+                    {
+                        <tr>
+                            <td>
+                                <strong>@student.FirstName @student.LastName</strong>
+                                <br />
+                                <small class="text-muted">ID: @student.StudentId</small>
+                            </td>
+                            <td>
+                                <div>@student.Email</div>
+                                @if (!string.IsNullOrEmpty(student.PhoneNumber))
+                                {
+                                    <small class="text-muted">@student.PhoneNumber</small>
+                                }
+                            </td>
+                            <td>
+                                <span class="status-badge @(student.IsActive ? "status-active" : "status-inactive")">
+                                    @student.Status
+                                </span>
+                            </td>
+                            <td>
+                                <div>@student.RegistrationDate.ToString("MMM dd, yyyy")</div>
+                                <small class="text-muted">Born: @student.DateOfBirth.ToString("MMM dd, yyyy")</small>
+                            </td>
+                            <td>
+                                <div class="d-flex flex-column">
+                                    <span class="badge bg-primary mb-1">Total: @student.TotalCoursesEnrolled</span>
+                                    <span class="badge bg-success mb-1">Completed: @student.CompletedCourses</span>
+                                    <span class="badge bg-warning">Active: @student.ActiveCourses</span>
+                                </div>
+                            </td>
+                            <td>
+                                <span class="badge @GetGPABadgeClass(student.OverallGPA)">
+                                    @($"{student.OverallGPA:F2}")
+                                </span>
+                            </td>
+                            <td>
+                                <div class="text-center">
+                                    <div><strong>@student.TotalPoints</strong> pts</div>
+                                    <small class="text-muted">Level @student.Level</small>
+                                    <div class="progress mt-1" style="height: 4px;">
+                                        <div class="progress-bar progress-bar-custom"
+                                            style="width: @(Math.Min(100, (student.CompletedCourses / (double)Math.Max(1, student.TotalCoursesEnrolled)) * 100))%">
+                                        </div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                @if (student.LastLoginDate.HasValue)
+                                {
+                                    <div>@student.LastLoginDate.Value.ToString("MMM dd")</div>
+                                    <small class="text-muted">@student.LastLoginDate.Value.ToString("HH:mm")</small>
+                                }
+                                else
+                                {
+                                    <span class="text-muted">Never</span>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+}
+else
+{
+    <div class="report-card">
+        <div class="report-card-body text-center py-5">
+            <h5 class="text-muted">No Students Found</h5>
+            <p class="text-muted">No student records match the selected criteria.</p>
+        </div>
+    </div>
+}
+
+@code {
+    private IEnumerable<StudentInformationReportDto>? reports;
+    private bool loading = true;
+    private string studentId = string.Empty;
+    private string selectedStatus = string.Empty;
+    private DateTime? startDate;
+    private DateTime? endDate;
+    private int? courseId;
+    private User user = default!;
+
+    [CascadingParameter]
+    private HttpContext HttpContext { get; set; } = default!;
+
+    protected override async Task OnInitializedAsync()
+    {
+        user = await UserAccessor.GetRequiredUserAsync(HttpContext);
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        if (user == null) return;
+
+        loading = true;
+        StateHasChanged();
+
+        try
+        {
+            if (!string.IsNullOrEmpty(studentId))
+            {
+                // Load single student
+                var singleStudent = await ReportRepository.GetStudentInformationReportAsync(user, studentId);
+                reports = new List<StudentInformationReportDto> { singleStudent };
+            }
+            else
+            {
+                // Load multiple students
+                reports = await ReportRepository.GetAllStudentsInformationReportAsync(
+                user,
+                startDate,
+                endDate,
+                selectedStatus,
+                courseId
+                );
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading data: {ex.Message}");
+            reports = new List<StudentInformationReportDto>();
+        }
+        finally
+        {
+            loading = false;
+            StateHasChanged();
+        }
+    }
+
+    private string GetGPABadgeClass(double gpa)
+    {
+        return gpa switch
+        {
+            >= 3.5 => "bg-success",
+            >= 3.0 => "bg-info",
+            >= 2.5 => "bg-warning",
+            >= 2.0 => "bg-secondary",
+            _ => "bg-danger"
+        };
+    }
+
+    private async Task ExportToPdf()
+    {
+        try
+        {
+            if (reports?.Any() == true)
+            {
+                var data = reports.Select(r => new
+                {
+                    Name = $"{r.FirstName} {r.LastName}",
+                    StudentId = r.StudentId,
+                    Email = r.Email,
+                    Status = r.Status,
+                    TotalCourses = r.TotalCoursesEnrolled,
+                    CompletedCourses = r.CompletedCourses,
+                    OverallGPA = r.OverallGPA.ToString("F2"),
+                    TotalPoints = r.TotalPoints,
+                    Level = r.Level
+                });
+
+                var jsonData = System.Text.Json.JsonSerializer.Serialize(data);
+                await JSRuntime.InvokeVoidAsync("downloadPdf", "Student Information Report", jsonData);
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Export error: {ex.Message}");
+        }
+    }
+
+    private async Task ExportToExcel()
+    {
+        try
+        {
+            if (reports?.Any() == true)
+            {
+                var data = reports.Select(r => new
+                {
+                    FirstName = r.FirstName,
+                    LastName = r.LastName,
+                    StudentId = r.StudentId,
+                    Email = r.Email,
+                    PhoneNumber = r.PhoneNumber,
+                    DateOfBirth = r.DateOfBirth,
+                    RegistrationDate = r.RegistrationDate,
+                    Status = r.Status,
+                    TotalCoursesEnrolled = r.TotalCoursesEnrolled,
+                    CompletedCourses = r.CompletedCourses,
+                    ActiveCourses = r.ActiveCourses,
+                    OverallGPA = r.OverallGPA,
+                    TotalCredits = r.TotalCredits,
+                    EarnedCredits = r.EarnedCredits,
+                    TotalPoints = r.TotalPoints,
+                    Level = r.Level,
+                    LastLoginDate = r.LastLoginDate
+                });
+
+                var jsonData = System.Text.Json.JsonSerializer.Serialize(data);
+                await JSRuntime.InvokeVoidAsync("downloadExcel", "Student Information Report", jsonData);
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Export error: {ex.Message}");
+        }
+    }
+}
