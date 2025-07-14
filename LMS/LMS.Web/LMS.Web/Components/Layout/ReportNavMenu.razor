@@ -1,0 +1,92 @@
+@using Microsoft.AspNetCore.Components.Authorization
+@inject AuthenticationStateProvider AuthenticationStateProvider
+
+<div class="nav-scrollable">
+    <nav class="flex-column">
+        <div class="nav-header">
+            <h4 class="nav-brand">📊 Reports</h4>
+        </div>
+
+        <div class="nav-section">
+            <h6 class="nav-section-title">📚 Academic Reports</h6>
+            <NavLink class="nav-link" href="/reports/course-completion" Match="NavLinkMatch.All">
+                <span class="nav-icon">📈</span> Course Completion
+            </NavLink>
+            <NavLink class="nav-link" href="/reports/assessment-performance" Match="NavLinkMatch.All">
+                <span class="nav-icon">📝</span> Assessment Performance
+            </NavLink>
+            <NavLink class="nav-link" href="/reports/enrollment-summary" Match="NavLinkMatch.All">
+                <span class="nav-icon">👥</span> Enrollment Summary
+            </NavLink>
+            <NavLink class="nav-link" href="/reports/enrollment-trends" Match="NavLinkMatch.All">
+                <span class="nav-icon">📊</span> Enrollment Trends
+            </NavLink>
+        </div>
+
+        <div class="nav-section">
+            <h6 class="nav-section-title">👨‍🎓 Student Reports</h6>
+            <NavLink class="nav-link" href="/reports/student-information" Match="NavLinkMatch.All">
+                <span class="nav-icon">👤</span> Student Information
+            </NavLink>
+            <NavLink class="nav-link" href="/reports/student-progress" Match="NavLinkMatch.All">
+                <span class="nav-icon">📈</span> Student Progress
+            </NavLink>
+            <NavLink class="nav-link" href="/reports/low-performance" Match="NavLinkMatch.All">
+                <span class="nav-icon">⚠️</span> Low Performance
+            </NavLink>
+            <NavLink class="nav-link" href="/reports/student-engagement" Match="NavLinkMatch.All">
+                <span class="nav-icon">🎯</span> Student Engagement
+            </NavLink>
+        </div>
+
+        <div class="nav-section">
+            <h6 class="nav-section-title">📋 Attendance Reports</h6>
+            <NavLink class="nav-link" href="/reports/attendance" Match="NavLinkMatch.All">
+                <span class="nav-icon">📅</span> Class Attendance
+            </NavLink>
+            <NavLink class="nav-link" href="/reports/student-attendance" Match="NavLinkMatch.All">
+                <span class="nav-icon">👤</span> Student Attendance
+            </NavLink>
+        </div>
+
+        <div class="nav-section">
+            <h6 class="nav-section-title">💬 Forum Reports</h6>
+            <NavLink class="nav-link" href="/reports/forum-activity" Match="NavLinkMatch.All">
+                <span class="nav-icon">💬</span> Forum Activity
+            </NavLink>
+        </div>
+
+        <div class="nav-section">
+            <h6 class="nav-section-title">📊 Analytics</h6>
+            <NavLink class="nav-link" href="/reports/popular-courses" Match="NavLinkMatch.All">
+                <span class="nav-icon">⭐</span> Popular Courses
+            </NavLink>
+            <NavLink class="nav-link" href="/reports/difficult-assessments" Match="NavLinkMatch.All">
+                <span class="nav-icon">🔥</span> Difficult Assessments
+            </NavLink>
+            <NavLink class="nav-link" href="/reports/learning-analytics" Match="NavLinkMatch.All">
+                <span class="nav-icon">🧠</span> Learning Analytics
+            </NavLink>
+            <NavLink class="nav-link" href="/reports/grade-distribution" Match="NavLinkMatch.All">
+                <span class="nav-icon">📊</span> Grade Distribution
+            </NavLink>
+        </div>
+
+        <div class="nav-section">
+            <h6 class="nav-section-title">👨‍🏫 Teacher Reports</h6>
+            <NavLink class="nav-link" href="/reports/teacher-performance" Match="NavLinkMatch.All">
+                <span class="nav-icon">🎓</span> Teacher Performance
+            </NavLink>
+        </div>
+
+        <div class="nav-section">
+            <h6 class="nav-section-title">📈 Advanced Analytics</h6>
+            <NavLink class="nav-link" href="/reports/academic-trends" Match="NavLinkMatch.All">
+                <span class="nav-icon">📈</span> Academic Trends
+            </NavLink>
+            <NavLink class="nav-link" href="/reports/risk-students" Match="NavLinkMatch.All">
+                <span class="nav-icon">🚨</span> Risk Students
+            </NavLink>
+        </div>
+    </nav>
+</div>

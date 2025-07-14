@@ -1,4 +1,7 @@
+@using Microsoft.AspNetCore.Authentication
 @using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.AspNetCore.Identity
+@inject SignInManager<User> SignInManager
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @inject NavigationManager NavigationManager
 @inject HttpClient Http
@@ -18,25 +21,25 @@
                     <ul class="dropdown-menu dropdown-menu-start" aria-labelledby="accountDropdown">
                         <li>
                             <button class="dropdown-item" type="button"
-                                @onclick="@(() => NavigationManager.NavigateTo("/user/account/manage"))">
+                                @onclick="@(() => NavigationManager.NavigateTo("/Account/manage"))">
                                 Manage
                             </button>
                         </li>
                         <li>
                             <button class="dropdown-item" type="button"
-                                @onclick="@(() => NavigationManager.NavigateTo("/user/account/changepassword"))">
+                                @onclick="@(() => NavigationManager.NavigateTo("/Account/changepassword"))">
                                 Change Password
                             </button>
                         </li>
                         <li>
                             <button class="dropdown-item" type="button"
-                                @onclick="@(() => NavigationManager.NavigateTo("/user/account/externallogins"))">
+                                @onclick="@(() => NavigationManager.NavigateTo("/Account/externallogins"))">
                                 External Logins
                             </button>
                         </li>
                         <li>
                             <button class="dropdown-item" type="button"
-                                @onclick="@(() => NavigationManager.NavigateTo("/user/account/personaldata"))">
+                                @onclick="@(() => NavigationManager.NavigateTo("/Account/personaldata"))">
                                 Personal Data
                             </button>
                         </li>
@@ -55,7 +58,7 @@
         else
         {
             <li class="nav-item">
-                <a class="nav-link" href="/user/account/login">Login</a>
+                <a class="nav-link" href="/Account/Login">Login</a>
             </li>
         }
     </ul>
@@ -63,6 +66,8 @@
 
 @code {
     private bool isAuthenticated;
+    [CascadingParameter]
+    private HttpContext HttpContext { get; set; } = default!;
 
     protected override async Task OnInitializedAsync()
     {
@@ -71,15 +76,8 @@
     }
     private async Task LogoutAsync()
     {
-        NavigationManager.NavigateTo("/api/user/account/logout", forceLoad: true);
-        // var response = await Http.PostAsync(NavigationManager.BaseUri+"api/user/account/logout", null);
-        // if (response.IsSuccessStatusCode)
-        // {
-        // NavigationManager.NavigateTo("/user/account/login", forceLoad: true);
-        // }
-        // else
-        // {
-        // Optionally handle error
-        // }
+        await SignInManager.SignOutAsync();
+        isAuthenticated = false;
+        NavigationManager.NavigateTo("/Account/Login");
     }
 }
