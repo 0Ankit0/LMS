@@ -11,12 +11,15 @@ using BlazorBootstrap;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.AddServiceDefaults();
 
 // Add services to the container.
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents()
     .AddInteractiveWebAssemblyComponents()
     .AddAuthenticationStateSerialization();
+
+builder.Services.AddOutputCache();
 
 // Add Blazor Bootstrap
 builder.Services.AddBlazorBootstrap();
@@ -80,6 +83,8 @@ app.UseHttpsRedirection();
 app.MapEndpoints();
 
 app.UseAntiforgery();
+
+app.UseOutputCache();
 
 app.MapStaticAssets();
 app.MapRazorComponents<App>()
