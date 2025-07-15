@@ -1,3 +1,4 @@
+@using BlazorBootstrap;
 @page "/user/lms/announcements"
 @inject HttpClient HttpClient
 
@@ -6,17 +7,12 @@
 <div class="simple-announcements-layout">
     <div class="announcements-container">
         <!-- Header -->
-
         <!-- Announcements Content -->
         <div class="announcements-content">
             @if (isLoading)
             {
                 <div class="loading-container">
-                    <div class="spinner">
-                        <div class="spinner-border text-primary" role="status">
-                            <span class="visually-hidden">Loading announcements...</span>
-                        </div>
-                    </div>
+                    <Spinner />
                     <p class="loading-text">Loading announcements...</p>
                 </div>
             }
@@ -46,17 +42,17 @@
                                 <p class="announcement-excerpt">@GetExcerpt(announcement.Content)</p>
                             </div>
                             <div class="announcement-actions">
-                                <button class="btn btn-sm btn-outline-primary view-btn"
-                                    @onclick="() => ShowAnnouncement(announcement)" @onclick:stopPropagation="true">
-                                    <i class="bi bi-eye"></i>
-                                </button>
+                                <Button Color="ButtonColor.Primary" Outline="true" Size="ButtonSize.Small" class="view-btn"
+                                        @onclick:stopPropagation="true">
+                                    <Icon Name="IconName.Eye" />
+                                </Button>
                             </div>
                         </div>
                     }
                     <div class="d-flex justify-content-end mt-2">
                         <a href="/user/lms/announcement-list"
-                            class="btn btn-link btn-sm text-primary text-decoration-underline p-0"
-                            style="font-size: 0.95em;">View All</a>
+                           class="btn btn-link btn-sm text-primary text-decoration-underline p-0"
+                           style="font-size: 0.95em;">View All</a>
                     </div>
                 </div>
             }
@@ -106,7 +102,6 @@
 @code {
     // Properties
     private bool isLoading = true;
-    private bool showModal = false;
 
     // Collections and selected items
     private List<AnnouncementModel> announcements = new();

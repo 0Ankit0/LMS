@@ -20,9 +20,9 @@
         <div class="group-list">
             <!-- General Group -->
             <div class="group-item @(selectedGroup == "general" ? "active" : "")"
-                @onclick='() => SelectGroup("general")' title="General Discussion">
+                 @onclick='() => SelectGroup("general")' title="General Discussion">
                 <div class="group-icon general-icon">
-                    <i class="bi bi-globe"></i>
+                    <Icon Name="IconName.Globe" />
                 </div>
             </div>
 
@@ -32,7 +32,7 @@
                 @foreach (var courseGroup in courseGroups)
                 {
                     <div class="group-item @(selectedGroup == courseGroup.CourseName ? "active" : "")"
-                        @onclick="() => SelectGroup(courseGroup.CourseName)" title="@courseGroup.CourseName">
+                         @onclick="() => SelectGroup(courseGroup.CourseName)" title="@courseGroup.CourseName">
                         <div class="group-icon course-icon">
                             <span class="course-initial">@courseGroup.CourseName.FirstOrDefault()</span>
                         </div>
@@ -44,7 +44,7 @@
         <!-- Add Forum Button -->
         <div class="group-item add-forum-button" @onclick="ShowCreateForumModal" title="Create New Forum">
             <div class="group-icon">
-                <i class="bi bi-plus-lg"></i>
+                <Icon Name="IconName.PlusLg" />
             </div>
         </div>
     </div>
@@ -57,20 +57,20 @@
                 <h4 class="forum-title">
                     @if (selectedGroup == "general")
                     {
-                        <i class="bi bi-globe me-2"></i>
+                        <Icon Name="IconName.Globe" class="me-2" />
                         <span>General Discussion</span>
                     }
                     else
                     {
-                        <i class="bi bi-mortarboard me-2"></i>
+                        <Icon Name="IconName.Mortarboard" class="me-2" />
                         <span>@selectedGroup</span>
                     }
                 </h4>
                 <!-- Search Box -->
                 <div class="forum-search-container">
-                    <input type="text" class="forum-search-input" placeholder="Search forums & topics..."
-                        @bind="searchQuery" />
-                    <i class="bi bi-search search-icon"></i>
+                    <InputText type="text" class="forum-search-input" placeholder="Search forums & topics..."
+                           @bind-Value="searchQuery" />
+                    <Icon Name="IconName.Search" class="search-icon" />
                 </div>
             </div>
 
@@ -81,10 +81,10 @@
                     {
                         <div class="forum-accordion">
                             <div class="forum-item @(selectedForumId == forum.Id ? "active" : "")"
-                                @onclick="() => SelectForum(forum.Id)">
+                                 @onclick="() => SelectForum(forum.Id)">
                                 <div class="forum-info">
                                     <div class="forum-name">
-                                        <i class="bi bi-hash me-2"></i>
+                                        <Icon Name="IconName.Hash" class="me-2" />
                                         <span>@forum.Title</span>
                                     </div>
                                     <div class="forum-stats">
@@ -93,13 +93,12 @@
                                 </div>
                                 <div class="forum-actions">
                                     <Button Color="ButtonColor.Secondary" Size="ButtonSize.Small"
-                                        @onclick="@(e => ShowNewTopicModal(e, forum.Id))" title="Add new topic">
-                                        <i class="bi bi-plus-lg"></i>
+                                            @onclick="@(e => ShowNewTopicModal(e, forum.Id))" title="Add new topic">
+                                        <Icon Name="IconName.PlusLg" />
                                     </Button>
                                     <Button Color="ButtonColor.Secondary" Size="ButtonSize.Small"
-                                        @onclick="@(e => ToggleForumExpansion(e, forum.Id))">
-                                        <i
-                                            class="bi @(expandedForums.Contains(forum.Id) ? "bi-chevron-up" : "bi-chevron-down")"></i>
+                                            @onclick="@(e => ToggleForumExpansion(e, forum.Id))">
+                                        <Icon Name="@(expandedForums.Contains(forum.Id) ? IconName.ChevronUp : IconName.ChevronDown)" />
                                     </Button>
                                 </div>
                             </div>
@@ -110,16 +109,16 @@
                                     @foreach (var topic in selectedForumTopics.Where(t => t.ForumId == forum.Id))
                                     {
                                         <div class="topic-dropdown-item @(selectedTopicId == topic.Id ? "active" : "")"
-                                            @onclick="() => SelectTopic(topic.Id)">
+                                             @onclick="() => SelectTopic(topic.Id)">
                                             <div class="topic-info">
                                                 <div class="topic-icon">
                                                     @if (topic.IsLocked)
                                                     {
-                                                        <i class="bi bi-lock text-secondary"></i>
+                                                        <Icon Name="IconName.Lock" class="text-secondary" />
                                                     }
                                                     else
                                                     {
-                                                        <i class="bi bi-chat-dots text-primary"></i>
+                                                        <Icon Name="IconName.ChatDots" class="text-primary" />
                                                     }
                                                 </div>
                                                 <div class="topic-details">
@@ -141,7 +140,7 @@
         else
         {
             <div class="forum-placeholder">
-                <i class="bi bi-chat-dots fa-3x text-muted mb-3"></i>
+                <Icon Name="IconName.ChatDots" Size="IconSize.x3" class="text-muted mb-3" />
                 <p class="text-muted">Select a group to view forums</p>
             </div>
         }
@@ -156,43 +155,43 @@
                 <!-- Topic View Header -->
                 <div class="discussion-header">
                     <div class="discussion-title">
-                        <button class="btn btn-sm btn-outline-secondary me-2" @onclick="BackToForum" title="Back to Forum">
-                            <i class="bi bi-arrow-left"></i>
-                        </button>
+                        <Button Color="ButtonColor.Secondary" Size="ButtonSize.Small" class="me-2" @onclick="BackToForum" title="Back to Forum">
+                            <Icon Name="IconName.ArrowLeft" />
+                        </Button>
                         @if (selectedTopic?.IsLocked == true)
                         {
-                            <i class="bi bi-lock me-2 text-secondary"></i>
+                            <Icon Name="IconName.Lock" class="me-2 text-secondary" />
                         }
                         else
                         {
-                            <i class="bi bi-chat-dots me-2"></i>
+                            <Icon Name="IconName.ChatDots" class="me-2" />
                         }
                         <span>@selectedTopic?.Title</span>
                     </div>
                     <div class="discussion-actions">
                         <div class="topic-stats me-3">
                             <small class="text-muted">
-                                <i class="bi bi-chat-left me-1"></i>@selectedTopic?.PostCount posts
-                                <span class="ms-2"><i class="bi bi-person me-1"></i>by @selectedTopic?.CreatedByUserName</span>
+                                <Icon Name="IconName.ChatLeft" class="me-1" />@selectedTopic?.PostCount posts
+                                <span class="ms-2"><Icon Name="IconName.Person" class="me-1" />by @selectedTopic?.CreatedByUserName</span>
                             </small>
                         </div>
-                        <button class="btn btn-sm btn-outline-secondary me-2" title="Search in Topic">
-                            <i class="bi bi-search"></i>
-                        </button>
-                        <div class="dropdown">
-                            <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button"
-                                data-bs-toggle="dropdown">
-                                <i class="bi bi-three-dots-vertical"></i>
-                            </button>
-                            <ul class="dropdown-menu">
-                                <li><a class="dropdown-item" href="#"><i class="bi bi-lock me-2"></i>Lock Topic</a></li>
-                                <li>
-                                    <hr class="dropdown-divider">
-                                </li>
-                                <li><a class="dropdown-item text-danger" href="#"><i class="bi bi-trash me-2"></i>Delete
-                                        Topic</a></li>
-                            </ul>
-                        </div>
+                        <Button Color="ButtonColor.Secondary" Size="ButtonSize.Small" class="me-2" title="Search in Topic">
+                            <Icon Name="IconName.Search" />
+                        </Button>
+                        <Dropdown>
+                            <DropdownToggleButton Color="ButtonColor.Secondary" Size="ButtonSize.Small">
+                                <Icon Name="IconName.ThreeDotsVertical" />
+                            </DropdownToggleButton>
+                            <DropdownMenu>
+                                <DropdownItem>
+                                    <Icon Name="IconName.Lock" class="me-2" />Lock Topic
+                                </DropdownItem>
+                                <DropdownDivider />
+                                <DropdownItem Class="text-danger">
+                                    <Icon Name="IconName.Trash" class="me-2" />Delete Topic
+                                </DropdownItem>
+                            </DropdownMenu>
+                        </Dropdown>
                     </div>
                 </div>
 
@@ -221,20 +220,20 @@
                                         @((MarkupString)post.Content.Replace("\n", "<br />"))
                                     </div>
                                     <div class="post-actions">
-                                        <button class="btn btn-sm btn-outline-secondary" title="Like">
-                                            <i class="bi bi-heart me-1"></i>0
-                                        </button>
-                                        <button class="btn btn-sm btn-outline-secondary" @onclick="() => QuotePost(post)" title="Quote">
-                                            <i class="bi bi-quote me-1"></i>Quote
-                                        </button>
+                                        <Button Color="ButtonColor.Secondary" Size="ButtonSize.Small" title="Like">
+                                            <Icon Name="IconName.Heart" class="me-1" />0
+                                        </Button>
+                                        <Button Color="ButtonColor.Secondary" Size="ButtonSize.Small" @onclick="() => QuotePost(post)" title="Quote">
+                                            <Icon Name="IconName.Quote" class="me-1" />Quote
+                                        </Button>
                                         @if (currentUserId == post.AuthorId)
                                         {
-                                            <button class="btn btn-sm btn-outline-secondary" @onclick="() => EditPost(post)" title="Edit">
-                                                <i class="bi bi-pencil me-1"></i>Edit
-                                            </button>
-                                            <button class="btn btn-sm btn-outline-danger" @onclick="() => DeletePost(post)" title="Delete">
-                                                <i class="bi bi-trash me-1"></i>Delete
-                                            </button>
+                                            <Button Color="ButtonColor.Secondary" Size="ButtonSize.Small" @onclick="() => EditPost(post)" title="Edit">
+                                                <Icon Name="IconName.Pencil" class="me-1" />Edit
+                                            </Button>
+                                            <Button Color="ButtonColor.Danger" Size="ButtonSize.Small" @onclick="() => DeletePost(post)" title="Delete">
+                                                <Icon Name="IconName.Trash" class="me-1" />Delete
+                                            </Button>
                                         }
                                     </div>
                                 </div>
@@ -252,20 +251,20 @@
                             <div class="quoted-text">
                                 <div class="quote-header">
                                     <span>Replying to @quotedAuthor:</span>
-                                    <button class="btn btn-sm btn-outline-secondary" @onclick="ClearQuote">
-                                        <i class="bi bi-x"></i>
-                                    </button>
+                                    <Button Color="ButtonColor.Secondary" Size="ButtonSize.Small" @onclick="ClearQuote">
+                                        <Icon Name="IconName.X" />
+                                    </Button>
                                 </div>
                                 <div class="quote-content">@quotedText</div>
                             </div>
                         }
                         <div class="input-container">
-                            <input type="text" class="message-input" placeholder="Reply to @selectedTopic?.Title..."
-                                @bind="newTopicReply" @onkeypress="HandleTopicReplyKeyPress" />
-                            <button class="send-button" @onclick="SendTopicReply"
-                                disabled="@string.IsNullOrWhiteSpace(newTopicReply)">
-                                <i class="bi bi-send"></i>
-                            </button>
+                            <InputText type="text" class="message-input" placeholder="@($"Reply to {selectedTopic?.Title}...")"
+                                   @bind-value="newTopicReply" @onkeypress="HandleTopicReplyKeyPress" />
+                            <Button Color="ButtonColor.Primary" class="send-button" @onclick="SendTopicReply"
+                                    disabled="@string.IsNullOrWhiteSpace(newTopicReply)">
+                                <Icon Name="IconName.Send" />
+                            </Button>
                         </div>
                     </div>
                 }
@@ -275,31 +274,36 @@
                 <!-- Forum Topics View -->
                 <div class="discussion-header">
                     <div class="discussion-title">
-                        <i class="bi bi-hash me-2"></i>
+                        <Icon Name="IconName.Hash" class="me-2" />
                         <span>@selectedForum.Title</span>
                     </div>
                     <div class="discussion-actions">
                         <div class="forum-stats me-3">
                             <small class="text-muted">
-                                <i class="bi bi-list me-1"></i>@selectedForum.TopicCount topics
-                                <span class="ms-2"><i class="bi bi-people me-1"></i>@(selectedForumTopics?.SelectMany(t => new[]
+                                <Icon Name="IconName.List" class="me-1" />@selectedForum.TopicCount topics
+                                <span class="ms-2"><Icon Name="IconName.People" class="me-1" />@(selectedForumTopics?.SelectMany(t => new[]
                                                                 { t.CreatedByUserId }).Distinct().Count() ?? 0) contributors</span>
                             </small>
                         </div>
-                        <button class="btn btn-sm btn-outline-secondary me-2" title="Search Topics">
-                            <i class="bi bi-search"></i>
-                        </button>
-                        <div class="dropdown">
-                            <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button"
-                                data-bs-toggle="dropdown">
-                                <i class="bi bi-sort-down"></i>
-                            </button>
-                            <ul class="dropdown-menu">
-                                <li><a class="dropdown-item" href="#"><i class="bi bi-calendar me-2"></i>Sort by Date</a></li>
-                                <li><a class="dropdown-item" href="#"><i class="bi bi-reply me-2"></i>Sort by Replies</a></li>
-                                <li><a class="dropdown-item" href="#"><i class="bi bi-person me-2"></i>Sort by Author</a></li>
-                            </ul>
-                        </div>
+                        <Button Color="ButtonColor.Secondary" Size="ButtonSize.Small" class="me-2" title="Search Topics">
+                            <Icon Name="IconName.Search" />
+                        </Button>
+                        <Dropdown>
+                            <DropdownToggleButton Color="ButtonColor.Secondary" Size="ButtonSize.Small">
+                                <Icon Name="IconName.SortDown" />
+                            </DropdownToggleButton>
+                            <DropdownMenu>
+                                <DropdownItem>
+                                    <Icon Name="IconName.Calendar" class="me-2" />Sort by Date
+                                </DropdownItem>
+                                <DropdownItem>
+                                    <Icon Name="IconName.Reply" class="me-2" />Sort by Replies
+                                </DropdownItem>
+                                <DropdownItem>
+                                    <Icon Name="IconName.Person" class="me-2" />Sort by Author
+                                </DropdownItem>
+                            </DropdownMenu>
+                        </Dropdown>
                     </div>
                 </div>
 
@@ -313,11 +317,11 @@
                                 <div class="topic-icon">
                                     @if (topic.IsLocked)
                                     {
-                                        <i class="bi bi-lock text-secondary"></i>
+                                        <Icon Name="IconName.Lock" class="text-secondary" />
                                     }
                                     else
                                     {
-                                        <i class="bi bi-chat-dots text-primary"></i>
+                                        <Icon Name="IconName.ChatDots" class="text-primary" />
                                     }
                                 </div>
                                 <div class="topic-content">
@@ -351,20 +355,18 @@
                     else
                     {
                         <div class="content-placeholder">
-                            <i class="bi bi-chat-dots fa-4x text-muted mb-3"></i>
+                            <Icon Name="IconName.ChatDots" Size="IconSize.x4" class="text-muted mb-3" />
                             <h5 class="text-muted">No Topics Yet</h5>
                             <p class="text-muted">Be the first to start a discussion in this forum!</p>
                         </div>
                     }
                 </div>
             }
-
-
         }
         else
         {
             <div class="chat-placeholder p-4">
-                <i class="fas fa-comments fa-5x text-muted mb-4"></i>
+                <Icon Name="IconName.ChatDots" Size="IconSize.x5" class="text-muted mb-4" />
                 <h3 class="text-muted mb-2 ">Welcome to Forums</h3>
                 <p class="text-muted">Select a forum from the sidebar to view topics and discussions</p>
             </div>
@@ -373,129 +375,86 @@
 </div>
 
 <!-- New Topic Modal -->
-@if (showNewTopicModal)
-{
-    <div class="modal fade show" style="display: block; background-color: rgba(0,0,0,0.5);" tabindex="-1">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header bg-primary text-white">
-                    <h5 class="modal-title">
-                        <i class="fas fa-plus-circle me-2"></i>Create New Topic
-                    </h5>
-                    <button type="button" class="btn-close btn-close-white" @onclick="HideNewTopicModal"></button>
-                </div>
-                <div class="modal-body">
-                    <EditForm Model="@newTopic" OnValidSubmit="CreateTopic">
-                        <DataAnnotationsValidator />
-                        <ValidationSummary class="alert alert-danger" />
+<Modal @ref="newTopicModal" Title="Create New Topic">
+    <BodyTemplate>
+        <EditForm Model="@newTopic" OnValidSubmit="CreateTopic">
+            <DataAnnotationsValidator />
+            <ValidationSummary class="alert alert-danger" />
 
-                        <div class="mb-3">
-                            <label for="topicTitle" class="form-label fw-semibold">
-                                <i class="fas fa-heading me-1"></i>Topic Title
-                            </label>
-                            <InputText id="topicTitle" class="form-control form-control-lg" @bind-Value="newTopic.Title"
-                                placeholder="Enter an engaging topic title..." />
-                            <ValidationMessage For="@(() => newTopic.Title)" />
-                        </div>
-
-                        <div class="mb-3">
-                            <label for="topicContent" class="form-label fw-semibold">
-                                <i class="bi bi-text-paragraph me-1"></i>Initial Post Content
-                            </label>
-                            <InputTextArea id="topicContent" class="form-control" rows="8"
-                                @bind-Value="newTopic.InitialPost"
-                                placeholder="Start the discussion with your thoughts..." />
-                            <ValidationMessage For="@(() => newTopic.InitialPost)" />
-                            <div class="form-text">You can use basic formatting: **bold**, *italic*, `code`</div>
-                        </div>
-
-                        <div class="modal-footer border-0 px-0 mt-3">
-                            <button type="button" class="btn btn-light" @onclick="HideNewTopicModal">
-                                <i class="bi bi-x-lg me-1"></i>Cancel
-                            </button>
-                            <button type="submit" class="btn btn-primary" disabled="@isCreatingTopic">
-                                @if (isCreatingTopic)
-                                {
-                                    <span class="spinner-border spinner-border-sm me-2"></span>
-                                    <span>Creating...</span>
-                                }
-                                else
-                                {
-                                    <i class="bi bi-plus-lg me-1"></i>
-                                    <span>Create Topic</span>
-                                }
-                            </button>
-                        </div>
-                    </EditForm>
-                </div>
+            <div class="mb-3">
+                <label for="topicTitle" class="form-label fw-semibold">
+                    <Icon Name="IconName.PencilSquare" class="me-1" />Topic Title
+                </label>
+                <InputText id="topicTitle" class="form-control" @bind-Value="newTopic.Title"
+                           placeholder="Enter an engaging topic title..." />
+                <ValidationMessage For="@(() => newTopic.Title)" />
             </div>
-        </div>
-    </div>
-}
+
+            <div class="mb-3">
+                <label for="topicContent" class="form-label fw-semibold">
+                    <Icon Name="IconName.TextParagraph" class="me-1" />Initial Post Content
+                </label>
+                <InputTextArea id="topicContent" class="form-control" rows="6" @bind-Value="newTopic.InitialPost"
+                               placeholder="Write the first post for this topic..." />
+                <ValidationMessage For="@(() => newTopic.InitialPost)" />
+                <div class="form-text">You can use basic formatting: **bold**, *italic*, `code`</div>
+            </div>
+
+            <div class="modal-footer border-0 px-0 mt-3">
+                <Button Color="ButtonColor.Light" @onclick="HideNewTopicModal">
+                    <Icon Name="IconName.XLg" class="me-1" />Cancel
+                </Button>
+                <Button Color="ButtonColor.Primary" Type="ButtonType.Submit" IsLoading="@isCreatingTopic">
+                    <Icon Name="IconName.PlusLg" class="me-1" />
+                    <span>Create Topic</span>
+                </Button>
+            </div>
+        </EditForm>
+    </BodyTemplate>
+</Modal>
 
 <!-- New Post Modal -->
-@if (showNewPostModal)
-{
-    <div class="modal fade show" style="display: block; background-color: rgba(0,0,0,0.5);" tabindex="-1">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header bg-primary text-white">
-                    <h5 class="modal-title">
-                        <i class="fas fa-reply me-2"></i>Reply to: @selectedTopic?.Title
-                    </h5>
-                    <button type="button" class="btn-close btn-close-white" @onclick="HideNewPostModal"></button>
+<Modal @ref="newPostModal" Title="@($"Reply to: {selectedTopic?.Title}")">
+    <BodyTemplate>
+        <EditForm Model="@newPost" OnValidSubmit="CreatePost">
+            <DataAnnotationsValidator />
+            <ValidationSummary/>
+
+            @if (!string.IsNullOrEmpty(quotedText))
+            {
+                <div class="quote-preview mb-3">
+                    <div class="quote-header">
+                        <strong>@quotedAuthor wrote:</strong>
+                        <Button Color="ButtonColor.Secondary" Size="ButtonSize.Small" class="ms-2" @onclick="ClearQuote">
+                            <Icon Name="IconName.X" />
+                        </Button>
+                    </div>
+                    <div class="quote-body">@quotedText</div>
                 </div>
-                <div class="modal-body">
-                    <EditForm Model="@newPost" OnValidSubmit="CreatePost">
-                        <DataAnnotationsValidator />
-                        <ValidationSummary class="alert alert-danger" />
+            }
 
-                        @if (!string.IsNullOrEmpty(quotedText))
-                        {
-                            <div class="quote-preview mb-3">
-                                <div class="quote-header">
-                                    <strong>@quotedAuthor wrote:</strong>
-                                    <button type="button" class="btn btn-sm btn-outline-secondary ms-2" @onclick="ClearQuote">
-                                        <i class="fas fa-times"></i>
-                                    </button>
-                                </div>
-                                <div class="quote-body">@quotedText</div>
-                            </div>
-                        }
-
-                        <div class="mb-3">
-                            <label for="postContent" class="form-label fw-semibold">
-                                <i class="fas fa-align-left me-1"></i>Your Reply
-                            </label>
-                            <InputTextArea id="postContent" class="form-control" rows="8" @bind-Value="newPost.Content"
-                                placeholder="Share your thoughts..." />
-                            <ValidationMessage For="@(() => newPost.Content)" />
-                            <div class="form-text">You can use basic formatting: **bold**, *italic*, `code`</div>
-                        </div>
-
-                        <div class="modal-footer border-0 px-0">
-                            <button type="button" class="btn btn-light" @onclick="HideNewPostModal">
-                                <i class="fas fa-times me-1"></i>Cancel
-                            </button>
-                            <button type="submit" class="btn btn-primary" disabled="@isCreatingPost">
-                                @if (isCreatingPost)
-                                {
-                                    <span class="spinner-border spinner-border-sm me-2"></span>
-                                    <span>Posting...</span>
-                                }
-                                else
-                                {
-                                    <i class="fas fa-reply me-1"></i>
-                                    <span>Post Reply</span>
-                                }
-                            </button>
-                        </div>
-                    </EditForm>
-                </div>
+            <div class="mb-3">
+                <label for="postContent" class="form-label fw-semibold">
+                    <Icon Name="IconName.ChatLeftText" class="me-1" />Your Reply
+                </label>
+                <InputTextArea id="postContent" class="form-control" rows="8" @bind-Value="newPost.Content"
+                          placeholder="Share your thoughts..." />
+                <ValidationMessage For="@(() => newPost.Content)" />
+                <div class="form-text">You can use basic formatting: **bold**, *italic*, `code`</div>
             </div>
-        </div>
-    </div>
-}
+
+            <div class="modal-footer border-0 px-0">
+                <Button Color="ButtonColor.Light" @onclick="HideNewPostModal">
+                    <Icon Name="IconName.X" class="me-1" />Cancel
+                </Button>
+                <Button Color="ButtonColor.Primary" Type="ButtonType.Submit" IsLoading="@isCreatingPost">
+                    <Icon Name="IconName.Reply" class="me-1" />
+                    <span>Post Reply</span>
+                </Button>
+            </div>
+        </EditForm>
+    </BodyTemplate>
+</Modal>
 
 <!-- Create Forum Modal -->
 <Modal @ref="createForumModal" Title="Create New Forum">
@@ -507,18 +466,18 @@
             <div class="row">
                 <div class="col-md-8">
                     <div class="mb-3">
-                        <label for="title" class="form-label fw-semibold">
-                            <i class="fas fa-heading me-1"></i>Forum Title
+                        <label for="forumTitle" class="form-label fw-semibold">
+                            <Icon Name="IconName.PencilSquare" class="me-1" />Forum Title
                         </label>
-                        <InputText id="title" class="form-control form-control-lg" @bind-Value="newForum.Title"
-                            placeholder="Enter forum title..." />
+                        <InputText id="forumTitle" class="form-control form-control-lg" @bind-Value="newForum.Title"
+                                   placeholder="Enter forum title..." />
                         <ValidationMessage For="@(() => newForum.Title)" />
                     </div>
                 </div>
                 <div class="col-md-4">
                     <div class="mb-3">
                         <label for="courseId" class="form-label fw-semibold">
-                            <i class="fas fa-graduation-cap me-1"></i>Course
+                            <Icon Name="IconName.Mortarboard" class="me-1" />Course
                         </label>
                         <InputSelect id="courseId" class="form-select" @bind-Value="newForum.CourseId">
                             <option value="">General Forum</option>
@@ -535,20 +494,20 @@
             </div>
 
             <div class="mb-3">
-                <label for="description" class="form-label fw-semibold">
-                    <i class="fas fa-align-left me-1"></i>Description
+                <label for="forumDescription" class="form-label fw-semibold">
+                    <Icon Name="IconName.ChatLeftText" class="me-1" />Description
                 </label>
-                <InputTextArea id="description" class="form-control" rows="4" @bind-Value="newForum.Description"
-                    placeholder="Describe what this forum is about..." />
+                <InputTextArea id="forumDescription" class="form-control" rows="4" @bind-Value="newForum.Description"
+                          placeholder="Describe what this forum is about..." />
                 <ValidationMessage For="@(() => newForum.Description)" />
             </div>
 
             <div class="modal-footer border-0 px-0">
                 <Button Color="ButtonColor.Light" @onclick="HideCreateModal">
-                    <i class="fas fa-times me-1"></i>Cancel
+                    <Icon Name="IconName.X" class="me-1" />Cancel
                 </Button>
                 <Button Color="ButtonColor.Primary" Type="ButtonType.Submit" IsLoading="@isCreating">
-                    <i class="fas fa-plus me-1"></i>
+                    <Icon Name="IconName.PlusLg" class="me-1" />
                     <span>Create Forum</span>
                 </Button>
             </div>
@@ -557,21 +516,17 @@
 </Modal>
 
 @code {
-    // Removed unused fields: isLoading, showCreateModal, forumMessages
     private bool isCreating = false;
     private Modal? createForumModal;
+    private Modal? newTopicModal;
+    private Modal? newPostModal;
     private string? currentUserId = "current-user"; // Set a dummy user for demo
-    private string newMessage = "";
     private string newTopicReply = "";
     private string searchQuery = "";
 
-    // Enhanced forum features
-    private bool showNewTopicModal = false;
-    private bool showNewPostModal = false;
     private bool isCreatingTopic = false;
     private bool isCreatingPost = false;
 
-    // Topic and post management
     private int? selectedTopicId;
     private ForumTopicModel? selectedTopic;
     private List<ForumTopicModel>? selectedForumTopics;
@@ -579,7 +534,6 @@
     private string quotedText = "";
     private string quotedAuthor = "";
 
-    // Discord-like state management
     private string selectedGroup = "";
     private int? selectedForumId;
     private ForumModel? selectedForum;
@@ -720,39 +674,34 @@
         selectedTopicPosts = null;
     }
 
-    private void ShowNewTopicModal()
-    {
-        if (selectedForumId.HasValue)
-        {
-            newTopic = new CreateForumTopicRequest { ForumId = selectedForumId.Value };
-            showNewTopicModal = true;
-        }
-    }
-
-    private void ShowNewTopicModal(MouseEventArgs e, int forumId)
+    private async void ShowNewTopicModal(MouseEventArgs e, int forumId)
     {
         newTopic = new CreateForumTopicRequest { ForumId = forumId };
-        showNewTopicModal = true;
+        if (newTopicModal != null)
+            await newTopicModal.ShowAsync();
     }
 
-    private void HideNewTopicModal()
+    private async void HideNewTopicModal()
     {
-        showNewTopicModal = false;
+        if (newTopicModal != null)
+            await newTopicModal.HideAsync();
         newTopic = new CreateForumTopicRequest();
     }
 
-    private void ShowNewPostModal()
+    private async void ShowNewPostModal()
     {
         if (selectedTopicId.HasValue)
         {
             newPost = new CreateForumPostRequest { TopicId = selectedTopicId.Value };
-            showNewPostModal = true;
+            if (newPostModal != null)
+                await newPostModal.ShowAsync();
         }
     }
 
-    private void HideNewPostModal()
+    private async void HideNewPostModal()
     {
-        showNewPostModal = false;
+        if (newPostModal != null)
+            await newPostModal.HideAsync();
         newPost = new CreateForumPostRequest();
     }
 
@@ -776,22 +725,6 @@
     private async Task DeletePost(ForumPostModel post)
     {
         await JSRuntime.InvokeVoidAsync("showToast", "Delete functionality not implemented yet", "info");
-    }
-
-    private async Task SendMessage()
-    {
-        if (string.IsNullOrWhiteSpace(newMessage) || !selectedForumId.HasValue) return;
-
-        try
-        {
-            await Task.Delay(500);
-            newMessage = "";
-            await JSRuntime.InvokeVoidAsync("scrollToBottom", "messagesArea");
-        }
-        catch (Exception ex)
-        {
-            await JSRuntime.InvokeVoidAsync("showToast", $"Error sending message: {ex.Message}", "error");
-        }
     }
 
     private async Task SendTopicReply()
@@ -822,14 +755,6 @@
         catch (Exception ex)
         {
             await JSRuntime.InvokeVoidAsync("showToast", $"Error sending reply: {ex.Message}", "error");
-        }
-    }
-
-    private async Task HandleKeyPress(KeyboardEventArgs e)
-    {
-        if (e.Key == "Enter")
-        {
-            await SendMessage();
         }
     }
 
@@ -911,12 +836,14 @@
 
     private async Task ShowCreateForumModal()
     {
-        await createForumModal?.ShowAsync()!;
+        if (createForumModal != null)
+            await createForumModal.ShowAsync();
     }
 
     private async Task HideCreateModal()
     {
-        await createForumModal?.HideAsync()!;
+        if (createForumModal != null)
+            await createForumModal.HideAsync();
         newForum = new CreateForumRequest();
     }
 

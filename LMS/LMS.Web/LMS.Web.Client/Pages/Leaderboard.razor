@@ -1,37 +1,33 @@
+@using BlazorBootstrap;
 @page "/user/lms/leaderboard"
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @inject HttpClient HttpClient
 @inject IJSRuntime JSRuntime
 
 <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-    <h1 class="h2"><i class="fas fa-trophy text-warning me-2"></i>Leaderboard</h1>
+    <h1 class="h2"><Icon Name="IconName.Trophy" Class="me-2" />Leaderboard</h1>
     <div class="btn-toolbar mb-2 mb-md-0">
         <div class="btn-group me-2" role="group">
-            <button type="button" class="btn @(selectedPeriod == "all" ? "btn-primary" : "btn-outline-primary") btn-sm" 
-                    @onclick='() => SelectPeriod("all")'>
+            <Button Color="ButtonColor.Primary" Outline="@(selectedPeriod != "all")" Size="ButtonSize.Small" @onclick='() => SelectPeriod("all")'>
                 All Time
-            </button>
-            <button type="button" class="btn @(selectedPeriod == "month" ? "btn-primary" : "btn-outline-primary") btn-sm" 
-                    @onclick='() => SelectPeriod("month")'>
+            </Button>
+            <Button Color="ButtonColor.Primary" Outline="@(selectedPeriod != "month")" Size="ButtonSize.Small" @onclick='() => SelectPeriod("month")'>
                 This Month
-            </button>
-            <button type="button" class="btn @(selectedPeriod == "week" ? "btn-primary" : "btn-outline-primary") btn-sm" 
-                    @onclick='() => SelectPeriod("week")'>
+            </Button>
+            <Button Color="ButtonColor.Primary" Outline="@(selectedPeriod != "week")" Size="ButtonSize.Small" @onclick='() => SelectPeriod("week")'>
                 This Week
-            </button>
+            </Button>
         </div>
-        <button class="btn btn-outline-primary btn-sm" @onclick="RefreshLeaderboard">
-            <i class="fas fa-sync-alt"></i> Refresh
-        </button>
+        <Button Color="ButtonColor.Primary" Outline="true" Size="ButtonSize.Small" @onclick="RefreshLeaderboard">
+            <Icon Name="IconName.ArrowClockwise" /> Refresh
+        </Button>
     </div>
 </div>
 
 @if (isLoading)
 {
     <div class="d-flex justify-content-center py-5">
-        <div class="spinner-border text-primary" role="status">
-            <span class="visually-hidden">Loading leaderboard...</span>
-        </div>
+        <Spinner />
     </div>
 }
 else
@@ -41,14 +37,14 @@ else
     {
         <div class="row mb-4">
             <div class="col-12">
-                <div class="card bg-gradient-primary text-white">
-                    <div class="card-body">
+                <Card>
+                    <CardBody>
                         <div class="row align-items-center">
                             <div class="col-md-3 text-center">
                                 <div class="position-relative d-inline-block">
-                                    <img src="@GetAvatarUrl(currentUserRank.UserId)" 
-                                         alt="@currentUserRank.UserName" 
-                                         class="rounded-circle border border-3 border-white" 
+                                    <img src="@GetAvatarUrl(currentUserRank.UserId)"
+                                         alt="@currentUserRank.UserName"
+                                         class="rounded-circle border border-3 border-white"
                                          style="width: 80px; height: 80px; object-fit: cover;" />
                                     <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-warning text-dark">
                                         #@currentUserRank.Rank
@@ -85,8 +81,8 @@ else
                                 </div>
                             </div>
                         </div>
-                    </div>
-                </div>
+                    </CardBody>
+                </Card>
             </div>
         </div>
     }
@@ -96,21 +92,21 @@ else
     {
         <div class="row mb-4">
             <div class="col-12">
-                <div class="card">
-                    <div class="card-body">
+                <Card>
+                    <CardBody>
                         <h5 class="card-title text-center mb-4">
-                            <i class="fas fa-medal text-warning"></i> Top Performers
+                            <Icon Name="IconName.Award" Class="text-warning" /> Top Performers
                         </h5>
                         <div class="row justify-content-center">
                             <!-- 2nd Place -->
                             <div class="col-md-3 text-center order-md-1">
                                 <div class="position-relative mb-3">
-                                    <img src="@GetAvatarUrl(topRanks[1].UserId)" 
-                                         alt="@topRanks[1].UserName" 
-                                         class="rounded-circle border border-3 border-secondary" 
+                                    <img src="@GetAvatarUrl(topRanks[1].UserId)"
+                                         alt="@topRanks[1].UserName"
+                                         class="rounded-circle border border-3 border-secondary"
                                          style="width: 80px; height: 80px; object-fit: cover;" />
                                     <div class="position-absolute top-0 start-100 translate-middle">
-                                        <i class="fas fa-medal fa-2x text-secondary"></i>
+                                        <Icon Name="IconName.AwardFill" Class="text-secondary" Size="IconSize.x2" />
                                         <span class="position-absolute top-50 start-50 translate-middle text-white fw-bold">2</span>
                                     </div>
                                 </div>
@@ -122,12 +118,12 @@ else
                             <!-- 1st Place -->
                             <div class="col-md-3 text-center order-md-2">
                                 <div class="position-relative mb-3">
-                                    <img src="@GetAvatarUrl(topRanks[0].UserId)" 
-                                         alt="@topRanks[0].UserName" 
-                                         class="rounded-circle border border-3 border-warning" 
+                                    <img src="@GetAvatarUrl(topRanks[0].UserId)"
+                                         alt="@topRanks[0].UserName"
+                                         class="rounded-circle border border-3 border-warning"
                                          style="width: 100px; height: 100px; object-fit: cover;" />
                                     <div class="position-absolute top-0 start-100 translate-middle">
-                                        <i class="fas fa-crown fa-3x text-warning"></i>
+                                        <Icon Name="IconName.TrophyFill" Class="text-warning" Size="IconSize.x3" />
                                         <span class="position-absolute top-50 start-50 translate-middle text-white fw-bold">1</span>
                                     </div>
                                 </div>
@@ -139,12 +135,12 @@ else
                             <!-- 3rd Place -->
                             <div class="col-md-3 text-center order-md-3">
                                 <div class="position-relative mb-3">
-                                    <img src="@GetAvatarUrl(topRanks[2].UserId)" 
-                                         alt="@topRanks[2].UserName" 
-                                         class="rounded-circle border border-3 border-danger" 
+                                    <img src="@GetAvatarUrl(topRanks[2].UserId)"
+                                         alt="@topRanks[2].UserName"
+                                         class="rounded-circle border border-3 border-danger"
                                          style="width: 80px; height: 80px; object-fit: cover;" />
                                     <div class="position-absolute top-0 start-100 translate-middle">
-                                        <i class="fas fa-medal fa-2x text-danger"></i>
+                                        <Icon Name="IconName.AwardFill" Class="text-danger" Size="IconSize.x2" />
                                         <span class="position-absolute top-50 start-50 translate-middle text-white fw-bold">3</span>
                                     </div>
                                 </div>
@@ -153,8 +149,8 @@ else
                                 <small class="text-muted">@topRanks[2].CompletedCourses courses</small>
                             </div>
                         </div>
-                    </div>
-                </div>
+                    </CardBody>
+                </Card>
             </div>
         </div>
     }
@@ -164,118 +160,100 @@ else
     {
         <div class="row">
             <div class="col-12">
-                <div class="card">
-                    <div class="card-header d-flex justify-content-between align-items-center">
+                <Card>
+                    <CardHeader>
                         <h5 class="mb-0">
-                            <i class="fas fa-list-ol"></i> Full Rankings
+                            <Icon Name="IconName.ListOl" /> Full Rankings
                         </h5>
                         <div class="d-flex gap-2">
                             <div class="input-group input-group-sm" style="width: 200px;">
-                                <span class="input-group-text"><i class="fas fa-search"></i></span>
-                                <input type="text" class="form-control" placeholder="Search users..." 
-                                       @bind="searchTerm" @oninput="OnSearchTermChanged" />
+                                <span class="input-group-text"><Icon Name="IconName.Search" /></span>
+                                <InputText class="form-control" placeholder="Search users..."
+                                           @bind-value="searchTerm" @oninput="OnSearchTermChanged" />
                             </div>
                         </div>
-                    </div>
-                    <div class="card-body p-0">
-                        <div class="table-responsive">
-                            <table class="table table-hover mb-0">
-                                <thead class="table-light">
-                                    <tr>
-                                        <th>Rank</th>
-                                        <th>User</th>
-                                        <th class="text-center">Points</th>
-                                        <th class="text-center">Courses</th>
-                                        <th class="text-center">Achievements</th>
-                                        <th class="text-center">Avg. Score</th>
-                                        <th class="text-center">Streak</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @foreach (var user in filteredLeaderboard)
+                    </CardHeader>
+                    <CardBody>
+                        <Grid TItem="LeaderboardEntryModel" Data="filteredLeaderboard" class="table table-hover">
+                            <GridColumns>
+                                <GridColumn TItem="LeaderboardEntryModel" HeaderText="Rank">
+                                    <div class="d-flex align-items-center">
+                                        @if (context.Rank <= 3)
+                                        {
+                                            <Icon Name="IconName.AwardFill" Class="@(GetRankColor(context.Rank) + " me-2")" />
+                                        }
+                                        <span class="fw-bold">@context.Rank</span>
+                                        @if (context.UserId == currentUserId)
+                                        {
+                                            <Badge Color="BadgeColor.Primary" class="ms-2">You</Badge>
+                                        }
+                                    </div>
+                                </GridColumn>
+                                <GridColumn TItem="LeaderboardEntryModel" HeaderText="User">
+                                    <div class="d-flex align-items-center">
+                                        <img src="@GetAvatarUrl(context.UserId)"
+                                             alt="@context.UserName"
+                                             class="rounded-circle me-3"
+                                             style="width: 40px; height: 40px; object-fit: cover;" />
+                                        <div>
+                                            <div class="fw-bold">@context.UserName</div>
+                                            <small class="text-muted">@context.UserName</small>
+                                        </div>
+                                    </div>
+                                </GridColumn>
+                                <GridColumn TItem="LeaderboardEntryModel" HeaderText="Points" class="text-center">
+                                    <Badge Color="BadgeColor.Primary" class="fs-6">@context.Score</Badge>
+                                </GridColumn>
+                                <GridColumn TItem="LeaderboardEntryModel" HeaderText="Courses" class="text-center">
+                                    <Badge Color="BadgeColor.Success">@context.CompletedCourses</Badge>
+                                </GridColumn>
+                                <GridColumn TItem="LeaderboardEntryModel" HeaderText="Achievements" class="text-center">
+                                    <Badge Color="BadgeColor.Warning">@context.Achievements</Badge>
+                                </GridColumn>
+                                <GridColumn TItem="LeaderboardEntryModel" HeaderText="Avg. Score" class="text-center">
+                                    <Badge Color="@GetScoreBadgeColor(context.AverageScore)">
+                                        @context.AverageScore.ToString("F1")%
+                                    </Badge>
+                                </GridColumn>
+                                <GridColumn TItem="LeaderboardEntryModel" HeaderText="Streak" class="text-center">
+                                    @if (context.CurrentStreak > 0)
                                     {
-                                        <tr class="@(user.UserId == currentUserId ? "table-primary" : "")">
-                                            <td>
-                                                <div class="d-flex align-items-center">
-                                                    @if (user.Rank <= 3)
-                                                    {
-                                                        <i class="fas fa-medal @GetRankColor(user.Rank) me-2"></i>
-                                                    }
-                                                    <span class="fw-bold">@user.Rank</span>
-                                                    @if (user.UserId == currentUserId)
-                                                    {
-                                                        <span class="badge bg-primary ms-2">You</span>
-                                                    }
-                                                </div>
-                                            </td>
-                                            <td>
-                                                <div class="d-flex align-items-center">
-                                                    <img src="@GetAvatarUrl(user.UserId)" 
-                                                         alt="@user.UserName" 
-                                                         class="rounded-circle me-3" 
-                                                         style="width: 40px; height: 40px; object-fit: cover;" />
-                                                    <div>
-                                                        <div class="fw-bold">@user.UserName</div>
-                                                        <small class="text-muted">@user.UserName</small>
-                                                    </div>
-                                                </div>
-                                            </td>
-                                            <td class="text-center">
-                                                <span class="badge bg-primary fs-6">@user.Score</span>
-                                            </td>
-                                            <td class="text-center">
-                                                <span class="badge bg-success">@user.CompletedCourses</span>
-                                            </td>
-                                            <td class="text-center">
-                                                <span class="badge bg-warning">@user.Achievements</span>
-                                            </td>
-                                            <td class="text-center">
-                                                <span class="badge @GetScoreBadgeClass(user.AverageScore)">
-                                                    @user.AverageScore.ToString("F1")%
-                                                </span>
-                                            </td>
-                                            <td class="text-center">
-                                                @if (user.CurrentStreak > 0)
-                                                {
-                                                    <span class="badge bg-info">
-                                                        <i class="fas fa-fire"></i> @user.CurrentStreak
-                                                    </span>
-                                                }
-                                                else
-                                                {
-                                                    <span class="text-muted">-</span>
-                                                }
-                                            </td>
-                                        </tr>
+                                        <Badge Color="BadgeColor.Info">
+                                            <Icon Name="IconName.Fire" /> @context.CurrentStreak
+                                        </Badge>
                                     }
-                                </tbody>
-                            </table>
-                        </div>
-                        
+                                    else
+                                    {
+                                        <span class="text-muted">-</span>
+                                    }
+                                </GridColumn>
+                            </GridColumns>
+                        </Grid>
+
                         @if (filteredLeaderboard.Count == 0 && !string.IsNullOrEmpty(searchTerm))
                         {
                             <div class="text-center py-4">
                                 <p class="text-muted">No users found matching "@searchTerm"</p>
                             </div>
                         }
-                    </div>
-                </div>
+                    </CardBody>
+                </Card>
             </div>
         </div>
     }
     else
     {
         <div class="text-center py-5">
-            <div class="card">
-                <div class="card-body">
-                    <i class="fas fa-trophy fa-3x text-muted mb-3"></i>
+            <Card>
+                <CardBody>
+                    <Icon Name="IconName.Trophy" Size="IconSize.x3" Class="text-muted mb-3" />
                     <h4 class="text-muted">No Leaderboard Data</h4>
                     <p class="text-muted">Complete courses and earn points to appear on the leaderboard.</p>
-                    <a href="/user/lms/coursecatalog" class="btn btn-primary">
-                        <i class="fas fa-book"></i> Start Learning
-                    </a>
-                </div>
-            </div>
+                    <Button Color="ButtonColor.Primary" To="/user/lms/coursecatalog">
+                        <Icon Name="IconName.Book" /> Start Learning
+                    </Button>
+                </CardBody>
+            </Card>
         </div>
     }
 }
@@ -297,7 +275,7 @@ else
         {
             currentUserId = authState.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         }
-        
+
         await LoadLeaderboard();
     }
 
@@ -314,7 +292,7 @@ else
                 "month" => "/api/leaderboards/monthly",
                 _ => "/api/leaderboards/overall"
             };
-            
+
             var response = await HttpClient.GetAsync(endpoint);
             if (response.IsSuccessStatusCode)
             {
@@ -323,7 +301,7 @@ else
 
             topRanks = leaderboard?.Take(3).ToList() ?? new List<LeaderboardEntryModel>();
             currentUserRank = leaderboard?.FirstOrDefault(l => l.UserId == currentUserId);
-            
+
             FilterLeaderboard();
         }
         catch (Exception ex)
@@ -363,7 +341,7 @@ else
         // Apply search filter
         if (!string.IsNullOrWhiteSpace(searchTerm))
         {
-            filtered = filtered.Where(l => 
+            filtered = filtered.Where(l =>
                 l.UserName.Contains(searchTerm, StringComparison.OrdinalIgnoreCase));
         }
 
@@ -379,16 +357,16 @@ else
     private string GetRankColor(int rank) => rank switch
     {
         1 => "text-warning", // Gold
-        2 => "text-secondary", // Silver  
+        2 => "text-secondary", // Silver
         3 => "text-danger", // Bronze
         _ => "text-muted"
     };
 
-    private string GetScoreBadgeClass(double score) => score switch
+    private BadgeColor GetScoreBadgeColor(double score) => score switch
     {
-        >= 90 => "bg-success",
-        >= 80 => "bg-info",
-        >= 70 => "bg-warning",
-        _ => "bg-secondary"
+        >= 90 => BadgeColor.Success,
+        >= 80 => BadgeColor.Info,
+        >= 70 => BadgeColor.Warning,
+        _ => BadgeColor.Secondary
     };
 }

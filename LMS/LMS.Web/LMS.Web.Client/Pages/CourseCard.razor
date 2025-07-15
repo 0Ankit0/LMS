@@ -1,0 +1,49 @@
+
+@using LMS.Data.DTOs
+@using BlazorBootstrap
+
+<Card class="course-card">
+    <CardBody>
+        <div class="course-image-container">
+            <img src="@Course.ThumbnailUrl" class="course-image" alt="Course image" />
+            <Button Color="ButtonColor.Light" Size="ButtonSize.Small" class="bookmark-btn" @onclick="() => OnBookmark.InvokeAsync(Course.Id)">
+                <Icon Name="@(IsBookmarked ? IconName.BookmarkFill : IconName.Bookmark)" />
+            </Button>
+        </div>
+        <div class="course-info">
+            <div class="course-meta">
+                <Badge Color="BadgeColor.Secondary" class="course-level">@Course.Level</Badge>
+                <span class="course-duration">@FormatDuration(Course.EstimatedDuration)</span>
+            </div>
+            <CardTitle Size="HeadingSize.H6">@Course.Title</CardTitle>
+            <CardText>@Course.Description</CardText>
+            <div class="course-footer">
+                <div class="instructor-info">
+                    <img src="/favicon.png" class="instructor-avatar" alt="Instructor">
+                    <span class="instructor-name">@Course.InstructorName</span>
+                </div>
+                <Button Color="ButtonColor.Primary" Size="ButtonSize.Small" Type="ButtonType.Link" To="@($"/user/lms/course/{Course.Id}")" class="view-btn">
+                    View
+                </Button>
+            </div>
+        </div>
+    </CardBody>
+</Card>
+
+@code {
+    [Parameter] public CourseModel Course { get; set; }
+    [Parameter] public bool IsBookmarked { get; set; }
+    [Parameter] public EventCallback<int> OnBookmark { get; set; }
+
+    private string FormatDuration(TimeSpan duration)
+    {
+        var hours = (int)duration.TotalHours;
+        var minutes = duration.Minutes;
+
+        if (hours > 0)
+        {
+            return minutes > 0 ? $"{hours}h {minutes}m" : $"{hours}h";
+        }
+        return $"{minutes}m";
+    }
+}

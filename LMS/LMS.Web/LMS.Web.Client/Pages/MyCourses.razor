@@ -1,3 +1,4 @@
+@using BlazorBootstrap;
 @page "/user/lms/my-courses"
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @inject HttpClient HttpClient
@@ -6,22 +7,13 @@
 <PageTitle>My Courses - LMS</PageTitle>
 
 <div class="container-fluid">
-    <div
-        class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-        <h1 class="h2"><i class="fas fa-book-open me-2"></i>My Courses</h1>
+    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+        <h1 class="h2"><Icon Name="IconName.Book" Class="me-2" />My Courses</h1>
         <div class="btn-toolbar mb-2 mb-md-0">
             <div class="btn-group me-2" role="group">
-                <input type="radio" class="btn-check" name="filter" id="all" autocomplete="off" checked
-                    @onchange='() => FilterCourses("all")'>>
-                <label class="btn btn-outline-primary" for="all">All</label>
-
-                <input type="radio" class="btn-check" name="filter" id="active" autocomplete="off"
-                    @onchange='() => FilterCourses("active")'>>
-                <label class="btn btn-outline-primary" for="active">Active</label>
-
-                <input type="radio" class="btn-check" name="filter" id="completed" autocomplete="off"
-                    @onchange='() => FilterCourses("completed")'>>
-                <label class="btn btn-outline-primary" for="completed">Completed</label>
+                <Button Color="ButtonColor.Primary" Outline="@(currentFilter != "all")" @onclick='() => FilterCourses("all")'>All</Button>
+                <Button Color="ButtonColor.Primary" Outline="@(currentFilter != "active")" @onclick='() => FilterCourses("active")'>Active</Button>
+                <Button Color="ButtonColor.Primary" Outline="@(currentFilter != "completed")" @onclick='() => FilterCourses("completed")'>Completed</Button>
             </div>
         </div>
     </div>
@@ -29,9 +21,7 @@
     @if (isLoading)
     {
         <div class="d-flex justify-content-center py-5">
-            <div class="spinner-border text-primary" role="status">
-                <span class="visually-hidden">Loading courses...</span>
-            </div>
+            <Spinner />
         </div>
     }
     else if (filteredEnrollments?.Any() == true)
@@ -40,7 +30,7 @@
             @foreach (var enrollment in filteredEnrollments)
             {
                 <div class="col-lg-4 col-md-6 mb-4">
-                    <div class="card h-100 shadow-sm">
+                    <Card Class="h-100 shadow-sm">
                         @if (!string.IsNullOrEmpty(enrollment.CourseThumbnailUrl))
                         {
                             <img src="@enrollment.CourseThumbnailUrl" class="card-img-top" style="height: 200px; object-fit: cover;" alt="@enrollment.CourseTitle">
@@ -48,13 +38,13 @@
                         else
                         {
                             <div class="card-img-top bg-light d-flex align-items-center justify-content-center" style="height: 200px;">
-                                <i class="fas fa-book fa-3x text-muted"></i>
+                                <Icon Name="IconName.Book" Size="IconSize.x3" Class="text-muted" />
                             </div>
                         }
 
-                        <div class="card-body d-flex flex-column">
-                            <h5 class="card-title">@enrollment.CourseTitle</h5>
-                            <p class="card-text text-muted small">@enrollment.CourseDescription</p>
+                        <CardBody Class="d-flex flex-column">
+                            <CardTitle>@enrollment.CourseTitle</CardTitle>
+                            <CardText>@enrollment.CourseDescription</CardText>
 
                             <!-- Progress Bar -->
                             <div class="mb-3">
@@ -62,47 +52,42 @@
                                     <small class="text-muted">Progress</small>
                                     <small class="text-muted">@($"{enrollment.ProgressPercentage:F0}%")</small>
                                 </div>
-                                <div class="progress" style="height: 8px;">
-                                    <div class="progress-bar bg-success" role="progressbar"
-                                        style="width: @($"{enrollment.ProgressPercentage}%")"
-                                        aria-valuenow="@enrollment.ProgressPercentage" aria-valuemin="0" aria-valuemax="100">
-                                    </div>
-                                </div>
+                                <Progress Value="(int)enrollment.ProgressPercentage" Color="ProgressColor.Success" />
                             </div>
 
                             <!-- Status Badge -->
                             <div class="mb-3">
                                 @if (enrollment.CompletedAt.HasValue)
                                 {
-                                    <span class="badge bg-success">
-                                        <i class="fas fa-check me-1"></i>Completed
-                                    </span>
+                                    <Badge Color="BadgeColor.Success">
+                                        <Icon Name="IconName.Check" Class="me-1" />Completed
+                                    </Badge>
                                 }
                                 else if (enrollment.LastAccessedAt.HasValue && enrollment.LastAccessedAt >
                                 DateTime.Now.AddDays(-7))
                                 {
-                                    <span class="badge bg-primary">
-                                        <i class="fas fa-play me-1"></i>Active
-                                    </span>
+                                    <Badge Color="BadgeColor.Primary">
+                                        <Icon Name="IconName.Play" Class="me-1" />Active
+                                    </Badge>
                                 }
                                 else
                                 {
-                                    <span class="badge bg-warning">
-                                        <i class="fas fa-pause me-1"></i>Paused
-                                    </span>
+                                    <Badge Color="BadgeColor.Warning">
+                                        <Icon Name="IconName.Pause" Class="me-1" />Paused
+                                    </Badge>
                                 }
                             </div>
 
                             <!-- Course Info -->
                             <div class="mb-3">
                                 <small class="text-muted d-block">
-                                    <i class="fas fa-calendar me-1"></i>
+                                    <Icon Name="IconName.Calendar" Class="me-1" />
                                     Enrolled: @enrollment.EnrolledAt.ToString("MMM dd, yyyy")
                                 </small>
                                 @if (enrollment.LastAccessedAt.HasValue)
                                 {
                                     <small class="text-muted d-block">
-                                        <i class="fas fa-clock me-1"></i>
+                                        <Icon Name="IconName.Clock" Class="me-1" />
                                         Last accessed: @enrollment.LastAccessedAt.Value.ToString("MMM dd, yyyy")
                                     </small>
                                 }
@@ -112,26 +97,26 @@
                             <div class="mt-auto">
                                 @if (enrollment.CompletedAt.HasValue)
                                 {
-                                    <a href="/course/@enrollment.CourseId" class="btn btn-outline-primary btn-sm me-2">
-                                        <i class="fas fa-eye me-1"></i>Review
-                                    </a>
-                                    <button class="btn btn-success btn-sm"
-                                        @onclick="() => DownloadCertificate(enrollment.CourseId)">
-                                        <i class="fas fa-download me-1"></i>Certificate
-                                    </button>
+                                    <Button Color="ButtonColor.Primary" Outline="true" Size="ButtonSize.Small" To="@($"/course/{enrollment.CourseId}")" Class="me-2">
+                                        <Icon Name="IconName.Eye" Class="me-1" />Review
+                                    </Button>
+                                    <Button Color="ButtonColor.Success" Size="ButtonSize.Small"
+                                            @onclick="() => DownloadCertificate(enrollment.CourseId)">
+                                        <Icon Name="IconName.Download" Class="me-1" />Certificate
+                                    </Button>
                                 }
                                 else
                                 {
-                                    <a href="/course/@enrollment.CourseId" class="btn btn-primary btn-sm me-2">
-                                        <i class="fas fa-play me-1"></i>Continue
-                                    </a>
-                                    <button class="btn btn-outline-danger btn-sm" @onclick="() => ShowUnenrollModal(enrollment)">
-                                        <i class="fas fa-times me-1"></i>Unenroll
-                                    </button>
+                                    <Button Color="ButtonColor.Primary" Size="ButtonSize.Small" To="@($"/course/{enrollment.CourseId}")" Class="me-2">
+                                        <Icon Name="IconName.Play" Class="me-1" />Continue
+                                    </Button>
+                                    <Button Color="ButtonColor.Danger" Outline="true" Size="ButtonSize.Small" @onclick="() => ShowUnenrollModal(enrollment)">
+                                        <Icon Name="IconName.X" Class="me-1" />Unenroll
+                                    </Button>
                                 }
                             </div>
-                        </div>
-                    </div>
+                        </CardBody>
+                    </Card>
                 </div>
             }
         </div>
@@ -139,59 +124,45 @@
     else
     {
         <div class="text-center py-5">
-            <i class="fas fa-book-open fa-4x text-muted mb-3"></i>
+            <Icon Name="IconName.Book" Size="IconSize.x4" Class="text-muted mb-3" />
             <h4 class="text-muted">No courses found</h4>
             <p class="text-muted">@GetEmptyStateMessage()</p>
-            <a href="/courses" class="btn btn-primary">
-                <i class="fas fa-search me-1"></i>Browse Courses
-            </a>
+            <Button Color="ButtonColor.Primary" To="/courses">
+                <Icon Name="IconName.Search" Class="me-1" />Browse Courses
+            </Button>
         </div>
     }
 </div>
 
 <!-- Unenroll Confirmation Modal -->
-@if (showUnenrollModal && selectedEnrollment != null)
-{
-    <div class="modal fade show" style="display: block;" tabindex="-1">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Confirm Unenrollment</h5>
-                    <button type="button" class="btn-close" @onclick="HideUnenrollModal"></button>
-                </div>
-                <div class="modal-body">
-                    <p>Are you sure you want to unenroll from <strong>@selectedEnrollment.CourseTitle</strong>?</p>
-                    <div class="alert alert-warning">
-                        <i class="fas fa-exclamation-triangle me-2"></i>
-                        Your progress will be lost and cannot be recovered.
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" @onclick="HideUnenrollModal">Cancel</button>
-                    <button type="button" class="btn btn-danger" @onclick="ConfirmUnenroll" disabled="@isUnenrolling">
-                        @if (isUnenrolling)
-                        {
-                            <span class="spinner-border spinner-border-sm me-2"></span>
-                        }
-                        Unenroll
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-    <div class="modal-backdrop fade show"></div>
-}
+<Modal @ref="unenrollModal" Title="Confirm Unenrollment">
+    <BodyTemplate>
+        @if (selectedEnrollment != null)
+        {
+            <p>Are you sure you want to unenroll from <strong>@selectedEnrollment.CourseTitle</strong>?</p>
+            <Alert Color="AlertColor.Warning">
+                <Icon Name="IconName.ExclamationTriangle" Class="me-2" />
+                Your progress will be lost and cannot be recovered.
+            </Alert>
+        }
+    </BodyTemplate>
+    <FooterTemplate>
+        <Button Color="ButtonColor.Secondary" @onclick="HideUnenrollModal">Cancel</Button>
+        <Button Color="ButtonColor.Danger" @onclick="ConfirmUnenroll">
+            Unenroll
+        </Button>
+    </FooterTemplate>
+</Modal>
 
 @code {
     private bool isLoading = true;
-    private bool isUnenrolling = false;
-    private bool showUnenrollModal = false;
     private string currentFilter = "all";
     private string? currentUserId;
 
     private List<EnrollmentModel>? enrollments;
     private List<EnrollmentModel>? filteredEnrollments;
     private EnrollmentModel? selectedEnrollment;
+    private Modal unenrollModal = default!;
 
     protected override async Task OnInitializedAsync()
     {
@@ -207,7 +178,7 @@
             if (authState.User.Identity?.IsAuthenticated == true)
             {
                 currentUserId = authState.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-                
+
                 if (!string.IsNullOrEmpty(currentUserId))
                 {
                     var response = await HttpClient.GetAsync($"/api/enrollments/user/{currentUserId}/enrollments");
@@ -252,15 +223,15 @@
         };
     }
 
-    private void ShowUnenrollModal(EnrollmentModel enrollment)
+    private async Task ShowUnenrollModal(EnrollmentModel enrollment)
     {
         selectedEnrollment = enrollment;
-        showUnenrollModal = true;
+        await unenrollModal.ShowAsync();
     }
 
-    private void HideUnenrollModal()
+    private async Task HideUnenrollModal()
     {
-        showUnenrollModal = false;
+        await unenrollModal.HideAsync();
         selectedEnrollment = null;
     }
 
@@ -270,14 +241,13 @@
 
         try
         {
-            isUnenrolling = true;
             var response = await HttpClient.DeleteAsync($"/api/enrollments/user/{currentUserId}/course/{selectedEnrollment.CourseId}");
 
             if (response.IsSuccessStatusCode)
             {
                 await JSRuntime.InvokeVoidAsync("showToast", "Successfully unenrolled from course", "success");
                 await LoadUserCourses();
-                HideUnenrollModal();
+                await HideUnenrollModal();
             }
             else
             {
@@ -287,10 +257,6 @@
         catch (Exception ex)
         {
             await JSRuntime.InvokeVoidAsync("showToast", $"Error: {ex.Message}", "error");
-        }
-        finally
-        {
-            isUnenrolling = false;
         }
     }
 

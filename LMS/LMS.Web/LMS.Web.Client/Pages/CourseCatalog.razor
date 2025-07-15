@@ -1,4 +1,4 @@
-@using BlazorBootstrap;
+@using BlazorBootstrap
 @page "/user/lms/courses/catalog"
 @inject HttpClient HttpClient
 
@@ -9,61 +9,47 @@
             <h5 class="sidebar-title">Categories</h5>
         </div>
         <div class="sidebar-content">
-            <div class="category-list">
-                <div class="category-item @(selectedCategory == "all" ? "active" : "")"
-                    @onclick='() => SelectCategory("all")'>
+            <ListGroup class="category-list">
+                <ListGroupItem class="@(selectedCategory == "all" ? "active" : "")" @onclick='() => SelectCategory("all")'>
                     <div class="category-icon">
                         <Icon Name="IconName.BookmarkFill" />
                     </div>
                     <span class="category-text">All Courses</span>
-                </div>
-                <div class="category-item @(selectedCategory == "development" ? "active" : "")"
-                    @onclick='() => SelectCategory("development")'>
+                </ListGroupItem>
+                <ListGroupItem class="@(selectedCategory == "development" ? "active" : "")" @onclick='() => SelectCategory("development")'>
                     <div class="category-icon">
                         <Icon Name="IconName.Laptop" />
                     </div>
                     <span class="category-text">Development</span>
-                </div>
-                <div class="category-item @(selectedCategory == "business" ? "active" : "")"
-                    @onclick='() => SelectCategory("business")'>
+                </ListGroupItem>
+                <ListGroupItem class="@(selectedCategory == "business" ? "active" : "")" @onclick='() => SelectCategory("business")'>
                     <div class="category-icon">
                         <Icon Name="IconName.GraphUp" />
                     </div>
                     <span class="category-text">Business</span>
-                </div>
-                <div class="category-item @(selectedCategory == "design" ? "active" : "")"
-                    @onclick='() => SelectCategory("design")'>
+                </ListGroupItem>
+                <ListGroupItem class="@(selectedCategory == "design" ? "active" : "")" @onclick='() => SelectCategory("design")'>
                     <div class="category-icon">
                         <Icon Name="IconName.PaintBucket" />
                     </div>
                     <span class="category-text">Design</span>
-                </div>
-                <div class="category-item @(selectedCategory == "security" ? "active" : "")"
-                    @onclick='() => SelectCategory("security")'>
+                </ListGroupItem>
+                <ListGroupItem class="@(selectedCategory == "security" ? "active" : "")" @onclick='() => SelectCategory("security")'>
                     <div class="category-icon">
                         <Icon Name="IconName.ShieldCheck" />
                     </div>
                     <span class="category-text">Security</span>
-                </div>
-            </div>
+                </ListGroupItem>
+            </ListGroup>
 
             <div class="filters-section">
                 <h6 class="filter-title">Filters</h6>
                 <div class="filter-group">
                     <span class="filter-label">Level</span>
                     <div class="filter-options">
-                        <label class="filter-option">
-                            <input type="checkbox" @bind="filters.Beginner" @bind:after="ApplyFilters">
-                            <span>Beginner</span>
-                        </label>
-                        <label class="filter-option">
-                            <input type="checkbox" @bind="filters.Intermediate" @bind:after="ApplyFilters">
-                            <span>Intermediate</span>
-                        </label>
-                        <label class="filter-option">
-                            <input type="checkbox" @bind="filters.Advanced" @bind:after="ApplyFilters">
-                            <span>Advanced</span>
-                        </label>
+                        <CheckboxInput @bind-value="filters.Beginner" @onchange="ApplyFilters">Beginner</CheckboxInput>
+                        <CheckboxInput @bind-value="filters.Intermediate" @onchange="ApplyFilters">Intermediate</CheckboxInput>
+                        <CheckboxInput @bind-value="filters.Advanced" @onchange="ApplyFilters">Advanced</CheckboxInput>
                     </div>
                 </div>
             </div>
@@ -80,8 +66,7 @@
             </div>
             <div class="header-actions">
                 <div class="search-container">
-                    <TextInput @bind-Value="searchQuery" @bind-Value:event="oninput"
-                        Placeholder="Search courses, instructors, topics..." />
+                    <InputText @bind-Value="searchQuery" @bind-Value:event="oninput" Placeholder="Search courses, instructors, topics..." class="form-control" />
                 </div>
                 <div class="sort-dropdown">
                     <Dropdown>
@@ -89,14 +74,10 @@
                             <Icon Name="IconName.Funnel" class="me-1" /> @GetSortDisplayText()
                         </DropdownToggleButton>
                         <DropdownMenu>
-                            <DropdownItem @onclick='() => SetSort("popular")' Active="@(sortBy == "popular")">Most
-                                Popular</DropdownItem>
-                            <DropdownItem @onclick='() => SetSort("newest")' Active="@(sortBy == "newest")">Newest
-                            </DropdownItem>
-                            <DropdownItem @onclick='() => SetSort("alphabetical")' Active="@(sortBy == "alphabetical")">
-                                A-Z</DropdownItem>
-                            <DropdownItem @onclick='() => SetSort("level")' Active="@(sortBy == "level")">By Level
-                            </DropdownItem>
+                            <DropdownItem @onclick='() => SetSort("popular")' Active="@(sortBy == "popular")">Most Popular</DropdownItem>
+                            <DropdownItem @onclick='() => SetSort("newest")' Active="@(sortBy == "newest")">Newest</DropdownItem>
+                            <DropdownItem @onclick='() => SetSort("alphabetical")' Active="@(sortBy == "alphabetical")">A-Z</DropdownItem>
+                            <DropdownItem @onclick='() => SetSort("level")' Active="@(sortBy == "level")">By Level</DropdownItem>
                         </DropdownMenu>
                     </Dropdown>
                 </div>
@@ -110,36 +91,7 @@
                 {
                     @foreach (var course in filteredCourses)
                     {
-                        <Card class="course-card">
-                            <CardBody>
-                                <div class="course-image-container">
-                                    <img src="@course.ThumbnailUrl" class="course-image" alt="Course image" />
-                                    <Button Color="ButtonColor.Light" Size="ButtonSize.Small" class="bookmark-btn"
-                                        @onclick="() => ToggleBookmark(course.Id)">
-                                        <Icon
-                                            Name="@(bookmarkedCourses.Contains(course.Id) ? IconName.BookmarkFill : IconName.Bookmark)" />
-                                    </Button>
-                                </div>
-                                <div class="course-info">
-                                    <div class="course-meta">
-                                        <Badge Color="BadgeColor.Secondary" class="course-level">@course.Level</Badge>
-                                        <span class="course-duration">@FormatDuration(course.EstimatedDuration)</span>
-                                    </div>
-                                    <CardTitle Size="HeadingSize.H6">@course.Title</CardTitle>
-                                    <CardText>@course.Description</CardText>
-                                    <div class="course-footer">
-                                        <div class="instructor-info">
-                                            <img src="/favicon.png" class="instructor-avatar" alt="Instructor">
-                                            <span class="instructor-name">@course.InstructorName</span>
-                                        </div>
-                                        <Button Color="ButtonColor.Primary" Size="ButtonSize.Small" Type="ButtonType.Link"
-                                            To="@($"/user/lms/course/{course.Id}")" class="view-btn">
-                                            View
-                                        </Button>
-                                    </div>
-                                </div>
-                            </CardBody>
-                        </Card>
+                        <CourseCard Course="course" IsBookmarked="bookmarkedCourses.Contains(course.Id)" OnBookmark="ToggleBookmark" />
                     }
                 }
                 else
@@ -154,6 +106,7 @@
         </div>
     </div>
 </div>
+
 
 @code {
     // State variables
@@ -198,8 +151,6 @@
         selectedCategory = category;
         ApplyFilters();
     }
-
-
 
     private void SetSort(string sortType)
     {

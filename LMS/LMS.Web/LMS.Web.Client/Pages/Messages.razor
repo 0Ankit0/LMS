@@ -8,11 +8,11 @@
 
 <div class="container-fluid">
     <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-        <h1 class="h2"><i class="fas fa-envelope me-2"></i>Messages</h1>
+        <h1 class="h2"><Icon Name="IconName.Envelope" Class="me-2" />Messages</h1>
         <div class="btn-toolbar mb-2 mb-md-0">
-            <button type="button" class="btn btn-primary" @onclick="ShowComposeModal">
-                <i class="fas fa-plus me-1"></i>Compose
-            </button>
+            <Button Color="ButtonColor.Primary" @onclick="ShowComposeModal">
+                <Icon Name="IconName.Plus" Class="me-1" />Compose
+            </Button>
         </div>
     </div>
 
@@ -21,22 +21,22 @@
         <div class="col-md-4 border-end">
             <div class="mb-3">
                 <div class="btn-group w-100" role="group">
-                    <button type="button" class="btn @(currentFolder == "inbox" ? "btn-primary" : "btn-outline-primary")" 
+                    <Button Color="ButtonColor.Primary" Outline="@(currentFolder != "inbox")"
                             @onclick='() => SwitchFolder("inbox")'>
-                        <i class="fas fa-inbox me-1"></i>Inbox (@unreadCount)
-                    </button>
-                    
-                    <button type="button" class="btn @(currentFolder == "sent" ? "btn-primary" : "btn-outline-primary")" 
+                        <Icon Name="IconName.Inbox" Class="me-1" />Inbox (@unreadCount)
+                    </Button>
+
+                    <Button Color="ButtonColor.Primary" Outline="@(currentFolder != "sent")"
                             @onclick='() => SwitchFolder("sent")'>
-                        <i class="fas fa-paper-plane me-1"></i>Sent
-                    </button>
+                        <Icon Name="IconName.Send" Class="me-1" />Sent
+                    </Button>
                 </div>
             </div>
 
             @if (isLoadingMessages)
             {
                 <div class="text-center py-3">
-                    <div class="spinner-border spinner-border-sm text-primary"></div>
+                    <Spinner />
                 </div>
             }
             else if (filteredMessages?.Any() == true)
@@ -74,11 +74,11 @@
                             </small>
                             @if (!message.IsRead && currentFolder == "inbox")
                             {
-                                <span class="badge bg-primary rounded-pill ms-2">New</span>
+                                <Badge Color="BadgeColor.Primary" class="rounded-pill ms-2">New</Badge>
                             }
-                            @if (GetMessagePriorityIcon(message.Priority) != null)
+                            @if (GetMessagePriorityIconName(message.Priority) is IconName iconName)
                             {
-                                <i class="@GetMessagePriorityIcon(message.Priority) ms-2"></i>
+                                <Icon Name="@iconName" class="ms-2" />
                             }
                         </a>
                     }
@@ -87,7 +87,7 @@
             else
             {
                 <div class="text-center py-5">
-                    <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+                    <Icon Name="IconName.Inbox" Size="IconSize.x3" Class="text-muted mb-3" />
                     <p class="text-muted">No messages in @currentFolder</p>
                 </div>
             }
@@ -97,29 +97,31 @@
         <div class="col-md-8">
             @if (selectedMessage != null)
             {
-                <div class="card">
-                    <div class="card-header d-flex justify-content-between align-items-center">
-                        <div>
-                            <h5 class="mb-0">@selectedMessage.Subject</h5>
-                            <small class="text-muted">
-                                From: @selectedMessage.FromUserName • 
-                                @selectedMessage.SentAt.ToString("MMMM dd, yyyy 'at' h:mm tt")
-                            </small>
+                <Card>
+                    <CardHeader>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h5 class="mb-0">@selectedMessage.Subject</h5>
+                                <small class="text-muted">
+                                    From: @selectedMessage.FromUserName •
+                                    @selectedMessage.SentAt.ToString("MMMM dd, yyyy 'at' h:mm tt")
+                                </small>
+                            </div>
+                            <div class="btn-group">
+                                <Button Color="ButtonColor.Primary" Outline="true" Size="ButtonSize.Small" @onclick="ReplyToMessage">
+                                    <Icon Name="IconName.Reply" Class="me-1" />Reply
+                                </Button>
+                                <Button Color="ButtonColor.Danger" Outline="true" Size="ButtonSize.Small" @onclick="DeleteMessage">
+                                    <Icon Name="IconName.Trash" Class="me-1" />Delete
+                                </Button>
+                            </div>
                         </div>
-                        <div class="btn-group">
-                            <button type="button" class="btn btn-outline-primary btn-sm" @onclick="ReplyToMessage">
-                                <i class="fas fa-reply me-1"></i>Reply
-                            </button>
-                            <button type="button" class="btn btn-outline-danger btn-sm" @onclick="DeleteMessage">
-                                <i class="fas fa-trash me-1"></i>Delete
-                            </button>
-                        </div>
-                    </div>
-                    <div class="card-body">
+                    </CardHeader>
+                    <CardBody>
                         <div class="message-content">
                             @((MarkupString)selectedMessage.Content.Replace("\n", "<br>"))
                         </div>
-                        
+
                         @if (selectedMessage.Attachments?.Any() == true)
                         {
                             <div class="mt-3">
@@ -127,15 +129,15 @@
                                 @foreach (var attachment in selectedMessage.Attachments)
                                 {
                                     <div class="d-flex align-items-center mb-2">
-                                        <i class="fas fa-paperclip me-2"></i>
+                                        <Icon Name="IconName.Paperclip" Class="me-2" />
                                         <a href="#" class="text-decoration-none">@attachment.FileName</a>
                                         <small class="text-muted ms-2">(@FormatFileSize(attachment.FileSize))</small>
                                     </div>
                                 }
                             </div>
                         }
-                    </div>
-                </div>
+                    </CardBody>
+                </Card>
 
                 <!-- Replies -->
                 @if (selectedMessage.Replies?.Any() == true)
@@ -144,15 +146,15 @@
                         <h6>Replies:</h6>
                         @foreach (var reply in selectedMessage.Replies)
                         {
-                            <div class="card mb-2">
-                                <div class="card-body py-2">
+                            <Card class="mb-2">
+                                <CardBody class="py-2">
                                     <div class="d-flex justify-content-between align-items-center mb-2">
                                         <small class="fw-bold">@reply.FromUserName</small>
                                         <small class="text-muted">@reply.SentAt.ToString("MMM dd, yyyy 'at' h:mm tt")</small>
                                     </div>
                                     <div>@((MarkupString)reply.Content.Replace("\n", "<br>"))</div>
-                                </div>
-                            </div>
+                                </CardBody>
+                            </Card>
                         }
                     </div>
                 }
@@ -160,7 +162,7 @@
             else
             {
                 <div class="text-center py-5">
-                    <i class="fas fa-envelope-open-text fa-4x text-muted mb-3"></i>
+                    <Icon Name="IconName.EnvelopeOpen" Size="IconSize.x4" Class="text-muted mb-3" />
                     <h4 class="text-muted">Select a message</h4>
                     <p class="text-muted">Choose a message from the list to read its content</p>
                 </div>
@@ -170,105 +172,81 @@
 </div>
 
 <!-- Compose Message Modal -->
-@if (showComposeModal)
-{
-    <div class="modal fade show" style="display: block;" tabindex="-1">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">
-                        @if (replyToMessage != null)
-                        {
-                            <span>Reply to: @replyToMessage.Subject</span>
-                        }
-                        else
-                        {
-                            <span>Compose Message</span>
-                        }
-                    </h5>
-                    <button type="button" class="btn-close" @onclick="HideComposeModal"></button>
+<Modal @ref="composeModal" Title="@(replyToMessage != null ? "Reply to: " + replyToMessage.Subject : "Compose Message")">
+    <BodyTemplate>
+        <EditForm Model="@newMessage" OnValidSubmit="@SendMessage">
+            <DataAnnotationsValidator />
+            <ValidationSummary class="alert alert-danger" />
+
+            @if (replyToMessage == null)
+            {
+                <div class="mb-3">
+                    <label for="toUser" class="form-label">To</label>
+                    <InputText id="toUser" class="form-control" @bind-value="toUserSearch" placeholder="Search for a user..." />
+                    @if (searchedUsers?.Any() == true)
+                    {
+                        <div class="dropdown-menu show">
+                            @foreach (var user in searchedUsers.Take(5))
+                            {
+                                <a class="dropdown-item" href="#" @onclick="() => SelectRecipient(user)" @onclick:preventDefault="true">
+                                    @user.UserName (@user.Email)
+                                </a>
+                            }
+                        </div>
+                    }
                 </div>
-                <div class="modal-body">
-                    <EditForm Model="@newMessage" OnValidSubmit="@SendMessage">
-                        <DataAnnotationsValidator />
-                        <ValidationSummary class="alert alert-danger" />
-                        
-                        @if (replyToMessage == null)
-                        {
-                            <div class="mb-3">
-                                <label for="toUser" class="form-label">To</label>
-<InputText id="toUser" class="form-control" @bind-value="toUserSearch" placeholder="Search for a user..." />
-                                @if (searchedUsers?.Any() == true)
-                                {
-                                    <div class="dropdown-menu show">
-                                        @foreach (var user in searchedUsers.Take(5))
-                                        {
-                                            <a class="dropdown-item" href="#" @onclick="() => SelectRecipient(user)" @onclick:preventDefault="true">
-                                                @user.UserName (@user.Email)
-                                            </a>
-                                        }
-                                    </div>
-                                }
-                            </div>
-                        }
-                        
-                        <div class="mb-3">
-                            <label for="subject" class="form-label">Subject</label>
-<InputText id="subject" class="form-control" @bind-value="newMessage.Subject" />
-                            <ValidationMessage For="@(() => newMessage.Subject)" />
-                        </div>
-                        
-                        <div class="mb-3">
-                            <label for="priority" class="form-label">Priority</label>
-<InputSelect id="priority" class="form-select" @bind-value="newMessage.Priority">
-                                <option value="1">Low</option>
-                                <option value="2">Normal</option>
-                                <option value="3">High</option>
-                                <option value="4">Urgent</option>
-                            </InputSelect>
-                        </div>
-                        
-                        <div class="mb-3">
-                            <label for="content" class="form-label">Message</label>
-<InputTextArea id="content" class="form-control" rows="6" @bind-value="newMessage.Content" />
-                            <ValidationMessage For="@(() => newMessage.Content)" />
-                        </div>
-                        
-                        <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" @onclick="HideComposeModal">Cancel</button>
-                            <button type="submit" class="btn btn-primary" disabled="@isSending">
-                                @if (isSending)
-                                {
-                                    <span class="spinner-border spinner-border-sm me-2"></span>
-                                }
-                                Send Message
-                            </button>
-                        </div>
-                    </EditForm>
-                </div>
+            }
+
+            <div class="mb-3">
+                <label for="subject" class="form-label">Subject</label>
+                <InputText id="subject" class="form-control" @bind-value="newMessage.Subject" />
+                <ValidationMessage For="@(() => newMessage.Subject)" />
             </div>
-        </div>
-    </div>
-    <div class="modal-backdrop fade show"></div>
-}
+
+            <div class="mb-3">
+                <label for="priority" class="form-label">Priority</label>
+                <select id="priority" class="form-select" @bind="newMessage.Priority">
+                    <option value="1">Low</option>
+                    <option value="2">Normal</option>
+                    <option value="3">High</option>
+                    <option value="4">Urgent</option>
+                </select>
+            </div>
+
+            <div class="mb-3">
+                <label for="content" class="form-label">Message</label>
+                <InputTextArea id="content" class="form-control" rows="6" @bind-value="newMessage.Content" />
+                <ValidationMessage For="@(() => newMessage.Content)" />
+            </div>
+
+        </EditForm>
+    </BodyTemplate>
+    <FooterTemplate>
+        <Button Color="ButtonColor.Secondary" @onclick="HideComposeModal">Cancel</Button>
+        <Button Color="ButtonColor.Primary" IsLoading="isSending" @onclick="SendMessage">
+            Send Message
+        </Button>
+    </FooterTemplate>
+</Modal>
 
 @code {
     private bool isLoadingMessages = true;
     private bool isSending = false;
-    private bool showComposeModal = false;
     private string currentFolder = "inbox";
     private string? currentUserId;
     private string toUserSearch = "";
-    
+
     private List<MessageModel>? inboxMessages;
     private List<MessageModel>? sentMessages;
     private List<MessageModel>? filteredMessages;
     private List<UserModel>? searchedUsers;
     private MessageModel? selectedMessage;
     private MessageModel? replyToMessage;
-    
+
     private CreateMessageRequest newMessage = new();
     private int unreadCount = 0;
+
+    private Modal? composeModal;
 
     protected override async Task OnInitializedAsync()
     {
@@ -284,7 +262,7 @@
             if (authState.User.Identity?.IsAuthenticated == true)
             {
                 currentUserId = authState.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-                
+
                 if (!string.IsNullOrEmpty(currentUserId))
                 {
                     // Load inbox and sent messages via HTTP endpoints
@@ -293,15 +271,15 @@
                     {
                         inboxMessages = await inboxResponse.Content.ReadFromJsonAsync<List<MessageModel>>() ?? new List<MessageModel>();
                     }
-                    
+
                     var sentResponse = await HttpClient.GetAsync($"/api/messages/user/{currentUserId}/sent");
                     if (sentResponse.IsSuccessStatusCode)
                     {
                         sentMessages = await sentResponse.Content.ReadFromJsonAsync<List<MessageModel>>() ?? new List<MessageModel>();
                     }
-                    
+
                     unreadCount = inboxMessages?.Count(m => !m.IsRead) ?? 0;
-                    
+
                     FilterMessages();
                 }
             }
@@ -335,7 +313,7 @@
     private async Task SelectMessage(MessageModel message)
     {
         selectedMessage = message;
-        
+
         // Mark as read if it's an inbox message and not already read
         if (currentFolder == "inbox" && !message.IsRead && currentUserId != null)
         {
@@ -356,17 +334,20 @@
         }
     }
 
-    private void ShowComposeModal()
+    private async void ShowComposeModal()
     {
         replyToMessage = null;
         newMessage = new CreateMessageRequest();
-        showComposeModal = true;
+        toUserSearch = "";
+        searchedUsers = null;
+        if (composeModal != null)
+            await composeModal.ShowAsync();
     }
 
-    private void ReplyToMessage()
+    private async void ReplyToMessage()
     {
         if (selectedMessage == null) return;
-        
+
         replyToMessage = selectedMessage;
         newMessage = new CreateMessageRequest
         {
@@ -375,12 +356,16 @@
             ParentMessageId = selectedMessage.Id,
             Priority = 2
         };
-        showComposeModal = true;
+        toUserSearch = "";
+        searchedUsers = null;
+        if (composeModal != null)
+            await composeModal.ShowAsync();
     }
 
-    private void HideComposeModal()
+    private async void HideComposeModal()
     {
-        showComposeModal = false;
+        if (composeModal != null)
+            await composeModal.HideAsync();
         replyToMessage = null;
         newMessage = new CreateMessageRequest();
         toUserSearch = "";
@@ -395,7 +380,7 @@
         {
             isSending = true;
             var response = await HttpClient.PostAsJsonAsync($"/api/messages?senderId={currentUserId}", newMessage);
-            
+
             if (response.IsSuccessStatusCode)
             {
                 await JSRuntime.InvokeVoidAsync("showToast", "Message sent successfully!", "success");
@@ -448,12 +433,13 @@
         searchedUsers = null;
     }
 
-    private string? GetMessagePriorityIcon(string priority)
+    // Returns a BlazorBootstrap IconName? for the given priority string
+    private IconName? GetMessagePriorityIconName(string priority)
     {
         return priority switch
         {
-            "High" => "fas fa-exclamation text-warning",
-            "Urgent" => "fas fa-exclamation-triangle text-danger",
+            "High" => IconName.ExclamationLg,
+            "Urgent" => IconName.ExclamationTriangle,
             _ => null
         };
     }
@@ -470,16 +456,4 @@
         }
         return $"{len:0.##} {sizes[order]}";
     }
-}lms/messages"
-<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-    <h1 class="h2">Messages</h1>
-</div>
-
-<div class="row">
-    <div class="col-12">
-        <div class="alert alert-info">
-            <i class="fas fa-info-circle"></i>
-            This is the Messages component. It will handle private messaging between users.
-        </div>
-    </div>
-</div>
+}

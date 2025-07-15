@@ -1,23 +1,22 @@
+@using BlazorBootstrap;
 @page "/user/lms/certificates"
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @inject HttpClient HttpClient
 @inject IJSRuntime JSRuntime
 
 <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-    <h1 class="h2"><i class="fas fa-certificate text-warning me-2"></i>My Certificates</h1>
+    <h1 class="h2"><Icon Name="IconName.Award" Class="me-2" />My Certificates</h1>
     <div class="btn-toolbar mb-2 mb-md-0">
-        <button class="btn btn-outline-primary btn-sm" @onclick="RefreshCertificates">
-            <i class="fas fa-sync-alt"></i> Refresh
-        </button>
+        <Button Color="ButtonColor.Primary" Size="ButtonSize.Small" @onclick="RefreshCertificates">
+            <Icon Name="IconName.ArrowClockwise" /> Refresh
+        </Button>
     </div>
 </div>
 
 @if (isLoading)
 {
     <div class="d-flex justify-content-center py-5">
-        <div class="spinner-border text-primary" role="status">
-            <span class="visually-hidden">Loading certificates...</span>
-        </div>
+        <Spinner />
     </div>
 }
 else if (certificates?.Any() == true)
@@ -25,40 +24,64 @@ else if (certificates?.Any() == true)
     <!-- Statistics Cards -->
     <div class="row mb-4">
         <div class="col-md-3">
-            <div class="card bg-primary text-white text-center">
-                <div class="card-body">
-                    <i class="fas fa-certificate fa-2x mb-2"></i>
-                    <h4>@certificates.Count()</h4>
-                    <small>Total Certificates</small>
-                </div>
-            </div>
+            <Card>
+                <CardBody>
+                    <div class="d-flex">
+                        <div class="flex-shrink-0">
+                            <Icon Name="IconName.Award" Class="text-primary" Size="IconSize.x3" />
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <h5 class="card-title">@certificates.Count()</h5>
+                            <p class="card-text">Total Certificates</p>
+                        </div>
+                    </div>
+                </CardBody>
+            </Card>
         </div>
         <div class="col-md-3">
-            <div class="card bg-success text-white text-center">
-                <div class="card-body">
-                    <i class="fas fa-calendar-check fa-2x mb-2"></i>
-                    <h4>@certificates.Count(c => c.IssuedAt >= DateTime.Now.AddDays(-30))</h4>
-                    <small>This Month</small>
-                </div>
-            </div>
+            <Card>
+                <CardBody>
+                    <div class="d-flex">
+                        <div class="flex-shrink-0">
+                            <Icon Name="IconName.CalendarCheck" Class="text-success" Size="IconSize.x3" />
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <h5 class="card-title">@certificates.Count(c => c.IssuedAt >= DateTime.Now.AddDays(-30))</h5>
+                            <p class="card-text">This Month</p>
+                        </div>
+                    </div>
+                </CardBody>
+            </Card>
         </div>
         <div class="col-md-3">
-            <div class="card bg-info text-white text-center">
-                <div class="card-body">
-                    <i class="fas fa-check-circle fa-2x mb-2"></i>
-                    <h4>@certificates.Count(c => c.IsValid)</h4>
-                    <small>Valid</small>
-                </div>
-            </div>
+            <Card>
+                <CardBody>
+                    <div class="d-flex">
+                        <div class="flex-shrink-0">
+                            <Icon Name="IconName.CheckCircle" Class="text-info" Size="IconSize.x3" />
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <h5 class="card-title">@certificates.Count(c => c.IsValid)</h5>
+                            <p class="card-text">Valid</p>
+                        </div>
+                    </div>
+                </CardBody>
+            </Card>
         </div>
         <div class="col-md-3">
-            <div class="card bg-warning text-white text-center">
-                <div class="card-body">
-                    <i class="fas fa-clock fa-2x mb-2"></i>
-                    <h4>@certificates.Count(c => c.ExpiresAt.HasValue && c.ExpiresAt.Value <= DateTime.Now.AddDays(30))</h4>
-                    <small>Expiring Soon</small>
-                </div>
-            </div>
+            <Card>
+                <CardBody>
+                    <div class="d-flex">
+                        <div class="flex-shrink-0">
+                            <Icon Name="IconName.Clock" Class="text-warning" Size="IconSize.x3" />
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <h5 class="card-title">@certificates.Count(c => c.ExpiresAt.HasValue && c.ExpiresAt.Value <= DateTime.Now.AddDays(30))</h5>
+                            <p class="card-text">Expiring Soon</p>
+                        </div>
+                    </div>
+                </CardBody>
+            </Card>
         </div>
     </div>
 
@@ -67,22 +90,22 @@ else if (certificates?.Any() == true)
         @foreach (var certificate in certificates)
         {
             <div class="col-lg-6 col-xl-4 mb-4">
-                <div class="card h-100 shadow-sm">
-                    <div class="card-header bg-primary text-white">
+                <Card>
+                    <CardHeader>
                         <div class="d-flex justify-content-between align-items-center">
                             <div>
-                                <i class="fas fa-certificate fa-2x mb-2"></i>
-                                <h6 class="mb-0">Certificate</h6>
+                                <Icon Name="IconName.Award" Class="me-2" />
+                                <h6 class="mb-0 d-inline">Certificate</h6>
                             </div>
-                            <span class="badge bg-success">
-                                <i class="fas fa-check"></i> Valid
-                            </span>
+                            <Badge Color="BadgeColor.Success">
+                                <Icon Name="IconName.Check" /> Valid
+                            </Badge>
                         </div>
-                    </div>
-                    
-                    <div class="card-body">
+                    </CardHeader>
+
+                    <CardBody>
                         <h5 class="card-title text-primary">@certificate.CourseTitle</h5>
-                        
+
                         <div class="mb-3">
                             <p class="card-text">
                                 <strong>Certificate #:</strong> @certificate.CertificateNumber
@@ -108,33 +131,30 @@ else if (certificates?.Any() == true)
                         <div class="mb-3">
                             <div class="d-flex justify-content-between mb-1">
                                 <span>Final Grade: @certificate.FinalGrade.ToString("F1")%</span>
-                                <span class="badge @GetGradeBadgeClass(certificate.FinalGrade)">
+                                <Badge Color="@GetGradeBadgeColor(certificate.FinalGrade)">
                                     @GetGradeLabel(certificate.FinalGrade)
-                                </span>
+                                </Badge>
                             </div>
-                            <div class="progress" style="height: 6px;">
-                                <div class="progress-bar @GetGradeProgressClass(certificate.FinalGrade)" 
-                                     style="width: @certificate.FinalGrade%"></div>
-                            </div>
+                            <Progress Value="(int)certificate.FinalGrade" Color="@GetGradeProgressColor(certificate.FinalGrade)" />
                         </div>
-                    </div>
-                    
-                    <div class="card-footer bg-transparent">
+                    </CardBody>
+
+                    <CardFooter>
                         <div class="d-grid gap-2">
-                            <ButtonGroup>
+                            <div class="btn-group">
                                 <Button Color="ButtonColor.Primary" Size="ButtonSize.Small" @onclick="() => ViewCertificate(certificate)">
-                                    <i class="fas fa-eye"></i> View
+                                    <Icon Name="IconName.Eye" /> View
                                 </Button>
                                 <Button Color="ButtonColor.Success" Size="ButtonSize.Small" @onclick="() => DownloadCertificate(certificate)">
-                                    <i class="fas fa-download"></i> Download
+                                    <Icon Name="IconName.Download" /> Download
                                 </Button>
                                 <Button Color="ButtonColor.Info" Size="ButtonSize.Small" @onclick="() => ShareCertificate(certificate)">
-                                    <i class="fas fa-share"></i> Share
+                                    <Icon Name="IconName.Share" /> Share
                                 </Button>
-                            </ButtonGroup>
+                            </div>
                         </div>
-                    </div>
-                </div>
+                    </CardFooter>
+                </Card>
             </div>
         }
     </div>
@@ -142,16 +162,16 @@ else if (certificates?.Any() == true)
 else
 {
     <div class="text-center py-5">
-        <div class="card">
-            <div class="card-body">
-                <i class="fas fa-certificate fa-3x text-muted mb-3"></i>
+        <Card>
+            <CardBody>
+                <Icon Name="IconName.Award" Size="IconSize.x3" Class="text-muted mb-3" />
                 <h4 class="text-muted">No Certificates Earned</h4>
                 <p class="text-muted">Complete courses to earn certificates and showcase your achievements.</p>
-                <a href="/user/lms/coursecatalog" class="btn btn-primary">
-                    <i class="fas fa-book"></i> Browse Courses
-                </a>
-            </div>
-        </div>
+                <Button Color="ButtonColor.Primary" To="/user/lms/coursecatalog">
+                    <Icon Name="IconName.Book" /> Browse Courses
+                </Button>
+            </CardBody>
+        </Card>
     </div>
 }
 
@@ -171,7 +191,7 @@ else
             isLoading = true;
             var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
             var currentUserId = authState.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            
+
             if (!string.IsNullOrEmpty(currentUserId))
             {
                 certificates = await HttpClient.GetFromJsonAsync<List<CertificateModel>>($"/api/certificates/user/{currentUserId}");
@@ -245,20 +265,20 @@ else
         await JSRuntime.InvokeVoidAsync("alert", $"Share link copied: {shareUrl}");
     }
 
-    private string GetGradeBadgeClass(double grade) => grade switch
+    private BadgeColor GetGradeBadgeColor(double grade) => grade switch
     {
-        >= 90 => "bg-success",
-        >= 80 => "bg-info",
-        >= 70 => "bg-warning",
-        _ => "bg-secondary"
+        >= 90 => BadgeColor.Success,
+        >= 80 => BadgeColor.Info,
+        >= 70 => BadgeColor.Warning,
+        _ => BadgeColor.Secondary
     };
 
-    private string GetGradeProgressClass(double grade) => grade switch
+    private ProgressColor GetGradeProgressColor(double grade) => grade switch
     {
-        >= 90 => "bg-success",
-        >= 80 => "bg-info", 
-        >= 70 => "bg-warning",
-        _ => "bg-secondary"
+        >= 90 => ProgressColor.Success,
+        >= 80 => ProgressColor.Info,
+        >= 70 => ProgressColor.Warning,
+        _ => ProgressColor.Secondary
     };
 
     private string GetGradeLabel(double grade) => grade switch

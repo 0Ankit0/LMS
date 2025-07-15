@@ -1,6 +1,6 @@
 @using BlazorBootstrap
 @using Microsoft.AspNetCore.Components.Authorization
-@using Microsoft.JSInterop  
+@using Microsoft.JSInterop
 @using System.Security.Claims
 @page "/user/lms/analytics"
 @inject AuthenticationStateProvider AuthenticationStateProvider
@@ -50,29 +50,29 @@
                     </NavLink>
                 </NavItem>
             </Nav>
-            
+
             <div class="filters-section">
                 <h6 class="filter-title">Time Period</h6>
                 <div class="filter-group">
-                    <ButtonGroup>
-                        <Button Color="@(selectedPeriod == "week" ? ButtonColor.Primary : ButtonColor.Secondary)" 
+                    <div class="btn-group">
+                        <Button Color="@(selectedPeriod == "week" ? ButtonColor.Primary : ButtonColor.Secondary)"
                                 @onclick='() => SelectPeriod("week")'>
                             This Week
                         </Button>
-                        <Button Color="@(selectedPeriod == "month" ? ButtonColor.Primary : ButtonColor.Secondary)" 
+                        <Button Color="@(selectedPeriod == "month" ? ButtonColor.Primary : ButtonColor.Secondary)"
                                 @onclick='() => SelectPeriod("month")'>
                             This Month
                         </Button>
-                        <Button Color="@(selectedPeriod == "all" ? ButtonColor.Primary : ButtonColor.Secondary)" 
+                        <Button Color="@(selectedPeriod == "all" ? ButtonColor.Primary : ButtonColor.Secondary)"
                                 @onclick='() => SelectPeriod("all")'>
                             All Time
                         </Button>
-                    </ButtonGroup>
+                    </div>
                 </div>
             </div>
         </OffcanvasBody>
     </Offcanvas>
-    
+
     <!-- Main Analytics Area -->
     <div class="analytics-main">
         <!-- Header -->
@@ -88,7 +88,7 @@
                 </Button>
             </div>
         </div>
-        
+
         <!-- Analytics Content -->
         <div class="analytics-content">
             @if (isLoading)
@@ -117,7 +117,7 @@
                                 </div>
                             </CardBody>
                         </Card>
-                        
+
                         <Card Background="Background.Success" Class="kpi-card">
                             <CardBody>
                                 <div class="kpi-icon">
@@ -129,7 +129,7 @@
                                 </div>
                             </CardBody>
                         </Card>
-                        
+
                         <Card Background="Background.Info" Class="kpi-card">
                             <CardBody>
                                 <div class="kpi-icon">
@@ -141,7 +141,7 @@
                                 </div>
                             </CardBody>
                         </Card>
-                        
+
                         <Card Background="Background.Warning" Class="kpi-card">
                             <CardBody>
                                 <div class="kpi-icon">
@@ -154,7 +154,7 @@
                             </CardBody>
                         </Card>
                     </div>
-                    
+
                     <!-- Charts Row -->
                     <div class="charts-row">
                         <!-- Course Progress Chart -->
@@ -176,7 +176,7 @@
                                                 <span class="course-name">@enrollment.CourseTitle</span>
                                                 <span class="progress-value">@courseProgress.ToString("F1")%</span>
                                             </div>
-                                            <Progress Value="@courseProgress" Color="@GetProgressColor(courseProgress)" />
+                                            <Progress Value="(int)courseProgress" Color="@GetProgressColor(courseProgress)" />
                                             <div class="progress-meta">
                                                 <span class="modules-info">
                                                     @GetCompletedModules(enrollment.Id) / @GetTotalModules(enrollment.Id) modules
@@ -209,12 +209,10 @@
                             </CardHeader>
                             <CardBody Class="center">
                                 <div class="circular-progress">
-                                    <div class="circle-progress" style="--progress: @overallProgress">
-                                        <span class="progress-text">@overallProgress.ToString("F0")%</span>
-                                    </div>
+                                    <Progress Circle="true" Value="(int)overallProgress" />
                                     <div class="progress-label">Overall Progress</div>
                                 </div>
-                                
+
                                 <div class="stats-grid">
                                     <div class="stat-item">
                                         <div class="stat-value">@totalLessonsCompleted</div>
@@ -237,7 +235,7 @@
                         </Card>
                     </div>
                 }
-                
+
                 @if (selectedView == "activity")
                 {
                     <!-- Recent Activity -->
@@ -279,7 +277,7 @@
                         </div>
                     </div>
                 }
-                
+
                 @if (selectedView == "performance")
                 {
                     <!-- Performance Metrics -->
@@ -303,10 +301,7 @@
                                                     @metric.Value.ToString("F1")@metric.Unit
                                                 </Badge>
                                             </div>
-                                            <div class="metric-progress">
-                                                <div class="progress-bar @GetMetricProgressClass(metric.Value)" 
-                                                     style="width: @GetMetricPercentage(metric.Value, metric.MaxValue)%"></div>
-                                            </div>
+                                            <Progress Value="(int)GetMetricPercentage(metric.Value, metric.MaxValue)" Color="@GetMetricProgressBarColor(metric.Value)" />
                                             <div class="metric-description">@metric.Description</div>
                                         </div>
                                     }
@@ -326,6 +321,7 @@
         </div>
     </div>
 </div>
+
 
 @code {
     private List<EnrollmentModel>? enrollments;
@@ -520,6 +516,15 @@
         >= 80 => "bg-info",
         >= 70 => "bg-warning",
         _ => "bg-secondary"
+    };
+
+    // FIX: Add the missing method for Progress color in performance metrics
+    private ProgressColor GetMetricProgressBarColor(double value) => value switch
+    {
+        >= 90 => ProgressColor.Success,
+        >= 80 => ProgressColor.Info,
+        >= 70 => ProgressColor.Warning,
+        _ => ProgressColor.Secondary
     };
 
     private double GetMetricPercentage(double value, double maxValue)

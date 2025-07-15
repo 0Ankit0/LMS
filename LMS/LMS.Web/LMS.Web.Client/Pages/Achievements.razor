@@ -1,3 +1,5 @@
+
+@using BlazorBootstrap;
 @page "/user/lms/achievements"
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @inject HttpClient HttpClient
@@ -6,19 +8,174 @@
 <div class="container-fluid">
     <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
         <h1 class="h2"><Icon Name="IconName.Trophy" Class="me-2" />Achievements</h1>
-        <div class="btn-toolbar mb-2 mb-md-0">
-            <ButtonGroup>
-                <Button Color="ButtonColor.Primary" IsOutline="@(currentTab != "earned")" @onclick="@(() => SwitchTab("earned"))">
-                    <Icon Name="IconName.Award" Class="me-1" />Earned (@earnedCount)
-                </Button>
-                <Button Color="ButtonColor.Primary" IsOutline="@(currentTab != "available")" @onclick="@(() => SwitchTab("available"))">
-                    <Icon Name="IconName.Bullseye" Class="me-1" />Available (@availableCount)
-                </Button>
-                <Button Color="ButtonColor.Primary" IsOutline="@(currentTab != "leaderboard")" @onclick="@(() => SwitchTab("leaderboard"))">
-                    <Icon Name="IconName.BarChartLine" Class="me-1" />Leaderboard
-                </Button>
-            </ButtonGroup>
-        </div>
+        <Tabs>
+            <Tab Title="Earned">
+                <Content>
+                    <div class="row">
+                        @if (earnedAchievements?.Any() == true)
+                        {
+                            @foreach (var achievement in earnedAchievements)
+                            {
+                                <div class="col-md-6 col-lg-4 mb-4">
+                                    <Card Class="h-100 border-success">
+                                        <CardBody Class="text-center">
+                                            <div class="achievement-icon mb-3" style="background-color: @achievement.BadgeColor">
+                                                @if (!string.IsNullOrEmpty(achievement.AchievementIconUrl))
+                                                {
+                                                    <img src="@achievement.AchievementIconUrl" alt="@achievement.AchievementName" class="img-fluid">
+                                                }
+                                                else
+                                                {
+                                                    <Icon Name="IconName.Trophy" Size="IconSize.x2" TextColor="TextColor.White" />
+                                                }
+                                            </div>
+                                            <h5 class="card-title">@achievement.AchievementName</h5>
+                                            <p class="card-text text-muted">@achievement.AchievementDescription</p>
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <Badge Color="BadgeColor.Success">@achievement.Points pts</Badge>
+                                                <small class="text-muted">Earned @achievement.EarnedAt ?? @achievement.EarnedAt.ToString("MMM dd, yyyy") : "Not found"</small>
+                                            </div>
+                                        </CardBody>
+                                    </Card>
+                                </div>
+                            }
+                        }
+                        else
+                        {
+                            <div class="col-12">
+                                <div class="text-center py-5">
+                                    <Icon Name="IconName.Award" Size="IconSize.x4" Class="text-muted mb-3" />
+                                    <h4 class="text-muted">No achievements earned yet</h4>
+                                    <p class="text-muted">Complete courses and activities to earn your first achievement!</p>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </Content>
+            </Tab>
+            <Tab Title="Available">
+                <Content>
+                    <div class="row">
+                        @if (availableAchievements?.Any() == true)
+                        {
+                            @foreach (var achievement in availableAchievements)
+                            {
+                                <div class="col-md-6 col-lg-4 mb-4">
+                                    <Card Class="h-100">
+                                        <CardBody Class="text-center">
+                                            <div class="achievement-icon mb-3 opacity-50" style="background-color: @achievement.BadgeColor">
+                                                @if (!string.IsNullOrEmpty(achievement.IconUrl))
+                                                {
+                                                    <img src="@achievement.IconUrl" alt="@achievement.Name" class="img-fluid">
+                                                }
+                                                else
+                                                {
+                                                    <Icon Name="IconName.Trophy" Size="IconSize.x2" TextColor="TextColor.White" />
+                                                }
+                                            </div>
+                                            <h5 class="card-title">@achievement.Name</h5>
+                                            <p class="card-text text-muted">@achievement.Description</p>
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <Badge Color="BadgeColor.Primary">@achievement.Points pts</Badge>
+                                                <small class="text-muted">@achievement.Type</small>
+                                            </div>
+                                            @if (achievement.Criteria.Count > 0)
+                                            {
+                                                foreach (var criterion in achievement.Criteria)
+                                                {
+                                                    <div class="mt-2">
+                                                        <small class="text-info">
+                                                            <Icon Name="IconName.CheckCircle" Class="me-1" />@criterion
+                                                        </small>
+                                                    </div>
+                                                }
+                                            }
+                                        </CardBody>
+                                    </Card>
+                                </div>
+                            }
+                        }
+                        else
+                        {
+                            <div class="col-12">
+                                <div class="text-center py-5">
+                                    <div class="text-center py-5">
+                                        <Icon Name="IconName.Bullseye" Size="IconSize.x4" Class="text-muted mb-3" />
+                                        <h4 class="text-muted">No available achievements</h4>
+                                        <p class="text-muted">All achievements have been earned! Great job!</p>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </Content>
+            </Tab>
+            <Tab Title="Leaderboard">
+                <Content>
+                    <Card>
+                        <CardHeader>
+                            <h5 class="mb-0"><Icon Name="IconName.BarChartLine" Class="me-2" />Achievement Leaderboard</h5>
+                        </CardHeader>
+                        <CardBody>
+                            @if (leaderboardEntries?.Any() == true)
+                            {
+                                <div class="table-responsive">
+                                    <Grid TItem="LeaderboardEntryModel" Data="leaderboardEntries" AllowPaging="false" AllowSorting="false">
+                                        <GridColumns>
+                                            <GridColumn TItem="LeaderboardEntryModel" HeaderText="Rank" Field="@(nameof(LeaderboardEntryModel.Rank))" Sortable="true">
+                                                <ChildContent>
+                                                    <span class="fw-bold">#@context.Rank</span>
+                                                    @if (context.Rank <= 3)
+                                                    {
+                                                        <Icon Name="IconName.Award" Class="@GetRankIconClass(context.Rank)" />
+                                                    }
+                                                </ChildContent>
+                                            </GridColumn>
+                                            <GridColumn TItem="LeaderboardEntryModel" HeaderText="User" Field="@(nameof(LeaderboardEntryModel.UserName))" Sortable="true">
+                                                <ChildContent>
+                                                    <div class="d-flex align-items-center">
+                                                        @if (!string.IsNullOrEmpty(context.ProfilePictureUrl))
+                                                        {
+                                                            <img src="@context.ProfilePictureUrl" alt="@context.UserName" class="rounded-circle me-2" style="width: 32px; height: 32px;">
+                                                        }
+                                                        else
+                                                        {
+                                                            <div class="bg-secondary rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 32px; height: 32px;">
+                                                                <Icon Name="IconName.Person" TextColor="TextColor.White" />
+                                                            </div>
+                                                        }
+                                                        <span>@context.UserName</span>
+                                                        @if (context.UserId == currentUserId)
+                                                        {
+                                                            <Badge Color="BadgeColor.Primary" Class="ms-2">You</Badge>
+                                                        }
+                                                    </div>
+                                                </ChildContent>
+                                            </GridColumn>
+                                            <GridColumn TItem="LeaderboardEntryModel" HeaderText="Total Points" Field="@(nameof(LeaderboardEntryModel.TotalPoints))" Sortable="true" />
+                                            <GridColumn TItem="LeaderboardEntryModel" HeaderText="Achievements" Field="@(nameof(LeaderboardEntryModel.AchievementCount))" Sortable="true" />
+                                            <GridColumn TItem="LeaderboardEntryModel" HeaderText="Latest Achievement" Field="@(nameof(LeaderboardEntryModel.LastUpdated))" Sortable="true">
+                                                <ChildContent>
+                                                    @context.LastUpdated.ToString("MMM dd, yyyy")
+                                                </ChildContent>
+                                            </GridColumn>
+                                        </GridColumns>
+                                    </Grid>
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="text-center py-5">
+                                    <Icon Name="IconName.BarChartLine" Size="IconSize.x4" Class="text-muted mb-3" />
+                                    <h4 class="text-muted">No leaderboard data available</h4>
+                                    <p class="text-muted">Start earning achievements to appear on the leaderboard!</p>
+                                </div>
+                            }
+                        </CardBody>
+                    </Card>
+                </Content>
+            </Tab>
+        </Tabs>
     </div>
 
     @if (isLoading)
@@ -79,25 +236,25 @@
                     {
                         <div class="col-md-6 col-lg-4 mb-4">
                             <Card Class="h-100 border-success">
-                            <CardBody Class="text-center">
-                                <div class="achievement-icon mb-3" style="background-color: @achievement.BadgeColor">
-                                    @if (!string.IsNullOrEmpty(achievement.AchievementIconUrl))
-                                    {
-                                        <img src="@achievement.AchievementIconUrl" alt="@achievement.AchievementName" class="img-fluid">
-                                    }
-                                    else
-                                    {
-                                        <Icon Name="IconName.Trophy" Size="IconSize.x2" TextColor="TextColor.White" />
-                                    }
-                                </div>
-                                <h5 class="card-title">@achievement.AchievementName</h5>
-                                <p class="card-text text-muted">@achievement.AchievementDescription</p>
-                                <div class="d-flex justify-content-between align-items-center">
-                                    <Badge Color="BadgeColor.Success">@achievement.Points pts</Badge>
-                                    <small class="text-muted">Earned @achievement.EarnedAt ?? @achievement.EarnedAt.ToString("MMM dd, yyyy") : "Not found"</small>
-                                </div>
-                            </CardBody>
-                        </Card>
+                                <CardBody Class="text-center">
+                                    <div class="achievement-icon mb-3" style="background-color: @achievement.BadgeColor">
+                                        @if (!string.IsNullOrEmpty(achievement.AchievementIconUrl))
+                                        {
+                                            <img src="@achievement.AchievementIconUrl" alt="@achievement.AchievementName" class="img-fluid">
+                                        }
+                                        else
+                                        {
+                                            <Icon Name="IconName.Trophy" Size="IconSize.x2" TextColor="TextColor.White" />
+                                        }
+                                    </div>
+                                    <h5 class="card-title">@achievement.AchievementName</h5>
+                                    <p class="card-text text-muted">@achievement.AchievementDescription</p>
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <Badge Color="BadgeColor.Success">@achievement.Points pts</Badge>
+                                        <small class="text-muted">Earned @achievement.EarnedAt ?? @achievement.EarnedAt.ToString("MMM dd, yyyy") : "Not found"</small>
+                                    </div>
+                                </CardBody>
+                            </Card>
                         </div>
                     }
                 }
@@ -105,10 +262,10 @@
                 {
                     <div class="col-12">
                         <div class="text-center py-5">
-                                        <Icon Name="IconName.Award" Size="IconSize.x4" Class="text-muted mb-3" />
-                        <h4 class="text-muted">No achievements earned yet</h4>
-                        <p class="text-muted">Complete courses and activities to earn your first achievement!</p>
-                    </div>
+                            <Icon Name="IconName.Award" Size="IconSize.x4" Class="text-muted mb-3" />
+                            <h4 class="text-muted">No achievements earned yet</h4>
+                            <p class="text-muted">Complete courses and activities to earn your first achievement!</p>
+                        </div>
                     </div>
                 }
             </div>
@@ -122,36 +279,36 @@
                     {
                         <div class="col-md-6 col-lg-4 mb-4">
                             <Card Class="h-100">
-                            <CardBody Class="text-center">
-                                <div class="achievement-icon mb-3 opacity-50" style="background-color: @achievement.BadgeColor">
-                                    @if (!string.IsNullOrEmpty(achievement.IconUrl))
+                                <CardBody Class="text-center">
+                                    <div class="achievement-icon mb-3 opacity-50" style="background-color: @achievement.BadgeColor">
+                                        @if (!string.IsNullOrEmpty(achievement.IconUrl))
+                                        {
+                                            <img src="@achievement.IconUrl" alt="@achievement.Name" class="img-fluid">
+                                        }
+                                        else
+                                        {
+                                            <Icon Name="IconName.Trophy" Size="IconSize.x2" TextColor="TextColor.White" />
+                                        }
+                                    </div>
+                                    <h5 class="card-title">@achievement.Name</h5>
+                                    <p class="card-text text-muted">@achievement.Description</p>
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <Badge Color="BadgeColor.Primary">@achievement.Points pts</Badge>
+                                        <small class="text-muted">@achievement.Type</small>
+                                    </div>
+                                    @if (achievement.Criteria.Count > 0)
                                     {
-                                        <img src="@achievement.IconUrl" alt="@achievement.Name" class="img-fluid">
+                                        foreach (var criterion in achievement.Criteria)
+                                        {
+                                            <div class="mt-2">
+                                                <small class="text-info">
+                                                    <Icon Name="IconName.CheckCircle" Class="me-1" />@criterion
+                                                </small>
+                                            </div>
+                                        }
                                     }
-                                    else
-                                    {
-                                        <Icon Name="IconName.Trophy" Size="IconSize.x2" TextColor="TextColor.White" />
-                                    }
-                                </div>
-                                <h5 class="card-title">@achievement.Name</h5>
-                                <p class="card-text text-muted">@achievement.Description</p>
-                                <div class="d-flex justify-content-between align-items-center">
-                                    <Badge Color="BadgeColor.Primary">@achievement.Points pts</Badge>
-                                    <small class="text-muted">@achievement.Type</small>
-                                </div>
-                                @if (achievement.Criteria.Count>0)
-                                {
-                                    foreach(var criterion in achievement.Criteria)
-                                    {
-                                        <div class="mt-2">
-                                            <small class="text-info">
-                                                <Icon Name="IconName.CheckCircle" Class="me-1" />@criterion
-                                            </small>
-                                        </div>
-                                    }
-                                }
-                            </CardBody>
-                        </Card>
+                                </CardBody>
+                            </Card>
                         </div>
                     }
                 }
@@ -160,10 +317,10 @@
                     <div class="col-12">
                         <div class="text-center py-5">
                             <div class="text-center py-5">
-                                        <Icon Name="IconName.Bullseye" Size="IconSize.x4" Class="text-muted mb-3" />
-                        <h4 class="text-muted">No available achievements</h4>
-                        <p class="text-muted">All achievements have been earned! Great job!</p>
-                    </div>
+                                <Icon Name="IconName.Bullseye" Size="IconSize.x4" Class="text-muted mb-3" />
+                                <h4 class="text-muted">No available achievements</h4>
+                                <p class="text-muted">All achievements have been earned! Great job!</p>
+                            </div>
                         </div>
                     </div>
                 }
@@ -235,6 +392,7 @@
         }
     }
 </div>
+
 
 @code {
     private bool isLoading = true;
@@ -313,12 +471,7 @@
         }
     }
 
-    private Task SwitchTab(string tab)
-    {
-        currentTab = tab;
-        StateHasChanged();
-        return Task.CompletedTask;
-    }
+    
 
     private string GetRankIconClass(int rank)
     {

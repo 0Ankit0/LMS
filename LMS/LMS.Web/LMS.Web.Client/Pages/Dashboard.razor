@@ -1,3 +1,5 @@
+
+@using BlazorBootstrap;
 @page "/user/lms/dashboard"
 @inject NavigationManager NavigationManager
 @inject AuthenticationStateProvider AuthenticationStateProvider
@@ -7,128 +9,118 @@
     <div class="row g-4 mb-4">
         <!-- Continue with Course -->
         <div class="col-lg-8">
-            <div class="card border-0 shadow-sm h-100" style="background: #fff; border-radius: 18px;">
-                <div class="card-body d-flex align-items-center" style="padding: 2rem;">
+            <Card class="border-0 shadow-sm h-100" style="background: #fff; border-radius: 18px;">
+                <CardBody class="d-flex align-items-center" style="padding: 2rem;">
                     <img src="@ContinueCourse.ThumbnailUrl" class="rounded-4 shadow-sm me-4" style="width: 140px; height: 90px; object-fit: cover; background: #e9ecef;" alt="Course image" />
                     <div class="flex-grow-1">
                         <div class="d-flex align-items-center mb-2">
-                            <span class="badge bg-primary bg-opacity-10 text-primary fw-semibold me-2" style="font-size: 0.9rem;">Continue Course</span>
+                            <Badge Color="BadgeColor.Primary" class="bg-opacity-10 text-primary fw-semibold me-2" style="font-size: 0.9rem;">Continue Course</Badge>
                         </div>
                         <h4 class="fw-bold mb-1" style="letter-spacing: -0.5px;">@ContinueCourse.Title</h4>
                         <p class="mb-3 text-muted" style="font-size: 1rem;">@ContinueCourse.Description</p>
-                        <a class="btn btn-primary px-4 py-2 rounded-pill fw-semibold" href="@($"/courses/details?id={ContinueCourse.Id}")" style="font-size: 1rem;">
-                            Go to Course <i class="bi bi-arrow-right ms-1"></i>
-                        </a>
+                        <Button Color="ButtonColor.Primary" class="px-4 py-2 rounded-pill fw-semibold" To="@($"/courses/details?id={ContinueCourse.Id}")" style="font-size: 1rem;">
+                            Go to Course <Icon Name="IconName.ArrowRight" class="ms-1" />
+                        </Button>
                     </div>
-                </div>
-            </div>
+                </CardBody>
+            </Card>
         </div>
         <!-- Your Progress -->
         <div class="col-lg-4">
-            <div class="card border-0 shadow-sm h-100" style="background: #fff; border-radius: 18px;">
-                <div class="card-title fs-4 text-center fw-bold text-primary mt-2" style="font-size: 1.1rem; width: 100%;">Your Progress</div>
-                <div class="card-body d-flex flex-column align-items-center justify-content-center">
-                      <select class="form-select form-select-sm w-full" @onchange="OnProgressCourseChanged" style="border-radius: 12px;">
-                            @foreach (var item in ProgressCourses)
-                            {
-                                <option value="@item.Course.Id" selected="@(item.Course.Id == (SelectedProgressCourse?.Id ?? 0))">
-                                    @item.Course.Title
-                                </option>
-                            }
-                        </select>
+            <Card class="border-0 shadow-sm h-100" style="background: #fff; border-radius: 18px;">
+                <CardHeader class="fs-4 text-center fw-bold text-primary mt-2" style="font-size: 1.1rem; width: 100%;">Your Progress</CardHeader>
+                <CardBody class="d-flex flex-column align-items-center justify-content-center">
+                    <select class="form-select form-select-sm w-full" @onchange="OnProgressCourseChanged" style="border-radius: 12px;">
+                        @foreach (var item in ProgressCourses)
+                        {
+                            <option value="@item.Course.Id" selected="@(item.Course.Id == (SelectedProgressCourse?.Id ?? 0))">
+                                @item.Course.Title
+                            </option>
+                        }
+                    </select>
                     <div class="w-100 m-2 d-flex">
                         <div class="position-relative mx-auto" style="width: 110px; height: 110px;">
-                            <svg width="110" height="110">
-                                <circle cx="55" cy="55" r="48" stroke="#e9ecef" stroke-width="10" fill="none" />
-                                <circle cx="55" cy="55" r="48" stroke="#4e73df" stroke-width="10" fill="none"
-                                        stroke-dasharray="301.592"
-                                        stroke-dashoffset="@((1 - SelectedProgressCourseProgress / 100.0) * 301.592)"
-                                        stroke-linecap="round"
-                                        style="transition: stroke-dashoffset 0.5s;" />
-                            </svg>
-                            <div class="position-absolute top-50 start-50 translate-middle text-center">
-                                <span class="fw-bold" style="font-size: 2rem;">@SelectedProgressCourseProgress.ToString("F0")%</span>
-                            </div>
+                            <Progress Circle="true" Value="(int)SelectedProgressCourseProgress" />
                         </div>
                         <div class="justify-content-center">
 
-                        <div class="text-bold text-center mb-2" style="font-size: 1rem; width: 100%;">@(SelectedProgressCourse?.Title ?? "No course selected")</div>
-                        <div class="text-muted text-center small mb-2" style="min-height: 38px; width: 100%;">@(SelectedProgressCourse?.Description ?? "")</div>
+                            <div class="text-bold text-center mb-2" style="font-size: 1rem; width: 100%;">@(SelectedProgressCourse?.Title ?? "No course selected")</div>
+                            <div class="text-muted text-center small mb-2" style="min-height: 38px; width: 100%;">@(SelectedProgressCourse?.Description ?? "")</div>
                         </div>
                     </div>
-                        <div class="d-flex justify-content-center">
-                            @if (SelectedProgressCourse != null)
-                            {
-                                <a class="btn btn-outline-primary btn-sm rounded-pill fw-semibold" href="@($"/courses/details?id={SelectedProgressCourse.Id}")">
-                                    Go to Course <i class="bi bi-arrow-right ms-1"></i>
-                                </a>
-                            }
-                        </div>
-                </div>
-            </div>
+                    <div class="d-flex justify-content-center">
+                        @if (SelectedProgressCourse != null)
+                        {
+                            <Button Color="ButtonColor.Primary" Size="ButtonSize.Small" class="rounded-pill fw-semibold" To="@($"/courses/details?id={SelectedProgressCourse.Id}")">
+                                Go to Course <Icon Name="IconName.ArrowRight" class="ms-1" />
+                            </Button>
+                        }
+                    </div>
+                </CardBody>
+            </Card>
         </div>
     </div>
 
     <div class="row g-4 mb-4">
         <!-- New Courses -->
         <div class="col-lg-6">
-            <div class="card border-0 shadow-sm h-100" style="background: #fff; border-radius: 18px;">
-                <div class="card-body" style="padding: 2rem;">
+            <Card class="border-0 shadow-sm h-100" style="background: #fff; border-radius: 18px;">
+                <CardBody style="padding: 2rem;">
                     <div class="d-flex justify-content-between align-items-center mb-3">
                         <span class="fw-bold text-primary" style="font-size: 1.1rem;">New Courses</span>
-                        <a class="btn btn-link btn-sm px-0 fw-semibold" href="/courses" style="text-decoration: none;">See All</a>
+                        <Button Color="ButtonColor.Link" Size="ButtonSize.Small" class="px-0 fw-semibold" To="/courses" style="text-decoration: none;">See All</Button>
                     </div>
                     <div class="row g-3">
                         @foreach (var course in NewCourses)
                         {
                             <div class="col-md-6">
-                                <div class="card border-0 shadow-sm h-100" style="border-radius: 14px;">
+                                <Card class="border-0 shadow-sm h-100" style="border-radius: 14px;">
                                     <img src="@course.ThumbnailUrl" class="card-img-top rounded-top" style="height: 90px; object-fit: cover; background: #e9ecef;" alt="Course image" />
-                                    <div class="card-body p-2">
+                                    <CardBody class="p-2">
                                         <h6 class="fw-bold mb-1" style="font-size: 1rem;">@course.Title</h6>
                                         <p class="text-muted small mb-2">@course.Description</p>
-                                        <a class="btn btn-outline-primary btn-sm w-100 rounded-pill fw-semibold" href="@($"/courses/details?id={course.Id}")">View</a>
-                                    </div>
-                                </div>
+                                        <Button Color="ButtonColor.Primary" Size="ButtonSize.Small" class="w-100 rounded-pill fw-semibold" To="@($"/courses/details?id={course.Id}")">View</Button>
+                                    </CardBody>
+                                </Card>
                             </div>
                         }
                     </div>
-                </div>
-            </div>
+                </CardBody>
+            </Card>
         </div>
         <!-- Your Courses -->
         <div class="col-lg-6">
-            <div class="card border-0 shadow-sm h-100" style="background: #fff; border-radius: 18px;">
-                <div class="card-body" style="padding: 2rem;">
+            <Card class="border-0 shadow-sm h-100" style="background: #fff; border-radius: 18px;">
+                <CardBody style="padding: 2rem;">
                     <div class="d-flex justify-content-between align-items-center mb-3">
                         <span class="fw-bold text-primary" style="font-size: 1.1rem;">Your Courses</span>
-                        <a class="btn btn-link btn-sm px-0 fw-semibold" href="/user/courses" style="text-decoration: none;">See All</a>
+                        <Button Color="ButtonColor.Link" Size="ButtonSize.Small" class="px-0 fw-semibold" To="/user/courses" style="text-decoration: none;">See All</Button>
                     </div>
                     <div class="row g-3">
                         @foreach (var course in YourCourses)
                         {
                             <div class="col-md-6">
-                                <div class="card border-0 shadow-sm h-100" style="border-radius: 14px;">
+                                <Card class="border-0 shadow-sm h-100" style="border-radius: 14px;">
                                     <img src="@course.ThumbnailUrl" class="card-img-top rounded-top" style="height: 90px; object-fit: cover; background: #e9ecef;" alt="Course image" />
-                                    <div class="card-body p-2">
+                                    <CardBody class="p-2">
                                         <h6 class="fw-bold mb-1" style="font-size: 1rem;">@course.Title</h6>
                                         <p class="text-muted small mb-2">@course.Description</p>
-                                        <a class="btn btn-outline-primary btn-sm w-100 rounded-pill fw-semibold" href="@($"/courses/details?id={course.Id}")">View</a>
-                                    </div>
-                                </div>
+                                        <Button Color="ButtonColor.Primary" Size="ButtonSize.Small" class="w-100 rounded-pill fw-semibold" To="@($"/courses/details?id={course.Id}")">View</Button>
+                                    </CardBody>
+                                </Card>
                             </div>
                         }
                     </div>
-                </div>
-            </div>
+                </CardBody>
+            </Card>
         </div>
     </div>
 
     <div class="row g-4 mb-4">
         <!-- Upcoming Courses -->
         <div class="col-lg-8">
-            <div class="card border-0 shadow-sm h-100" style="background: #fff; border-radius: 18px;">
-                <div class="card-body" style="padding: 2rem;">
+            <Card class="border-0 shadow-sm h-100" style="background: #fff; border-radius: 18px;">
+                <CardBody style="padding: 2rem;">
                     <div class="fw-bold text-primary mb-3" style="font-size: 1.1rem;">
                         Upcoming Courses
                     </div>
@@ -141,7 +133,7 @@
                                 <div class="flex-grow-1">
                                     <h6 class="fw-bold mb-1" style="font-size: 1rem;">@course.Title</h6>
                                     <p class="text-muted small mb-1">@course.Description</p>
-                                    <a class="btn btn-primary btn-sm px-3 rounded-pill fw-semibold" href="@($"/courses/details?id={course.Id}")">Go to Course</a>
+                                    <Button Color="ButtonColor.Primary" Size="ButtonSize.Small" class="px-3 rounded-pill fw-semibold" To="@($"/courses/details?id={course.Id}")">Go to Course</Button>
                                 </div>
                             </div>
                         }
@@ -150,13 +142,13 @@
                     {
                         <p class="text-muted">No upcoming courses.</p>
                     }
-                </div>
-            </div>
+                </CardBody>
+            </Card>
         </div>
         <!-- Your Notes -->
         <div class="col-lg-4">
-            <div class="card border-0 shadow-sm h-100" style="background: #fff; border-radius: 18px;">
-                <div class="card-body" style="padding: 2rem;">
+            <Card class="border-0 shadow-sm h-100" style="background: #fff; border-radius: 18px;">
+                <CardBody style="padding: 2rem;">
                     <div class="fw-bold text-primary mb-3" style="font-size: 1.1rem;">
                         Your Notes
                     </div>
@@ -176,11 +168,12 @@
                     {
                         <p class="text-muted">No notes yet.</p>
                     }
-                </div>
-            </div>
+                </CardBody>
+            </Card>
         </div>
     </div>
 </div>
+
 
 @code {
     private bool isLoading = true;
