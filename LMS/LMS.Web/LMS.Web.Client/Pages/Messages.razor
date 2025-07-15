@@ -1,3 +1,4 @@
+@using BlazorBootstrap;
 @page "/user/lms/messages"
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @inject HttpClient HttpClient
@@ -196,7 +197,7 @@
                         {
                             <div class="mb-3">
                                 <label for="toUser" class="form-label">To</label>
-                                <InputText id="toUser" class="form-control" @bind-Value="toUserSearch" placeholder="Search for a user..." />
+<InputText id="toUser" class="form-control" @bind-value="toUserSearch" placeholder="Search for a user..." />
                                 @if (searchedUsers?.Any() == true)
                                 {
                                     <div class="dropdown-menu show">
@@ -213,13 +214,13 @@
                         
                         <div class="mb-3">
                             <label for="subject" class="form-label">Subject</label>
-                            <InputText id="subject" class="form-control" @bind-Value="newMessage.Subject" />
+<InputText id="subject" class="form-control" @bind-value="newMessage.Subject" />
                             <ValidationMessage For="@(() => newMessage.Subject)" />
                         </div>
                         
                         <div class="mb-3">
                             <label for="priority" class="form-label">Priority</label>
-                            <InputSelect id="priority" class="form-select" @bind-Value="newMessage.Priority">
+<InputSelect id="priority" class="form-select" @bind-value="newMessage.Priority">
                                 <option value="1">Low</option>
                                 <option value="2">Normal</option>
                                 <option value="3">High</option>
@@ -229,7 +230,7 @@
                         
                         <div class="mb-3">
                             <label for="content" class="form-label">Message</label>
-                            <InputTextArea id="content" class="form-control" rows="6" @bind-Value="newMessage.Content" />
+<InputTextArea id="content" class="form-control" rows="6" @bind-value="newMessage.Content" />
                             <ValidationMessage For="@(() => newMessage.Content)" />
                         </div>
                         

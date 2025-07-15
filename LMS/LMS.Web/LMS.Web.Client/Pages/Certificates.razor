@@ -121,17 +121,17 @@ else if (certificates?.Any() == true)
                     
                     <div class="card-footer bg-transparent">
                         <div class="d-grid gap-2">
-                            <div class="btn-group">
-                                <button class="btn btn-primary btn-sm" @onclick="() => ViewCertificate(certificate)">
+                            <ButtonGroup>
+                                <Button Color="ButtonColor.Primary" Size="ButtonSize.Small" @onclick="() => ViewCertificate(certificate)">
                                     <i class="fas fa-eye"></i> View
-                                </button>
-                                <button class="btn btn-success btn-sm" @onclick="() => DownloadCertificate(certificate)">
+                                </Button>
+                                <Button Color="ButtonColor.Success" Size="ButtonSize.Small" @onclick="() => DownloadCertificate(certificate)">
                                     <i class="fas fa-download"></i> Download
-                                </button>
-                                <button class="btn btn-info btn-sm" @onclick="() => ShareCertificate(certificate)">
+                                </Button>
+                                <Button Color="ButtonColor.Info" Size="ButtonSize.Small" @onclick="() => ShareCertificate(certificate)">
                                     <i class="fas fa-share"></i> Share
-                                </button>
-                            </div>
+                                </Button>
+                            </ButtonGroup>
                         </div>
                     </div>
                 </div>

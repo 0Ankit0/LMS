@@ -1,3 +1,7 @@
+@using BlazorBootstrap
+@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.JSInterop  
+@using System.Security.Claims
 @page "/user/lms/analytics"
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @inject HttpClient HttpClient
@@ -5,56 +9,69 @@
 
 <div class="analytics-layout">
     <!-- Analytics Sidebar -->
-    <div class="analytics-sidebar">
-        <div class="sidebar-header">
-            <h5 class="sidebar-title">Analytics</h5>
-        </div>
-        <div class="sidebar-content">
-            <div class="analytics-nav">
-                <div class="nav-item @(selectedView == "overview" ? "active" : "")" @onclick='() => SelectView("overview")'>
-                    <div class="nav-icon">
-                        <i class="bi bi-speedometer2"></i>
-                    </div>
-                    <span class="nav-text">Overview</span>
-                </div>
-                <div class="nav-item @(selectedView == "progress" ? "active" : "")" @onclick='() => SelectView("progress")'>
-                    <div class="nav-icon">
-                        <i class="bi bi-graph-up"></i>
-                    </div>
-                    <span class="nav-text">Progress</span>
-                </div>
-                <div class="nav-item @(selectedView == "performance" ? "active" : "")" @onclick='() => SelectView("performance")'>
-                    <div class="nav-icon">
-                        <i class="bi bi-trophy"></i>
-                    </div>
-                    <span class="nav-text">Performance</span>
-                </div>
-                <div class="nav-item @(selectedView == "activity" ? "active" : "")" @onclick='() => SelectView("activity")'>
-                    <div class="nav-icon">
-                        <i class="bi bi-clock-history"></i>
-                    </div>
-                    <span class="nav-text">Activity</span>
-                </div>
-            </div>
+    <Offcanvas Placement="Placement.Start" IsBodyScrolling="true" IsBackdrop="false">
+        <OffcanvasHeader>
+            <OffcanvasTitle>
+                <h5>Analytics</h5>
+            </OffcanvasTitle>
+        </OffcanvasHeader>
+        <OffcanvasBody>
+            <Nav Class="flex-column analytics-nav">
+                <NavItem>
+                    <NavLink class="@GetOverviewNavClass()" @onclick='() => SelectView("overview")'>
+                        <div class="nav-icon">
+                            <Icon Name="IconName.Speedometer2" />
+                        </div>
+                        <span class="nav-text">Overview</span>
+                    </NavLink>
+                </NavItem>
+                <NavItem>
+                    <NavLink class="@GetProgressNavClass()" @onclick='() => SelectView("progress")'>
+                        <div class="nav-icon">
+                            <Icon Name="IconName.GraphUp" />
+                        </div>
+                        <span class="nav-text">Progress</span>
+                    </NavLink>
+                </NavItem>
+                <NavItem>
+                    <NavLink class="@GetPerformanceNavClass()" @onclick='() => SelectView("performance")'>
+                        <div class="nav-icon">
+                            <Icon Name="IconName.Trophy" />
+                        </div>
+                        <span class="nav-text">Performance</span>
+                    </NavLink>
+                </NavItem>
+                <NavItem>
+                    <NavLink class="@GetActivityNavClass()" @onclick='() => SelectView("activity")'>
+                        <div class="nav-icon">
+                            <Icon Name="IconName.ClockHistory" />
+                        </div>
+                        <span class="nav-text">Activity</span>
+                    </NavLink>
+                </NavItem>
+            </Nav>
             
             <div class="filters-section">
                 <h6 class="filter-title">Time Period</h6>
                 <div class="filter-group">
-                    <div class="filter-options">
-                        <label class="filter-option @(selectedPeriod == "week" ? "active" : "")" @onclick='() => SelectPeriod("week")'>
-                            <span>This Week</span>
-                        </label>
-                        <label class="filter-option @(selectedPeriod == "month" ? "active" : "")" @onclick='() => SelectPeriod("month")'>
-                            <span>This Month</span>
-                        </label>
-                        <label class="filter-option @(selectedPeriod == "all" ? "active" : "")" @onclick='() => SelectPeriod("all")'>
-                            <span>All Time</span>
-                        </label>
-                    </div>
+                    <ButtonGroup>
+                        <Button Color="@(selectedPeriod == "week" ? ButtonColor.Primary : ButtonColor.Secondary)" 
+                                @onclick='() => SelectPeriod("week")'>
+                            This Week
+                        </Button>
+                        <Button Color="@(selectedPeriod == "month" ? ButtonColor.Primary : ButtonColor.Secondary)" 
+                                @onclick='() => SelectPeriod("month")'>
+                            This Month
+                        </Button>
+                        <Button Color="@(selectedPeriod == "all" ? ButtonColor.Primary : ButtonColor.Secondary)" 
+                                @onclick='() => SelectPeriod("all")'>
+                            All Time
+                        </Button>
+                    </ButtonGroup>
                 </div>
             </div>
-        </div>
-    </div>
+        </OffcanvasBody>
+    </Offcanvas>
     
     <!-- Main Analytics Area -->
     <div class="analytics-main">
@@ -65,10 +82,10 @@
                 <p class="page-subtitle">Track your learning progress and performance</p>
             </div>
             <div class="header-actions">
-                <button class="btn btn-outline-primary refresh-btn" @onclick="RefreshAnalytics">
-                    <i class="bi bi-arrow-clockwise"></i>
+                <Button Color="ButtonColor.Primary" @onclick="RefreshAnalytics">
+                    <Icon Name="IconName.ArrowClockwise" />
                     <span>Refresh</span>
-                </button>
+                </Button>
             </div>
         </div>
         
@@ -78,9 +95,7 @@
             {
                 <div class="loading-container">
                     <div class="spinner">
-                        <div class="spinner-border text-primary" role="status">
-                            <span class="visually-hidden">Loading analytics...</span>
-                        </div>
+                        <Spinner Color="SpinnerColor.Primary" />
                     </div>
                     <p class="loading-text">Loading your analytics...</p>
                 </div>
@@ -91,58 +106,66 @@
                 {
                     <!-- KPI Cards -->
                     <div class="kpi-grid">
-                        <div class="kpi-card primary">
-                            <div class="kpi-icon">
-                                <i class="bi bi-graph-up-arrow"></i>
-                            </div>
-                            <div class="kpi-content">
-                                <div class="kpi-value">@overallProgress.ToString("F1")%</div>
-                                <div class="kpi-label">Overall Progress</div>
-                            </div>
-                        </div>
+                        <Card Background="Background.Primary" Class="kpi-card">
+                            <CardBody>
+                                <div class="kpi-icon">
+                                    <Icon Name="IconName.GraphUpArrow" />
+                                </div>
+                                <div class="kpi-content">
+                                    <div class="kpi-value">@overallProgress.ToString("F1")%</div>
+                                    <div class="kpi-label">Overall Progress</div>
+                                </div>
+                            </CardBody>
+                        </Card>
                         
-                        <div class="kpi-card success">
-                            <div class="kpi-icon">
-                                <i class="bi bi-check-circle"></i>
-                            </div>
-                            <div class="kpi-content">
-                                <div class="kpi-value">@completedCourses</div>
-                                <div class="kpi-label">Completed Courses</div>
-                            </div>
-                        </div>
+                        <Card Background="Background.Success" Class="kpi-card">
+                            <CardBody>
+                                <div class="kpi-icon">
+                                    <Icon Name="IconName.CheckCircle" />
+                                </div>
+                                <div class="kpi-content">
+                                    <div class="kpi-value">@completedCourses</div>
+                                    <div class="kpi-label">Completed Courses</div>
+                                </div>
+                            </CardBody>
+                        </Card>
                         
-                        <div class="kpi-card info">
-                            <div class="kpi-icon">
-                                <i class="bi bi-clock"></i>
-                            </div>
-                            <div class="kpi-content">
-                                <div class="kpi-value">@totalStudyHours</div>
-                                <div class="kpi-label">Study Hours</div>
-                            </div>
-                        </div>
+                        <Card Background="Background.Info" Class="kpi-card">
+                            <CardBody>
+                                <div class="kpi-icon">
+                                    <Icon Name="IconName.Clock" />
+                                </div>
+                                <div class="kpi-content">
+                                    <div class="kpi-value">@totalStudyHours</div>
+                                    <div class="kpi-label">Study Hours</div>
+                                </div>
+                            </CardBody>
+                        </Card>
                         
-                        <div class="kpi-card warning">
-                            <div class="kpi-icon">
-                                <i class="bi bi-star"></i>
-                            </div>
-                            <div class="kpi-content">
-                                <div class="kpi-value">@averageScore.ToString("F1")%</div>
-                                <div class="kpi-label">Average Score</div>
-                            </div>
-                        </div>
+                        <Card Background="Background.Warning" Class="kpi-card">
+                            <CardBody>
+                                <div class="kpi-icon">
+                                    <Icon Name="IconName.Star" />
+                                </div>
+                                <div class="kpi-content">
+                                    <div class="kpi-value">@averageScore.ToString("F1")%</div>
+                                    <div class="kpi-label">Average Score</div>
+                                </div>
+                            </CardBody>
+                        </Card>
                     </div>
                     
                     <!-- Charts Row -->
                     <div class="charts-row">
                         <!-- Course Progress Chart -->
-                        <div class="chart-card large">
-                            <div class="card-header">
+                        <Card Class="chart-card large">
+                            <CardHeader>
                                 <h6 class="card-title">
-                                    <i class="bi bi-bar-chart"></i>
+                                    <Icon Name="IconName.BarChart" />
                                     Course Progress Overview
                                 </h6>
-                            </div>
-                            <div class="card-content">
+                            </CardHeader>
+                            <CardBody>
                                 @if (enrollments?.Any() == true)
                                 {
                                     @foreach (var enrollment in enrollments.Take(5))
@@ -153,10 +176,7 @@
                                                 <span class="course-name">@enrollment.CourseTitle</span>
                                                 <span class="progress-value">@courseProgress.ToString("F1")%</span>
                                             </div>
-                                            <div class="progress-bar-container">
-                                                <div class="progress-bar @GetProgressBarClass(courseProgress)" 
-                                                     style="width: @courseProgress%"></div>
-                                            </div>
+                                            <Progress Value="@courseProgress" Color="@GetProgressColor(courseProgress)" />
                                             <div class="progress-meta">
                                                 <span class="modules-info">
                                                     @GetCompletedModules(enrollment.Id) / @GetTotalModules(enrollment.Id) modules
@@ -170,24 +190,24 @@
                                 }
                                 else
                                 {
-                                    <div class="empty-state">
-                                        <i class="bi bi-book"></i>
-                                        <p>No course enrollments found.</p>
-                                        <a href="/user/lms/courses/catalog" class="btn btn-primary">Browse Courses</a>
-                                    </div>
+                                    <Alert Color="AlertColor.Info" Class="text-center">
+                                        <Icon Name="IconName.Book" />
+                                        <p class="mb-2">No course enrollments found.</p>
+                                        <Button Color="ButtonColor.Primary" To="/user/lms/courses/catalog">Browse Courses</Button>
+                                    </Alert>
                                 }
-                            </div>
-                        </div>
+                            </CardBody>
+                        </Card>
 
                         <!-- Activity Summary -->
-                        <div class="chart-card small">
-                            <div class="card-header">
+                        <Card Class="chart-card small">
+                            <CardHeader>
                                 <h6 class="card-title">
-                                    <i class="bi bi-activity"></i>
+                                    <Icon Name="IconName.Activity" />
                                     Activity Summary
                                 </h6>
-                            </div>
-                            <div class="card-content center">
+                            </CardHeader>
+                            <CardBody Class="center">
                                 <div class="circular-progress">
                                     <div class="circle-progress" style="--progress: @overallProgress">
                                         <span class="progress-text">@overallProgress.ToString("F0")%</span>
@@ -213,8 +233,8 @@
                                         <div class="stat-label">Active Days</div>
                                     </div>
                                 </div>
-                            </div>
-                        </div>
+                            </CardBody>
+                        </Card>
                     </div>
                 }
                 
@@ -225,7 +245,7 @@
                         <div class="activity-card">
                             <div class="card-header">
                                 <h6 class="card-title">
-                                    <i class="bi bi-clock-history"></i>
+                                    <Icon Name="IconName.ClockHistory" />
                                     Recent Activity
                                 </h6>
                             </div>
@@ -250,10 +270,10 @@
                                 }
                                 else
                                 {
-                                    <div class="empty-state">
-                                        <i class="bi bi-clock-history"></i>
-                                        <p>No recent activity found.</p>
-                                    </div>
+                                    <Alert Color="AlertColor.Secondary" Class="text-center">
+                                        <Icon Name="IconName.ClockHistory" />
+                                        <p class="mb-0">No recent activity found.</p>
+                                    </Alert>
                                 }
                             </div>
                         </div>
@@ -267,7 +287,7 @@
                         <div class="performance-card">
                             <div class="card-header">
                                 <h6 class="card-title">
-                                    <i class="bi bi-graph-up"></i>
+                                    <Icon Name="IconName.GraphUp" />
                                     Performance Metrics
                                 </h6>
                             </div>
@@ -279,9 +299,9 @@
                                         <div class="metric-item">
                                             <div class="metric-header">
                                                 <span class="metric-name">@metric.Name</span>
-                                                <span class="metric-badge @GetMetricBadgeClass(metric.Value)">
+                                                <Badge Color="@GetMetricBadgeColor(metric.Value)">
                                                     @metric.Value.ToString("F1")@metric.Unit
-                                                </span>
+                                                </Badge>
                                             </div>
                                             <div class="metric-progress">
                                                 <div class="progress-bar @GetMetricProgressClass(metric.Value)" 
@@ -293,10 +313,10 @@
                                 }
                                 else
                                 {
-                                    <div class="empty-state">
-                                        <i class="bi bi-graph-up"></i>
-                                        <p>Performance data will appear as you progress through courses.</p>
-                                    </div>
+                                    <Alert Color="AlertColor.Info" Class="text-center">
+                                        <Icon Name="IconName.GraphUp" />
+                                        <p class="mb-0">Performance data will appear as you progress through courses.</p>
+                                    </Alert>
                                 }
                             </div>
                         </div>
@@ -452,6 +472,14 @@
         return 5; // Mock: 5 modules per course
     }
 
+    private ProgressColor GetProgressColor(double progress) => progress switch
+    {
+        >= 90 => ProgressColor.Success,
+        >= 70 => ProgressColor.Info,
+        >= 50 => ProgressColor.Warning,
+        _ => ProgressColor.Danger
+    };
+
     private string GetProgressBarClass(double progress) => progress switch
     {
         >= 90 => "bg-success",
@@ -468,6 +496,14 @@
         "certificate" => "warning",
         "enrollment" => "secondary",
         _ => "muted"
+    };
+
+    private BadgeColor GetMetricBadgeColor(double value) => value switch
+    {
+        >= 90 => BadgeColor.Success,
+        >= 80 => BadgeColor.Info,
+        >= 70 => BadgeColor.Warning,
+        _ => BadgeColor.Secondary
     };
 
     private string GetMetricBadgeClass(double value) => value switch
@@ -490,6 +526,11 @@
     {
         return maxValue > 0 ? (value / maxValue) * 100 : 0;
     }
+
+    private string GetOverviewNavClass() => $"nav-item {(selectedView == "overview" ? "active" : "")}";
+    private string GetProgressNavClass() => $"nav-item {(selectedView == "progress" ? "active" : "")}";
+    private string GetPerformanceNavClass() => $"nav-item {(selectedView == "performance" ? "active" : "")}";
+    private string GetActivityNavClass() => $"nav-item {(selectedView == "activity" ? "active" : "")}";
 
     // Helper models for analytics
     public class ActivityModel

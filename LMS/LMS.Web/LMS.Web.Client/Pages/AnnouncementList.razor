@@ -1,3 +1,4 @@
+@using BlazorBootstrap;
 @page "/user/lms/announcement-list"
 @inject HttpClient HttpClient
 
@@ -10,61 +11,65 @@
             <h5 class="sidebar-title">Announcements</h5>
         </div>
         <div class="sidebar-content">
-            <div class="announcements-nav">
-                <div class="nav-item @(selectedFilter == "all" ? "active" : "")" @onclick='() => SelectFilter("all")'>
+            <Nav>
+                <NavLink Class="@GetFilterClass("all")" @onclick='() => SelectFilter("all")'>
                     <div class="nav-icon">
-                        <i class="bi bi-megaphone"></i>
+                        <Icon Name="IconName.Megaphone" />
                     </div>
                     <span class="nav-text">All Announcements</span>
-                </div>
-                <div class="nav-item @(selectedFilter == "high" ? "active" : "")" @onclick='() => SelectFilter("high")'>
+                </NavLink>
+                <NavLink Class="@GetFilterClass("high")" @onclick='() => SelectFilter("high")'>
                     <div class="nav-icon">
-                        <i class="bi bi-exclamation-triangle"></i>
+                        <Icon Name="IconName.ExclamationTriangle" />
                     </div>
                     <span class="nav-text">High Priority</span>
-                </div>
-                <div class="nav-item @(selectedFilter == "medium" ? "active" : "")" @onclick='() => SelectFilter("medium")'>
+                </NavLink>
+                <NavLink Class="@GetFilterClass("medium")" @onclick='() => SelectFilter("medium")'>
                     <div class="nav-icon">
-                        <i class="bi bi-info-circle"></i>
+                        <Icon Name="IconName.InfoCircle" />
                     </div>
                     <span class="nav-text">Medium Priority</span>
-                </div>
-                <div class="nav-item @(selectedFilter == "low" ? "active" : "")" @onclick='() => SelectFilter("low")'>
+                </NavLink>
+                <NavLink Class="@GetFilterClass("low")" @onclick='() => SelectFilter("low")'>
                     <div class="nav-icon">
-                        <i class="bi bi-bell"></i>
+                        <Icon Name="IconName.Bell" />
                     </div>
                     <span class="nav-text">Low Priority</span>
-                </div>
-                <div class="nav-item @(selectedFilter == "recent" ? "active" : "")" @onclick='() => SelectFilter("recent")'>
+                </NavLink>
+                <NavLink Class="@GetFilterClass("recent")" @onclick='() => SelectFilter("recent")'>
                     <div class="nav-icon">
-                        <i class="bi bi-clock-history"></i>
+                        <Icon Name="IconName.ClockHistory" />
                     </div>
                     <span class="nav-text">Recent</span>
-                </div>
-            </div>
-            
+                </NavLink>
+            </Nav>
+
             <div class="filters-section">
                 <h6 class="filter-title">Date Range</h6>
                 <div class="filter-group">
                     <div class="filter-options">
-                        <label class="filter-option @(dateFilter == "today" ? "active" : "")" @onclick='() => SelectDateFilter("today")'>
+                        <Button Color="ButtonColor.Link" Class="@GetDateFilterClass("today")"
+                            @onclick='() => SelectDateFilter("today")'>
                             <span>Today</span>
-                        </label>
-                        <label class="filter-option @(dateFilter == "week" ? "active" : "")" @onclick='() => SelectDateFilter("week")'>
+                        </Button>
+                        <Button Color="ButtonColor.Link" Class="@GetDateFilterClass("week")"
+                            @onclick='() => SelectDateFilter("week")'>
                             <span>This Week</span>
-                        </label>
-                        <label class="filter-option @(dateFilter == "month" ? "active" : "")" @onclick='() => SelectDateFilter("month")'>
+                        </Button>
+                        <Button Color="ButtonColor.Link" Class="@GetDateFilterClass("month")"
+                            @onclick='() => SelectDateFilter("month")'>
                             <span>This Month</span>
-                        </label>
-                        <label class="filter-option @(dateFilter == "all" ? "active" : "")" @onclick='() => SelectDateFilter("all")'>
+                        </Button>
+                        <Button Color="ButtonColor.Link" Class="@GetDateFilterClass("all")"
+                            @onclick='() => SelectDateFilter("all")'>
                             <span>All Time</span>
-                        </label>
+                        </Button>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-    
+
     <!-- Main Announcements Area -->
     <div class="announcements-main">
         <!-- Header -->
@@ -75,26 +80,22 @@
             </div>
             <div class="header-actions">
                 <div class="search-container">
-                    <i class="bi bi-search search-icon"></i>
-                    <input type="text" class="search-input" placeholder="Search announcements..." 
-                           @bind="searchQuery" @oninput="OnSearchInput">
+                    <TextInput @bind-Value="searchQuery" Placeholder="Search announcements..." />
                 </div>
-                <button class="btn btn-outline-primary refresh-btn" @onclick="RefreshAnnouncements">
-                    <i class="bi bi-arrow-clockwise"></i>
+                <Button Color="ButtonColor.Primary" @onclick="RefreshAnnouncements">
+                    <Icon Name="IconName.ArrowClockwise" />
                     <span>Refresh</span>
-                </button>
+                </Button>
             </div>
         </div>
-        
+
         <!-- Announcements Content -->
         <div class="announcements-content">
             @if (isLoading)
             {
                 <div class="loading-container">
                     <div class="spinner">
-                        <div class="spinner-border text-primary" role="status">
-                            <span class="visually-hidden">Loading announcements...</span>
-                        </div>
+                        <Spinner Color="SpinnerColor.Primary" />
                     </div>
                     <p class="loading-text">Loading announcements...</p>
                 </div>
@@ -104,96 +105,91 @@
                 <div class="announcements-list">
                     @foreach (var announcement in filteredAnnouncements)
                     {
-                        <div class="announcement-card @GetPriorityClass(announcement.Priority)" 
-                             @onclick="() => ShowAnnouncement(announcement)">
+                        <Card Class="@GetAnnouncementCardClass(announcement.Priority)">
                             <div class="announcement-priority">
-                                <i class="@GetPriorityIcon(announcement.Priority)"></i>
+                                <Icon Name="@GetPriorityIconEnum(announcement.Priority)" />
                             </div>
-                            <div class="announcement-content">
+                            <CardBody Class="announcement-content">
                                 <div class="announcement-header">
                                     <h5 class="announcement-title">@announcement.Title</h5>
                                     <div class="announcement-meta">
                                         <span class="announcement-author">
-                                            <i class="bi bi-person-circle"></i>
+                                            <Icon Name="IconName.PersonCircle" />
                                             @announcement.AuthorName
                                         </span>
                                         <span class="announcement-date">
-                                            <i class="bi bi-calendar"></i>
+                                            <Icon Name="IconName.Calendar" />
                                             @FormatDate(announcement.PublishedAt)
                                         </span>
-                                        <span class="priority-badge @GetPriorityClass(announcement.Priority)">
+                                        <Badge Color="@GetPriorityBadgeColor(announcement.Priority)">
                                             @announcement.Priority
-                                        </span>
+                                        </Badge>
                                     </div>
                                 </div>
                                 <p class="announcement-excerpt">@GetExcerpt(announcement.Content)</p>
-                            </div>
+                            </CardBody>
                             <div class="announcement-actions">
-                                <button class="btn btn-sm btn-outline-primary view-btn" 
-                                        @onclick="() => ShowAnnouncement(announcement)"
-                                        @onclick:stopPropagation="true">
-                                    <i class="bi bi-eye"></i>
+                                <Button Color="ButtonColor.Primary" Size="ButtonSize.Small"
+                                    @onclick="() => ShowAnnouncement(announcement)">
+                                    <Icon Name="IconName.Eye" />
                                     View
-                                </button>
+                                </Button>
                             </div>
-                        </div>
+                        </Card>
                     }
                 </div>
             }
             else
             {
-                <div class="empty-state">
-                    <i class="bi bi-megaphone"></i>
-                    <h5>No announcements found</h5>
-                    <p>There are no announcements matching your current filters.</p>
-                    <button class="btn btn-primary" @onclick="ClearFilters">Clear Filters</button>
-                </div>
+                <Card Class="empty-state text-center py-5">
+                    <CardBody>
+                        <Icon Name="IconName.Megaphone" Size="IconSize.x4" Class="text-muted mb-3" />
+                        <h5>No announcements found</h5>
+                        <p>There are no announcements matching your current filters.</p>
+                        <Button Color="ButtonColor.Primary" @onclick="ClearFilters">Clear Filters</Button>
+                    </CardBody>
+                </Card>
             }
         </div>
     </div>
 </div>
 
 <!-- Announcement Detail Modal -->
-@if (showModal && selectedAnnouncement != null)
-{
-    <div class="modal fade show" style="display: block; background-color: rgba(0,0,0,0.5);" tabindex="-1">
-        <div class="modal-dialog modal-lg modal-dialog-centered">
-            <div class="modal-content border-0 shadow">
-                <div class="modal-header bg-primary text-white">
-                    <h5 class="modal-title">
-                        <i class="bi bi-megaphone me-2"></i>
-                        @selectedAnnouncement.Title
-                    </h5>
-                    <button type="button" class="btn-close btn-close-white" @onclick="CloseModal"></button>
+<Modal @ref="announcementDetailModal">
+    <ModalContent Size="ModalSize.Large" Centered="true">
+        <ModalHeader Background="Background.Primary" TextColor="TextColor.White">
+            <ModalTitle>
+                <Icon Name="IconName.Megaphone" Class="me-2" />
+                @selectedAnnouncement?.Title
+            </ModalTitle>
+            <Button CloseButton="true" @onclick="CloseModal"></Button>
+        </ModalHeader>
+        <ModalBody>
+            <div class="announcement-detail-meta mb-3">
+                <div class="meta-item">
+                    <Icon Name="IconName.PersonCircle" TextColor="TextColor.Primary" />
+                    <span>@selectedAnnouncement?.AuthorName</span>
                 </div>
-                <div class="modal-body">
-                    <div class="announcement-detail-meta mb-3">
-                        <div class="meta-item">
-                            <i class="bi bi-person-circle text-primary"></i>
-                            <span>@selectedAnnouncement.AuthorName</span>
-                        </div>
-                        <div class="meta-item">
-                            <i class="bi bi-calendar-event text-primary"></i>
-                            <span>@selectedAnnouncement.PublishedAt.ToString("MMM dd, yyyy HH:mm")</span>
-                        </div>
-                        <div class="meta-item">
-                            <span class="priority-badge @GetPriorityClass(selectedAnnouncement.Priority)">
-                                <i class="@GetPriorityIcon(selectedAnnouncement.Priority)"></i>
-                                @selectedAnnouncement.Priority Priority
-                            </span>
-                        </div>
-                    </div>
-                    <div class="announcement-detail-content">
-                        @selectedAnnouncement.Content
-                    </div>
+                <div class="meta-item">
+                    <Icon Name="IconName.CalendarEvent" TextColor="TextColor.Primary" />
+                    <span>@selectedAnnouncement?.PublishedAt.ToString("MMM dd, yyyy HH:mm")</span>
                 </div>
-                <div class="modal-footer">
-                    <button class="btn btn-secondary" @onclick="CloseModal">Close</button>
+                <div class="meta-item">
+                    <Badge Color="@GetPriorityBadgeColor(selectedAnnouncement?.Priority)">
+                        <Icon Name="@GetPriorityIconEnum(selectedAnnouncement?.Priority)" />
+                        @selectedAnnouncement?.Priority Priority
+                    </Badge>
                 </div>
             </div>
-        </div>
-    </div>
-}
+            <div class="announcement-detail-content">
+                @((MarkupString)(selectedAnnouncement?.Content ?? ""))
+            </div>
+        </ModalBody>
+        <ModalFooter>
+            <Button Color="ButtonColor.Secondary" @onclick="CloseModal">Close</Button>
+        </ModalFooter>
+    </ModalContent>
+</Modal>
 
 @code {
     // Properties for filtering and search
@@ -201,13 +197,15 @@
     private string dateFilter = "all";
     private string searchQuery = "";
     private bool isLoading = true;
-    private bool showModal = false;
-    
+
     // Collections and selected items
     private List<AnnouncementModel> announcements = new();
     private List<AnnouncementModel> filteredAnnouncements = new();
     private AnnouncementModel? selectedAnnouncement;
-    
+
+    // Modal reference
+    private Modal? announcementDetailModal;
+
     protected override async Task OnInitializedAsync()
     {
         await LoadAnnouncements();
@@ -216,13 +214,11 @@
     private async Task LoadAnnouncements()
     {
         isLoading = true;
-        
+
         try
         {
             // Load announcements from service
             announcements = await HttpClient.GetFromJsonAsync<List<AnnouncementModel>>("/api/announcements");
-            
-           
             ApplyFilters();
         }
         catch (Exception ex)
@@ -248,12 +244,6 @@
         ApplyFilters();
     }
 
-    private void OnSearchInput(ChangeEventArgs e)
-    {
-        searchQuery = e.Value?.ToString() ?? "";
-        ApplyFilters();
-    }
-
     private void ApplyFilters()
     {
         filteredAnnouncements = announcements.Where(a => a.IsActive).ToList();
@@ -264,14 +254,14 @@
             if (selectedFilter == "recent")
             {
                 filteredAnnouncements = filteredAnnouncements
-                    .Where(a => a.PublishedAt >= DateTime.Now.AddDays(-7))
-                    .ToList();
+                .Where(a => a.PublishedAt >= DateTime.Now.AddDays(-7))
+                .ToList();
             }
             else
             {
                 filteredAnnouncements = filteredAnnouncements
-                    .Where(a => a.Priority.Equals(selectedFilter, StringComparison.OrdinalIgnoreCase))
-                    .ToList();
+                .Where(a => a.Priority.Equals(selectedFilter, StringComparison.OrdinalIgnoreCase))
+                .ToList();
             }
         }
 
@@ -289,8 +279,8 @@
             if (cutoffDate != DateTime.MinValue)
             {
                 filteredAnnouncements = filteredAnnouncements
-                    .Where(a => a.PublishedAt >= cutoffDate)
-                    .ToList();
+                .Where(a => a.PublishedAt >= cutoffDate)
+                .ToList();
             }
         }
 
@@ -298,29 +288,35 @@
         if (!string.IsNullOrWhiteSpace(searchQuery))
         {
             filteredAnnouncements = filteredAnnouncements
-                .Where(a => a.Title.Contains(searchQuery, StringComparison.OrdinalIgnoreCase) ||
-                           a.Content.Contains(searchQuery, StringComparison.OrdinalIgnoreCase) ||
-                           a.AuthorName.Contains(searchQuery, StringComparison.OrdinalIgnoreCase))
-                .ToList();
+            .Where(a => a.Title.Contains(searchQuery, StringComparison.OrdinalIgnoreCase) ||
+            a.Content.Contains(searchQuery, StringComparison.OrdinalIgnoreCase) ||
+            a.AuthorName.Contains(searchQuery, StringComparison.OrdinalIgnoreCase))
+            .ToList();
         }
 
         // Sort by date (newest first)
         filteredAnnouncements = filteredAnnouncements
-            .OrderByDescending(a => a.PublishedAt)
-            .ToList();
+        .OrderByDescending(a => a.PublishedAt)
+        .ToList();
 
         StateHasChanged();
     }
 
-    private void ShowAnnouncement(AnnouncementModel announcement)
+    private async void ShowAnnouncement(AnnouncementModel announcement)
     {
         selectedAnnouncement = announcement;
-        showModal = true;
+        if (announcementDetailModal != null)
+        {
+            await announcementDetailModal.ShowAsync();
+        }
     }
 
-    private void CloseModal()
+    private async void CloseModal()
     {
-        showModal = false;
+        if (announcementDetailModal != null)
+        {
+            await announcementDetailModal.HideAsync();
+        }
         selectedAnnouncement = null;
     }
 
@@ -342,21 +338,34 @@
         return priority.ToLower();
     }
 
-    private string GetPriorityIcon(string priority)
+    // Returns the correct BlazorBootstrap.IconName enum for the given priority
+    private IconName GetPriorityIconEnum(string? priority)
     {
-        return priority.ToLower() switch
+        return (priority ?? "").ToLower() switch
         {
-            "high" => "bi-exclamation-triangle",
-            "medium" => "bi-info-circle",
-            "low" => "bi-bell",
-            _ => "bi-info-circle"
+            "high" => IconName.ExclamationTriangle,
+            "medium" => IconName.InfoCircle,
+            "low" => IconName.Bell,
+            _ => IconName.InfoCircle
+        };
+    }
+
+    // Returns the correct BlazorBootstrap.BadgeColor enum for the given priority
+    private BadgeColor GetPriorityBadgeColor(string? priority)
+    {
+        return (priority ?? "").ToLower() switch
+        {
+            "high" => BadgeColor.Danger,
+            "medium" => BadgeColor.Warning,
+            "low" => BadgeColor.Info,
+            _ => BadgeColor.Secondary
         };
     }
 
     private string FormatDate(DateTime date)
     {
         var timeSpan = DateTime.Now - date;
-        
+
         if (timeSpan.Days > 0)
         {
             return $"{timeSpan.Days} day{(timeSpan.Days > 1 ? "s" : "")} ago";
@@ -386,4 +395,9 @@
 
         return content.Substring(0, maxLength) + "...";
     }
+
+    // Helper methods for CSS classes
+    private string GetFilterClass(string filter) => selectedFilter == filter ? "nav-item active" : "nav-item";
+    private string GetDateFilterClass(string filter) => dateFilter == filter ? "filter-option active" : "filter-option";
+    private string GetAnnouncementCardClass(string priority) => $"announcement-card {GetPriorityClass(priority)}";
 }

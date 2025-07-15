@@ -1,3 +1,4 @@
+@using BlazorBootstrap;
 @page "/user/lms/forums"
 @using Microsoft.AspNetCore.Components.Authorization
 @using Microsoft.AspNetCore.Components.Forms
@@ -68,7 +69,7 @@
                 <!-- Search Box -->
                 <div class="forum-search-container">
                     <input type="text" class="forum-search-input" placeholder="Search forums & topics..."
-                        @bind="searchQuery" @oninput="OnSearchInput" />
+                        @bind="searchQuery" />
                     <i class="bi bi-search search-icon"></i>
                 </div>
             </div>
@@ -91,16 +92,15 @@
                                     </div>
                                 </div>
                                 <div class="forum-actions">
-                                    <button class="btn btn-sm btn-ghost add-topic-btn"
-                                        @onclick="(e) => ShowNewTopicModal(e, forum.Id)" @onclick:stopPropagation="true"
-                                        title="Add new topic">
+                                    <Button Color="ButtonColor.Secondary" Size="ButtonSize.Small"
+                                        @onclick="@(e => ShowNewTopicModal(e, forum.Id))" title="Add new topic">
                                         <i class="bi bi-plus-lg"></i>
-                                    </button>
-                                    <button class="btn btn-sm btn-ghost expand-btn"
-                                        @onclick="(e) => ToggleForumExpansion(e, forum.Id)" @onclick:stopPropagation="true">
+                                    </Button>
+                                    <Button Color="ButtonColor.Secondary" Size="ButtonSize.Small"
+                                        @onclick="@(e => ToggleForumExpansion(e, forum.Id))">
                                         <i
                                             class="bi @(expandedForums.Contains(forum.Id) ? "bi-chevron-up" : "bi-chevron-down")"></i>
-                                    </button>
+                                    </Button>
                                 </div>
                             </div>
 
@@ -156,7 +156,7 @@
                 <!-- Topic View Header -->
                 <div class="discussion-header">
                     <div class="discussion-title">
-                        <button class="btn btn-sm btn-ghost me-2" @onclick="BackToForum" title="Back to Forum">
+                        <button class="btn btn-sm btn-outline-secondary me-2" @onclick="BackToForum" title="Back to Forum">
                             <i class="bi bi-arrow-left"></i>
                         </button>
                         @if (selectedTopic?.IsLocked == true)
@@ -221,19 +221,18 @@
                                         @((MarkupString)post.Content.Replace("\n", "<br />"))
                                     </div>
                                     <div class="post-actions">
-                                        <button class="btn btn-sm btn-ghost" title="Like">
+                                        <button class="btn btn-sm btn-outline-secondary" title="Like">
                                             <i class="bi bi-heart me-1"></i>0
                                         </button>
-                                        <button class="btn btn-sm btn-ghost" @onclick="() => QuotePost(post)" title="Quote">
+                                        <button class="btn btn-sm btn-outline-secondary" @onclick="() => QuotePost(post)" title="Quote">
                                             <i class="bi bi-quote me-1"></i>Quote
                                         </button>
                                         @if (currentUserId == post.AuthorId)
                                         {
-                                            <button class="btn btn-sm btn-ghost" @onclick="() => EditPost(post)" title="Edit">
+                                            <button class="btn btn-sm btn-outline-secondary" @onclick="() => EditPost(post)" title="Edit">
                                                 <i class="bi bi-pencil me-1"></i>Edit
                                             </button>
-                                            <button class="btn btn-sm btn-ghost text-danger" @onclick="() => DeletePost(post)"
-                                                title="Delete">
+                                            <button class="btn btn-sm btn-outline-danger" @onclick="() => DeletePost(post)" title="Delete">
                                                 <i class="bi bi-trash me-1"></i>Delete
                                             </button>
                                         }
@@ -253,7 +252,7 @@
                             <div class="quoted-text">
                                 <div class="quote-header">
                                     <span>Replying to @quotedAuthor:</span>
-                                    <button class="btn btn-sm btn-ghost" @onclick="ClearQuote">
+                                    <button class="btn btn-sm btn-outline-secondary" @onclick="ClearQuote">
                                         <i class="bi bi-x"></i>
                                     </button>
                                 </div>
@@ -386,7 +385,7 @@
                     <button type="button" class="btn-close btn-close-white" @onclick="HideNewTopicModal"></button>
                 </div>
                 <div class="modal-body">
-                    <EditForm Model="@newTopic" OnValidSubmit="@CreateTopic">
+                    <EditForm Model="@newTopic" OnValidSubmit="CreateTopic">
                         <DataAnnotationsValidator />
                         <ValidationSummary class="alert alert-danger" />
 
@@ -447,7 +446,7 @@
                     <button type="button" class="btn-close btn-close-white" @onclick="HideNewPostModal"></button>
                 </div>
                 <div class="modal-body">
-                    <EditForm Model="@newPost" OnValidSubmit="@CreatePost">
+                    <EditForm Model="@newPost" OnValidSubmit="CreatePost">
                         <DataAnnotationsValidator />
                         <ValidationSummary class="alert alert-danger" />
 
@@ -499,93 +498,69 @@
 }
 
 <!-- Create Forum Modal -->
-@if (showCreateModal)
-{
-    <div class="modal fade show" style="display: block; background-color: rgba(0,0,0,0.5);" tabindex="-1">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content border-0 shadow">
-                <div class="modal-header bg-primary text-white">
-                    <h5 class="modal-title">
-                        <i class="fas fa-plus-circle me-2"></i>Create New Forum
-                    </h5>
-                    <button type="button" class="btn-close btn-close-white" @onclick="HideCreateModal"></button>
+<Modal @ref="createForumModal" Title="Create New Forum">
+    <BodyTemplate>
+        <EditForm Model="@newForum" OnValidSubmit="CreateForum">
+            <DataAnnotationsValidator />
+            <ValidationSummary class="alert alert-danger" />
+
+            <div class="row">
+                <div class="col-md-8">
+                    <div class="mb-3">
+                        <label for="title" class="form-label fw-semibold">
+                            <i class="fas fa-heading me-1"></i>Forum Title
+                        </label>
+                        <InputText id="title" class="form-control form-control-lg" @bind-Value="newForum.Title"
+                            placeholder="Enter forum title..." />
+                        <ValidationMessage For="@(() => newForum.Title)" />
+                    </div>
                 </div>
-                <div class="modal-body">
-                    <EditForm Model="@newForum" OnValidSubmit="@CreateForum">
-                        <DataAnnotationsValidator />
-                        <ValidationSummary class="alert alert-danger" />
-
-                        <div class="row">
-                            <div class="col-md-8">
-                                <div class="mb-3">
-                                    <label for="title" class="form-label fw-semibold">
-                                        <i class="fas fa-heading me-1"></i>Forum Title
-                                    </label>
-                                    <InputText id="title" class="form-control form-control-lg" @bind-Value="newForum.Title"
-                                        placeholder="Enter forum title..." />
-                                    <ValidationMessage For="@(() => newForum.Title)" />
-                                </div>
-                            </div>
-                            <div class="col-md-4">
-                                <div class="mb-3">
-                                    <label for="courseId" class="form-label fw-semibold">
-                                        <i class="fas fa-graduation-cap me-1"></i>Course
-                                    </label>
-                                    <InputSelect id="courseId" class="form-select form-select-lg"
-                                        @bind-Value="newForum.CourseId">
-                                        <option value="">General Forum</option>
-                                        @if (availableCourses != null)
-                                        {
-                                            @foreach (var course in availableCourses)
-                                            {
-                                                <option value="@course.Id">@course.Title</option>
-                                            }
-                                        }
-                                    </InputSelect>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="mb-3">
-                            <label for="description" class="form-label fw-semibold">
-                                <i class="fas fa-align-left me-1"></i>Description
-                            </label>
-                            <InputTextArea id="description" class="form-control" rows="4" @bind-Value="newForum.Description"
-                                placeholder="Describe what this forum is about..." />
-                            <ValidationMessage For="@(() => newForum.Description)" />
-                        </div>
-
-                        <div class="modal-footer border-0 px-0">
-                            <button type="button" class="btn btn-light" @onclick="HideCreateModal">
-                                <i class="fas fa-times me-1"></i>Cancel
-                            </button>
-                            <button type="submit" class="btn btn-primary" disabled="@isCreating">
-                                @if (isCreating)
+                <div class="col-md-4">
+                    <div class="mb-3">
+                        <label for="courseId" class="form-label fw-semibold">
+                            <i class="fas fa-graduation-cap me-1"></i>Course
+                        </label>
+                        <InputSelect id="courseId" class="form-select" @bind-Value="newForum.CourseId">
+                            <option value="">General Forum</option>
+                            @if (availableCourses != null)
+                            {
+                                @foreach (var course in availableCourses)
                                 {
-                                    <span class="spinner-border spinner-border-sm me-2"></span>
-                                    <span>
-                                        Creating...
-                                    </span>
+                                    <option value="@course.Id">@course.Title</option>
                                 }
-                                else
-                                {
-                                    <i class="fas fa-plus me-1"></i>
-                                    <span>Create Forum</span>
-                                }
-                            </button>
-                        </div>
-                    </EditForm>
+                            }
+                        </InputSelect>
+                    </div>
                 </div>
             </div>
-        </div>
-    </div>
-}
+
+            <div class="mb-3">
+                <label for="description" class="form-label fw-semibold">
+                    <i class="fas fa-align-left me-1"></i>Description
+                </label>
+                <InputTextArea id="description" class="form-control" rows="4" @bind-Value="newForum.Description"
+                    placeholder="Describe what this forum is about..." />
+                <ValidationMessage For="@(() => newForum.Description)" />
+            </div>
+
+            <div class="modal-footer border-0 px-0">
+                <Button Color="ButtonColor.Light" @onclick="HideCreateModal">
+                    <i class="fas fa-times me-1"></i>Cancel
+                </Button>
+                <Button Color="ButtonColor.Primary" Type="ButtonType.Submit" IsLoading="@isCreating">
+                    <i class="fas fa-plus me-1"></i>
+                    <span>Create Forum</span>
+                </Button>
+            </div>
+        </EditForm>
+    </BodyTemplate>
+</Modal>
 
 @code {
-    private bool isLoading = false;
+    // Removed unused fields: isLoading, showCreateModal, forumMessages
     private bool isCreating = false;
-    private bool showCreateModal = false;
-    private string? currentUserId;
+    private Modal? createForumModal;
+    private string? currentUserId = "current-user"; // Set a dummy user for demo
     private string newMessage = "";
     private string newTopicReply = "";
     private string searchQuery = "";
@@ -610,7 +585,6 @@
     private ForumModel? selectedForum;
     private List<ForumModel>? selectedGroupForums;
     private List<CourseGroup>? courseGroups;
-    private List<ForumMessage>? forumMessages;
     private HashSet<int> expandedForums = new HashSet<int>();
 
     private List<ForumModel>? forums;
@@ -619,21 +593,10 @@
     private CreateForumTopicRequest newTopic = new();
     private CreateForumPostRequest newPost = new();
 
-    // Supporting classes
     public class CourseGroup
     {
         public string CourseName { get; set; } = "";
         public int ForumCount { get; set; }
-    }
-
-    public class ForumMessage
-    {
-        public int Id { get; set; }
-        public int ForumId { get; set; }
-        public string UserId { get; set; } = "";
-        public string UserName { get; set; } = "";
-        public string Content { get; set; } = "";
-        public DateTime CreatedAt { get; set; }
     }
 
     protected override async Task OnInitializedAsync()
@@ -645,7 +608,6 @@
     {
         try
         {
-            isLoading = true;
             forums = await Http.GetFromJsonAsync<List<ForumModel>>("api/forums");
             courseGroups = await Http.GetFromJsonAsync<List<CourseGroup>>("api/forums/coursegroups");
             availableCourses = await Http.GetFromJsonAsync<List<CourseModel>>("api/courses");
@@ -655,17 +617,6 @@
         {
             await JSRuntime.InvokeVoidAsync("showToast", $"Error loading forum data: {ex.Message}", "error");
         }
-        finally
-        {
-            isLoading = false;
-        }
-    }
-
-    private void OnSearchInput(ChangeEventArgs e)
-    {
-        searchQuery = e.Value?.ToString() ?? "";
-        // Here you would implement search logic
-        // For now, just update the searchQuery
     }
 
     private async void ToggleForumExpansion(MouseEventArgs e, int forumId)
@@ -677,7 +628,6 @@
         else
         {
             expandedForums.Add(forumId);
-            // Load topics for this forum from API
             await LoadTopicsForForum(forumId);
         }
     }
@@ -729,7 +679,6 @@
     {
         selectedTopicId = topicId;
 
-        // Find the topic in all topics, not just the selected forum topics
         if (selectedForumTopics != null)
         {
             selectedTopic = selectedForumTopics.FirstOrDefault(t => t.Id == topicId);
@@ -741,7 +690,6 @@
 
         if (selectedTopic != null)
         {
-            // Ensure the forum is selected if we're selecting a topic
             if (selectedForumId != selectedTopic.ForumId)
             {
                 selectedForumId = selectedTopic.ForumId;
@@ -822,13 +770,11 @@
 
     private async Task EditPost(ForumPostModel post)
     {
-        // Implement edit functionality
         await JSRuntime.InvokeVoidAsync("showToast", "Edit functionality not implemented yet", "info");
     }
 
     private async Task DeletePost(ForumPostModel post)
     {
-        // Implement delete functionality
         await JSRuntime.InvokeVoidAsync("showToast", "Delete functionality not implemented yet", "info");
     }
 
@@ -838,21 +784,8 @@
 
         try
         {
-            // Simulate sending message
             await Task.Delay(500);
-
-            var message = new ForumMessage
-            {
-                Id = (forumMessages?.Count ?? 0) + 1,
-                ForumId = selectedForumId.Value,
-                Content = newMessage,
-                UserName = "Current User",
-                CreatedAt = DateTime.Now
-            };
-
-            forumMessages?.Add(message);
             newMessage = "";
-
             await JSRuntime.InvokeVoidAsync("scrollToBottom", "messagesArea");
         }
         catch (Exception ex)
@@ -867,7 +800,6 @@
 
         try
         {
-            // Simulate sending reply
             await Task.Delay(500);
 
             var reply = new ForumPostModel
@@ -922,7 +854,6 @@
             {
                 await JSRuntime.InvokeVoidAsync("showToast", "Topic created successfully!", "success");
                 HideNewTopicModal();
-                // Reload topics for the forum
                 if (newTopic.ForumId > 0)
                 {
                     await LoadTopicsForForum(newTopic.ForumId);
@@ -957,7 +888,6 @@
             {
                 await JSRuntime.InvokeVoidAsync("showToast", "Post created successfully!", "success");
                 HideNewPostModal();
-                // Reload posts for the topic
                 if (newPost.TopicId > 0)
                 {
                     await LoadPostsForTopic(newPost.TopicId);
@@ -979,26 +909,14 @@
         }
     }
 
-    // Removed GenerateDummyTopicPosts - now using HTTP endpoint
-
-    // Removed GenerateDummyForums - now using HTTP endpoint
-
-    // Removed GenerateDummyCourseGroups - now using HTTP endpoint
-
-    // Removed GenerateDummyTopics - now using HTTP endpoint
-
-    // Removed GenerateDummyCourses - now using HTTP endpoint
-
-    // Removed GenerateDummyMessages - now using HTTP endpoint
-
-    private void ShowCreateForumModal()
+    private async Task ShowCreateForumModal()
     {
-        showCreateModal = true;
+        await createForumModal?.ShowAsync()!;
     }
 
-    private void HideCreateModal()
+    private async Task HideCreateModal()
     {
-        showCreateModal = false;
+        await createForumModal?.HideAsync()!;
         newForum = new CreateForumRequest();
     }
 
@@ -1039,8 +957,6 @@
             isCreating = false;
         }
     }
-
-    // ...existing code...
 }
 
 <script>

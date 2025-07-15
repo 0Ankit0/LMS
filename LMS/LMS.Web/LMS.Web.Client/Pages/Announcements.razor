@@ -73,46 +73,35 @@
 </div>
 
 <!-- Announcement Detail Modal -->
-@if (showModal && selectedAnnouncement != null)
-{
-    <div class="modal fade show" style="display: block; background-color: rgba(0,0,0,0.5);" tabindex="-1">
-        <div class="modal-dialog modal-lg modal-dialog-centered">
-            <div class="modal-content border-0 shadow">
-                <div class="modal-header bg-primary text-white">
-                    <h5 class="modal-title">
-                        <i class="bi bi-megaphone me-2"></i>
-                        @selectedAnnouncement.Title
-                    </h5>
-                    <button type="button" class="btn-close btn-close-white" @onclick="CloseModal"></button>
+<Modal @ref="announcementModal" Title="@selectedAnnouncement?.Title">
+    <BodyTemplate>
+        @if (selectedAnnouncement != null)
+        {
+            <div class="announcement-detail-meta mb-3">
+                <div class="meta-item">
+                    <i class="bi bi-person-circle text-primary"></i>
+                    <span>@selectedAnnouncement.AuthorName</span>
                 </div>
-                <div class="modal-body">
-                    <div class="announcement-detail-meta mb-3">
-                        <div class="meta-item">
-                            <i class="bi bi-person-circle text-primary"></i>
-                            <span>@selectedAnnouncement.AuthorName</span>
-                        </div>
-                        <div class="meta-item">
-                            <i class="bi bi-calendar-event text-primary"></i>
-                            <span>@selectedAnnouncement.PublishedAt.ToString("MMM dd, yyyy HH:mm")</span>
-                        </div>
-                        <div class="meta-item">
-                            <span class="priority-badge @GetPriorityClass(selectedAnnouncement.Priority)">
-                                <i class="@GetPriorityIcon(selectedAnnouncement.Priority)"></i>
-                                @selectedAnnouncement.Priority Priority
-                            </span>
-                        </div>
-                    </div>
-                    <div class="announcement-detail-content">
-                        @selectedAnnouncement.Content
-                    </div>
+                <div class="meta-item">
+                    <i class="bi bi-calendar-event text-primary"></i>
+                    <span>@selectedAnnouncement.PublishedAt.ToString("MMM dd, yyyy HH:mm")</span>
                 </div>
-                <div class="modal-footer">
-                    <button class="btn btn-secondary" @onclick="CloseModal">Close</button>
+                <div class="meta-item">
+                    <span class="priority-badge @GetPriorityClass(selectedAnnouncement.Priority)">
+                        <i class="@GetPriorityIcon(selectedAnnouncement.Priority)"></i>
+                        @selectedAnnouncement.Priority Priority
+                    </span>
                 </div>
             </div>
-        </div>
-    </div>
-}
+            <div class="announcement-detail-content">
+                @selectedAnnouncement.Content
+            </div>
+        }
+    </BodyTemplate>
+    <FooterTemplate>
+        <Button Color="ButtonColor.Secondary" @onclick="CloseModal">Close</Button>
+    </FooterTemplate>
+</Modal>
 
 @code {
     // Properties
@@ -152,15 +141,17 @@
         }
     }
 
-    private void ShowAnnouncement(AnnouncementModel announcement)
+    private Modal announcementModal = default!;
+
+    private async Task ShowAnnouncement(AnnouncementModel announcement)
     {
         selectedAnnouncement = announcement;
-        showModal = true;
+        await announcementModal.ShowAsync();
     }
 
-    private void CloseModal()
+    private async Task CloseModal()
     {
-        showModal = false;
+        await announcementModal.HideAsync();
         selectedAnnouncement = null;
     }
 

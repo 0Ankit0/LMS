@@ -1,3 +1,4 @@
+@using BlazorBootstrap;
 @page "/user/lms/courses/catalog"
 @inject HttpClient HttpClient
 
@@ -12,35 +13,35 @@
                 <div class="category-item @(selectedCategory == "all" ? "active" : "")"
                     @onclick='() => SelectCategory("all")'>
                     <div class="category-icon">
-                        <i class="bi bi-bookmark-fill"></i>
+                        <Icon Name="IconName.BookmarkFill" />
                     </div>
                     <span class="category-text">All Courses</span>
                 </div>
                 <div class="category-item @(selectedCategory == "development" ? "active" : "")"
                     @onclick='() => SelectCategory("development")'>
                     <div class="category-icon">
-                        <i class="bi bi-laptop"></i>
+                        <Icon Name="IconName.Laptop" />
                     </div>
                     <span class="category-text">Development</span>
                 </div>
                 <div class="category-item @(selectedCategory == "business" ? "active" : "")"
                     @onclick='() => SelectCategory("business")'>
                     <div class="category-icon">
-                        <i class="bi bi-graph-up"></i>
+                        <Icon Name="IconName.GraphUp" />
                     </div>
                     <span class="category-text">Business</span>
                 </div>
                 <div class="category-item @(selectedCategory == "design" ? "active" : "")"
                     @onclick='() => SelectCategory("design")'>
                     <div class="category-icon">
-                        <i class="bi bi-paint-bucket"></i>
+                        <Icon Name="IconName.PaintBucket" />
                     </div>
                     <span class="category-text">Design</span>
                 </div>
                 <div class="category-item @(selectedCategory == "security" ? "active" : "")"
                     @onclick='() => SelectCategory("security")'>
                     <div class="category-icon">
-                        <i class="bi bi-shield-check"></i>
+                        <Icon Name="IconName.ShieldCheck" />
                     </div>
                     <span class="category-text">Security</span>
                 </div>
@@ -79,24 +80,25 @@
             </div>
             <div class="header-actions">
                 <div class="search-container">
-                    <i class="bi bi-search search-icon"></i>
-                    <input type="text" class="search-input" placeholder="Search courses, instructors, topics..."
-                        @bind="searchQuery" @oninput="OnSearchInput">
+                    <TextInput @bind-Value="searchQuery" @bind-Value:event="oninput"
+                        Placeholder="Search courses, instructors, topics..." />
                 </div>
                 <div class="sort-dropdown">
-                    <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
-                        <i class="bi bi-funnel me-1"></i> @GetSortDisplayText()
-                    </button>
-                    <ul class="dropdown-menu">
-                        <li><a class="dropdown-item @(sortBy == "popular" ? "active" : "")" href="#"
-                                @onclick='() => SetSort("popular")'>Most Popular</a></li>
-                        <li><a class="dropdown-item @(sortBy == "newest" ? "active" : "")" href="#"
-                                @onclick='() => SetSort("newest")'>Newest</a></li>
-                        <li><a class="dropdown-item @(sortBy == "alphabetical" ? "active" : "")" href="#"
-                                @onclick='() => SetSort("alphabetical")'>A-Z</a></li>
-                        <li><a class="dropdown-item @(sortBy == "level" ? "active" : "")" href="#"
-                                @onclick='() => SetSort("level")'>By Level</a></li>
-                    </ul>
+                    <Dropdown>
+                        <DropdownToggleButton Color="ButtonColor.Secondary" Outline="true">
+                            <Icon Name="IconName.Funnel" class="me-1" /> @GetSortDisplayText()
+                        </DropdownToggleButton>
+                        <DropdownMenu>
+                            <DropdownItem @onclick='() => SetSort("popular")' Active="@(sortBy == "popular")">Most
+                                Popular</DropdownItem>
+                            <DropdownItem @onclick='() => SetSort("newest")' Active="@(sortBy == "newest")">Newest
+                            </DropdownItem>
+                            <DropdownItem @onclick='() => SetSort("alphabetical")' Active="@(sortBy == "alphabetical")">
+                                A-Z</DropdownItem>
+                            <DropdownItem @onclick='() => SetSort("level")' Active="@(sortBy == "level")">By Level
+                            </DropdownItem>
+                        </DropdownMenu>
+                    </Dropdown>
                 </div>
             </div>
         </div>
@@ -108,37 +110,42 @@
                 {
                     @foreach (var course in filteredCourses)
                     {
-                        <div class="course-card">
-                            <div class="course-image-container">
-                                <img src="@course.ThumbnailUrl" class="course-image" alt="Course image" />
-                                <button class="bookmark-btn" @onclick="() => ToggleBookmark(course.Id)">
-                                    <i
-                                        class="bi @(bookmarkedCourses.Contains(course.Id) ? "bi-bookmark-fill" : "bi-bookmark")"></i>
-                                </button>
-                            </div>
-                            <div class="course-info">
-                                <div class="course-meta">
-                                    <span class="course-level">@course.Level</span>
-                                    <span class="course-duration">@FormatDuration(course.EstimatedDuration)</span>
+                        <Card class="course-card">
+                            <CardBody>
+                                <div class="course-image-container">
+                                    <img src="@course.ThumbnailUrl" class="course-image" alt="Course image" />
+                                    <Button Color="ButtonColor.Light" Size="ButtonSize.Small" class="bookmark-btn"
+                                        @onclick="() => ToggleBookmark(course.Id)">
+                                        <Icon
+                                            Name="@(bookmarkedCourses.Contains(course.Id) ? IconName.BookmarkFill : IconName.Bookmark)" />
+                                    </Button>
                                 </div>
-                                <h6 class="course-title">@course.Title</h6>
-                                <p class="course-description">@course.Description</p>
-                                <div class="course-footer">
-                                    <div class="instructor-info">
-                                        <img src="/favicon.png" class="instructor-avatar" alt="Instructor">
-                                        <span class="instructor-name">@course.InstructorName</span>
+                                <div class="course-info">
+                                    <div class="course-meta">
+                                        <Badge Color="BadgeColor.Secondary" class="course-level">@course.Level</Badge>
+                                        <span class="course-duration">@FormatDuration(course.EstimatedDuration)</span>
                                     </div>
-                                    <a class="btn btn-primary btn-sm view-btn"
-                                        href="@($"/user/lms/course/{course.Id}")">View</a>
+                                    <CardTitle Size="HeadingSize.H6">@course.Title</CardTitle>
+                                    <CardText>@course.Description</CardText>
+                                    <div class="course-footer">
+                                        <div class="instructor-info">
+                                            <img src="/favicon.png" class="instructor-avatar" alt="Instructor">
+                                            <span class="instructor-name">@course.InstructorName</span>
+                                        </div>
+                                        <Button Color="ButtonColor.Primary" Size="ButtonSize.Small" Type="ButtonType.Link"
+                                            To="@($"/user/lms/course/{course.Id}")" class="view-btn">
+                                            View
+                                        </Button>
+                                    </div>
                                 </div>
-                            </div>
-                        </div>
+                            </CardBody>
+                        </Card>
                     }
                 }
                 else
                 {
                     <div class="no-courses-found">
-                        <i class="bi bi-search"></i>
+                        <Icon Name="IconName.Search" Size="IconSize.x3" />
                         <h5>No courses found</h5>
                         <p>Try adjusting your search criteria or filters.</p>
                     </div>
@@ -192,11 +199,7 @@
         ApplyFilters();
     }
 
-    private void OnSearchInput(ChangeEventArgs e)
-    {
-        searchQuery = e.Value?.ToString() ?? "";
-        ApplyFilters();
-    }
+
 
     private void SetSort(string sortType)
     {
@@ -218,18 +221,18 @@
         if (!string.IsNullOrWhiteSpace(searchQuery))
         {
             courses = courses.Where(c =>
-                c.Title.Contains(searchQuery, StringComparison.OrdinalIgnoreCase) ||
-                c.Description.Contains(searchQuery, StringComparison.OrdinalIgnoreCase) ||
-                c.InstructorName.Contains(searchQuery, StringComparison.OrdinalIgnoreCase));
+            c.Title.Contains(searchQuery, StringComparison.OrdinalIgnoreCase) ||
+            c.Description.Contains(searchQuery, StringComparison.OrdinalIgnoreCase) ||
+            c.InstructorName.Contains(searchQuery, StringComparison.OrdinalIgnoreCase));
         }
 
         // Apply level filters
         if (filters.HasAnyLevelFilter())
         {
             courses = courses.Where(c =>
-                (filters.Beginner && c.Level == "Beginner") ||
-                (filters.Intermediate && c.Level == "Intermediate") ||
-                (filters.Advanced && c.Level == "Advanced"));
+            (filters.Beginner && c.Level == "Beginner") ||
+            (filters.Intermediate && c.Level == "Intermediate") ||
+            (filters.Advanced && c.Level == "Advanced"));
         }
 
         // Apply sorting
