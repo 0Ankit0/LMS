@@ -1,3 +1,5 @@
+
+@using BlazorBootstrap;
 @page "/admin"
 
 @using Microsoft.AspNetCore.Components.Web
@@ -13,131 +15,132 @@
 
 <div class="row g-4">
     <div class="col-lg-3 col-md-6">
-        <div class="card bg-primary text-white">
-            <div class="card-body">
+        <Card>
+            <CardBody>
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
                         <h5 class="card-title">Courses</h5>
                         <h3 class="mb-0">--</h3>
                     </div>
-                    <i class="bi bi-book fs-1 opacity-75"></i>
+                    <Icon Name="IconName.Book" Class="fs-1 opacity-75" />
                 </div>
-                <a href="/admin/courses" class="btn btn-light btn-sm mt-2">Manage Courses</a>
-            </div>
-        </div>
+                <Button Color="ButtonColor.Light" Size="ButtonSize.Small" class="mt-2" To="/admin/courses">Manage Courses</Button>
+            </CardBody>
+        </Card>
     </div>
 
     <div class="col-lg-3 col-md-6">
-        <div class="card bg-success text-white">
-            <div class="card-body">
+        <Card>
+            <CardBody>
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
                         <h5 class="card-title">Categories</h5>
                         <h3 class="mb-0">--</h3>
                     </div>
-                    <i class="bi bi-tags fs-1 opacity-75"></i>
+                    <Icon Name="IconName.Tags" Class="fs-1 opacity-75" />
                 </div>
-                <a href="/admin/categories" class="btn btn-light btn-sm mt-2">Manage Categories</a>
-            </div>
-        </div>
+                <Button Color="ButtonColor.Light" Size="ButtonSize.Small" class="mt-2" To="/admin/categories">Manage Categories</Button>
+            </CardBody>
+        </Card>
     </div>
 
     <div class="col-lg-3 col-md-6">
-        <div class="card bg-info text-white">
-            <div class="card-body">
+        <Card>
+            <CardBody>
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
                         <h5 class="card-title">Assessments</h5>
                         <h3 class="mb-0">--</h3>
                     </div>
-                    <i class="bi bi-clipboard-check fs-1 opacity-75"></i>
+                    <Icon Name="IconName.ClipboardCheck" Class="fs-1 opacity-75" />
                 </div>
-                <a href="/admin/assessments" class="btn btn-light btn-sm mt-2">Manage Assessments</a>
-            </div>
-        </div>
+                <Button Color="ButtonColor.Light" Size="ButtonSize.Small" class="mt-2" To="/admin/assessments">Manage Assessments</Button>
+            </CardBody>
+        </Card>
     </div>
 
     <div class="col-lg-3 col-md-6">
-        <div class="card bg-warning text-white">
-            <div class="card-body">
+        <Card>
+            <CardBody>
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
                         <h5 class="card-title">Enrollments</h5>
                         <h3 class="mb-0">--</h3>
                     </div>
-                    <i class="bi bi-person-plus fs-1 opacity-75"></i>
+                    <Icon Name="IconName.PersonPlus" Class="fs-1 opacity-75" />
                 </div>
-                <a href="/admin/enrollments" class="btn btn-light btn-sm mt-2">Manage Enrollments</a>
-            </div>
-        </div>
+                <Button Color="ButtonColor.Light" Size="ButtonSize.Small" class="mt-2" To="/admin/enrollments">Manage Enrollments</Button>
+            </CardBody>
+        </Card>
     </div>
 </div>
 
 <div class="row g-4 mt-2">
     <div class="col-md-6">
-        <div class="card">
-            <div class="card-header">
+        <Card>
+            <CardHeader>
                 <h5 class="card-title mb-0">Quick Actions</h5>
-            </div>
-            <div class="card-body">
+            </CardHeader>
+            <CardBody>
                 <div class="list-group list-group-flush">
                     <a href="/admin/courses/create"
                         class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
-                        <span><i class="bi bi-plus-circle me-2"></i>Create New Course</span>
-                        <i class="bi bi-chevron-right"></i>
+                        <span><Icon Name="IconName.PlusCircle" Class="me-2" />Create New Course</span>
+                        <Icon Name="IconName.ChevronRight" />
                     </a>
                     <a href="/admin/categories/create"
                         class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
-                        <span><i class="bi bi-plus-circle me-2"></i>Create New Category</span>
-                        <i class="bi bi-chevron-right"></i>
+                        <span><Icon Name="IconName.PlusCircle" Class="me-2" />Create New Category</span>
+                        <Icon Name="IconName.ChevronRight" />
                     </a>
                     <a href="/admin/assessments/create"
                         class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
-                        <span><i class="bi bi-plus-circle me-2"></i>Create New Assessment</span>
-                        <i class="bi bi-chevron-right"></i>
+                        <span><Icon Name="IconName.PlusCircle" Class="me-2" />Create New Assessment</span>
+                        <Icon Name="IconName.ChevronRight" />
                     </a>
                     <a href="/admin/achievements/create"
                         class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
-                        <span><i class="bi bi-plus-circle me-2"></i>Create New Achievement</span>
-                        <i class="bi bi-chevron-right"></i>
+                        <span><Icon Name="IconName.PlusCircle" Class="me-2" />Create New Achievement</span>
+                        <Icon Name="IconName.ChevronRight" />
                     </a>
                 </div>
-            </div>
-        </div>
+            </CardBody>
+        </Card>
     </div>
 
     <div class="col-md-6">
-        <div class="card">
-            <div class="card-header">
+        <Card>
+            <CardHeader>
                 <h5 class="card-title mb-0">Management Tools</h5>
-            </div>
-            <div class="card-body">
+            </CardHeader>
+            <CardBody>
                 <div class="list-group list-group-flush">
                     <a href="/admin/modules"
                         class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
-                        <span><i class="bi bi-collection me-2"></i>Manage Modules</span>
-                        <i class="bi bi-chevron-right"></i>
+                        <span><Icon Name="IconName.Collection" Class="me-2" />Manage Modules</span>
+                        <Icon Name="IconName.ChevronRight" />
                     </a>
                     <a href="/admin/lessons"
                         class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
-                        <span><i class="bi bi-play-circle me-2"></i>Manage Lessons</span>
-                        <i class="bi bi-chevron-right"></i>
+                        <span><Icon Name="IconName.PlayCircle" Class="me-2" />Manage Lessons</span>
+                        <Icon Name="IconName.ChevronRight" />
                     </a>
                     <a href="/admin/forums"
                         class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
-                        <span><i class="bi bi-chat-square-text me-2"></i>Manage Forums</span>
-                        <i class="bi bi-chevron-right"></i>
+                        <span><Icon Name="IconName.ChatSquareText" Class="me-2" />Manage Forums</span>
+                        <Icon Name="IconName.ChevronRight" />
                     </a>
                     <a href="/admin/certificates"
                         class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
-                        <span><i class="bi bi-award me-2"></i>Manage Certificates</span>
-                        <i class="bi bi-chevron-right"></i>
+                        <span><Icon Name="IconName.Award" Class="me-2" />Manage Certificates</span>
+                        <Icon Name="IconName.ChevronRight" />
                     </a>
                 </div>
-            </div>
-        </div>
+            </CardBody>
+        </Card>
     </div>
 </div>
+
 
                        
                        
