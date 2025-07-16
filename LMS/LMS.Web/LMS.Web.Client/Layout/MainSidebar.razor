@@ -1,32 +1,78 @@
-@using BlazorBootstrap
-@using Microsoft.AspNetCore.Components
-@using Microsoft.AspNetCore.Components.Routing
-@using Microsoft.AspNetCore.Components.Web
 @using System.Collections.Generic
-@rendermode @(new InteractiveServerRenderMode())
+@rendermode InteractiveAuto
 
-<Sidebar @ref="sidebar" Type="SidebarType.Push" Title="LMS" DataProvider="SidebarDataProvider">
-</Sidebar>
+<div class="top-row ps-3 navbar navbar-dark">
+    <div class="container-fluid d-flex align-items-center justify-content-end">
+        <button class="navbar-collapse-toggle" @onclick="ToggleNavbar"
+            title="@(isNavbarCollapsed ? "Expand sidebar" : "Collapse sidebar")">
+            <span class="bi @(isNavbarCollapsed ? "bi-chevron-right" : "bi-chevron-left")"></span>
+        </button>
+        <button class="navbar-toggler" @onclick="ToggleMobileMenu" title="Toggle navigation menu">
+        </button>
+    </div>
+</div>
+
+<div class="nav-scrollable @(GetNavScrollableClasses())" style="@(isMobileMenuOpen ? "display: block;" : "")">
+    <nav class="nav">
+        <div class="nav-item" data-tooltip="Home">
+            <NavLink class="nav-link" href="/home" Match="NavLinkMatch.All" title="Home">
+                <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span>
+                <span class="nav-text">Home</span>
+            </NavLink>
+        </div>
+
+        <div class="nav-item" data-tooltip="Analytics Dashboard">
+            <NavLink class="nav-link" href="/user/lms/analytics" title="Analytics Dashboard">
+                <span class="bi bi-speedometer2" aria-hidden="true"></span>
+                <span class="nav-text">Analytics Dashboard</span>
+            </NavLink>
+        </div>
+
+        <div class="nav-item" data-tooltip="Course Catalog">
+            <NavLink class="nav-link" href="user/lms/courses/catalog" title="Course Catalog">
+                <span class="bi bi-book" aria-hidden="true"></span>
+                <span class="nav-text">Course Catalog</span>
+            </NavLink>
+        </div>
+
+        <div class="nav-item" data-tooltip="Account">
+            <NavLink class="nav-link" href="user/lms/announcement-list" title="Account">
+                <span class="bi bi-megaphone" aria-hidden="true"></span>
+                <span class="nav-text">Announcements</span>
+            </NavLink>
+        </div>
+        <div class="nav-item" data-tooltip="Account">
+            <NavLink class="nav-link" href="user/lms/forums" title="Account">
+                <span class="bi bi-megaphone" aria-hidden="true"></span>
+                <span class="nav-text">Forums</span>
+            </NavLink>
+        </div>
+    </nav>
+</div>
 
 @code {
-    private Sidebar sidebar = default!;
+    private bool isNavbarCollapsed = true; // Start contracted by default
+    private bool isMobileMenuOpen = false; // Mobile menu state
 
-    private IEnumerable<NavItem> NavItems { get; set; } = default!;
-
-    protected override void OnInitialized()
+    private void ToggleNavbar()
     {
-        NavItems = new List<NavItem>
-{
-new NavItem { Href = "/home", IconName = IconName.HouseDoorFill, Text = "Home", Match = NavLinkMatch.All },
-new NavItem { Href = "/user/lms/analytics", IconName = IconName.Speedometer2, Text = "Analytics Dashboard" },
-new NavItem { Href = "user/lms/courses/catalog", IconName = IconName.Book, Text = "Course Catalog" },
-new NavItem { Href = "user/lms/announcement-list", IconName = IconName.Megaphone, Text = "Announcements" },
-new NavItem { Href = "user/lms/forums", IconName = IconName.Megaphone, Text = "Forums" }
-};
+        isNavbarCollapsed = !isNavbarCollapsed;
     }
 
-    private Task<SidebarDataProviderResult> SidebarDataProvider(SidebarDataProviderRequest request)
+    private void ToggleMobileMenu()
     {
-        return Task.FromResult(new SidebarDataProviderResult { Data = NavItems });
+        isMobileMenuOpen = !isMobileMenuOpen;
+    }
+
+    private string GetNavScrollableClasses()
+    {
+        var classes = new List<string>();
+
+        if (isNavbarCollapsed)
+        {
+            classes.Add("collapsed");
+        }
+
+        return string.Join(" ", classes);
     }
 }

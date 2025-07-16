@@ -1,6 +1,7 @@
 ﻿@page "/home"
 @inject NavigationManager NavigationManager
 @inject AuthenticationStateProvider AuthenticationStateProvider
+@using BlazorBootstrap
 
 <PageTitle>Home</PageTitle>
 
@@ -9,30 +10,44 @@
         <!-- Left: Navigation Cards -->
         <div class="col-12 col-md-2 mb-4 mb-md-0 d-flex flex-column">
             <div class="card shadow-sm mb-3">
+                <div class="card-body d-flex align-items-center" @onclick="@(() => NavigateTo("/admin"))"
+                    style="cursor:pointer;">
+                    <Icon Name="IconName.Speedometer2" class="me-2 fs-4 text-primary" />
+                    <span>Admin</span>
+                </div>
+            </div>
+            <div class="card shadow-sm mb-3">
+                <div class="card-body d-flex align-items-center" @onclick="@(() => NavigateTo("/reports"))"
+                    style="cursor:pointer;">
+                    <Icon Name="IconName.Speedometer2" class="me-2 fs-4 text-primary" />
+                    <span>Reports</span>
+                </div>
+            </div>
+            <div class="card shadow-sm mb-3">
                 <div class="card-body d-flex align-items-center" @onclick="@(() => NavigateTo("/user/lms/dashboard"))"
-                     style="cursor:pointer;">
-                    <i class="bi bi-speedometer2 me-2 fs-4 text-primary"></i>
+                    style="cursor:pointer;">
+                    <Icon Name="IconName.Speedometer2" class="me-2 fs-4 text-primary" />
                     <span>Dashboard</span>
                 </div>
             </div>
             <div class="card shadow-sm mb-3">
                 <div class="card-body d-flex align-items-center" @onclick="@(() => NavigateTo("/user/lms/forums"))"
-                     style="cursor:pointer;">
-                    <i class="bi bi-journal-bookmark me-2 fs-4 text-success"></i>
+                    style="cursor:pointer;">
+                    <Icon Name="IconName.JournalBookmark" class="me-2 fs-4 text-success" />
                     <span>Forums</span>
                 </div>
             </div>
             <div class="card shadow-sm mb-3">
                 <div class="card-body d-flex align-items-center" @onclick="@(() => NavigateTo("/user/lms/analytics"))"
-                     style="cursor:pointer;">
-                    <i class="bi bi-person-circle me-2 fs-4 text-info"></i>
+                    style="cursor:pointer;">
+                    <Icon Name="IconName.PersonCircle" class="me-2 fs-4 text-info" />
                     <span>Analytics</span>
                 </div>
             </div>
             <div class="card shadow-sm mb-3">
                 <div class="card-body d-flex align-items-center" @onclick="@(() => NavigateTo("/user/lms/my-courses"))"
-                     style="cursor:pointer;">
-                    <i class="bi bi-trophy me-2 fs-4 text-warning"></i>
+                    style="cursor:pointer;">
+                    <Icon Name="IconName.Trophy" class="me-2 fs-4 text-warning" />
                     <span>My Courses</span>
                 </div>
             </div>
@@ -43,14 +58,16 @@
             <div class="card border-0 mb-4 flex-grow-1 d-flex flex-column">
                 <div class="card-header bg-primary bg-opacity-50 text-white">
                     <div class="d-flex justify-content-between align-items-center w-100">
-                        <span><i class="bi bi-megaphone"></i> Announcements</span>
+                        <span>
+                            <Icon Name="IconName.Megaphone" /> Announcements
+                        </span>
                         <a href="/user/lms/announcement-list"
-                           class="btn btn-link btn-sm text-white text-decoration-underline p-0"
-                           style="font-size: 0.95em;">View All</a>
+                            class="btn btn-link btn-sm text-white text-decoration-underline p-0"
+                            style="font-size: 0.95em;">View All</a>
                     </div>
                 </div>
                 <div class="card-body  p-0 flex-grow-1 d-flex flex-column hide-scrollbar"
-                     style="max-height: 80svh; overflow-y: auto;">
+                    style="max-height: 80svh; overflow-y: auto;">
                     <Announcements />
                 </div>
             </div>
@@ -72,10 +89,10 @@
         /* IE and Edge */
     }
 
-        .hide-scrollbar::-webkit-scrollbar {
-            display: none;
-            /* Chrome, Safari, Opera */
-        }
+    .hide-scrollbar::-webkit-scrollbar {
+        display: none;
+        /* Chrome, Safari, Opera */
+    }
 </style>
 
 @code {

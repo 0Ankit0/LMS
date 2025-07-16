@@ -6,7 +6,6 @@
 
 <div class="simple-announcements-layout">
     <div class="announcements-container">
-        <!-- Header -->
         <!-- Announcements Content -->
         <div class="announcements-content">
             @if (isLoading)
@@ -43,7 +42,7 @@
                             </div>
                             <div class="announcement-actions">
                                 <Button Color="ButtonColor.Primary" Outline="true" Size="ButtonSize.Small" class="view-btn"
-                                        @onclick:stopPropagation="true">
+                                    @onclick="() => ShowAnnouncement(announcement)">
                                     <Icon Name="IconName.Eye" />
                                 </Button>
                             </div>
@@ -51,8 +50,8 @@
                     }
                     <div class="d-flex justify-content-end mt-2">
                         <a href="/user/lms/announcement-list"
-                           class="btn btn-link btn-sm text-primary text-decoration-underline p-0"
-                           style="font-size: 0.95em;">View All</a>
+                            class="btn btn-link btn-sm text-primary text-decoration-underline p-0"
+                            style="font-size: 0.95em;">View All</a>
                     </div>
                 </div>
             }

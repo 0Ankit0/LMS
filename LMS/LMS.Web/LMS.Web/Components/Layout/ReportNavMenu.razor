@@ -1,15 +1,15 @@
 @using Microsoft.AspNetCore.Components.Authorization
 @inject AuthenticationStateProvider AuthenticationStateProvider
-@rendermode InteractiveServer
+@rendermode InteractiveAuto
 
 <div class="top-row ps-3 navbar navbar-dark">
     <div class="container-fluid d-flex align-items-center justify-content-end">
         <button class="navbar-collapse-toggle" @onclick="ToggleNavbar"
-                title="@(isNavbarCollapsed ? "Expand sidebar" : "Collapse sidebar")">
+            title="@(isNavbarCollapsed ? "Expand sidebar" : "Collapse sidebar")">
             <span class="bi @(isNavbarCollapsed ? "bi-chevron-right" : "bi-chevron-left")"></span>
         </button>
         <button class="navbar-toggler" @onclick="ToggleMobileMenu" title="Toggle navigation menu"
-                aria-label="Toggle navigation menu">
+            aria-label="Toggle navigation menu">
             <span class="bar"></span>
             <span class="bar"></span>
             <span class="bar"></span>

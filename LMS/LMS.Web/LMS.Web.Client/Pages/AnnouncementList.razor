@@ -5,69 +5,92 @@
 <PageTitle>Announcements - LMS</PageTitle>
 
 <div class="announcements-layout">
-    <!-- Announcements Sidebar -->
+    <!-- Announcements Sidebar as Tabs -->
     <div class="announcements-sidebar">
-        <div class="sidebar-header">
-            <h5 class="sidebar-title">Announcements</h5>
-        </div>
-        <div class="sidebar-content">
-            <Nav>
-                <NavLink Class="@GetFilterClass("all")" @onclick='() => SelectFilter("all")'>
-                    <div class="nav-icon">
-                        <Icon Name="IconName.Megaphone" />
-                    </div>
-                    <span class="nav-text">All Announcements</span>
-                </NavLink>
-                <NavLink Class="@GetFilterClass("high")" @onclick='() => SelectFilter("high")'>
-                    <div class="nav-icon">
-                        <Icon Name="IconName.ExclamationTriangle" />
-                    </div>
-                    <span class="nav-text">High Priority</span>
-                </NavLink>
-                <NavLink Class="@GetFilterClass("medium")" @onclick='() => SelectFilter("medium")'>
-                    <div class="nav-icon">
-                        <Icon Name="IconName.InfoCircle" />
-                    </div>
-                    <span class="nav-text">Medium Priority</span>
-                </NavLink>
-                <NavLink Class="@GetFilterClass("low")" @onclick='() => SelectFilter("low")'>
-                    <div class="nav-icon">
-                        <Icon Name="IconName.Bell" />
-                    </div>
-                    <span class="nav-text">Low Priority</span>
-                </NavLink>
-                <NavLink Class="@GetFilterClass("recent")" @onclick='() => SelectFilter("recent")'>
-                    <div class="nav-icon">
-                        <Icon Name="IconName.ClockHistory" />
-                    </div>
-                    <span class="nav-text">Recent</span>
-                </NavLink>
-            </Nav>
-
-            <div class="filters-section">
-                <h6 class="filter-title">Date Range</h6>
-                <div class="filter-group">
-                    <div class="filter-options">
-                        <Button Color="ButtonColor.Link" Class="@GetDateFilterClass("today")"
-                            @onclick='() => SelectDateFilter("today")'>
-                            <span>Today</span>
-                        </Button>
-                        <Button Color="ButtonColor.Link" Class="@GetDateFilterClass("week")"
-                            @onclick='() => SelectDateFilter("week")'>
-                            <span>This Week</span>
-                        </Button>
-                        <Button Color="ButtonColor.Link" Class="@GetDateFilterClass("month")"
-                            @onclick='() => SelectDateFilter("month")'>
-                            <span>This Month</span>
-                        </Button>
-                        <Button Color="ButtonColor.Link" Class="@GetDateFilterClass("all")"
-                            @onclick='() => SelectDateFilter("all")'>
-                            <span>All Time</span>
+        <Tabs NavStyle="NavStyle.VerticalUnderline">
+            <Tab Title="All Announcements" Active="@(selectedFilter == "all")">
+                <Content>
+                    <div class="ms-3">
+                        <Button Color="ButtonColor.Link" Class="@GetFilterClass("all")"
+                            @onclick='() => SelectFilter("all")'>
+                            <Icon Name="IconName.Megaphone" class="me-2" />
+                            All Announcements
                         </Button>
                     </div>
-                </div>
-            </div>
-        </div>
+                </Content>
+            </Tab>
+            <Tab Title="High Priority" Active="@(selectedFilter == "high")">
+                <Content>
+                    <div class="ms-3">
+                        <Button Color="ButtonColor.Link" Class="@GetFilterClass("high")"
+                            @onclick='() => SelectFilter("high")'>
+                            <Icon Name="IconName.ExclamationTriangle" class="me-2" />
+                            High Priority
+                        </Button>
+                    </div>
+                </Content>
+            </Tab>
+            <Tab Title="Medium Priority" Active="@(selectedFilter == "medium")">
+                <Content>
+                    <div class="ms-3">
+                        <Button Color="ButtonColor.Link" Class="@GetFilterClass("medium")"
+                            @onclick='() => SelectFilter("medium")'>
+                            <Icon Name="IconName.InfoCircle" class="me-2" />
+                            Medium Priority
+                        </Button>
+                    </div>
+                </Content>
+            </Tab>
+            <Tab Title="Low Priority" Active="@(selectedFilter == "low")">
+                <Content>
+                    <div class="ms-3">
+                        <Button Color="ButtonColor.Link" Class="@GetFilterClass("low")"
+                            @onclick='() => SelectFilter("low")'>
+                            <Icon Name="IconName.Bell" class="me-2" />
+                            Low Priority
+                        </Button>
+                    </div>
+                </Content>
+            </Tab>
+            <Tab Title="Recent" Active="@(selectedFilter == "recent")">
+                <Content>
+                    <div class="ms-3">
+                        <Button Color="ButtonColor.Link" Class="@GetFilterClass("recent")"
+                            @onclick='() => SelectFilter("recent")'>
+                            <Icon Name="IconName.ClockHistory" class="me-2" />
+                            Recent
+                        </Button>
+                    </div>
+                </Content>
+            </Tab>
+            <Tab Title="Date Range">
+                <Content>
+                    <div class="filters-section ms-3">
+                        <h6 class="filter-title">Date Range</h6>
+                        <div class="filter-group">
+                            <div class="filter-options">
+                                <Button Color="ButtonColor.Link" Class="@GetDateFilterClass("today")"
+                                    @onclick='() => SelectDateFilter("today")'>
+                                    <span>Today</span>
+                                </Button>
+                                <Button Color="ButtonColor.Link" Class="@GetDateFilterClass("week")"
+                                    @onclick='() => SelectDateFilter("week")'>
+                                    <span>This Week</span>
+                                </Button>
+                                <Button Color="ButtonColor.Link" Class="@GetDateFilterClass("month")"
+                                    @onclick='() => SelectDateFilter("month")'>
+                                    <span>This Month</span>
+                                </Button>
+                                <Button Color="ButtonColor.Link" Class="@GetDateFilterClass("all")"
+                                    @onclick='() => SelectDateFilter("all")'>
+                                    <span>All Time</span>
+                                </Button>
+                            </div>
+                        </div>
+                    </div>
+                </Content>
+            </Tab>
+        </Tabs>
     </div>
 
     <!-- Main Announcements Area -->
@@ -154,42 +177,43 @@
     </div>
 </div>
 
-<!-- Announcement Detail Modal -->
-<Modal @ref="announcementDetailModal">
-    <ModalContent Size="ModalSize.Large" Centered="true">
-        <ModalHeader Background="Background.Primary" TextColor="TextColor.White">
-            <ModalTitle>
-                <Icon Name="IconName.Megaphone" Class="me-2" />
-                @selectedAnnouncement?.Title
-            </ModalTitle>
-            <Button CloseButton="true" @onclick="CloseModal"></Button>
-        </ModalHeader>
-        <ModalBody>
+<!-- Announcement Detail Modal using new format -->
+<Modal @ref="announcementDetailModal" Title="Announcement Details" UseStaticBackdrop="true" CloseOnEscape="false">
+    <BodyTemplate>
+        @if (selectedAnnouncement is not null)
+        {
             <div class="announcement-detail-meta mb-3">
                 <div class="meta-item">
                     <Icon Name="IconName.PersonCircle" TextColor="TextColor.Primary" />
-                    <span>@selectedAnnouncement?.AuthorName</span>
+                    <span>@selectedAnnouncement.AuthorName</span>
                 </div>
                 <div class="meta-item">
                     <Icon Name="IconName.CalendarEvent" TextColor="TextColor.Primary" />
-                    <span>@selectedAnnouncement?.PublishedAt.ToString("MMM dd, yyyy HH:mm")</span>
+                    <span>@selectedAnnouncement.PublishedAt.ToString("MMM dd, yyyy HH:mm")</span>
                 </div>
                 <div class="meta-item">
-                    <Badge Color="@GetPriorityBadgeColor(selectedAnnouncement?.Priority)">
-                        <Icon Name="@GetPriorityIconEnum(selectedAnnouncement?.Priority)" />
-                        @selectedAnnouncement?.Priority Priority
+                    <Badge Color="@GetPriorityBadgeColor(selectedAnnouncement.Priority)">
+                        <Icon Name="@GetPriorityIconEnum(selectedAnnouncement.Priority)" />
+                        @selectedAnnouncement.Priority Priority
                     </Badge>
                 </div>
             </div>
             <div class="announcement-detail-content">
-                @((MarkupString)(selectedAnnouncement?.Content ?? ""))
+                @((MarkupString)(selectedAnnouncement.Content ?? ""))
             </div>
-        </ModalBody>
-        <ModalFooter>
-            <Button Color="ButtonColor.Secondary" @onclick="CloseModal">Close</Button>
-        </ModalFooter>
-    </ModalContent>
+        }
+        else
+        {
+            <div>No announcement selected.</div>
+        }
+    </BodyTemplate>
+    <FooterTemplate>
+        <Button Color="ButtonColor.Secondary" @onclick="OnHideModalClick">Close</Button>
+        <Button Color="ButtonColor.Primary">Understood</Button>
+    </FooterTemplate>
 </Modal>
+
+<Button Color="ButtonColor.Primary" @onclick="OnShowModalClick">Launch static backdrop modal</Button>
 
 @code {
     // Properties for filtering and search
@@ -400,4 +424,17 @@
     private string GetFilterClass(string filter) => selectedFilter == filter ? "nav-item active" : "nav-item";
     private string GetDateFilterClass(string filter) => dateFilter == filter ? "filter-option active" : "filter-option";
     private string GetAnnouncementCardClass(string priority) => $"announcement-card {GetPriorityClass(priority)}";
+
+    private async Task OnShowModalClick()
+    {
+        if (announcementDetailModal != null)
+            await announcementDetailModal.ShowAsync();
+    }
+
+    private async Task OnHideModalClick()
+    {
+        if (announcementDetailModal != null)
+            await announcementDetailModal.HideAsync();
+        selectedAnnouncement = null;
+    }
 }
