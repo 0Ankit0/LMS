@@ -60,6 +60,7 @@
     private string? errorMessage;
 
     private bool _showPassword = false;
+    private bool _shouldRedirect = false;
 
     [CascadingParameter]
     private HttpContext HttpContext { get; set; } = default!;
@@ -72,10 +73,22 @@
 
     protected override async Task OnInitializedAsync()
     {
+        if (HttpContext.User?.Identity?.IsAuthenticated == true)
+        {
+            _shouldRedirect = true;
+            return;
+        }
         if (HttpMethods.IsGet(HttpContext.Request.Method))
         {
-            // Clear the existing external cookie to ensure a clean login process
             await HttpContext.SignOutAsync(IdentityConstants.ExternalScheme);
+        }
+    }
+
+    protected override void OnAfterRender(bool firstRender)
+    {
+        if ( _shouldRedirect)
+        {
+            RedirectManager.RedirectTo("/home");
         }
     }
     private void TogglePassword()

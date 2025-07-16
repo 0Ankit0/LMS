@@ -15,7 +15,7 @@
 <hr />
 <div class="row">
     <div class="col-md-4">
-        <EditForm method="post" Model="Forum" OnValidSubmit="AddForum" FormName="create" Enhance>
+        <EditForm Model="Forum" OnValidSubmit="HandleValidSubmit">
             <AntiforgeryToken />
             <DataAnnotationsValidator />
             <ValidationSummary class="text-danger" role="alert" />
@@ -31,11 +31,11 @@
             </div>
             <div class="mb-3">
                 <label for="courseid" class="form-label">Course</label>
-                <SearchableSelectComponent TItem="DropdownOption" TValue="int?" Items="@courseOptions"
-                    ValueSelector="@(item => (int?)item.Value)" DisplaySelector="@(item => item.Text)"
-                    SearchFunction="@SearchCourses" SelectedValue="@Forum.CourseId"
-                    OnSelectedValueChanged="@((int? value) => Forum.CourseId = value)"
-                    Placeholder="Select a course (optional)..." class="form-control" />
+                <SearchableSelectComponent TItem="DropdownOption<int>" TValue="int?" Items="@courseOptions"
+                                           ValueSelector="@(item => (int?)item.Value)" DisplaySelector="@(item => item.Text)"
+                                           SearchFunction="@SearchCourses" SelectedValue="@Forum.CourseId"
+                                           OnSelectedValueChanged="@((int? value) => Forum.CourseId = value)"
+                                           Placeholder="Select a course (optional)..." class="form-control" />
                 <ValidationMessage For="() => Forum.CourseId" class="text-danger" />
             </div>
             <div class="mb-3">
@@ -53,10 +53,9 @@
 </div>
 
 @code {
-    [SupplyParameterFromForm]
     private CreateForumRequest Forum { get; set; } = new();
 
-    private List<DropdownOption> courseOptions = new();
+    private List<DropdownOption<int>> courseOptions = new();
 
     protected override async Task OnInitializedAsync()
     {
@@ -64,9 +63,14 @@
         courseOptions = await DropdownRepository.GetCoursesAsync(search: "", take: 20);
     }
 
-    private async Task<IEnumerable<DropdownOption>> SearchCourses(string searchTerm)
+    private async Task<IEnumerable<DropdownOption<int>>> SearchCourses(string searchTerm)
     {
         return await DropdownRepository.GetCoursesAsync(searchTerm, take: 20);
+    }
+
+    private Task HandleValidSubmit(EditContext context)
+    {
+        return AddForum();
     }
 
     private async Task AddForum()

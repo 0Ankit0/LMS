@@ -12,9 +12,10 @@
 
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h1 class="mb-0">Create New Assessment</h1>
-    <a href="/admin/assessments" class="btn btn-outline-secondary">
-        <i class="bi bi-arrow-left me-2"></i>Back to Assessments
-    </a>
+    <Button Color="ButtonColor.Secondary" Href="/admin/assessments">
+        <Icon Name="IconName.ArrowLeft" />
+        Back to Assessments
+    </Button>
 </div>
 
 <div class="row">
@@ -45,7 +46,7 @@
 
                     <div class="mb-3">
                         <label for="courseid" class="form-label">Course <span class="text-danger">*</span></label>
-                        <SearchableSelectComponent TItem="DropdownOption" TValue="int?" Items="@courseOptions"
+                        <SearchableSelectComponent TItem="DropdownOption<int>" TValue="int?" Items="@courseOptions"
                             ValueSelector="@(item => (int?)item.Value)" DisplaySelector="@(item => item.Text)"
                             SearchFunction="@SearchCourses" SelectedValue="@Assessment.CourseId"
                             OnSelectedValueChanged="@((int? value) => Assessment.CourseId = value)"
@@ -165,7 +166,7 @@
     [SupplyParameterFromForm]
     private CreateAssessmentRequest Assessment { get; set; } = new();
 
-    private List<DropdownOption> courseOptions = new();
+    private List<DropdownOption<int>> courseOptions = new();
     private List<DropdownOption> moduleOptions = new();
     private List<DropdownOption> lessonOptions = new();
 
@@ -183,7 +184,7 @@
         lessonOptions = await DropdownRepository.GetLessonsAsync(search: "", take: 20);
     }
 
-    private async Task<IEnumerable<DropdownOption>> SearchCourses(string searchTerm)
+    private async Task<IEnumerable<DropdownOption<int>>> SearchCourses(string searchTerm)
     {
         return await DropdownRepository.GetCoursesAsync(searchTerm, take: 20);
     }
@@ -215,3 +216,4 @@
         }
     }
 }
+

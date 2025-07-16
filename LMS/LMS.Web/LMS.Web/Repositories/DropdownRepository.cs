@@ -7,8 +7,8 @@ namespace LMS.Repositories
 {
     public interface IDropdownRepository
     {
-        Task<List<DropdownOption>> GetCategoriesAsync(string? search = null, int take = 20);
-        Task<List<DropdownOption>> GetCoursesAsync(string? search = null, int take = 20);
+        Task<List<DropdownOption<int>>> GetCategoriesAsync(string? search = null, int take = 20);
+        Task<List<DropdownOption<int>>> GetCoursesAsync(string? search = null, int take = 20);
         Task<List<DropdownOption>> GetModulesAsync(string? search = null, int take = 20);
         Task<List<DropdownOption>> GetModulesByCourseAsync(int courseId, string? search = null, int take = 20);
         Task<List<DropdownOption<string>>> GetUsersAsync(string? search = null, int take = 20);
@@ -32,7 +32,7 @@ namespace LMS.Repositories
             _logger = logger;
         }
 
-        public async Task<List<DropdownOption>> GetCategoriesAsync(string? search = null, int take = 20)
+        public async Task<List<DropdownOption<int>>> GetCategoriesAsync(string? search = null, int take = 20)
         {
             try
             {
@@ -44,7 +44,7 @@ namespace LMS.Repositories
                 return await query
                     .OrderBy(c => c.Name)
                     .Take(take)
-                    .Select(c => new DropdownOption
+                    .Select(c => new DropdownOption<int>
                     {
                         Value = c.Id,
                         Text = c.Name,
@@ -59,7 +59,7 @@ namespace LMS.Repositories
             }
         }
 
-        public async Task<List<DropdownOption>> GetCoursesAsync(string? search = null, int take = 20)
+        public async Task<List<DropdownOption<int>>> GetCoursesAsync(string? search = null, int take = 20)
         {
             try
             {
@@ -71,7 +71,7 @@ namespace LMS.Repositories
                 return await query
                     .OrderBy(c => c.Title)
                     .Take(take)
-                    .Select(c => new DropdownOption
+                    .Select(c => new DropdownOption<int>
                     {
                         Value = c.Id,
                         Text = c.Title,

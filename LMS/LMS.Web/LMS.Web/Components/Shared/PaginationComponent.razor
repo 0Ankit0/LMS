@@ -16,59 +16,21 @@
 
     @if (EffectiveTotalPages > 1)
     {
-        <nav aria-label="Table pagination">
-            <ul class="pagination mb-0">
-                <li class="page-item @(EffectiveCurrentPage == 1 ? "disabled" : "")">
-                    <button @onclick="() => HandlePageChanged(1)" class="page-link" disabled="@(EffectiveCurrentPage == 1)">
-                        &laquo;&laquo;
-                    </button>
-                </li>
-                <li class="page-item @(EffectiveCurrentPage == 1 ? "disabled" : "")">
-                    <button @onclick="() => HandlePageChanged(EffectiveCurrentPage - 1)" class="page-link"
-                        disabled="@(EffectiveCurrentPage == 1)">
-                        &laquo;
-                    </button>
-                </li>
-
-                @foreach (var pageNumber in GetVisiblePages())
-                {
-                    <li class="page-item @(pageNumber == EffectiveCurrentPage ? "active" : "")">
-                        <button @onclick="() => HandlePageChanged(pageNumber)" class="page-link">
-                            @pageNumber
-                        </button>
-                    </li>
-                }
-
-                <li class="page-item @(EffectiveCurrentPage == EffectiveTotalPages ? "disabled" : "")">
-                    <button @onclick="() => HandlePageChanged(EffectiveCurrentPage + 1)" class="page-link"
-                        disabled="@(EffectiveCurrentPage == EffectiveTotalPages)">
-                        &raquo;
-                    </button>
-                </li>
-                <li class="page-item @(EffectiveCurrentPage == EffectiveTotalPages ? "disabled" : "")">
-                    <button @onclick="() => HandlePageChanged(EffectiveTotalPages)" class="page-link"
-                        disabled="@(EffectiveCurrentPage == EffectiveTotalPages)">
-                        &raquo;&raquo;
-                    </button>
-                </li>
-            </ul>
-        </nav>
+        <Pagination CurrentPage="EffectiveCurrentPage"
+                    TotalPages="EffectiveTotalPages"
+                    OnPageChanged="HandlePageChanged" />
     }
 </div>
 
 @code {
-    [Parameter] public int CurrentPage { get; set; } = 1;
-    [Parameter] public int PageSize { get; set; } = 10;
-    [Parameter] public int TotalCount { get; set; }
-    [Parameter] public int TotalPages { get; set; }
     [Parameter] public PaginatedResult<TItem>? PaginatedResult { get; set; }
     [Parameter] public EventCallback<int> OnPageChanged { get; set; }
     [Parameter] public EventCallback<int> OnPageSizeChanged { get; set; }
 
-    private int EffectiveCurrentPage => PaginatedResult?.PageNumber ?? CurrentPage;
-    private int EffectivePageSize => PaginatedResult?.PageSize ?? PageSize;
-    private int EffectiveTotalCount => PaginatedResult?.TotalCount ?? TotalCount;
-    private int EffectiveTotalPages => PaginatedResult?.TotalPages ?? TotalPages;
+    private int EffectiveCurrentPage => PaginatedResult?.PageNumber ?? 1;
+    private int EffectivePageSize => PaginatedResult?.PageSize ?? 10;
+    private int EffectiveTotalCount => PaginatedResult?.TotalCount ?? 0;
+    private int EffectiveTotalPages => PaginatedResult?.TotalPages ?? 0;
 
     private int StartItem => EffectiveTotalCount == 0 ? 0 : ((EffectiveCurrentPage - 1) * EffectivePageSize) + 1;
     private int EndItem => Math.Min(EffectiveCurrentPage * EffectivePageSize, EffectiveTotalCount);
@@ -84,21 +46,5 @@
     private async Task HandlePageChanged(int page)
     {
         await OnPageChanged.InvokeAsync(page);
-    }
-
-    private IEnumerable<int> GetVisiblePages()
-    {
-        const int maxVisiblePages = 5;
-        var half = maxVisiblePages / 2;
-        var start = Math.Max(1, EffectiveCurrentPage - half);
-        var end = Math.Min(EffectiveTotalPages, start + maxVisiblePages - 1);
-
-        // Adjust start if we're near the end
-        if (end - start + 1 < maxVisiblePages)
-        {
-            start = Math.Max(1, end - maxVisiblePages + 1);
-        }
-
-        return Enumerable.Range(start, end - start + 1);
     }
 }

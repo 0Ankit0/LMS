@@ -3,8 +3,6 @@
 @using Microsoft.EntityFrameworkCore
 @using LMS.Data.Entities
 
-
-
 @inject ApplicationDbContext context
 @inject NavigationManager NavigationManager
 @rendermode InteractiveServer
@@ -25,40 +23,37 @@ else
         <!-- Discord-like Sidebar (Only visible when Forum tab is active) -->
         @if (activeTab == "Forum")
         {
-            <div class="sidebar bg-dark text-light" style="width: 240px; min-height: 100vh; padding: 20px 0;">
-                <div class="px-3 mb-4">
-                    <h6 class="text-uppercase text-muted small fw-bold mb-3" style="letter-spacing: 1px;">Course Forums</h6>
-                    <div class="list-group list-group-flush">
-                        <a href="#" class="list-group-item list-group-item-action bg-transparent text-light border-0 rounded mb-1 @(selectedForumChannel == "general" ? "active" : "")" 
-                           @onclick="@(() => SelectForumChannel("general"))" @onclick:preventDefault="true">
+            <!-- Sidebar navigation replaced with plain HTML to avoid RZ10012 errors -->
+            <nav class="sidebar bg-dark text-white p-3" style="width: 260px; min-height: 100vh;">
+                <div class="mb-4">
+                    <strong>Course Forums</strong>
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item bg-dark text-white @(selectedForumChannel == "general" ? "active" : "")" style="cursor:pointer;" @onclick="@(() => SelectForumChannel("general"))">
                             <i class="bi bi-hash me-2"></i> general
-                        </a>
-                        <a href="#" class="list-group-item list-group-item-action bg-transparent text-light border-0 rounded mb-1 @(selectedForumChannel == "announcements" ? "active" : "")"
-                           @onclick="@(() => SelectForumChannel("announcements"))" @onclick:preventDefault="true">
+                        </li>
+                        <li class="list-group-item bg-dark text-white @(selectedForumChannel == "announcements" ? "active" : "")" style="cursor:pointer;" @onclick="@(() => SelectForumChannel("announcements"))">
                             <i class="bi bi-megaphone me-2"></i> announcements
-                        </a>
-                        <a href="#" class="list-group-item list-group-item-action bg-transparent text-light border-0 rounded mb-1 @(selectedForumChannel == "questions" ? "active" : "")"
-                           @onclick="@(() => SelectForumChannel("questions"))" @onclick:preventDefault="true">
+                        </li>
+                        <li class="list-group-item bg-dark text-white @(selectedForumChannel == "questions" ? "active" : "")" style="cursor:pointer;" @onclick="@(() => SelectForumChannel("questions"))">
                             <i class="bi bi-question-circle me-2"></i> questions
-                        </a>
-                        <a href="#" class="list-group-item list-group-item-action bg-transparent text-light border-0 rounded mb-1 @(selectedForumChannel == "assignments" ? "active" : "")"
-                           @onclick="@(() => SelectForumChannel("assignments"))" @onclick:preventDefault="true">
+                        </li>
+                        <li class="list-group-item bg-dark text-white @(selectedForumChannel == "assignments" ? "active" : "")" style="cursor:pointer;" @onclick="@(() => SelectForumChannel("assignments"))">
                             <i class="bi bi-clipboard me-2"></i> assignments
-                        </a>
-                    </div>
+                        </li>
+                    </ul>
                 </div>
-                <div class="px-3">
-                    <h6 class="text-uppercase text-muted small fw-bold mb-3" style="letter-spacing: 1px;">Study Groups</h6>
-                    <div class="list-group list-group-flush">
-                        <a href="#" class="list-group-item list-group-item-action bg-transparent text-light border-0 rounded mb-1">
+                <div>
+                    <strong>Study Groups</strong>
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item bg-dark text-white">
                             <i class="bi bi-people me-2"></i> Study Group 1
-                        </a>
-                        <a href="#" class="list-group-item list-group-item-action bg-transparent text-light border-0 rounded mb-1">
+                        </li>
+                        <li class="list-group-item bg-dark text-white">
                             <i class="bi bi-people me-2"></i> Study Group 2
-                        </a>
-                    </div>
+                        </li>
+                    </ul>
                 </div>
-            </div>
+            </nav>
         }
 
         <!-- Main Content Area -->
@@ -86,7 +81,7 @@ else
                     <button class="nav-link @(activeTab == "Resources" ? "active" : "")" @onclick="@(() => SetActiveTab("Resources"))">
                         <i class="bi bi-folder me-2"></i> Resources
                     </button>
-                    <button class="nav-link @(activeTab == "Assessment" ? "active" : "")" @onclick="@(() => SetActiveTab("Assessment"))">>
+                    <button class="nav-link @(activeTab == "Assessment" ? "active" : "")" @onclick="@(() => SetActiveTab("Assessment"))">
                         <i class="bi bi-clipboard-check me-2"></i> Assessment
                     </button>
                 </nav>
@@ -242,18 +237,17 @@ else
     private CourseModel? course;
     private string activeTab = "Forum";
     private string selectedForumChannel = "general";
-    
-    [SupplyParameterFromQuery]
-    private int Id { get; set; }
 
     // Data lists
     private List<ForumPostModel> forumPosts = new();
     private List<LessonResourceModel> courseResources = new();
     private List<AssessmentModel> assessments = new();
 
+    [SupplyParameterFromQuery]
+    private int Id { get; set; }
+
     protected override async Task OnInitializedAsync()
     {
-        
         var courseEntity = await context.Courses.FirstOrDefaultAsync(m => m.Id == Id);
 
         if (courseEntity is null)
@@ -335,26 +329,26 @@ else
         padding: 1rem 1.5rem;
     }
 
-    .nav-tabs .nav-link:hover {
-        border-bottom-color: #dee2e6;
-        color: #495057;
-    }
+        .nav-tabs .nav-link:hover {
+            border-bottom-color: #dee2e6;
+            color: #495057;
+        }
 
-    .nav-tabs .nav-link.active {
-        border-bottom-color: #0d6efd;
-        color: #0d6efd;
-        background: none;
-    }
+        .nav-tabs .nav-link.active {
+            border-bottom-color: #0d6efd;
+            color: #0d6efd;
+            background: none;
+        }
 
     .sidebar .list-group-item {
         transition: all 0.2s;
     }
 
-    .sidebar .list-group-item:hover {
-        background-color: #40444b !important;
-    }
+        .sidebar .list-group-item:hover {
+            background-color: #40444b !important;
+        }
 
-    .sidebar .list-group-item.active {
-        background-color: #5865f2 !important;
-    }
+        .sidebar .list-group-item.active {
+            background-color: #5865f2 !important;
+        }
 </style>

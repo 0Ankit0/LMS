@@ -8,9 +8,10 @@
 
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h1 class="mb-0">Assessments</h1>
-    <a href="/admin/assessments/create" class="btn btn-primary">
-        <i class="bi bi-plus-circle me-2"></i>Add New Assessment
-    </a>
+    <Button Color="ButtonColor.Primary" Href="/admin/assessments/create">
+        <Icon Name="IconName.PlusCircle" />
+        Add New Assessment
+    </Button>
 </div>
 
 <div class="card">
@@ -19,31 +20,32 @@
         {
             if (paginatedAssessments.Items.Any())
             {
-                <QuickGrid Class="table table-striped table-hover" Items="paginatedAssessments.Items.AsQueryable()">
-                    <PropertyColumn Property="assessment => assessment.Title" Title="Title" />
-                    <PropertyColumn Property="assessment => assessment.Description" Title="Description" />
-                    <PropertyColumn Property="assessment => assessment.CourseId" Title="Course ID" />
-                    <PropertyColumn Property="assessment => assessment.Type" Title="Type" />
-                    <PropertyColumn Property="assessment => assessment.MaxAttempts" Title="Max Attempts" />
-                    <PropertyColumn Property="assessment => assessment.PassingScore" Title="Passing Score" />
-                    <PropertyColumn Property="assessment => assessment.IsRandomized" Title="Randomized" />
-                    <PropertyColumn Property="assessment => assessment.AvailableFrom" Title="Available From"
-                        Format="yyyy-MM-dd" />
+                <Grid TItem="AssessmentModel" Class="table table-striped table-hover" Data="paginatedAssessments.Items">
+                    <GridColumn TItem="AssessmentModel" HeaderText="Title" PropertyName="Title" />
+                    <GridColumn TItem="AssessmentModel" HeaderText="Description" PropertyName="Description" />
+                    <GridColumn TItem="AssessmentModel" HeaderText="Course ID" PropertyName="CourseId" />
+                    <GridColumn TItem="AssessmentModel" HeaderText="Type" PropertyName="Type" />
+                    <GridColumn TItem="AssessmentModel" HeaderText="Max Attempts" PropertyName="MaxAttempts" />
+                    <GridColumn TItem="AssessmentModel" HeaderText="Passing Score" PropertyName="PassingScore" />
+                    <GridColumn TItem="AssessmentModel" HeaderText="Randomized">
+                        @((context as AssessmentModel)?.IsRandomized == true ? "Yes" : "No")
+                    </GridColumn>
+                    <GridColumn TItem="AssessmentModel" HeaderText="Available From" PropertyName="AvailableFrom" Format="yyyy-MM-dd" />
 
-                    <TemplateColumn Title="Actions" Context="assessment">
+                    <GridColumn TItem="AssessmentModel" HeaderText="Actions">
                         <div class="btn-group" role="group">
-                            <a href="@($"/admin/assessments/edit?id={assessment.Id}")" class="btn btn-sm btn-outline-primary">
-                                <i class="bi bi-pencil"></i> Edit
-                            </a>
-                            <a href="@($"/admin/assessments/details?id={assessment.Id}")" class="btn btn-sm btn-outline-info">
-                                <i class="bi bi-eye"></i> Details
-                            </a>
-                            <a href="@($"/admin/assessments/delete?id={assessment.Id}")" class="btn btn-sm btn-outline-danger">
-                                <i class="bi bi-trash"></i> Delete
-                            </a>
+                            <Button Color="ButtonColor.Primary" Size="ButtonSize.Small" Href='@($"/admin/assessments/edit?id={context.Id}")'>
+                                <Icon Name="IconName.Pencil" /> Edit
+                            </Button>
+                            <Button Color="ButtonColor.Info" Size="ButtonSize.Small" Href='@($"/admin/assessments/details?id={context.Id}")'>
+                                <Icon Name="IconName.Eye" /> Details
+                            </Button>
+                            <Button Color="ButtonColor.Danger" Size="ButtonSize.Small" Href='@($"/admin/assessments/delete?id={context.Id}")'>
+                                <Icon Name="IconName.Trash" /> Delete
+                            </Button>
                         </div>
-                    </TemplateColumn>
-                </QuickGrid>
+                    </GridColumn>
+                </Grid>
 
                 <PaginationComponent TItem="AssessmentModel" PaginatedResult="paginatedAssessments"
                     OnPageChanged="OnPageChanged" OnPageSizeChanged="OnPageSizeChanged" />

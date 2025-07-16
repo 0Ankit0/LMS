@@ -8,9 +8,10 @@
 
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h1 class="mb-0">Certificates</h1>
-    <a href="/admin/certificates/create" class="btn btn-primary">
-        <i class="bi bi-plus-circle me-2"></i>Add New Certificate
-    </a>
+    <Button Color="ButtonColor.Primary" Href="/admin/certificates/create">
+        <Icon Name="IconName.PlusCircle" />
+        Add New Certificate
+    </Button>
 </div>
 
 <div class="card">
@@ -19,32 +20,33 @@
         {
             if (paginatedCertificates.Items.Any())
             {
-                <QuickGrid Class="table table-striped table-hover" Items="paginatedCertificates.Items.AsQueryable()">
-                    <PropertyColumn Property="certificate => certificate.UserId" Title="User ID" />
-                    <PropertyColumn Property="certificate => certificate.UserName" Title="User Name" />
-                    <PropertyColumn Property="certificate => certificate.CourseId" Title="Course ID" />
-                    <PropertyColumn Property="certificate => certificate.CourseTitle" Title="Course Title" />
-                    <PropertyColumn Property="certificate => certificate.CertificateNumber" Title="Certificate Number" />
-                    <PropertyColumn Property="certificate => certificate.IssuedAt" Title="Issued" Format="yyyy-MM-dd" />
-                    <PropertyColumn Property="certificate => certificate.ExpiresAt" Title="Expires" Format="yyyy-MM-dd" />
-                    <PropertyColumn Property="certificate => certificate.FinalGrade" Title="Final Grade" />
-                    <PropertyColumn Property="certificate => certificate.IsValid" Title="Valid" />
+                <Grid TItem="CertificateModel" Class="table table-striped table-hover" Data="paginatedCertificates.Items">
+                    <GridColumn TItem="CertificateModel" HeaderText="User ID" PropertyName="UserId" />
+                    <GridColumn TItem="CertificateModel" HeaderText="User Name" PropertyName="UserName" />
+                    <GridColumn TItem="CertificateModel" HeaderText="Course ID" PropertyName="CourseId" />
+                    <GridColumn TItem="CertificateModel" HeaderText="Course Title" PropertyName="CourseTitle" />
+                    <GridColumn TItem="CertificateModel" HeaderText="Certificate Number" PropertyName="CertificateNumber" />
+                    <GridColumn TItem="CertificateModel" HeaderText="Issued" PropertyName="IssuedAt" Format="yyyy-MM-dd" />
+                    <GridColumn TItem="CertificateModel" HeaderText="Expires" PropertyName="ExpiresAt" Format="yyyy-MM-dd" />
+                    <GridColumn TItem="CertificateModel" HeaderText="Final Grade" PropertyName="FinalGrade" />
+                    <GridColumn TItem="CertificateModel" HeaderText="Valid">
+                        @((context as CertificateModel)?.IsValid == true ? "Yes" : "No")
+                    </GridColumn>
 
-                    <TemplateColumn Title="Actions" Context="certificate">
+                    <GridColumn TItem="CertificateModel" HeaderText="Actions">
                         <div class="btn-group" role="group">
-                            <a href="@($"/admin/certificates/edit?id={certificate.Id}")" class="btn btn-sm btn-outline-primary">
-                                <i class="bi bi-pencil"></i> Edit
-                            </a>
-                            <a href="@($"/admin/certificates/details?id={certificate.Id}")" class="btn btn-sm btn-outline-info">
-                                <i class="bi bi-eye"></i> Details
-                            </a>
-                            <a href="@($"/admin/certificates/delete?id={certificate.Id}")"
-                                class="btn btn-sm btn-outline-danger">
-                                <i class="bi bi-trash"></i> Delete
-                            </a>
+                            <Button Color="ButtonColor.Primary" Size="ButtonSize.Small" Href='@($"/admin/certificates/edit?id={context.Id}")'>
+                                <Icon Name="IconName.Pencil" /> Edit
+                            </Button>
+                            <Button Color="ButtonColor.Info" Size="ButtonSize.Small" Href='@($"/admin/certificates/details?id={context.Id}")'>
+                                <Icon Name="IconName.Eye" /> Details
+                            </Button>
+                            <Button Color="ButtonColor.Danger" Size="ButtonSize.Small" Href='@($"/admin/certificates/delete?id={context.Id}")'>
+                                <Icon Name="IconName.Trash" /> Delete
+                            </Button>
                         </div>
-                    </TemplateColumn>
-                </QuickGrid>
+                    </GridColumn>
+                </Grid>
 
                 <PaginationComponent TItem="CertificateModel" PaginatedResult="paginatedCertificates"
                     OnPageChanged="OnPageChanged" OnPageSizeChanged="OnPageSizeChanged" />

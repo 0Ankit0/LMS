@@ -15,26 +15,26 @@
 <hr />
 <div class="row">
     <div class="col-md-4">
-        <EditForm Model="Enrollment" OnValidSubmit="AddEnrollment">
+        <EditForm Model="Enrollment" OnValidSubmit="HandleValidSubmit">
             <AntiforgeryToken />
             <DataAnnotationsValidator />
             <ValidationSummary class="text-danger" role="alert" />
             <div class="mb-3">
                 <label for="userid" class="form-label">User <span class="text-danger">*</span></label>
                 <SearchableSelectComponent TItem="DropdownOption<string>" TValue="string" Items="@userOptions"
-                    ValueSelector="@(item => item.Value.ToString())" DisplaySelector="@(item => item.Text)"
-                    SearchFunction="@SearchUsers" SelectedValue="@Enrollment.UserId"
-                    OnSelectedValueChanged="@((string value) => Enrollment.UserId = value)"
-                    Placeholder="Select a user..." class="form-control" />
+                                           ValueSelector="@(item => item.Value)" DisplaySelector="@(item => item.Text)"
+                                           SearchFunction="@SearchUsers" SelectedValue="@Enrollment.UserId"
+                                           OnSelectedValueChanged="@((string value) => Enrollment.UserId = value)"
+                                           Placeholder="Select a user..." class="form-control" />
                 <ValidationMessage For="() => Enrollment.UserId" class="text-danger" />
             </div>
             <div class="mb-3">
                 <label for="courseid" class="form-label">Course <span class="text-danger">*</span></label>
-                <SearchableSelectComponent TItem="DropdownOption" TValue="int" Items="@courseOptions"
-                    ValueSelector="@(item => item.Value)" DisplaySelector="@(item => item.Text)"
-                    SearchFunction="@SearchCourses" SelectedValue="@Enrollment.CourseId"
-                    OnSelectedValueChanged="@((int value) => Enrollment.CourseId = value)"
-                    Placeholder="Select a course..." class="form-control" />
+                <SearchableSelectComponent TItem="DropdownOption<int>" TValue="int" Items="@courseOptions"
+                                           ValueSelector="@(item => item.Value)" DisplaySelector="@(item => item.Text)"
+                                           SearchFunction="@SearchCourses" SelectedValue="@Enrollment.CourseId"
+                                           OnSelectedValueChanged="@((int value) => Enrollment.CourseId = value)"
+                                           Placeholder="Select a course..." class="form-control" />
                 <ValidationMessage For="() => Enrollment.CourseId" class="text-danger" />
             </div>
             <button type="submit" class="btn btn-primary">Create</button>
@@ -47,11 +47,10 @@
 </div>
 
 @code {
-    [SupplyParameterFromForm]
     private CreateEnrollmentRequest Enrollment { get; set; } = new();
 
     private List<DropdownOption<string>> userOptions = new();
-    private List<DropdownOption> courseOptions = new();
+    private List<DropdownOption<int>> courseOptions = new();
 
     protected override async Task OnInitializedAsync()
     {
@@ -65,9 +64,14 @@
         return await DropdownRepository.GetUsersAsync(searchTerm, take: 20);
     }
 
-    private async Task<IEnumerable<DropdownOption>> SearchCourses(string searchTerm)
+    private async Task<IEnumerable<DropdownOption<int>>> SearchCourses(string searchTerm)
     {
         return await DropdownRepository.GetCoursesAsync(searchTerm, take: 20);
+    }
+
+    private Task HandleValidSubmit(EditContext context)
+    {
+        return AddEnrollment();
     }
 
     private async Task AddEnrollment()

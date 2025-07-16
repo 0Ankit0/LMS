@@ -8,9 +8,10 @@
 
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h1 class="mb-0">Forum Posts</h1>
-    <a href="/admin/forumposts/create" class="btn btn-primary">
-        <i class="bi bi-plus-circle me-2"></i>Add New Forum Post
-    </a>
+    <Button Color="ButtonColor.Primary" Href="/admin/forumposts/create">
+        <Icon Name="IconName.PlusCircle" />
+        Add New Forum Post
+    </Button>
 </div>
 
 <div class="card">
@@ -23,27 +24,27 @@
 
             @if (paginatedResult.Items.Any())
             {
-                <QuickGrid Class="table table-striped table-hover" Items="paginatedResult.Items.AsQueryable()">
-                    <PropertyColumn Property="forumpost => forumpost.Content" Title="Content" />
-                    <PropertyColumn Property="forumpost => forumpost.TopicTitle" Title="Topic" />
-                    <PropertyColumn Property="forumpost => forumpost.AuthorName" Title="Author" />
-                    <PropertyColumn Property="forumpost => forumpost.ParentPostId" Title="Parent Post" />
-                    <PropertyColumn Property="forumpost => forumpost.CreatedAt" Title="Created" Format="yyyy-MM-dd HH:mm" />
+                <Grid TItem="ForumPostModel" Class="table table-striped table-hover" Data="paginatedResult.Items">
+                    <GridColumn TItem="ForumPostModel" HeaderText="Content" PropertyName="Content" />
+                    <GridColumn TItem="ForumPostModel" HeaderText="Topic" PropertyName="TopicTitle" />
+                    <GridColumn TItem="ForumPostModel" HeaderText="Author" PropertyName="AuthorName" />
+                    <GridColumn TItem="ForumPostModel" HeaderText="Parent Post" PropertyName="ParentPostId" />
+                    <GridColumn TItem="ForumPostModel" HeaderText="Created" PropertyName="CreatedAt" Format="yyyy-MM-dd HH:mm" />
 
-                    <TemplateColumn Title="Actions" Context="forumpost">
+                    <GridColumn TItem="ForumPostModel" HeaderText="Actions">
                         <div class="btn-group" role="group">
-                            <a href="@($"/admin/forumposts/edit?id={forumpost.Id}")" class="btn btn-sm btn-outline-primary">
-                                <i class="bi bi-pencil"></i> Edit
-                            </a>
-                            <a href="@($"/admin/forumposts/details?id={forumpost.Id}")" class="btn btn-sm btn-outline-info">
-                                <i class="bi bi-eye"></i> Details
-                            </a>
-                            <a href="@($"/admin/forumposts/delete?id={forumpost.Id}")" class="btn btn-sm btn-outline-danger">
-                                <i class="bi bi-trash"></i> Delete
-                            </a>
+                            <Button Color="ButtonColor.Primary" Size="ButtonSize.Small" Href='@($"/admin/forumposts/edit?id={context.Id}")'>
+                                <Icon Name="IconName.Pencil" /> Edit
+                            </Button>
+                            <Button Color="ButtonColor.Info" Size="ButtonSize.Small" Href='@($"/admin/forumposts/details?id={context.Id}")'>
+                                <Icon Name="IconName.Eye" /> Details
+                            </Button>
+                            <Button Color="ButtonColor.Danger" Size="ButtonSize.Small" Href='@($"/admin/forumposts/delete?id={context.Id}")'>
+                                <Icon Name="IconName.Trash" /> Delete
+                            </Button>
                         </div>
-                    </TemplateColumn>
-                </QuickGrid>
+                    </GridColumn>
+                </Grid>
             }
             else
             {
@@ -112,3 +113,4 @@
         }
     }
 }
+

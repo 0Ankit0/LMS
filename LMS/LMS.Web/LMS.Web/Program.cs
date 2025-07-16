@@ -13,6 +13,9 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.AddServiceDefaults();
 
+// Add Blazor Bootstrap
+builder.Services.AddBlazorBootstrap();
+
 // Add services to the container.
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents()
@@ -21,8 +24,6 @@ builder.Services.AddRazorComponents()
 
 builder.Services.AddOutputCache();
 
-// Add Blazor Bootstrap
-builder.Services.AddBlazorBootstrap();
 
 builder.Services.AddCascadingAuthenticationState();
 builder.Services.AddScoped<IdentityUserAccessor>();

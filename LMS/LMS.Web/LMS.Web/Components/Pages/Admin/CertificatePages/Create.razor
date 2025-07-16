@@ -1,72 +1,89 @@
 ﻿@page "/admin/certificates/create"
 
 @using LMS.Repositories
+@using LMS.Data.DTOs
 
 @inject ICertificateRepository CertificateRepository
 @inject IDropdownRepository DropdownRepository
 @inject NavigationManager NavigationManager
 @rendermode @(new InteractiveServerRenderMode())
 
-<PageTitle>Create</PageTitle>
+<PageTitle>Create Certificate - Admin</PageTitle>
 
-<h1>Create</h1>
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="mb-0">Create New Certificate</h1>
+    <Button Color="ButtonColor.Secondary" Href="/admin/certificates">
+        <Icon Name="IconName.ArrowLeft" />
+        Back to Certificates
+    </Button>
+</div>
 
-<h2>Certificate</h2>
-<hr />
 <div class="row">
-    <div class="col-md-4">
-        <EditForm Model="Certificate" OnValidSubmit="AddCertificate">
-            <AntiforgeryToken />
-            <DataAnnotationsValidator />
-            <ValidationSummary class="text-danger" role="alert" />
-            <div class="mb-3">
-                <label for="userid" class="form-label">User <span class="text-danger">*</span></label>
-                <SearchableSelectComponent TItem="DropdownOption<string>" TValue="string" Items="@userOptions"
-                    ValueSelector="@(item => item.Value.ToString())" DisplaySelector="@(item => item.Text)"
-                    SearchFunction="@SearchUsers" SelectedValue="@Certificate.UserId"
-                    OnSelectedValueChanged="@((string value) => Certificate.UserId = value)"
-                    Placeholder="Select a user..." class="form-control" />
-                <ValidationMessage For="() => Certificate.UserId" class="text-danger" />
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Certificate Information</h5>
             </div>
-            <div class="mb-3">
-                <label for="courseid" class="form-label">Course <span class="text-danger">*</span></label>
-                <SearchableSelectComponent TItem="DropdownOption" TValue="int" Items="@courseOptions"
-                    ValueSelector="@(item => item.Value)" DisplaySelector="@(item => item.Text)"
-                    SearchFunction="@SearchCourses" SelectedValue="@Certificate.CourseId"
-                    OnSelectedValueChanged="@((int value) => Certificate.CourseId = value)"
-                    Placeholder="Select a course..." class="form-control" />
-                <ValidationMessage For="() => Certificate.CourseId" class="text-danger" />
+            <div class="card-body">
+                <EditForm Model="Certificate" OnValidSubmit="AddCertificate">
+                    <AntiforgeryToken />
+                    <DataAnnotationsValidator />
+                    <ValidationSummary class="alert alert-danger" role="alert" />
+
+                    <div class="mb-3">
+                        <label for="userid" class="form-label">User <span class="text-danger">*</span></label>
+                        <SearchableSelectComponent TItem="DropdownOption<string>" TValue="string" Items="@userOptions"
+                                                   ValueSelector="@(item => item.Value)" DisplaySelector="@(item => item.Text)"
+                                                   SearchFunction="@SearchUsers" SelectedValue="@Certificate.UserId"
+                                                   OnSelectedValueChanged="@((string value) => Certificate.UserId = value)"
+                                                   Placeholder="Select a user..." />
+                        <ValidationMessage For="() => Certificate.UserId" class="text-danger" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="courseid" class="form-label">Course <span class="text-danger">*</span></label>
+                        <SearchableSelectComponent TItem="DropdownOption<int>" TValue="int" Items="@courseOptions"
+                                                   ValueSelector="@(item => item.Value)" DisplaySelector="@(item => item.Text)"
+                                                   SearchFunction="@SearchCourses" SelectedValue="@Certificate.CourseId"
+                                                   OnSelectedValueChanged="@((int value) => Certificate.CourseId = value)"
+                                                   Placeholder="Select a course..." />
+                        <ValidationMessage For="() => Certificate.CourseId" class="text-danger" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="finalgrade" class="form-label">Final Grade</label>
+                        <InputNumber id="finalgrade" @bind-Value="Certificate.FinalGrade" class="form-control"
+                                     step="0.01" />
+                        <ValidationMessage For="() => Certificate.FinalGrade" class="text-danger" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="expiresat" class="form-label">Expires At</label>
+                        <InputDate id="expiresat" @bind-Value="Certificate.ExpiresAt" class="form-control" />
+                        <ValidationMessage For="() => Certificate.ExpiresAt" class="text-danger" />
+                    </div>
+
+                    <div class="d-flex gap-2">
+                        <Button Color="ButtonColor.Primary" Type="ButtonType.Submit">
+                            <Icon Name="IconName.CheckCircle" />
+                            Create Certificate
+                        </Button>
+                        <Button Color="ButtonColor.Secondary" Href="/admin/certificates">Cancel</Button>
+                    </div>
+                </EditForm>
             </div>
-            <div class="mb-3">
-                <label for="finalgrade" class="form-label">Final Grade <span class="text-danger">*</span></label>
-                <InputNumber id="finalgrade" @bind-Value="Certificate.FinalGrade" class="form-control" step="0.01"
-                    aria-required="true" placeholder="Enter final grade" />
-                <ValidationMessage For="() => Certificate.FinalGrade" class="text-danger" />
-            </div>
-            <div class="mb-3">
-                <label for="expiresat" class="form-label">Expires At (Optional)</label>
-                <InputDate id="expiresat" @bind-Value="Certificate.ExpiresAt" class="form-control" />
-                <ValidationMessage For="() => Certificate.ExpiresAt" class="text-danger" />
-            </div>
-            <button type="submit" class="btn btn-primary">Issue Certificate</button>
-        </EditForm>
+        </div>
     </div>
 </div>
 
-<div>
-    <a href="/admin/certificates">Back to List</a>
-</div>
-
 @code {
-    [SupplyParameterFromForm]
     private CreateCertificateRequest Certificate { get; set; } = new();
 
     private List<DropdownOption<string>> userOptions = new();
-    private List<DropdownOption> courseOptions = new();
+    private List<DropdownOption<int>> courseOptions = new();
 
     protected override async Task OnInitializedAsync()
     {
-        // Load initial options
         userOptions = await DropdownRepository.GetUsersAsync(search: "", take: 20);
         courseOptions = await DropdownRepository.GetCoursesAsync(search: "", take: 20);
     }
@@ -76,7 +93,7 @@
         return await DropdownRepository.GetUsersAsync(searchTerm, take: 20);
     }
 
-    private async Task<IEnumerable<DropdownOption>> SearchCourses(string searchTerm)
+    private async Task<IEnumerable<DropdownOption<int>>> SearchCourses(string searchTerm)
     {
         return await DropdownRepository.GetCoursesAsync(searchTerm, take: 20);
     }
@@ -93,8 +110,7 @@
         }
         catch (Exception ex)
         {
-            // Handle error - could add error display logic here
-            Console.WriteLine($"Error issuing certificate: {ex.Message}");
+            Console.WriteLine($"Error creating certificate: {ex.Message}");
         }
     }
 }
