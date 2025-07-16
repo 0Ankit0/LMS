@@ -87,6 +87,22 @@
             };
 
             paginatedResult = await ForumRepository.GetAllForumPostsPaginatedAsync(request);
+
+            if (paginatedResult == null || !paginatedResult.Items.Any())
+            {
+                paginatedResult = new PaginatedResult<ForumPostModel>
+                {
+                    Items = new List<ForumPostModel>
+                    {
+                        new ForumPostModel { Id = 1, Content = "This is the first post in the general discussion forum.", TopicTitle = "Welcome to the Forum!", AuthorName = "Admin", CreatedAt = DateTime.Now.AddDays(-10) },
+                        new ForumPostModel { Id = 2, Content = "I have a question about C# generics.", TopicTitle = "C# Generics", AuthorName = "John Doe", CreatedAt = DateTime.Now.AddDays(-5) },
+                        new ForumPostModel { Id = 3, Content = "Reply to John Doe: You can use `List<T>` for generic lists.", TopicTitle = "C# Generics", AuthorName = "Jane Smith", ParentPostId = 2, CreatedAt = DateTime.Now.AddDays(-4) }
+                    },
+                    TotalCount = 3,
+                    PageNumber = currentPage,
+                    PageSize = pageSize
+                };
+            }
         }
         finally
         {

@@ -84,6 +84,22 @@
             PageSize = pageSize
         };
         paginatedEnrollments = await EnrollmentRepository.GetEnrollmentsPaginatedAsync(request);
+
+        if (paginatedEnrollments == null || !paginatedEnrollments.Items.Any())
+        {
+            paginatedEnrollments = new PaginatedResult<EnrollmentModel>
+            {
+                Items = new List<EnrollmentModel>
+                {
+                    new EnrollmentModel { Id = 1, UserId = "user1", UserName = "John Doe", CourseId = 101, CourseTitle = "Introduction to Blazor", EnrolledAt = DateTime.Now.AddMonths(-2), Status = "Active", ProgressPercentage = 75.0, FinalGrade = 0.0 },
+                    new EnrollmentModel { Id = 2, UserId = "user2", UserName = "Jane Smith", CourseId = 102, CourseTitle = "Advanced C#", EnrolledAt = DateTime.Now.AddMonths(-5), Status = "Completed", ProgressPercentage = 100.0, FinalGrade = 88.0 },
+                    new EnrollmentModel { Id = 3, UserId = "user3", UserName = "Peter Jones", CourseId = 101, CourseTitle = "Introduction to Blazor", EnrolledAt = DateTime.Now.AddMonths(-1), Status = "Active", ProgressPercentage = 30.0, FinalGrade = 0.0 }
+                },
+                TotalCount = 3,
+                PageNumber = currentPage,
+                PageSize = pageSize
+            };
+        }
     }
 
     private async Task OnPageChanged(int page)

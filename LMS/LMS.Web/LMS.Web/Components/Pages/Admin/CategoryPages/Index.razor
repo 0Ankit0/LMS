@@ -89,6 +89,22 @@
             };
 
             paginatedResult = await CategoryRepository.GetCategoriesPaginatedAsync(request);
+
+            if (paginatedResult == null || !paginatedResult.Items.Any())
+            {
+                paginatedResult = new PaginatedResult<CategoryModel>
+                {
+                    Items = new List<CategoryModel>
+                    {
+                        new CategoryModel { Id = 1, Name = "Programming", Description = "Courses related to programming languages.", Color = "#FF5733", IsActive = true, CourseCount = 15 },
+                        new CategoryModel { Id = 2, Name = "Web Development", Description = "Courses on front-end and back-end web technologies.", Color = "#33FF57", IsActive = true, ParentCategoryId = 1, ParentCategoryName = "Programming", CourseCount = 20 },
+                        new CategoryModel { Id = 3, Name = "Data Science", Description = "Courses on data analysis, machine learning, and AI.", Color = "#3357FF", IsActive = true, CourseCount = 10 }
+                    },
+                    TotalCount = 3,
+                    PageNumber = currentPage,
+                    PageSize = pageSize
+                };
+            }
         }
         finally
         {

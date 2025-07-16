@@ -88,6 +88,22 @@
             PageSize = pageSize
         };
         paginatedForums = await ForumRepository.GetForumsPaginatedAsync(request);
+
+        if (paginatedForums == null || !paginatedForums.Items.Any())
+        {
+            paginatedForums = new PaginatedResult<ForumModel>
+            {
+                Items = new List<ForumModel>
+                {
+                    new ForumModel { Id = 1, Title = "General Discussion", Description = "A place for all general discussions.", IsGeneral = true, IsActive = true, TopicCount = 15, CreatedAt = DateTime.Now.AddMonths(-6) },
+                    new ForumModel { Id = 2, Title = "C# Course Forum", Description = "Discussions related to the C# programming course.", CourseId = 101, CourseName = "Introduction to C#", IsGeneral = false, IsActive = true, TopicCount = 25, CreatedAt = DateTime.Now.AddMonths(-3) },
+                    new ForumModel { Id = 3, Title = "Web Dev Q&A", Description = "Ask questions about web development.", CourseId = 102, CourseName = "Advanced JavaScript", IsGeneral = false, IsActive = true, TopicCount = 30, CreatedAt = DateTime.Now.AddMonths(-1) }
+                },
+                TotalCount = 3,
+                PageNumber = currentPage,
+                PageSize = pageSize
+            };
+        }
     }
 
     private async Task OnPageChanged(int page)

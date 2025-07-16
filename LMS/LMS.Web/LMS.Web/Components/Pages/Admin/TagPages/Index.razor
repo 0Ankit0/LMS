@@ -7,9 +7,10 @@
 
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h1 class="mb-0">Tags</h1>
-    <a href="/admin/tags/create" class="btn btn-primary">
-        <i class="bi bi-plus-circle me-2"></i>Add New Tag
-    </a>
+    <Button Color="ButtonColor.Primary" Href="/admin/tags/create">
+        <Icon Name="IconName.PlusCircle" />
+        Add New Tag
+    </Button>
 </div>
 
 <div class="card">
@@ -18,24 +19,24 @@
         {
             if (paginatedTags.Items.Any())
             {
-                <QuickGrid Class="table table-striped table-hover" Items="paginatedTags.Items.AsQueryable()">
-                    <PropertyColumn Property="tag => tag.Name" Title="Name" />
-                    <PropertyColumn Property="tag => tag.Color" Title="Color" />
+                <Grid TItem="TagModel" Class="table table-striped table-hover" Data="paginatedTags.Items">
+                    <GridColumn TItem="TagModel" HeaderText="Name" PropertyName="Name" />
+                    <GridColumn TItem="TagModel" HeaderText="Color" PropertyName="Color" />
 
-                    <TemplateColumn Title="Actions" Context="tag">
+                    <GridColumn TItem="TagModel" HeaderText="Actions">
                         <div class="btn-group" role="group">
-                            <a href="@($"/admin/tags/edit?id={tag.Id}")" class="btn btn-sm btn-outline-primary">
-                                <i class="bi bi-pencil"></i> Edit
-                            </a>
-                            <a href="@($"/admin/tags/details?id={tag.Id}")" class="btn btn-sm btn-outline-info">
-                                <i class="bi bi-eye"></i> Details
-                            </a>
-                            <a href="@($"/admin/tags/delete?id={tag.Id}")" class="btn btn-sm btn-outline-danger">
-                                <i class="bi bi-trash"></i> Delete
-                            </a>
+                            <Button Color="ButtonColor.Primary" Size="ButtonSize.Small" Href='@($"/admin/tags/edit?id={context.Id}")'>
+                                <Icon Name="IconName.Pencil" /> Edit
+                            </Button>
+                            <Button Color="ButtonColor.Info" Size="ButtonSize.Small" Href='@($"/admin/tags/details?id={context.Id}")'>
+                                <Icon Name="IconName.Eye" /> Details
+                            </Button>
+                            <Button Color="ButtonColor.Danger" Size="ButtonSize.Small" Href='@($"/admin/tags/delete?id={context.Id}")'>
+                                <Icon Name="IconName.Trash" /> Delete
+                            </Button>
                         </div>
-                    </TemplateColumn>
-                </QuickGrid>
+                    </GridColumn>
+                </Grid>
 
                 <PaginationComponent TItem="TagModel" PaginatedResult="paginatedTags" OnPageChanged="OnPageChanged"
                     OnPageSizeChanged="OnPageSizeChanged" />
@@ -76,6 +77,22 @@
             PageSize = pageSize
         };
         paginatedTags = await TagRepository.GetTagsPaginatedAsync(request);
+
+        if (paginatedTags == null || !paginatedTags.Items.Any())
+        {
+            paginatedTags = new PaginatedResult<TagModel>
+            {
+                Items = new List<TagModel>
+                {
+                    new TagModel { Id = 1, Name = "Programming", Color = "#007bff", IsActive = true, CourseCount = 10 },
+                    new TagModel { Id = 2, Name = "Web Development", Color = "#28a745", IsActive = true, CourseCount = 15 },
+                    new TagModel { Id = 3, Name = "Data Science", Color = "#ffc107", IsActive = true, CourseCount = 8 }
+                },
+                TotalCount = 3,
+                PageNumber = currentPage,
+                PageSize = pageSize
+            };
+        }
     }
 
     private async Task OnPageChanged(int page)

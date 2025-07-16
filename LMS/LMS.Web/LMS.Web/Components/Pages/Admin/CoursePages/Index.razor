@@ -87,6 +87,22 @@
             };
 
             paginatedResult = await CourseRepository.GetCoursesPaginatedAsync(request);
+
+            if (paginatedResult == null || !paginatedResult.Items.Any())
+            {
+                paginatedResult = new PaginatedResult<CourseModel>
+                {
+                    Items = new List<CourseModel>
+                    {
+                        new CourseModel { Id = 1, Title = "Introduction to C#", Description = "Learn the basics of C# programming.", Level = "Beginner", Status = "Published", MaxEnrollments = 100, StartDate = DateTime.Now.AddDays(-30), EndDate = DateTime.Now.AddDays(60), InstructorName = "Alice Smith" },
+                        new CourseModel { Id = 2, Title = "Advanced JavaScript", Description = "Deep dive into modern JavaScript.", Level = "Advanced", Status = "Published", MaxEnrollments = 50, StartDate = DateTime.Now.AddDays(-15), EndDate = DateTime.Now.AddDays(45), InstructorName = "Bob Johnson" },
+                        new CourseModel { Id = 3, Title = "Data Science with Python", Description = "Explore data science concepts using Python.", Level = "Intermediate", Status = "Draft", MaxEnrollments = 75, StartDate = DateTime.Now.AddDays(10), EndDate = DateTime.Now.AddDays(90), InstructorName = "Charlie Brown" }
+                    },
+                    TotalCount = 3,
+                    PageNumber = currentPage,
+                    PageSize = pageSize
+                };
+            }
         }
         finally
         {

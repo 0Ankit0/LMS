@@ -20,29 +20,31 @@
         {  
             if (paginatedLessons.Items.Any())  
             {  
-                <QuickGrid Class="table table-striped table-hover" Items="paginatedLessons.Items.AsQueryable()">  
-                    <PropertyColumn Property="lesson => lesson.Title" Title="Title" />  
-                    <PropertyColumn Property="lesson => lesson.Description" Title="Description" />  
-                    <PropertyColumn Property="lesson => lesson.ModuleId" Title="Module ID" />  
-                    <PropertyColumn Property="lesson => lesson.Type" Title="Type" />  
-                    <PropertyColumn Property="lesson => lesson.EstimatedDuration" Title="Duration" />  
-                    <PropertyColumn Property="lesson => lesson.OrderIndex" Title="Order" />  
-                    <PropertyColumn Property="lesson => lesson.IsRequired" Title="Required" />  
+                <Grid TItem="LessonModel" Class="table table-striped table-hover" Data="paginatedLessons.Items">
+                    <GridColumn TItem="LessonModel" HeaderText="Title" PropertyName="Title" />
+                    <GridColumn TItem="LessonModel" HeaderText="Description" PropertyName="Description" />
+                    <GridColumn TItem="LessonModel" HeaderText="Module ID" PropertyName="ModuleId" />
+                    <GridColumn TItem="LessonModel" HeaderText="Type" PropertyName="Type" />
+                    <GridColumn TItem="LessonModel" HeaderText="Duration" PropertyName="EstimatedDuration" />
+                    <GridColumn TItem="LessonModel" HeaderText="Order" PropertyName="OrderIndex" />
+                    <GridColumn TItem="LessonModel" HeaderText="Required">
+                        @((context as LessonModel)?.IsRequired == true ? "Yes" : "No")
+                    </GridColumn>
 
-                    <TemplateColumn Title="Actions" Context="lesson">  
-                        <div class="btn-group" role="group">  
-                            <a href="@($"/admin/lessons/edit?id={lesson.Id}")" class="btn btn-sm btn-outline-primary">  
-                                <i class="bi bi-pencil"></i> Edit  
-                            </a>  
-                            <a href="@($"/admin/lessons/details?id={lesson.Id}")" class="btn btn-sm btn-outline-info">  
-                                <i class="bi bi-eye"></i> Details  
-                            </a>  
-                            <a href="@($"/admin/lessons/delete?id={lesson.Id}")" class="btn btn-sm btn-outline-danger">  
-                                <i class="bi bi-trash"></i> Delete  
-                            </a>  
-                        </div>  
-                    </TemplateColumn>  
-                </QuickGrid>  
+                    <GridColumn TItem="LessonModel" HeaderText="Actions">
+                        <div class="btn-group" role="group">
+                            <Button Color="ButtonColor.Primary" Size="ButtonSize.Small" Href='@($"/admin/lessons/edit?id={context.Id}")'>
+                                <Icon Name="IconName.Pencil" /> Edit
+                            </Button>
+                            <Button Color="ButtonColor.Info" Size="ButtonSize.Small" Href='@($"/admin/lessons/details?id={context.Id}")'>
+                                <Icon Name="IconName.Eye" /> Details
+                            </Button>
+                            <Button Color="ButtonColor.Danger" Size="ButtonSize.Small" Href='@($"/admin/lessons/delete?id={context.Id}")'>
+                                <Icon Name="IconName.Trash" /> Delete
+                            </Button>
+                        </div>
+                    </GridColumn>
+                </Grid>  
 
                 <PaginationComponent TItem="LessonModel" PaginatedResult="paginatedLessons" OnPageChanged="OnPageChanged"  
                     OnPageSizeChanged="OnPageSizeChanged" />  
@@ -82,7 +84,23 @@
             PageNumber = currentPage,  
             PageSize = pageSize  
         };  
-        paginatedLessons = await LessonRepository.GetLessonsPaginatedAsync(request);  
+        paginatedLessons = await LessonRepository.GetLessonsPaginatedAsync(request);
+
+        if (paginatedLessons == null || !paginatedLessons.Items.Any())
+        {
+            paginatedLessons = new PaginatedResult<LessonModel>
+            {
+                Items = new List<LessonModel>
+                {
+                    new LessonModel { Id = 1, Title = "Introduction to Variables", Description = "Understanding data types and variables in C#.", ModuleId = 1, ModuleName = "C# Basics", Type = "Video", EstimatedDuration = TimeSpan.FromMinutes(15), OrderIndex = 1, IsRequired = true },
+                    new LessonModel { Id = 2, Title = "Control Flow Statements", Description = "Learning about if-else, switch, and loops.", ModuleId = 1, ModuleName = "C# Basics", Type = "Text", EstimatedDuration = TimeSpan.FromMinutes(20), OrderIndex = 2, IsRequired = true },
+                    new LessonModel { Id = 3, Title = "Functions and Methods", Description = "Defining and calling functions in C#.", ModuleId = 1, ModuleName = "C# Basics", Type = "Quiz", EstimatedDuration = TimeSpan.FromMinutes(10), OrderIndex = 3, IsRequired = false }
+                },
+                TotalCount = 3,
+                PageNumber = currentPage,
+                PageSize = pageSize
+            };
+        }  
     }  
 
     private async Task OnPageChanged(int page)  

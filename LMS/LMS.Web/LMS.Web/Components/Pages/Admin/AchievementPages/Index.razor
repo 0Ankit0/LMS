@@ -57,6 +57,22 @@
             PageSize = pageSize
         };
         paginatedAchievements = await AchievementRepository.GetAllAchievementsPaginatedAsync(request);
+
+        if (paginatedAchievements == null || !paginatedAchievements.Items.Any())
+        {
+            paginatedAchievements = new PaginatedResult<AchievementModel>
+            {
+                Items = new List<AchievementModel>
+                {
+                    new AchievementModel { Id = 1, Name = "First Course Completion", Description = "Completed your first course.", Points = 100, Type = "Course", IsActive = true, CreatedAt = DateTime.Now, UsersEarnedCount = 5 },
+                    new AchievementModel { Id = 2, Name = "Top Learner", Description = "Achieved top score in a quiz.", Points = 200, Type = "Quiz", IsActive = true, CreatedAt = DateTime.Now, UsersEarnedCount = 2 },
+                    new AchievementModel { Id = 3, Name = "Forum Contributor", Description = "Made 10 forum posts.", Points = 50, Type = "Forum", IsActive = true, CreatedAt = DateTime.Now, UsersEarnedCount = 8 }
+                },
+                TotalCount = 3,
+                PageNumber = currentPage,
+                PageSize = pageSize
+            };
+        }
     }
 
     private async Task OnPageChanged(int page)

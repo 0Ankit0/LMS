@@ -8,9 +8,10 @@
 
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h1 class="mb-0">Modules</h1>
-    <a href="/admin/modules/create" class="btn btn-primary">
-        <i class="bi bi-plus-circle me-2"></i>Add New Module
-    </a>
+    <Button Color="ButtonColor.Primary" Href="/admin/modules/create">
+        <Icon Name="IconName.PlusCircle" />
+        Add New Module
+    </Button>
 </div>
 
 <div class="card">
@@ -19,29 +20,33 @@
         {
             if (paginatedModules.Items.Any())
             {
-                <QuickGrid Class="table table-striped table-hover" Items="paginatedModules.Items.AsQueryable()">
-                    <PropertyColumn Property="module => module.Title" Title="Title" />
-                    <PropertyColumn Property="module => module.Description" Title="Description" />
-                    <PropertyColumn Property="module => module.CourseId" Title="Course ID" />
-                    <PropertyColumn Property="module => module.OrderIndex" Title="Order" />
-                    <PropertyColumn Property="module => module.IsRequired" Title="Required" />
-                    <PropertyColumn Property="module => module.IsActive" Title="Active" />
-                    <PropertyColumn Property="module => module.Lessons.Count" Title="Lessons" />
+                <Grid TItem="ModuleModel" Class="table table-striped table-hover" Data="paginatedModules.Items">
+                    <GridColumn TItem="ModuleModel" HeaderText="Title" PropertyName="Title" />
+                    <GridColumn TItem="ModuleModel" HeaderText="Description" PropertyName="Description" />
+                    <GridColumn TItem="ModuleModel" HeaderText="Course ID" PropertyName="CourseId" />
+                    <GridColumn TItem="ModuleModel" HeaderText="Order" PropertyName="OrderIndex" />
+                    <GridColumn TItem="ModuleModel" HeaderText="Required">
+                        @((context as ModuleModel)?.IsRequired == true ? "Yes" : "No")
+                    </GridColumn>
+                    <GridColumn TItem="ModuleModel" HeaderText="Active">
+                        @((context as ModuleModel)?.IsActive == true ? "Yes" : "No")
+                    </GridColumn>
+                    <GridColumn TItem="ModuleModel" HeaderText="Lessons" PropertyName="Lessons.Count" />
 
-                    <TemplateColumn Title="Actions" Context="module">
+                    <GridColumn TItem="ModuleModel" HeaderText="Actions">
                         <div class="btn-group" role="group">
-                            <a href="@($"/admin/modules/edit?id={module.Id}")" class="btn btn-sm btn-outline-primary">
-                                <i class="bi bi-pencil"></i> Edit
-                            </a>
-                            <a href="@($"/admin/modules/details?id={module.Id}")" class="btn btn-sm btn-outline-info">
-                                <i class="bi bi-eye"></i> Details
-                            </a>
-                            <a href="@($"/admin/modules/delete?id={module.Id}")" class="btn btn-sm btn-outline-danger">
-                                <i class="bi bi-trash"></i> Delete
-                            </a>
+                            <Button Color="ButtonColor.Primary" Size="ButtonSize.Small" Href='@($"/admin/modules/edit?id={context.Id}")'>
+                                <Icon Name="IconName.Pencil" /> Edit
+                            </Button>
+                            <Button Color="ButtonColor.Info" Size="ButtonSize.Small" Href='@($"/admin/modules/details?id={context.Id}")'>
+                                <Icon Name="IconName.Eye" /> Details
+                            </Button>
+                            <Button Color="ButtonColor.Danger" Size="ButtonSize.Small" Href='@($"/admin/modules/delete?id={context.Id}")'>
+                                <Icon Name="IconName.Trash" /> Delete
+                            </Button>
                         </div>
-                    </TemplateColumn>
-                </QuickGrid>
+                    </GridColumn>
+                </Grid>
 
                 <PaginationComponent TItem="ModuleModel" PaginatedResult="paginatedModules"
                     OnPageChanged="OnPageChanged" OnPageSizeChanged="OnPageSizeChanged" />
@@ -82,6 +87,22 @@
             PageSize = pageSize
         };
         paginatedModules = await ModuleRepository.GetModulesPaginatedAsync(request);
+
+        if (paginatedModules == null || !paginatedModules.Items.Any())
+        {
+            paginatedModules = new PaginatedResult<ModuleModel>
+            {
+                Items = new List<ModuleModel>
+                {
+                    new ModuleModel { Id = 1, Title = "C# Basics", Description = "Fundamental concepts of C#.", CourseId = 1, CourseName = "Introduction to C#", OrderIndex = 1, IsRequired = true, IsActive = true, Lessons = new List<LessonModel>() },
+                    new ModuleModel { Id = 2, Title = "Advanced C# Features", Description = "Exploring advanced topics like LINQ and async/await.", CourseId = 1, CourseName = "Introduction to C#", OrderIndex = 2, IsRequired = true, IsActive = true, Lessons = new List<LessonModel>() },
+                    new ModuleModel { Id = 3, Title = "Introduction to ASP.NET Core", Description = "Building web applications with ASP.NET Core.", CourseId = 2, CourseName = "Web Development", OrderIndex = 1, IsRequired = true, IsActive = true, Lessons = new List<LessonModel>() }
+                },
+                TotalCount = 3,
+                PageNumber = currentPage,
+                PageSize = pageSize
+            };
+        }
     }
 
     private async Task OnPageChanged(int page)

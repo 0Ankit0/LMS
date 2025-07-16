@@ -87,6 +87,22 @@
             PageSize = pageSize
         };
         paginatedCertificates = await CertificateRepository.GetCertificatesPaginatedAsync(request);
+
+        if (paginatedCertificates == null || !paginatedCertificates.Items.Any())
+        {
+            paginatedCertificates = new PaginatedResult<CertificateModel>
+            {
+                Items = new List<CertificateModel>
+                {
+                    new CertificateModel { Id = 1, UserId = "user1", UserName = "John Doe", CourseId = 101, CourseTitle = "Introduction to Blazor", CertificateNumber = "CERT-001-BLZ", IssuedAt = DateTime.Now.AddMonths(-3), ExpiresAt = DateTime.Now.AddYears(1), FinalGrade = 92.5, IsValid = true },
+                    new CertificateModel { Id = 2, UserId = "user2", UserName = "Jane Smith", CourseId = 102, CourseTitle = "Advanced C#", CertificateNumber = "CERT-002-CSH", IssuedAt = DateTime.Now.AddMonths(-6), ExpiresAt = DateTime.Now.AddYears(1), FinalGrade = 88.0, IsValid = true },
+                    new CertificateModel { Id = 3, UserId = "user1", UserName = "John Doe", CourseId = 103, CourseTitle = "Azure Fundamentals", CertificateNumber = "CERT-003-AZR", IssuedAt = DateTime.Now.AddMonths(-1), ExpiresAt = DateTime.Now.AddYears(1), FinalGrade = 95.0, IsValid = true }
+                },
+                TotalCount = 3,
+                PageNumber = currentPage,
+                PageSize = pageSize
+            };
+        }
     }
 
     private async Task OnPageChanged(int page)

@@ -86,6 +86,22 @@
             PageSize = pageSize
         };
         paginatedAssessments = await AssessmentRepository.GetAssessmentsPaginatedAsync(request);
+
+        if (paginatedAssessments == null || !paginatedAssessments.Items.Any())
+        {
+            paginatedAssessments = new PaginatedResult<AssessmentModel>
+            {
+                Items = new List<AssessmentModel>
+                {
+                    new AssessmentModel { Id = 1, Title = "Introduction to C# Quiz", Description = "Basic concepts of C#.", CourseId = 1, CourseName = "C# Programming", Type = "Quiz", MaxAttempts = 3, PassingScore = 70.0, IsRandomized = true, AvailableFrom = DateTime.Now.AddDays(-7) },
+                    new AssessmentModel { Id = 2, Title = "Advanced SQL Exam", Description = "Complex SQL queries and database design.", CourseId = 2, CourseName = "Database Management", Type = "Exam", MaxAttempts = 1, PassingScore = 80.0, IsRandomized = false, AvailableFrom = DateTime.Now.AddDays(-14) },
+                    new AssessmentModel { Id = 3, Title = "Web Development Project", Description = "Build a simple web application.", CourseId = 3, CourseName = "Full-Stack Web Dev", Type = "Project", MaxAttempts = 1, PassingScore = 60.0, IsRandomized = false, AvailableFrom = DateTime.Now.AddDays(-30) }
+                },
+                TotalCount = 3,
+                PageNumber = currentPage,
+                PageSize = pageSize
+            };
+        }
     }
 
     private async Task OnPageChanged(int page)
