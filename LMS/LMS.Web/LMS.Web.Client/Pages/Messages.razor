@@ -2,7 +2,7 @@
 @page "/user/lms/messages"
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @inject HttpClient HttpClient
-@inject IJSRuntime JSRuntime
+@inject ToastService ToastService
 
 <PageTitle>Messages - LMS</PageTitle>
 
@@ -171,6 +171,8 @@
     </div>
 </div>
 
+
+
 <!-- Compose Message Modal -->
 <Modal @ref="composeModal" Title="@(replyToMessage != null ? "Reply to: " + replyToMessage.Subject : "Compose Message")">
     <BodyTemplate>
@@ -286,7 +288,7 @@
         }
         catch (Exception ex)
         {
-            await JSRuntime.InvokeVoidAsync("console.error", "Error loading messages:", ex.Message);
+            ToastService.Notify(new ToastMessage(ToastType.Danger, $"Error loading messages: {ex.Message}"));
         }
         finally
         {
@@ -329,7 +331,7 @@
             }
             catch (Exception ex)
             {
-                await JSRuntime.InvokeVoidAsync("console.error", "Error marking message as read:", ex.Message);
+                ToastService.Notify(new ToastMessage(ToastType.Danger, $"Error marking message as read: {ex.Message}"));
             }
         }
     }
@@ -383,18 +385,18 @@
 
             if (response.IsSuccessStatusCode)
             {
-                await JSRuntime.InvokeVoidAsync("showToast", "Message sent successfully!", "success");
+                ToastService.Notify(new ToastMessage(ToastType.Success, "Message sent successfully!"));
                 HideComposeModal();
                 await LoadMessages();
             }
             else
             {
-                await JSRuntime.InvokeVoidAsync("showToast", "Failed to send message", "error");
+                ToastService.Notify(new ToastMessage(ToastType.Danger, "Failed to send message"));
             }
         }
         catch (Exception ex)
         {
-            await JSRuntime.InvokeVoidAsync("showToast", $"Error sending message: {ex.Message}", "error");
+            ToastService.Notify(new ToastMessage(ToastType.Danger, $"Error sending message: {ex.Message}"));
         }
         finally
         {
@@ -411,18 +413,18 @@
             var response = await HttpClient.DeleteAsync($"/api/messages/{selectedMessage.Id}?userId={currentUserId}");
             if (response.IsSuccessStatusCode)
             {
-                await JSRuntime.InvokeVoidAsync("showToast", "Message deleted successfully!", "success");
+                ToastService.Notify(new ToastMessage(ToastType.Success, "Message deleted successfully!"));
                 selectedMessage = null;
                 await LoadMessages();
             }
             else
             {
-                await JSRuntime.InvokeVoidAsync("showToast", "Failed to delete message", "error");
+                ToastService.Notify(new ToastMessage(ToastType.Danger, "Failed to delete message"));
             }
         }
         catch (Exception ex)
         {
-            await JSRuntime.InvokeVoidAsync("showToast", $"Error deleting message: {ex.Message}", "error");
+            ToastService.Notify(new ToastMessage(ToastType.Danger, $"Error deleting message: {ex.Message}"));
         }
     }
 

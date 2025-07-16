@@ -1,19 +1,26 @@
 @using BlazorBootstrap;
+@using System.Security.Claims;
 @page "/user/lms/my-courses"
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @inject HttpClient HttpClient
-@inject IJSRuntime JSRuntime
+@inject ToastService ToastService
 
 <PageTitle>My Courses - LMS</PageTitle>
 
 <div class="container-fluid">
-    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-        <h1 class="h2"><Icon Name="IconName.Book" Class="me-2" />My Courses</h1>
+    <div
+        class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+        <h1 class="h2">
+            <Icon Name="IconName.Book" Class="me-2" />My Courses
+        </h1>
         <div class="btn-toolbar mb-2 mb-md-0">
             <div class="btn-group me-2" role="group">
-                <Button Color="ButtonColor.Primary" Outline="@(currentFilter != "all")" @onclick='() => FilterCourses("all")'>All</Button>
-                <Button Color="ButtonColor.Primary" Outline="@(currentFilter != "active")" @onclick='() => FilterCourses("active")'>Active</Button>
-                <Button Color="ButtonColor.Primary" Outline="@(currentFilter != "completed")" @onclick='() => FilterCourses("completed")'>Completed</Button>
+                <Button Color="ButtonColor.Primary" Outline="@(currentFilter != "all")"
+                    @onclick='() => FilterCourses("all")'>All</Button>
+                <Button Color="ButtonColor.Primary" Outline="@(currentFilter != "active")"
+                    @onclick='() => FilterCourses("active")'>Active</Button>
+                <Button Color="ButtonColor.Primary" Outline="@(currentFilter != "completed")"
+                    @onclick='() => FilterCourses("completed")'>Completed</Button>
             </div>
         </div>
     </div>
@@ -33,11 +40,13 @@
                     <Card Class="h-100 shadow-sm">
                         @if (!string.IsNullOrEmpty(enrollment.CourseThumbnailUrl))
                         {
-                            <img src="@enrollment.CourseThumbnailUrl" class="card-img-top" style="height: 200px; object-fit: cover;" alt="@enrollment.CourseTitle">
+                            <img src="@enrollment.CourseThumbnailUrl" class="card-img-top" style="height: 200px; object-fit: cover;"
+                                alt="@enrollment.CourseTitle">
                         }
                         else
                         {
-                            <div class="card-img-top bg-light d-flex align-items-center justify-content-center" style="height: 200px;">
+                            <div class="card-img-top bg-light d-flex align-items-center justify-content-center"
+                                style="height: 200px;">
                                 <Icon Name="IconName.Book" Size="IconSize.x3" Class="text-muted" />
                             </div>
                         }
@@ -97,20 +106,23 @@
                             <div class="mt-auto">
                                 @if (enrollment.CompletedAt.HasValue)
                                 {
-                                    <Button Color="ButtonColor.Primary" Outline="true" Size="ButtonSize.Small" To="@($"/course/{enrollment.CourseId}")" Class="me-2">
+                                    <Button Color="ButtonColor.Primary" Outline="true" Size="ButtonSize.Small"
+                                        To="@($"/course/{enrollment.CourseId}")" Class="me-2">
                                         <Icon Name="IconName.Eye" Class="me-1" />Review
                                     </Button>
                                     <Button Color="ButtonColor.Success" Size="ButtonSize.Small"
-                                            @onclick="() => DownloadCertificate(enrollment.CourseId)">
+                                        @onclick="() => DownloadCertificate(enrollment.CourseId)">
                                         <Icon Name="IconName.Download" Class="me-1" />Certificate
                                     </Button>
                                 }
                                 else
                                 {
-                                    <Button Color="ButtonColor.Primary" Size="ButtonSize.Small" To="@($"/course/{enrollment.CourseId}")" Class="me-2">
+                                    <Button Color="ButtonColor.Primary" Size="ButtonSize.Small"
+                                        To="@($"/course/{enrollment.CourseId}")" Class="me-2">
                                         <Icon Name="IconName.Play" Class="me-1" />Continue
                                     </Button>
-                                    <Button Color="ButtonColor.Danger" Outline="true" Size="ButtonSize.Small" @onclick="() => ShowUnenrollModal(enrollment)">
+                                    <Button Color="ButtonColor.Danger" Outline="true" Size="ButtonSize.Small"
+                                        @onclick="() => ShowUnenrollModal(enrollment)">
                                         <Icon Name="IconName.X" Class="me-1" />Unenroll
                                     </Button>
                                 }
@@ -133,6 +145,8 @@
         </div>
     }
 </div>
+
+
 
 <!-- Unenroll Confirmation Modal -->
 <Modal @ref="unenrollModal" Title="Confirm Unenrollment">
@@ -192,7 +206,7 @@
         }
         catch (Exception ex)
         {
-            await JSRuntime.InvokeVoidAsync("console.error", "Error loading courses:", ex.Message);
+            ToastService.Notify(new ToastMessage(ToastType.Danger, $"Error loading courses: {ex.Message}"));
         }
         finally
         {
@@ -241,35 +255,42 @@
 
         try
         {
-            var response = await HttpClient.DeleteAsync($"/api/enrollments/user/{currentUserId}/course/{selectedEnrollment.CourseId}");
+            var response = await
+            HttpClient.DeleteAsync($"/api/enrollments/user/{currentUserId}/course/{selectedEnrollment.CourseId}");
 
             if (response.IsSuccessStatusCode)
             {
-                await JSRuntime.InvokeVoidAsync("showToast", "Successfully unenrolled from course", "success");
+                ToastService.Notify(new ToastMessage(ToastType.Success, "Successfully unenrolled from course"));
                 await LoadUserCourses();
                 await HideUnenrollModal();
             }
             else
             {
-                await JSRuntime.InvokeVoidAsync("showToast", "Failed to unenroll from course", "error");
+                ToastService.Notify(new ToastMessage(ToastType.Danger, "Failed to unenroll from course"));
             }
         }
         catch (Exception ex)
         {
-            await JSRuntime.InvokeVoidAsync("showToast", $"Error: {ex.Message}", "error");
+            ToastService.Notify(new ToastMessage(ToastType.Danger, $"Error: {ex.Message}"));
         }
     }
 
-    private async Task DownloadCertificate(int courseId)
+    private void DownloadCertificate(int courseId)
     {
-        try
-        {
-            await JSRuntime.InvokeVoidAsync("showToast", "Certificate download feature coming soon!", "info");
-            // TODO: Implement certificate download via HTTP endpoint
-        }
-        catch (Exception ex)
-        {
-            await JSRuntime.InvokeVoidAsync("showToast", $"Error: {ex.Message}", "error");
-        }
+        ToastService.Notify(new ToastMessage(ToastType.Info, "Certificate download functionality will be implemented soon"));
+    }
+
+    // Enrollment Model
+    public class EnrollmentModel
+    {
+        public int Id { get; set; }
+        public int CourseId { get; set; }
+        public string CourseTitle { get; set; } = string.Empty;
+        public string CourseDescription { get; set; } = string.Empty;
+        public string? CourseThumbnailUrl { get; set; }
+        public double ProgressPercentage { get; set; }
+        public DateTime EnrolledAt { get; set; }
+        public DateTime? LastAccessedAt { get; set; }
+        public DateTime? CompletedAt { get; set; }
     }
 }

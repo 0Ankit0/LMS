@@ -2,10 +2,12 @@
 @page "/user/lms/certificates"
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @inject HttpClient HttpClient
-@inject IJSRuntime JSRuntime
+@inject ToastService ToastService
 
 <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-    <h1 class="h2"><Icon Name="IconName.Award" Class="me-2" />My Certificates</h1>
+    <h1 class="h2">
+        <Icon Name="IconName.Award" Class="me-2" />My Certificates
+    </h1>
     <div class="btn-toolbar mb-2 mb-md-0">
         <Button Color="ButtonColor.Primary" Size="ButtonSize.Small" @onclick="RefreshCertificates">
             <Icon Name="IconName.ArrowClockwise" /> Refresh
@@ -76,18 +78,19 @@ else if (certificates?.Any() == true)
                             <Icon Name="IconName.Clock" Class="text-warning" Size="IconSize.x3" />
                         </div>
                         <div class="flex-grow-1 ms-3">
-                            <h5 class="card-title">@certificates.Count(c => c.ExpiresAt.HasValue && c.ExpiresAt.Value <= DateTime.Now.AddDays(30))</h5>
-                            <p class="card-text">Expiring Soon</p>
-                        </div>
+                            <h5 class="card-title">@certificates.Count(c => c.ExpiresAt.HasValue && c.ExpiresAt.Value <=
+                                                            DateTime.Now.AddDays(30))</h5>
+                        <p class="card-text">Expiring Soon</p>
                     </div>
-                </CardBody>
-            </Card>
-        </div>
+                </div>
+            </CardBody>
+        </Card>
     </div>
+</div>
 
     <!-- Certificates Grid -->
     <div class="row">
-        @foreach (var certificate in certificates)
+    @foreach (var certificate in certificates)
         {
             <div class="col-lg-6 col-xl-4 mb-4">
                 <Card>
@@ -135,20 +138,24 @@ else if (certificates?.Any() == true)
                                     @GetGradeLabel(certificate.FinalGrade)
                                 </Badge>
                             </div>
-                            <Progress Value="(int)certificate.FinalGrade" Color="@GetGradeProgressColor(certificate.FinalGrade)" />
+                            <Progress Value="(int)certificate.FinalGrade"
+                                Color="@GetGradeProgressColor(certificate.FinalGrade)" />
                         </div>
                     </CardBody>
 
                     <CardFooter>
                         <div class="d-grid gap-2">
                             <div class="btn-group">
-                                <Button Color="ButtonColor.Primary" Size="ButtonSize.Small" @onclick="() => ViewCertificate(certificate)">
+                                <Button Color="ButtonColor.Primary" Size="ButtonSize.Small"
+                                    @onclick="() => ViewCertificate(certificate)">
                                     <Icon Name="IconName.Eye" /> View
                                 </Button>
-                                <Button Color="ButtonColor.Success" Size="ButtonSize.Small" @onclick="() => DownloadCertificate(certificate)">
+                                <Button Color="ButtonColor.Success" Size="ButtonSize.Small"
+                                    @onclick="() => DownloadCertificate(certificate)">
                                     <Icon Name="IconName.Download" /> Download
                                 </Button>
-                                <Button Color="ButtonColor.Info" Size="ButtonSize.Small" @onclick="() => ShareCertificate(certificate)">
+                                <Button Color="ButtonColor.Info" Size="ButtonSize.Small"
+                                    @onclick="() => ShareCertificate(certificate)">
                                     <Icon Name="IconName.Share" /> Share
                                 </Button>
                             </div>
@@ -212,36 +219,36 @@ else
     private List<CertificateModel> GetMockCertificates()
     {
         return new List<CertificateModel>
-        {
-            new()
-            {
-                Id = 1,
-                CourseTitle = "Introduction to Programming",
-                CertificateNumber = "CERT-2024-001",
-                IssuedAt = DateTime.Now.AddDays(-30),
-                FinalGrade = 92.5,
-                IsValid = true
-            },
-            new()
-            {
-                Id = 2,
-                CourseTitle = "Web Development Fundamentals",
-                CertificateNumber = "CERT-2024-002",
-                IssuedAt = DateTime.Now.AddDays(-60),
-                ExpiresAt = DateTime.Now.AddYears(2),
-                FinalGrade = 87.0,
-                IsValid = true
-            },
-            new()
-            {
-                Id = 3,
-                CourseTitle = "Database Design",
-                CertificateNumber = "CERT-2024-003",
-                IssuedAt = DateTime.Now.AddDays(-90),
-                FinalGrade = 95.5,
-                IsValid = true
-            }
-        };
+{
+new()
+{
+Id = 1,
+CourseTitle = "Introduction to Programming",
+CertificateNumber = "CERT-2024-001",
+IssuedAt = DateTime.Now.AddDays(-30),
+FinalGrade = 92.5,
+IsValid = true
+},
+new()
+{
+Id = 2,
+CourseTitle = "Web Development Fundamentals",
+CertificateNumber = "CERT-2024-002",
+IssuedAt = DateTime.Now.AddDays(-60),
+ExpiresAt = DateTime.Now.AddYears(2),
+FinalGrade = 87.0,
+IsValid = true
+},
+new()
+{
+Id = 3,
+CourseTitle = "Database Design",
+CertificateNumber = "CERT-2024-003",
+IssuedAt = DateTime.Now.AddDays(-90),
+FinalGrade = 95.5,
+IsValid = true
+}
+};
     }
 
     private async Task RefreshCertificates()
@@ -249,20 +256,20 @@ else
         await LoadCertificates();
     }
 
-    private async Task ViewCertificate(CertificateModel certificate)
+    private void ViewCertificate(CertificateModel certificate)
     {
-        await JSRuntime.InvokeVoidAsync("alert", $"Viewing certificate: {certificate.CertificateNumber}");
+        ToastService.Notify(new ToastMessage(ToastType.Info, $"Viewing certificate: {certificate.CertificateNumber}"));
     }
 
-    private async Task DownloadCertificate(CertificateModel certificate)
+    private void DownloadCertificate(CertificateModel certificate)
     {
-        await JSRuntime.InvokeVoidAsync("alert", $"Downloading certificate: {certificate.CertificateNumber}");
+        ToastService.Notify(new ToastMessage(ToastType.Info, $"Downloading certificate: {certificate.CertificateNumber}"));
     }
 
-    private async Task ShareCertificate(CertificateModel certificate)
+    private void ShareCertificate(CertificateModel certificate)
     {
         var shareUrl = $"Certificate: {certificate.CourseTitle} - {certificate.CertificateNumber}";
-        await JSRuntime.InvokeVoidAsync("alert", $"Share link copied: {shareUrl}");
+        ToastService.Notify(new ToastMessage(ToastType.Success, $"Share link copied: {shareUrl}"));
     }
 
     private BadgeColor GetGradeBadgeColor(double grade) => grade switch

@@ -9,6 +9,7 @@
 @using Microsoft.AspNetCore.Components.Web.Virtualization
 @using System.Net.Http.Json
 @inject NavigationManager Navigation
+@inject ToastService ToastService
 @inject IJSRuntime JSRuntime
 @inject HttpClient Http
 
@@ -20,7 +21,7 @@
         <div class="group-list">
             <!-- General Group -->
             <div class="group-item @(selectedGroup == "general" ? "active" : "")"
-                 @onclick='() => SelectGroup("general")' title="General Discussion">
+                @onclick='() => SelectGroup("general")' title="General Discussion">
                 <div class="group-icon general-icon">
                     <Icon Name="IconName.Globe" />
                 </div>
@@ -32,7 +33,7 @@
                 @foreach (var courseGroup in courseGroups)
                 {
                     <div class="group-item @(selectedGroup == courseGroup.CourseName ? "active" : "")"
-                         @onclick="() => SelectGroup(courseGroup.CourseName)" title="@courseGroup.CourseName">
+                        @onclick="() => SelectGroup(courseGroup.CourseName)" title="@courseGroup.CourseName">
                         <div class="group-icon course-icon">
                             <span class="course-initial">@courseGroup.CourseName.FirstOrDefault()</span>
                         </div>
@@ -69,7 +70,7 @@
                 <!-- Search Box -->
                 <div class="forum-search-container">
                     <InputText type="text" class="forum-search-input" placeholder="Search forums & topics..."
-                           @bind-Value="searchQuery" />
+                        @bind-Value="searchQuery" />
                     <Icon Name="IconName.Search" class="search-icon" />
                 </div>
             </div>
@@ -81,7 +82,7 @@
                     {
                         <div class="forum-accordion">
                             <div class="forum-item @(selectedForumId == forum.Id ? "active" : "")"
-                                 @onclick="() => SelectForum(forum.Id)">
+                                @onclick="() => SelectForum(forum.Id)">
                                 <div class="forum-info">
                                     <div class="forum-name">
                                         <Icon Name="IconName.Hash" class="me-2" />
@@ -93,12 +94,13 @@
                                 </div>
                                 <div class="forum-actions">
                                     <Button Color="ButtonColor.Secondary" Size="ButtonSize.Small"
-                                            @onclick="@(e => ShowNewTopicModal(e, forum.Id))" title="Add new topic">
+                                        @onclick="@(e => ShowNewTopicModal(e, forum.Id))" title="Add new topic">
                                         <Icon Name="IconName.PlusLg" />
                                     </Button>
                                     <Button Color="ButtonColor.Secondary" Size="ButtonSize.Small"
-                                            @onclick="@(e => ToggleForumExpansion(e, forum.Id))">
-                                        <Icon Name="@(expandedForums.Contains(forum.Id) ? IconName.ChevronUp : IconName.ChevronDown)" />
+                                        @onclick="@(e => ToggleForumExpansion(e, forum.Id))">
+                                        <Icon
+                                            Name="@(expandedForums.Contains(forum.Id) ? IconName.ChevronUp : IconName.ChevronDown)" />
                                     </Button>
                                 </div>
                             </div>
@@ -109,7 +111,7 @@
                                     @foreach (var topic in selectedForumTopics.Where(t => t.ForumId == forum.Id))
                                     {
                                         <div class="topic-dropdown-item @(selectedTopicId == topic.Id ? "active" : "")"
-                                             @onclick="() => SelectTopic(topic.Id)">
+                                            @onclick="() => SelectTopic(topic.Id)">
                                             <div class="topic-info">
                                                 <div class="topic-icon">
                                                     @if (topic.IsLocked)
@@ -155,7 +157,8 @@
                 <!-- Topic View Header -->
                 <div class="discussion-header">
                     <div class="discussion-title">
-                        <Button Color="ButtonColor.Secondary" Size="ButtonSize.Small" class="me-2" @onclick="BackToForum" title="Back to Forum">
+                        <Button Color="ButtonColor.Secondary" Size="ButtonSize.Small" class="me-2" @onclick="BackToForum"
+                            title="Back to Forum">
                             <Icon Name="IconName.ArrowLeft" />
                         </Button>
                         @if (selectedTopic?.IsLocked == true)
@@ -172,7 +175,9 @@
                         <div class="topic-stats me-3">
                             <small class="text-muted">
                                 <Icon Name="IconName.ChatLeft" class="me-1" />@selectedTopic?.PostCount posts
-                                <span class="ms-2"><Icon Name="IconName.Person" class="me-1" />by @selectedTopic?.CreatedByUserName</span>
+                                <span class="ms-2">
+                                    <Icon Name="IconName.Person" class="me-1" />by @selectedTopic?.CreatedByUserName
+                                </span>
                             </small>
                         </div>
                         <Button Color="ButtonColor.Secondary" Size="ButtonSize.Small" class="me-2" title="Search in Topic">
@@ -223,15 +228,18 @@
                                         <Button Color="ButtonColor.Secondary" Size="ButtonSize.Small" title="Like">
                                             <Icon Name="IconName.Heart" class="me-1" />0
                                         </Button>
-                                        <Button Color="ButtonColor.Secondary" Size="ButtonSize.Small" @onclick="() => QuotePost(post)" title="Quote">
+                                        <Button Color="ButtonColor.Secondary" Size="ButtonSize.Small" @onclick="() => QuotePost(post)"
+                                            title="Quote">
                                             <Icon Name="IconName.Quote" class="me-1" />Quote
                                         </Button>
                                         @if (currentUserId == post.AuthorId)
                                         {
-                                            <Button Color="ButtonColor.Secondary" Size="ButtonSize.Small" @onclick="() => EditPost(post)" title="Edit">
+                                            <Button Color="ButtonColor.Secondary" Size="ButtonSize.Small" @onclick="() => EditPost(post)"
+                                                title="Edit">
                                                 <Icon Name="IconName.Pencil" class="me-1" />Edit
                                             </Button>
-                                            <Button Color="ButtonColor.Danger" Size="ButtonSize.Small" @onclick="() => DeletePost(post)" title="Delete">
+                                            <Button Color="ButtonColor.Danger" Size="ButtonSize.Small" @onclick="() => DeletePost(post)"
+                                                title="Delete">
                                                 <Icon Name="IconName.Trash" class="me-1" />Delete
                                             </Button>
                                         }
@@ -260,9 +268,9 @@
                         }
                         <div class="input-container">
                             <InputText type="text" class="message-input" placeholder="@($"Reply to {selectedTopic?.Title}...")"
-                                   @bind-value="newTopicReply" @onkeypress="HandleTopicReplyKeyPress" />
+                                @bind-value="newTopicReply" @onkeypress="HandleTopicReplyKeyPress" />
                             <Button Color="ButtonColor.Primary" class="send-button" @onclick="SendTopicReply"
-                                    disabled="@string.IsNullOrWhiteSpace(newTopicReply)">
+                                disabled="@string.IsNullOrWhiteSpace(newTopicReply)">
                                 <Icon Name="IconName.Send" />
                             </Button>
                         </div>
@@ -281,8 +289,10 @@
                         <div class="forum-stats me-3">
                             <small class="text-muted">
                                 <Icon Name="IconName.List" class="me-1" />@selectedForum.TopicCount topics
-                                <span class="ms-2"><Icon Name="IconName.People" class="me-1" />@(selectedForumTopics?.SelectMany(t => new[]
-                                                                { t.CreatedByUserId }).Distinct().Count() ?? 0) contributors</span>
+                                <span class="ms-2">
+                                    <Icon Name="IconName.People" class="me-1" />@(selectedForumTopics?.SelectMany(t => new[]
+                                                                { t.CreatedByUserId }).Distinct().Count() ?? 0) contributors
+                                </span>
                             </small>
                         </div>
                         <Button Color="ButtonColor.Secondary" Size="ButtonSize.Small" class="me-2" title="Search Topics">
@@ -374,6 +384,7 @@
     </div>
 </div>
 
+
 <!-- New Topic Modal -->
 <Modal @ref="newTopicModal" Title="Create New Topic">
     <BodyTemplate>
@@ -386,7 +397,7 @@
                     <Icon Name="IconName.PencilSquare" class="me-1" />Topic Title
                 </label>
                 <InputText id="topicTitle" class="form-control" @bind-Value="newTopic.Title"
-                           placeholder="Enter an engaging topic title..." />
+                    placeholder="Enter an engaging topic title..." />
                 <ValidationMessage For="@(() => newTopic.Title)" />
             </div>
 
@@ -395,7 +406,7 @@
                     <Icon Name="IconName.TextParagraph" class="me-1" />Initial Post Content
                 </label>
                 <InputTextArea id="topicContent" class="form-control" rows="6" @bind-Value="newTopic.InitialPost"
-                               placeholder="Write the first post for this topic..." />
+                    placeholder="Write the first post for this topic..." />
                 <ValidationMessage For="@(() => newTopic.InitialPost)" />
                 <div class="form-text">You can use basic formatting: **bold**, *italic*, `code`</div>
             </div>
@@ -418,7 +429,7 @@
     <BodyTemplate>
         <EditForm Model="@newPost" OnValidSubmit="CreatePost">
             <DataAnnotationsValidator />
-            <ValidationSummary/>
+            <ValidationSummary />
 
             @if (!string.IsNullOrEmpty(quotedText))
             {
@@ -438,7 +449,7 @@
                     <Icon Name="IconName.ChatLeftText" class="me-1" />Your Reply
                 </label>
                 <InputTextArea id="postContent" class="form-control" rows="8" @bind-Value="newPost.Content"
-                          placeholder="Share your thoughts..." />
+                    placeholder="Share your thoughts..." />
                 <ValidationMessage For="@(() => newPost.Content)" />
                 <div class="form-text">You can use basic formatting: **bold**, *italic*, `code`</div>
             </div>
@@ -470,7 +481,7 @@
                             <Icon Name="IconName.PencilSquare" class="me-1" />Forum Title
                         </label>
                         <InputText id="forumTitle" class="form-control form-control-lg" @bind-Value="newForum.Title"
-                                   placeholder="Enter forum title..." />
+                            placeholder="Enter forum title..." />
                         <ValidationMessage For="@(() => newForum.Title)" />
                     </div>
                 </div>
@@ -498,7 +509,7 @@
                     <Icon Name="IconName.ChatLeftText" class="me-1" />Description
                 </label>
                 <InputTextArea id="forumDescription" class="form-control" rows="4" @bind-Value="newForum.Description"
-                          placeholder="Describe what this forum is about..." />
+                    placeholder="Describe what this forum is about..." />
                 <ValidationMessage For="@(() => newForum.Description)" />
             </div>
 
@@ -569,7 +580,7 @@
         }
         catch (Exception ex)
         {
-            await JSRuntime.InvokeVoidAsync("showToast", $"Error loading forum data: {ex.Message}", "error");
+            ToastService.Notify(new ToastMessage(ToastType.Danger, $"Error loading forum data: {ex.Message}"));
         }
     }
 
@@ -594,7 +605,7 @@
         }
         catch (Exception ex)
         {
-            await JSRuntime.InvokeVoidAsync("showToast", $"Error loading topics: {ex.Message}", "error");
+            ToastService.Notify(new ToastMessage(ToastType.Danger, $"Error loading topics: {ex.Message}"));
         }
     }
 
@@ -663,7 +674,7 @@
         }
         catch (Exception ex)
         {
-            await JSRuntime.InvokeVoidAsync("showToast", $"Error loading posts: {ex.Message}", "error");
+            ToastService.Notify(new ToastMessage(ToastType.Danger, $"Error loading posts: {ex.Message}"));
         }
     }
 
@@ -717,14 +728,14 @@
         quotedAuthor = "";
     }
 
-    private async Task EditPost(ForumPostModel post)
+    private void EditPost(ForumPostModel post)
     {
-        await JSRuntime.InvokeVoidAsync("showToast", "Edit functionality not implemented yet", "info");
+        ToastService.Notify(new ToastMessage(ToastType.Info, "Edit functionality not implemented yet"));
     }
 
-    private async Task DeletePost(ForumPostModel post)
+    private void DeletePost(ForumPostModel post)
     {
-        await JSRuntime.InvokeVoidAsync("showToast", "Delete functionality not implemented yet", "info");
+        ToastService.Notify(new ToastMessage(ToastType.Info, "Delete functionality not implemented yet"));
     }
 
     private async Task SendTopicReply()
@@ -754,7 +765,7 @@
         }
         catch (Exception ex)
         {
-            await JSRuntime.InvokeVoidAsync("showToast", $"Error sending reply: {ex.Message}", "error");
+            ToastService.Notify(new ToastMessage(ToastType.Danger, $"Error sending reply: {ex.Message}"));
         }
     }
 
@@ -777,7 +788,7 @@
             var response = await Http.PostAsJsonAsync("api/forums/topics", newTopic);
             if (response.IsSuccessStatusCode)
             {
-                await JSRuntime.InvokeVoidAsync("showToast", "Topic created successfully!", "success");
+                ToastService.Notify(new ToastMessage(ToastType.Success, "Topic created successfully!"));
                 HideNewTopicModal();
                 if (newTopic.ForumId > 0)
                 {
@@ -787,12 +798,12 @@
             else
             {
                 var error = await response.Content.ReadAsStringAsync();
-                await JSRuntime.InvokeVoidAsync("showToast", $"Error creating topic: {error}", "error");
+                ToastService.Notify(new ToastMessage(ToastType.Danger, $"Error creating topic: {error}"));
             }
         }
         catch (Exception ex)
         {
-            await JSRuntime.InvokeVoidAsync("showToast", $"Error creating topic: {ex.Message}", "error");
+            ToastService.Notify(new ToastMessage(ToastType.Danger, $"Error creating topic: {ex.Message}"));
         }
         finally
         {
@@ -811,7 +822,7 @@
             var response = await Http.PostAsJsonAsync("api/forums/posts", newPost);
             if (response.IsSuccessStatusCode)
             {
-                await JSRuntime.InvokeVoidAsync("showToast", "Post created successfully!", "success");
+                ToastService.Notify(new ToastMessage(ToastType.Success, "Post created successfully!"));
                 HideNewPostModal();
                 if (newPost.TopicId > 0)
                 {
@@ -821,12 +832,12 @@
             else
             {
                 var error = await response.Content.ReadAsStringAsync();
-                await JSRuntime.InvokeVoidAsync("showToast", $"Error creating post: {error}", "error");
+                ToastService.Notify(new ToastMessage(ToastType.Danger, $"Error creating post: {error}"));
             }
         }
         catch (Exception ex)
         {
-            await JSRuntime.InvokeVoidAsync("showToast", $"Error creating post: {ex.Message}", "error");
+            ToastService.Notify(new ToastMessage(ToastType.Danger, $"Error creating post: {ex.Message}"));
         }
         finally
         {
@@ -872,12 +883,12 @@
             };
 
             forums?.Add(newForumModel);
-            await JSRuntime.InvokeVoidAsync("showToast", "Forum created successfully!", "success");
-            HideCreateModal();
+            ToastService.Notify(new ToastMessage(ToastType.Success, "Forum created successfully!"));
+            await HideCreateModal();
         }
         catch (Exception ex)
         {
-            await JSRuntime.InvokeVoidAsync("showToast", $"Error creating forum: {ex.Message}", "error");
+            ToastService.Notify(new ToastMessage(ToastType.Danger, $"Error creating forum: {ex.Message}"));
         }
         finally
         {

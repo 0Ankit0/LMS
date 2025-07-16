@@ -2,7 +2,7 @@
 @page "/user/lms/settings"
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @inject HttpClient HttpClient
-@inject IJSRuntime JSRuntime
+@inject ToastService ToastService
 
 <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
     <h1 class="h2"><Icon Name="IconName.Gear" Class="me-2" />Settings</h1>
@@ -435,106 +435,102 @@ else
         activeTab = tab;
     }
 
-    private async Task SaveProfile()
+    private void SaveProfile()
     {
         try
         {
             // In real implementation, save to database via UserService
-            await JSRuntime.InvokeVoidAsync("alert", "Profile saved successfully!");
+            ToastService.Notify(new ToastMessage(ToastType.Success, "Profile saved successfully!"));
         }
         catch (Exception ex)
         {
-            await JSRuntime.InvokeVoidAsync("alert", $"Error saving profile: {ex.Message}");
+            ToastService.Notify(new ToastMessage(ToastType.Danger, $"Error saving profile: {ex.Message}"));
         }
     }
 
-    private async Task SavePreferences()
+    private void SavePreferences()
     {
         try
         {
             // In real implementation, save to database
-            await JSRuntime.InvokeVoidAsync("alert", "Preferences saved successfully!");
+            ToastService.Notify(new ToastMessage(ToastType.Success, "Preferences saved successfully!"));
         }
         catch (Exception ex)
         {
-            await JSRuntime.InvokeVoidAsync("alert", $"Error saving preferences: {ex.Message}");
+            ToastService.Notify(new ToastMessage(ToastType.Danger, $"Error saving preferences: {ex.Message}"));
         }
     }
 
-    private async Task SaveNotifications()
+    private void SaveNotifications()
     {
         try
         {
             // In real implementation, save to database
-            await JSRuntime.InvokeVoidAsync("alert", "Notification settings saved successfully!");
+            ToastService.Notify(new ToastMessage(ToastType.Success, "Notification settings saved successfully!"));
         }
         catch (Exception ex)
         {
-            await JSRuntime.InvokeVoidAsync("alert", $"Error saving notification settings: {ex.Message}");
+            ToastService.Notify(new ToastMessage(ToastType.Danger, $"Error saving notification settings: {ex.Message}"));
         }
     }
 
-    private async Task SavePrivacy()
+    private void SavePrivacy()
     {
         try
         {
             // In real implementation, save to database
-            await JSRuntime.InvokeVoidAsync("alert", "Privacy settings saved successfully!");
+            ToastService.Notify(new ToastMessage(ToastType.Success, "Privacy settings saved successfully!"));
         }
         catch (Exception ex)
         {
-            await JSRuntime.InvokeVoidAsync("alert", $"Error saving privacy settings: {ex.Message}");
+            ToastService.Notify(new ToastMessage(ToastType.Danger, $"Error saving privacy settings: {ex.Message}"));
         }
     }
 
-    private async Task ChangePassword()
+    private void ChangePassword()
     {
         try
         {
             if (passwordModel.NewPassword != passwordModel.ConfirmPassword)
             {
-                await JSRuntime.InvokeVoidAsync("alert", "New passwords do not match!");
+                ToastService.Notify(new ToastMessage(ToastType.Warning, "New passwords do not match!"));
                 return;
             }
 
             // In real implementation, change password via UserManager
-            await JSRuntime.InvokeVoidAsync("alert", "Password changed successfully!");
+            ToastService.Notify(new ToastMessage(ToastType.Success, "Password changed successfully!"));
             passwordModel = new PasswordChangeModel();
         }
         catch (Exception ex)
         {
-            await JSRuntime.InvokeVoidAsync("alert", $"Error changing password: {ex.Message}");
+            ToastService.Notify(new ToastMessage(ToastType.Danger, $"Error changing password: {ex.Message}"));
         }
     }
 
-    private async Task ToggleTwoFactor()
+    private void ToggleTwoFactor()
     {
         try
         {
             privacyModel.TwoFactorEnabled = !privacyModel.TwoFactorEnabled;
             var status = privacyModel.TwoFactorEnabled ? "enabled" : "disabled";
-            await JSRuntime.InvokeVoidAsync("alert", $"Two-factor authentication {status}!");
+            ToastService.Notify(new ToastMessage(ToastType.Success, $"Two-factor authentication {status}!"));
         }
         catch (Exception ex)
         {
-            await JSRuntime.InvokeVoidAsync("alert", $"Error toggling 2FA: {ex.Message}");
+            ToastService.Notify(new ToastMessage(ToastType.Danger, $"Error toggling 2FA: {ex.Message}"));
         }
     }
 
-    private async Task ExportData()
+    private void ExportData()
     {
-        await JSRuntime.InvokeVoidAsync("alert", "Data export initiated. You will receive an email when ready.");
+        ToastService.Notify(new ToastMessage(ToastType.Info, "Data export initiated. You will receive an email when ready."));
     }
 
-    private async Task ConfirmDeleteAccount()
+    private void ConfirmDeleteAccount()
     {
-        var confirmed = await JSRuntime.InvokeAsync<bool>("confirm",
-            "Are you sure you want to permanently delete your account? This action cannot be undone.");
-
-        if (confirmed)
-        {
-            await JSRuntime.InvokeVoidAsync("alert", "Account deletion process initiated. Please check your email for confirmation.");
-        }
+        // For now, we'll use a simple toast notification approach
+        // In a real implementation, you would implement proper confirmation dialog
+        ToastService.Notify(new ToastMessage(ToastType.Warning, "Account deletion functionality requires additional confirmation. Please contact support."));
     }
 
     // Settings Models
