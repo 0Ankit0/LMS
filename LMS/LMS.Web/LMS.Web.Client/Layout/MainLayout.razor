@@ -1,12 +1,19 @@
 ﻿@using Microsoft.AspNetCore.Authorization
 @inherits LayoutComponentBase
 @attribute [Authorize]
+@inject NavigationManager NavigationManager
+
+@code {
+    private bool ShowSidebar => !NavigationManager.Uri.Contains("/home");
+}
 
 <div class="page">
-    @* <div class="sidebar">
-        <MainSidebar />
-
-    </div> *@
+    @if (ShowSidebar)
+    {
+        <div class="sidebar">
+            <MainSidebar />
+        </div>
+    }
 
     <main>
         <div class="top-row">
