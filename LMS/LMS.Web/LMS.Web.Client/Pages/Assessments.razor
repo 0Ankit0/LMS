@@ -2,6 +2,7 @@
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @inject HttpClient HttpClient
 @inject ToastService ToastService
+@using System.Security.Claims;
 
 <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
     <h1 class="h2"><i class="fas fa-clipboard-check text-success me-2"></i>Assessments & Quizzes</h1>
@@ -216,6 +217,12 @@ else
                         </div>
 
                         <div class="card-footer bg-transparent">
+                            @if (IsAdmin)
+                            {
+                                <a href="/admin/assessments/manage/@assessment.Id" class="btn btn-info w-100 mb-2">
+                                    <i class="fas fa-cog"></i> Manage Assessment
+                                </a>
+                            }
                             @if (IsAssessmentAvailable(assessment))
                             {
                                 @if (!isCompleted)
@@ -299,6 +306,7 @@ else
     private int completedAssessments = 0;
     private int pendingAssessments = 0;
     private double averageScore = 0;
+    private bool IsAdmin = false; // Placeholder for admin role check
 
     protected override async Task OnInitializedAsync()
     {
@@ -313,6 +321,7 @@ else
             var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
             if (authState.User.Identity?.IsAuthenticated == true)
             {
+                IsAdmin = authState.User.IsInRole("Admin"); // Check if the user is in the 'Admin' role
                 var currentUserId = authState.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
                 if (!string.IsNullOrEmpty(currentUserId))
                 {

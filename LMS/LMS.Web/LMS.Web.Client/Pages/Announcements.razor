@@ -114,6 +114,7 @@
     private async Task LoadAnnouncements()
     {
         isLoading = true;
+        await InvokeAsync(StateHasChanged);
 
         try
         {

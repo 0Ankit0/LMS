@@ -104,6 +104,13 @@
 
                             <!-- Action Buttons -->
                             <div class="mt-auto">
+                                @if (IsAdmin)
+                                {
+                                    <Button Color="ButtonColor.Info" Size="ButtonSize.Small"
+                                        To="@($"/admin/courses/manage/{enrollment.CourseId}")" Class="me-2">
+                                        <Icon Name="IconName.Gear" Class="me-1" />Manage
+                                    </Button>
+                                }
                                 @if (enrollment.CompletedAt.HasValue)
                                 {
                                     <Button Color="ButtonColor.Primary" Outline="true" Size="ButtonSize.Small"
@@ -177,6 +184,7 @@
     private List<EnrollmentModel>? filteredEnrollments;
     private EnrollmentModel? selectedEnrollment;
     private Modal unenrollModal = default!;
+    private bool IsAdmin = false; // Placeholder for admin role check
 
     protected override async Task OnInitializedAsync()
     {
@@ -191,6 +199,7 @@
             var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
             if (authState.User.Identity?.IsAuthenticated == true)
             {
+                IsAdmin = authState.User.IsInRole("Admin"); // Check if the user is in the 'Admin' role
                 currentUserId = authState.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
                 if (!string.IsNullOrEmpty(currentUserId))

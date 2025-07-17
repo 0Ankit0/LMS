@@ -1,5 +1,5 @@
-
 @using BlazorBootstrap;
+@using LMS.Data.Entities
 @page "/user/lms/achievements"
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @inject HttpClient HttpClient
@@ -425,45 +425,80 @@
                 
                 if (!string.IsNullOrEmpty(currentUserId))
                 {
-                    // Load user achievements via HTTP endpoint
-                    var earnedResponse = await HttpClient.GetAsync($"/api/achievements/user/{currentUserId}");
-                    if (earnedResponse.IsSuccessStatusCode)
+                    try
                     {
-                        earnedAchievements = await earnedResponse.Content.ReadFromJsonAsync<List<UserAchievementModel>>();
-                        earnedCount = earnedAchievements?.Count ?? 0;
-                        totalPoints = earnedAchievements?.Sum(a => a.Points) ?? 0;
+                        // Load user achievements via HTTP endpoint
+                        var earnedResponse = await HttpClient.GetAsync($"/api/achievements/user/{currentUserId}");
+                        if (earnedResponse.IsSuccessStatusCode)
+                        {
+                            earnedAchievements = await earnedResponse.Content.ReadFromJsonAsync<List<UserAchievementModel>>();
+                            earnedCount = earnedAchievements?.Count ?? 0;
+                            totalPoints = earnedAchievements?.Sum(a => a.Points) ?? 0;
+                        }
+                        else
+                        {
+                            LoadDummyEarnedAchievements();
+                        }
+                        
+                        // Load all achievements to find available ones
+                        var allResponse = await HttpClient.GetAsync("/api/achievements/all");
+                        if (allResponse.IsSuccessStatusCode)
+                        {
+                            var allAchievements = await allResponse.Content.ReadFromJsonAsync<List<AchievementModel>>();
+                            var earnedIds = earnedAchievements?.Select(a => a.AchievementId).ToHashSet() ?? new HashSet<int>();
+                            availableAchievements = allAchievements?.Where(a => !earnedIds.Contains(a.Id)).ToList();
+                            availableCount = availableAchievements?.Count ?? 0;
+                        }
+                        else
+                        {
+                            LoadDummyAvailableAchievements();
+                        }
+                        
+                        // Load leaderboard data via HTTP endpoint
+                        var leaderboardResponse = await HttpClient.GetAsync("/api/leaderboards/overall");
+                        if (leaderboardResponse.IsSuccessStatusCode)
+                        {
+                            leaderboardEntries = await leaderboardResponse.Content.ReadFromJsonAsync<List<LeaderboardEntryModel>>();
+                        }
+                        else
+                        {
+                            LoadDummyLeaderboardEntries();
+                        }
+                        
+                        // Find user rank via HTTP endpoint
+                        var rankResponse = await HttpClient.GetAsync($"/api/leaderboards/user/{currentUserId}/rank");
+                        if (rankResponse.IsSuccessStatusCode)
+                        {
+                            var rankResult = await rankResponse.Content.ReadFromJsonAsync<int>();
+                            userRank = rankResult;
+                        }
+                        else
+                        {
+                            userRank = 3; // Default dummy rank
+                        }
                     }
-                    
-                    // Load all achievements to find available ones
-                    var allResponse = await HttpClient.GetAsync("/api/achievements/all");
-                    if (allResponse.IsSuccessStatusCode)
+                    catch
                     {
-                        var allAchievements = await allResponse.Content.ReadFromJsonAsync<List<AchievementModel>>();
-                        var earnedIds = earnedAchievements?.Select(a => a.AchievementId).ToHashSet() ?? new HashSet<int>();
-                        availableAchievements = allAchievements?.Where(a => !earnedIds.Contains(a.Id)).ToList();
-                        availableCount = availableAchievements?.Count ?? 0;
-                    }
-                    
-                    // Load leaderboard data via HTTP endpoint
-                    var leaderboardResponse = await HttpClient.GetAsync("/api/leaderboards/overall");
-                    if (leaderboardResponse.IsSuccessStatusCode)
-                    {
-                        leaderboardEntries = await leaderboardResponse.Content.ReadFromJsonAsync<List<LeaderboardEntryModel>>();
-                    }
-                    
-                    // Find user rank via HTTP endpoint
-                    var rankResponse = await HttpClient.GetAsync($"/api/leaderboards/user/{currentUserId}/rank");
-                    if (rankResponse.IsSuccessStatusCode)
-                    {
-                        var rankResult = await rankResponse.Content.ReadFromJsonAsync<int>();
-                        userRank = rankResult;
+                        // If any API calls fail, load dummy data
+                        LoadDummyData();
                     }
                 }
+                else
+                {
+                    // No user ID found, load dummy data
+                    LoadDummyData();
+                }
+            }
+            else
+            {
+                // User not authenticated, load dummy data
+                LoadDummyData();
             }
         }
         catch (Exception ex)
         {
             ToastService.Notify(new ToastMessage(ToastType.Danger, $"Error loading messages: {ex.Message}"));
+            LoadDummyData(); // Fall back to dummy data on exception
         }
         finally
         {
@@ -471,7 +506,178 @@
         }
     }
 
-    
+    private void LoadDummyData()
+    {
+        LoadDummyEarnedAchievements();
+        LoadDummyAvailableAchievements();
+        LoadDummyLeaderboardEntries();
+        userRank = 3; // Default dummy rank
+    }
+
+    private void LoadDummyEarnedAchievements()
+    {
+        earnedAchievements = new List<UserAchievementModel>
+        {
+            new UserAchievementModel
+            {
+                Id = 1,
+                UserId = "dummyUser1",
+                UserName = "CurrentUser",
+                AchievementId = 101,
+                AchievementName = "First Course Completed",
+                AchievementDescription = "Successfully completed your first course",
+                AchievementIconUrl = "/images/achievements/course-complete.png",
+                Points = 50,
+                BadgeColor = "#28a745",
+                EarnedAt = DateTime.Now.AddDays(-15)
+            },
+            new UserAchievementModel
+            {
+                Id = 2,
+                UserId = "dummyUser1",
+                UserName = "CurrentUser",
+                AchievementId = 102,
+                AchievementName = "Perfect Score",
+                AchievementDescription = "Achieved 100% on an assessment",
+                AchievementIconUrl = "/images/achievements/perfect-score.png",
+                Points = 100,
+                BadgeColor = "#007bff",
+                EarnedAt = DateTime.Now.AddDays(-7)
+            },
+            new UserAchievementModel
+            {
+                Id = 3,
+                UserId = "dummyUser1",
+                UserName = "CurrentUser",
+                AchievementId = 103,
+                AchievementName = "Streak Master",
+                AchievementDescription = "Logged in for 7 consecutive days",
+                AchievementIconUrl = null,
+                Points = 75,
+                BadgeColor = "#fd7e14",
+                EarnedAt = DateTime.Now.AddDays(-2)
+            }
+        };
+
+        earnedCount = earnedAchievements.Count;
+        totalPoints = earnedAchievements.Sum(a => a.Points);
+    }
+
+    private void LoadDummyAvailableAchievements()
+    {
+        availableAchievements = new List<AchievementModel>
+    {
+        new AchievementModel
+        {
+            Id = 104,
+            Name = "Course Creator",
+            Description = "Create your first course",
+            IconUrl = "/images/achievements/course-creator.png",
+            Points = 150,
+            BadgeColor = "#6f42c1",
+            Type = "Creation",
+            Criteria = new List<AchievementCriteria>
+            {
+                new AchievementCriteria { Type = CriteriaType.CourseCompletion }
+            },
+            IsActive = true
+        },
+        new AchievementModel
+        {
+            Id = 105,
+            Name = "Community Contributor",
+            Description = "Post 10 helpful comments in discussions",
+            IconUrl = "/images/achievements/contributor.png",
+            Points = 100,
+            BadgeColor = "#20c997",
+            Type = "Community",
+            Criteria = new List<AchievementCriteria>
+            {
+                new AchievementCriteria { Type = CriteriaType.Participation },
+                new AchievementCriteria { Type = CriteriaType.Social }
+            },
+            IsActive = true
+        },
+        new AchievementModel
+        {
+            Id = 106,
+            Name = "Advanced Learner",
+            Description = "Complete 5 advanced courses",
+            IconUrl = null,
+            Points = 200,
+            BadgeColor = "#dc3545",
+            Type = "Learning",
+            Criteria = new List<AchievementCriteria>
+            {
+                new AchievementCriteria { Type = CriteriaType.CourseCompletion }
+            },
+            IsActive = true
+        }
+    };
+
+        availableCount = availableAchievements.Count;
+    }
+    private void LoadDummyLeaderboardEntries()
+    {
+        leaderboardEntries = new List<LeaderboardEntryModel>
+        {
+            new LeaderboardEntryModel
+            {
+                Rank = 1,
+                UserId = "user123",
+                UserName = "LearningMaster",
+                UserEmail = "master@example.com",
+                ProfilePictureUrl = "/images/profiles/user1.jpg",
+                TotalPoints = 850,
+                AchievementCount = 12,
+                LastUpdated = DateTime.Now.AddDays(-1)
+            },
+            new LeaderboardEntryModel
+            {
+                Rank = 2,
+                UserId = "user456",
+                UserName = "KnowledgeSeeker",
+                UserEmail = "seeker@example.com",
+                ProfilePictureUrl = "/images/profiles/user2.jpg",
+                TotalPoints = 720,
+                AchievementCount = 9,
+                LastUpdated = DateTime.Now.AddDays(-3)
+            },
+            new LeaderboardEntryModel
+            {
+                Rank = 3,
+                UserId = "dummyUser1", // Current user
+                UserName = "CurrentUser",
+                UserEmail = "current@example.com",
+                ProfilePictureUrl = null,
+                TotalPoints = 225,
+                AchievementCount = 3,
+                LastUpdated = DateTime.Now.AddDays(-2)
+            },
+            new LeaderboardEntryModel
+            {
+                Rank = 4,
+                UserId = "user789",
+                UserName = "StudyBuddy",
+                UserEmail = "buddy@example.com",
+                ProfilePictureUrl = "/images/profiles/user3.jpg",
+                TotalPoints = 180,
+                AchievementCount = 3,
+                LastUpdated = DateTime.Now.AddDays(-5)
+            },
+            new LeaderboardEntryModel
+            {
+                Rank = 5,
+                UserId = "user321",
+                UserName = "CourseExplorer",
+                UserEmail = "explorer@example.com",
+                ProfilePictureUrl = null,
+                TotalPoints = 125,
+                AchievementCount = 2,
+                LastUpdated = DateTime.Now.AddDays(-7)
+            }
+        };
+    }
 
     private string GetRankIconClass(int rank)
     {

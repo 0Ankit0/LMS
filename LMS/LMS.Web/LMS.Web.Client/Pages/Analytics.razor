@@ -9,13 +9,10 @@
 
 <div class="analytics-layout">
     <!-- Analytics Sidebar -->
-    <Offcanvas Placement="Placement.Start" IsBodyScrolling="true" IsBackdrop="false">
-        <OffcanvasHeader>
-            <OffcanvasTitle>
-                <h5>Analytics</h5>
-            </OffcanvasTitle>
-        </OffcanvasHeader>
-        <OffcanvasBody>
+    <Offcanvas @ref="offcanvas"
+               Placement="Placement.Start"
+               Title="Analytics">
+        <BodyTemplate>
             <Nav Class="flex-column analytics-nav">
                 <NavItem>
                     <NavLink class="@GetOverviewNavClass()" @onclick='() => SelectView("overview")'>
@@ -70,8 +67,13 @@
                     </div>
                 </div>
             </div>
-        </OffcanvasBody>
+            <div class="mt-3">
+                <Button Color="ButtonColor.Primary" @onclick="OnHideOffcanvasClick">Hide Offcanvas</Button>
+            </div>
+        </BodyTemplate>
     </Offcanvas>
+
+    <Button Color="ButtonColor.Primary" @onclick="OnShowOffcanvasClick">Show offcanvas</Button>
 
     <!-- Main Analytics Area -->
     <div class="analytics-main">
@@ -322,8 +324,13 @@
     </div>
 </div>
 
-
 @code {
+    private Offcanvas offcanvas = default!;
+
+    private async Task OnShowOffcanvasClick() => await offcanvas.ShowAsync();
+
+    private async Task OnHideOffcanvasClick() => await offcanvas.HideAsync();
+
     private List<EnrollmentModel>? enrollments;
     private List<ActivityModel> recentActivities = new();
     private List<MetricModel> performanceMetrics = new();

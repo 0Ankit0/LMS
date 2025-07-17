@@ -9,54 +9,54 @@
     <div class="row g-0 g-3">
         <!-- Left: Navigation Cards -->
         <div class="col-12 col-md-2 mb-4 mb-md-0 d-flex flex-column">
-            <div class="card shadow-sm mb-3">
-                <div class="card-body d-flex align-items-center" @onclick="@(() => NavigateTo("/admin"))"
+            <Card Class="shadow-sm mb-3">
+                <CardBody Class="d-flex align-items-center" @onclick="@(() => NavigateToServer("/admin"))"
                     style="cursor:pointer;">
-                    <Icon Name="IconName.Speedometer2" class="me-2 fs-4 text-primary" />
+                    <Icon Name="IconName.Speedometer2" Class="me-2 fs-4 text-primary" />
                     <span>Admin</span>
-                </div>
-            </div>
-            <div class="card shadow-sm mb-3">
-                <div class="card-body d-flex align-items-center" @onclick="@(() => NavigateTo("/reports"))"
+                </CardBody>
+            </Card>
+            <Card Class="shadow-sm mb-3">
+                <CardBody Class="d-flex align-items-center" @onclick="@(() => NavigateToServer("/reports"))"
                     style="cursor:pointer;">
-                    <Icon Name="IconName.Speedometer2" class="me-2 fs-4 text-primary" />
+                    <Icon Name="IconName.Speedometer2" Class="me-2 fs-4 text-primary" />
                     <span>Reports</span>
-                </div>
-            </div>
-            <div class="card shadow-sm mb-3">
-                <div class="card-body d-flex align-items-center" @onclick="@(() => NavigateTo("/user/lms/dashboard"))"
+                </CardBody>
+            </Card>
+            <Card Class="shadow-sm mb-3">
+                <CardBody Class="d-flex align-items-center" @onclick="@(() => NavigateTo("/user/lms/dashboard"))"
                     style="cursor:pointer;">
-                    <Icon Name="IconName.Speedometer2" class="me-2 fs-4 text-primary" />
+                    <Icon Name="IconName.Speedometer2" Class="me-2 fs-4 text-primary" />
                     <span>Dashboard</span>
-                </div>
-            </div>
-            <div class="card shadow-sm mb-3">
-                <div class="card-body d-flex align-items-center" @onclick="@(() => NavigateTo("/user/lms/forums"))"
+                </CardBody>
+            </Card>
+            <Card Class="shadow-sm mb-3">
+                <CardBody Class="d-flex align-items-center" @onclick="@(() => NavigateTo("/user/lms/forums"))"
                     style="cursor:pointer;">
-                    <Icon Name="IconName.JournalBookmark" class="me-2 fs-4 text-success" />
+                    <Icon Name="IconName.JournalBookmark" Class="me-2 fs-4 text-success" />
                     <span>Forums</span>
-                </div>
-            </div>
-            <div class="card shadow-sm mb-3">
-                <div class="card-body d-flex align-items-center" @onclick="@(() => NavigateTo("/user/lms/analytics"))"
+                </CardBody>
+            </Card>
+            <Card Class="shadow-sm mb-3">
+                <CardBody Class="d-flex align-items-center" @onclick="@(() => NavigateTo("/user/lms/analytics"))"
                     style="cursor:pointer;">
-                    <Icon Name="IconName.PersonCircle" class="me-2 fs-4 text-info" />
+                    <Icon Name="IconName.PersonCircle" Class="me-2 fs-4 text-info" />
                     <span>Analytics</span>
-                </div>
-            </div>
-            <div class="card shadow-sm mb-3">
-                <div class="card-body d-flex align-items-center" @onclick="@(() => NavigateTo("/user/lms/my-courses"))"
+                </CardBody>
+            </Card>
+            <Card Class="shadow-sm mb-3">
+                <CardBody Class="d-flex align-items-center" @onclick="@(() => NavigateTo("/user/lms/my-courses"))"
                     style="cursor:pointer;">
-                    <Icon Name="IconName.Trophy" class="me-2 fs-4 text-warning" />
+                    <Icon Name="IconName.Trophy" Class="me-2 fs-4 text-warning" />
                     <span>My Courses</span>
-                </div>
-            </div>
+                </CardBody>
+            </Card>
         </div>
 
         <!-- Middle: Announcements -->
         <div class="col-12 col-md-6 mb-4 mb-md-0 d-flex flex-column">
-            <div class="card border-0 mb-4 flex-grow-1 d-flex flex-column">
-                <div class="card-header bg-primary bg-opacity-50 text-white">
+            <Card Class="border-0 mb-4 flex-grow-1 d-flex flex-column">
+                <CardHeader Class="bg-primary bg-opacity-50 text-white">
                     <div class="d-flex justify-content-between align-items-center w-100">
                         <span>
                             <Icon Name="IconName.Megaphone" /> Announcements
@@ -65,18 +65,16 @@
                             class="btn btn-link btn-sm text-white text-decoration-underline p-0"
                             style="font-size: 0.95em;">View All</a>
                     </div>
-                </div>
-                <div class="card-body  p-0 flex-grow-1 d-flex flex-column hide-scrollbar"
+                </CardHeader>
+                <CardBody Class="p-0 flex-grow-1 d-flex flex-column hide-scrollbar"
                     style="max-height: 80svh; overflow-y: auto;">
                     <Announcements />
-                </div>
-            </div>
+                </CardBody>
+            </Card>
         </div>
         <!-- Right: Course List Search -->
         <div class="col-12 col-md-4 mb-4 mb-md-0 d-flex flex-column">
-            <div class="flex-grow-1 d-flex flex-column">
-                <CourseListSearch User="currentUser" />
-            </div>
+            <CourseListSearch User="currentUser" />
         </div>
     </div>
 </div>
@@ -121,5 +119,10 @@
     private void NavigateTo(string url)
     {
         NavigationManager.NavigateTo(url);
+    }
+
+    private void NavigateToServer(string url)
+    {
+        NavigationManager.NavigateTo(url, forceLoad: true);
     }
 }
