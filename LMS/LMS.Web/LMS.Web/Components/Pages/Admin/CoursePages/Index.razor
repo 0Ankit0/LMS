@@ -1,4 +1,5 @@
 ﻿@page "/admin/courses"
+@rendermode @(new InteractiveServerRenderMode())
 @using LMS.Repositories
 @using LMS.Web.Components.Shared
 @using LMS.Web.Services
@@ -18,25 +19,37 @@
         </div>
     </CardHeader>
     <CardBody>
-        <Grid TItem="CourseModel"
-              DataProvider="CoursesDataProvider"
-              PageSize="10"
-              AllowFiltering="true"
-              AllowPaging="true"
-              AllowSorting="true">
-            <GridColumn TItem="CourseModel" HeaderText="Title" PropertyName="Title" SortKeySelector="item => item.Title" Filterable="true" />
-            <GridColumn TItem="CourseModel" HeaderText="Description" PropertyName="Description" Filterable="true" />
-            <GridColumn TItem="CourseModel" HeaderText="Level" PropertyName="Level" SortKeySelector="item => item.Level" />
-            <GridColumn TItem="CourseModel" HeaderText="Status" PropertyName="Status" SortKeySelector="item => item.Status" />
-            <GridColumn TItem="CourseModel" HeaderText="Max Enrollments" PropertyName="MaxEnrollments" SortKeySelector="item => item.MaxEnrollments" HeaderTextAlignment="Alignment.End" TextAlignment="Alignment.End" />
+        <DataTableComponent TItem="CourseModel"
+                            DataProvider="CoursesDataProvider"
+                            PageSize="10"
+                            AllowFiltering="true"
+                            AllowPaging="true"
+                            AllowSorting="true">
+            <GridColumn TItem="CourseModel" HeaderText="Title" PropertyName="Title" SortKeySelector="item => item.Title" Filterable="true">
+                @context.Title
+            </GridColumn>
+            <GridColumn TItem="CourseModel" HeaderText="Description" PropertyName="Description" Filterable="true">
+                @context.Description
+            </GridColumn>
+            <GridColumn TItem="CourseModel" HeaderText="Level" PropertyName="Level" SortKeySelector="item => item.Level">
+                @context.Level
+            </GridColumn>
+            <GridColumn TItem="CourseModel" HeaderText="Status" PropertyName="Status" SortKeySelector="item => item.Status">
+                @context.Status
+            </GridColumn>
+            <GridColumn TItem="CourseModel" HeaderText="Max Enrollments" PropertyName="MaxEnrollments" SortKeySelector="item => item.MaxEnrollments" HeaderTextAlignment="Alignment.End" TextAlignment="Alignment.End">
+                @context.MaxEnrollments
+            </GridColumn>
             <GridColumn TItem="CourseModel" HeaderText="Start Date" PropertyName="StartDate" SortKeySelector="item => item.StartDate">
                 @context.StartDate.ToString("yyyy-MM-dd")
             </GridColumn>
             <GridColumn TItem="CourseModel" HeaderText="End Date" PropertyName="EndDate" SortKeySelector="item => item.EndDate">
                 @(context.EndDate?.ToString("yyyy-MM-dd") ?? "N/A")
             </GridColumn>
-            <GridColumn TItem="CourseModel" HeaderText="Instructor" PropertyName="InstructorName" Filterable="true" />
-            <GridColumn TItem="CourseModel" HeaderText="Actions">
+            <GridColumn TItem="CourseModel" HeaderText="Instructor" PropertyName="InstructorName" Filterable="true">
+                @context.InstructorName
+            </GridColumn>
+            <GridColumn TItem="CourseModel" HeaderText="Actions" Sortable="false" Filterable="false">
                 <div class="btn-group" role="group">
                     <Button Color="ButtonColor.Primary" Size="ButtonSize.Small" Href='@($"/admin/courses/edit?id={context.Id}")'>
                         <Icon Name="IconName.Pencil" /> Edit
@@ -52,7 +65,7 @@
                     </Button>
                 </div>
             </GridColumn>
-        </Grid>
+        </DataTableComponent>
     </CardBody>
 </Card>
 
@@ -65,8 +78,6 @@
                 OnConfirm="DeleteCourse" />
 
 @code {
-    // Removed unused field 'courses' to fix CS0414
-
     private ModalComponent deleteModal = default!;
     private CourseModel? courseToDelete;
 
@@ -80,7 +91,6 @@
                 PageSize = request.PageSize
             });
 
-            // If no data from API, generate dummy data
             var data = (result == null || result.Items == null || !result.Items.Any()) ? AddDummyCourses() : result.Items;
             var totalCount = (result == null || result.Items == null || !result.Items.Any()) ? data.Count : result.TotalCount;
 
@@ -101,7 +111,6 @@
         }
     }
 
-    // Dummy data generator for courses
     private List<CourseModel> AddDummyCourses()
     {
         return new List<CourseModel>
@@ -123,7 +132,6 @@
         {
             try
             {
-                // Use the correct delete method from the repository
                 await CourseRepository.DeleteCourseAsync(courseToDelete.Id);
                 ToastService.ShowSuccess("Success", $"Course '{courseToDelete.Title}' deleted successfully.");
                 await RefreshGridDataAsync();

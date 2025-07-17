@@ -48,7 +48,7 @@
                 <label for="courseid" class="form-label">Course</label>
                 <SearchableSelectComponent TItem="DropdownOption<int>" 
                                            TValue="int?" 
-                                           DataProvider="SearchCoursesDataProvider"
+                                           OnLoad="async () => (await DropdownRepository.GetCoursesAsync(null, 20))"
                                            ValueSelector="@(item => (int?)item.Value)" 
                                            DisplaySelector="@(item => item.Text)"
                                            @bind-SelectedValue="Forum.CourseId"

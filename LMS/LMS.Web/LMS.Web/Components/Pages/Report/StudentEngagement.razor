@@ -310,17 +310,17 @@ else
                     // Load individual student engagement
                     engagementData = await ReportRepository.GetStudentEngagementReportAsync(
                         user, selectedStudentId, startDate, endDate);
+
+                    if (engagementData == null)
+                    {
+                        engagementData = GenerateDummyIndividualData();
+                    }
                 }
                 else
                 {
                     // Load all students engagement summary
-                    engagementData = new
-                    {
-                        TotalStudents = 150,
-                        HighEngagement = 45,
-                        MediumEngagement = 75,
-                        LowEngagement = 30
-                    };
+                    // No API for all students engagement, use dummy data
+                    engagementData = GenerateDummyAllData();
                 }
 
                 await DrawCharts();
@@ -329,6 +329,15 @@ else
         catch (Exception ex)
         {
             Console.WriteLine($"Error loading engagement data: {ex.Message}");
+            if (reportType == "individual")
+            {
+                engagementData = GenerateDummyIndividualData();
+            }
+            else
+            {
+                engagementData = GenerateDummyAllData();
+            }
+            await DrawCharts();
         }
         finally
         {
@@ -336,17 +345,55 @@ else
         }
     }
 
+    private StudentEngagementReportDto GenerateDummyIndividualData()
+    {
+        var random = new Random();
+        return new StudentEngagementReportDto
+        {
+            StudentId = selectedStudentId,
+            StudentName = "Dummy Student",
+            TotalForumPosts = random.Next(10, 100),
+            TopicsCreated = random.Next(1, 10),
+            RepliesMade = random.Next(5, 50),
+            TotalCoursesEnrolled = random.Next(1, 5),
+            CompletedCourses = random.Next(0, 3),
+            TimeSpentOnPlatform = TimeSpan.FromHours(random.Next(50, 500)),
+            LastLoginDate = DateTime.Today.AddDays(-random.Next(1, 30)),
+            LastForumActivity = DateTime.Today.AddDays(-random.Next(1, 15)).ToString("MMM dd, yyyy"),
+            AverageAssessmentScore = random.NextDouble() * 40 + 60, // 60-100
+            ProgressPercentage = random.NextDouble() * 100,
+            CourseProgress = new List<StudentEngagementReportDto.CourseProgressDto>
+            {
+                new StudentEngagementReportDto.CourseProgressDto { CourseName = "Dummy Course 1", Progress = random.Next(30, 90) },
+                new StudentEngagementReportDto.CourseProgressDto { CourseName = "Dummy Course 2", Progress = random.Next(20, 80) },
+                new StudentEngagementReportDto.CourseProgressDto { CourseName = "Dummy Course 3", Progress = random.Next(10, 70) }
+            }
+        };
+    }
+
+    private object GenerateDummyAllData()
+    {
+        var random = new Random();
+        return new
+        {
+            TotalStudents = random.Next(100, 500),
+            HighEngagement = random.Next(20, 100),
+            MediumEngagement = random.Next(50, 200),
+            LowEngagement = random.Next(10, 80)
+        };
+    }
+
     private async Task DrawCharts()
     {
         if (engagementData != null)
         {
-            if (reportType == "individual")
+            if (reportType == "individual" && engagementData is StudentEngagementReportDto individualData)
             {
-                var engagementScore = CalculateEngagementScore(engagementData);
+                var engagementScore = CalculateEngagementScore(individualData);
                 await JSRuntime.InvokeVoidAsync("drawEngagementGauge", "engagementGauge", engagementScore);
                 await JSRuntime.InvokeVoidAsync("drawActivityChart", "activityChart", engagementData);
             }
-            else
+            else if (reportType != "individual")
             {
                 await JSRuntime.InvokeVoidAsync("drawEngagementDistribution", "engagementDistribution", engagementData);
             }
@@ -355,25 +402,29 @@ else
 
     private string GetEngagementLevel(object data)
     {
-        var score = CalculateEngagementScore(data);
-        return score switch
+        if (data is StudentEngagementReportDto individualData)
         {
-            >= 80 => "High",
-            >= 60 => "Medium",
-            >= 40 => "Low",
-            _ => "Very Low"
-        };
+            var score = CalculateEngagementScore(individualData);
+            return score switch
+            {
+                >= 80 => "High",
+                >= 60 => "Medium",
+                >= 40 => "Low",
+                _ => "Very Low"
+            };
+        }
+        return "N/A";
     }
 
-    private double CalculateEngagementScore(object data)
+    private double CalculateEngagementScore(StudentEngagementReportDto data)
     {
         // Mock calculation based on available data
-        var forumPosts = Convert.ToInt32(GetProperty(data, "TotalForumPosts") ?? 0);
-        var coursesCompleted = Convert.ToInt32(GetProperty(data, "CompletedCourses") ?? 0);
-        var coursesEnrolled = Convert.ToInt32(GetProperty(data, "TotalCoursesEnrolled") ?? 1);
+        var forumPosts = data.TotalForumPosts;
+        var coursesCompleted = data.CompletedCourses;
+        var coursesEnrolled = data.TotalCoursesEnrolled > 0 ? data.TotalCoursesEnrolled : 1;
 
-        var completionRate = coursesEnrolled > 0 ? (double)coursesCompleted / coursesEnrolled * 100 : 0;
-        var forumActivity = Math.Min(forumPosts * 5, 50); // Cap forum contribution at 50%
+        var completionRate = (double)coursesCompleted / coursesEnrolled * 100;
+        var forumActivity = Math.Min(forumPosts * 0.5, 50); // Cap forum contribution at 50%
 
         return Math.Min(completionRate * 0.7 + forumActivity * 0.3, 100);
     }
@@ -386,15 +437,13 @@ else
         return property?.GetValue(obj);
     }
 
-    private IEnumerable<object>? GetCourseProgress(object data)
+    private IEnumerable<StudentEngagementReportDto.CourseProgressDto>? GetCourseProgress(object data)
     {
-        // Mock course progress data
-        return new[]
+        if (data is StudentEngagementReportDto individualData)
         {
-            new { CourseName = "Mathematics 101", Progress = 85 },
-            new { CourseName = "Physics Fundamentals", Progress = 72 },
-            new { CourseName = "Chemistry Basics", Progress = 94 }
-        };
+            return individualData.CourseProgress;
+        }
+        return null;
     }
 
     private async Task ExportToPdf()

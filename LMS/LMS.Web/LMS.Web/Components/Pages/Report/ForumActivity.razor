@@ -357,6 +357,11 @@ else if (!loading)
                 endDate
                 );
                 multipleReports = null;
+
+                if (singleReport == null)
+                {
+                    singleReport = GenerateDummySingleReportData();
+                }
             }
             else
             {
@@ -367,6 +372,11 @@ else if (!loading)
                 courseId
                 );
                 singleReport = null;
+
+                if (multipleReports == null || !multipleReports.Any())
+                {
+                    multipleReports = GenerateDummyMultipleReportsData();
+                }
             }
         }
         catch (Exception ex)
@@ -374,12 +384,71 @@ else if (!loading)
             errorMessage = $"Error loading data: {ex.Message}";
             singleReport = null;
             multipleReports = null;
+
+            if (reportType == "single")
+            {
+                singleReport = GenerateDummySingleReportData();
+            }
+            else
+            {
+                multipleReports = GenerateDummyMultipleReportsData();
+            }
         }
         finally
         {
             loading = false;
             StateHasChanged();
         }
+    }
+
+    private ForumActivityReportDto GenerateDummySingleReportData()
+    {
+        return new ForumActivityReportDto
+        {
+            ForumId = forumId ?? 1,
+            ForumTitle = "Dummy Forum Title",
+            CourseName = "Dummy Course Name",
+            TotalTopics = random.Next(10, 50),
+            TotalPosts = random.Next(100, 500),
+            ActiveUsers = random.Next(5, 30),
+            AveragePostsPerUser = random.NextDouble() * 10 + 5,
+            AverageRepliesPerTopic = random.NextDouble() * 5 + 2,
+            MostActiveUser = "Dummy User",
+            MostActiveUserPosts = random.Next(20, 100),
+            MostPopularTopic = "Dummy Popular Topic",
+            MostPopularTopicReplies = random.Next(10, 50),
+            TotalViews = random.Next(500, 2000),
+            LastActivityDate = DateTime.Today.AddDays(-random.Next(1, 30))
+        };
+    }
+
+    private IEnumerable<ForumActivityReportDto> GenerateDummyMultipleReportsData()
+    {
+        var dummyData = new List<ForumActivityReportDto>();
+        var forumTitles = new[] { "General Discussion", "Technical Help", "Announcements", "Off-Topic" };
+        var courseNames = new[] { "Math 101", "Science 202", "History 303" };
+
+        for (int i = 0; i < 5; i++)
+        {
+            dummyData.Add(new ForumActivityReportDto
+            {
+                ForumId = i + 1,
+                ForumTitle = forumTitles[random.Next(forumTitles.Length)],
+                CourseName = courseNames[random.Next(courseNames.Length)],
+                TotalTopics = random.Next(5, 20),
+                TotalPosts = random.Next(50, 200),
+                ActiveUsers = random.Next(5, 20),
+                AveragePostsPerUser = random.NextDouble() * 10 + 5,
+                AverageRepliesPerTopic = random.NextDouble() * 5 + 2,
+                MostActiveUser = $"User {random.Next(1, 100)}",
+                MostActiveUserPosts = random.Next(10, 50),
+                MostPopularTopic = $"Topic {random.Next(1, 50)}",
+                MostPopularTopicReplies = random.Next(5, 25),
+                TotalViews = random.Next(200, 1000),
+                LastActivityDate = DateTime.Today.AddDays(-random.Next(1, 30))
+            });
+        }
+        return dummyData;
     }
 
     // Mock data methods for demonstration (replace with real data from report)

@@ -46,11 +46,52 @@ else
 
 @code {
     private bool loading = true;
+    private IEnumerable<EnrollmentSummaryReportDto> reports;
 
     protected override async Task OnInitializedAsync()
     {
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        loading = true;
         await Task.Delay(1000); // Simulate loading
+
+        // In a real scenario, you'd fetch data from a service here.
+        // For this stub, we'll just use dummy data.
+        reports = GenerateDummyData();
+
         loading = false;
+    }
+
+    private IEnumerable<EnrollmentSummaryReportDto> GenerateDummyData()
+    {
+        var random = new Random();
+        var dummyData = new List<EnrollmentSummaryReportDto>();
+
+        var courseNames = new[] { "Mathematics 101", "Physics Fundamentals", "Chemistry Basics", "Computer Science" };
+        var periods = new[] { "Daily", "Weekly", "Monthly" };
+
+        for (int i = 0; i < 5; i++)
+        {
+            dummyData.Add(new EnrollmentSummaryReportDto
+            {
+                ReportDate = DateTime.Today.AddDays(-i * 7),
+                TotalEnrollments = random.Next(100, 500),
+                NewEnrollments = random.Next(10, 50),
+                CompletedEnrollments = random.Next(5, 30),
+                ActiveEnrollments = random.Next(50, 200),
+                DroppedEnrollments = random.Next(0, 10),
+                SuspendedEnrollments = random.Next(0, 5),
+                CourseName = courseNames[random.Next(courseNames.Length)],
+                CourseId = random.Next(1, 10),
+                Period = periods[random.Next(periods.Length)],
+                AverageProgressPercentage = random.NextDouble() * 100,
+                CertificatesIssued = random.Next(0, 20)
+            });
+        }
+        return dummyData;
     }
 
     private async Task ExportToPdf()

@@ -1,8 +1,7 @@
 ﻿@page "/admin/certificates"
+@rendermode @(new InteractiveServerRenderMode())
 
 @using LMS.Repositories
-@using LMS.Web.Components.Shared
-@using LMS.Web.Services
 @inject ICertificateRepository CertificateRepository
 @inject LMS.Web.Services.ToastService ToastService
 
@@ -16,32 +15,40 @@
     </Button>
 </div>
 
-<DataTableComponent TItem="CertificateModel" 
+<DataTableComponent TItem="CertificateModel"
                     DataProvider="CertificatesDataProvider"
                     PageSize="10"
                     AllowFiltering="true">
-    <Columns>
-        <GridColumn TItem="CertificateModel" HeaderText="User ID" PropertyName="UserId" SortKeySelector="item => item.UserId" Filterable="true" />
-        <GridColumn TItem="CertificateModel" HeaderText="User Name" PropertyName="UserName" SortKeySelector="item => item.UserName" Filterable="true" />
-        <GridColumn TItem="CertificateModel" HeaderText="Course ID" PropertyName="CourseId" SortKeySelector="item => item.CourseId" HeaderTextAlignment="Alignment.End" TextAlignment="Alignment.End" />
-        <GridColumn TItem="CertificateModel" HeaderText="Course Title" PropertyName="CourseTitle" SortKeySelector="item => item.CourseTitle" Filterable="true" />
-        <GridColumn TItem="CertificateModel" HeaderText="Certificate Number" PropertyName="CertificateNumber" SortKeySelector="item => item.CertificateNumber" Filterable="true" />
-        <GridColumn TItem="CertificateModel" HeaderText="Issued" SortKeySelector="item => item.IssuedAt">
-            @context.IssuedAt.ToString("yyyy-MM-dd")
-        </GridColumn>
-        <GridColumn TItem="CertificateModel" HeaderText="Expires" SortKeySelector="item => item.ExpiresAt">
-            @(context.ExpiresAt?.ToString("yyyy-MM-dd") ?? "Never")
-        </GridColumn>
-        <GridColumn TItem="CertificateModel" HeaderText="Final Grade" SortKeySelector="item => item.FinalGrade" HeaderTextAlignment="Alignment.End" TextAlignment="Alignment.End">
-            <Badge Color="@GetGradeBadgeColor(context.FinalGrade)">@context.FinalGrade.ToString("F1")%</Badge>
-        </GridColumn>
-        <GridColumn TItem="CertificateModel" HeaderText="Valid" SortKeySelector="item => item.IsValid">
-            <Badge Color="@(context.IsValid ? BadgeColor.Success : BadgeColor.Danger)">
-                @(context.IsValid ? "Valid" : "Invalid")
-            </Badge>
-        </GridColumn>
-    </Columns>
-    <Actions>
+    <GridColumn TItem="CertificateModel" HeaderText="User ID" PropertyName="UserId" SortKeySelector="item => item.UserId" Filterable="true">
+        @context.UserId
+    </GridColumn>
+    <GridColumn TItem="CertificateModel" HeaderText="User Name" PropertyName="UserName" SortKeySelector="item => item.UserName" Filterable="true">
+        @context.UserName
+    </GridColumn>
+    <GridColumn TItem="CertificateModel" HeaderText="Course ID" PropertyName="CourseId" SortKeySelector="item => item.CourseId" HeaderTextAlignment="Alignment.End" TextAlignment="Alignment.End">
+        @context.CourseId
+    </GridColumn>
+    <GridColumn TItem="CertificateModel" HeaderText="Course Title" PropertyName="CourseTitle" SortKeySelector="item => item.CourseTitle" Filterable="true">
+        @context.CourseTitle
+    </GridColumn>
+    <GridColumn TItem="CertificateModel" HeaderText="Certificate Number" PropertyName="CertificateNumber" SortKeySelector="item => item.CertificateNumber" Filterable="true">
+        @context.CertificateNumber
+    </GridColumn>
+    <GridColumn TItem="CertificateModel" HeaderText="Issued" SortKeySelector="item => item.IssuedAt">
+        @context.IssuedAt.ToString("yyyy-MM-dd")
+    </GridColumn>
+    <GridColumn TItem="CertificateModel" HeaderText="Expires" SortKeySelector="item => item.ExpiresAt">
+        @(context.ExpiresAt?.ToString("yyyy-MM-dd") ?? "Never")
+    </GridColumn>
+    <GridColumn TItem="CertificateModel" HeaderText="Final Grade" SortKeySelector="item => item.FinalGrade" HeaderTextAlignment="Alignment.End" TextAlignment="Alignment.End">
+        <Badge Color="@GetGradeBadgeColor(context.FinalGrade)">@context.FinalGrade.ToString("F1")%</Badge>
+    </GridColumn>
+    <GridColumn TItem="CertificateModel" HeaderText="Valid" SortKeySelector="item => item.IsValid">
+        <Badge Color="@(context.IsValid ? BadgeColor.Success : BadgeColor.Danger)">
+            @(context.IsValid ? "Valid" : "Invalid")
+        </Badge>
+    </GridColumn>
+    <GridColumn TItem="CertificateModel" HeaderText="Actions" Sortable="false" Filterable="false">
         <div class="btn-group" role="group">
             <Button Color="ButtonColor.Primary" Size="ButtonSize.Small" Href='@($"/admin/certificates/edit?id={context.Id}")'>
                 <Icon Name="IconName.Pencil" /> Edit
@@ -53,12 +60,12 @@
                 <Icon Name="IconName.Trash" /> Delete
             </Button>
         </div>
-    </Actions>
+    </GridColumn>
 </DataTableComponent>
 
 <!-- Delete Confirmation Modal -->
-<ModalComponent @ref="deleteModal" 
-                Title="Confirm Delete" 
+<ModalComponent @ref="deleteModal"
+                Title="Confirm Delete"
                 Message="@($"Are you sure you want to delete the certificate '{certificateToDelete?.CertificateNumber}' for '{certificateToDelete?.UserName}'? This action cannot be undone.")"
                 ConfirmButtonText="Delete"
                 ConfirmButtonColor="ButtonColor.Danger"
@@ -108,19 +115,12 @@
         {
             try
             {
-                // Implement actual delete logic here
-                // await CertificateRepository.DeleteAsync(certificateToDelete.Id);
-                
-                // For now, just remove from the mock list
                 certificates = certificates.Where(c => c.Id != certificateToDelete.Id).ToList();
                 StateHasChanged();
-                
-                // Show success toast
                 ToastService.ShowSuccess("Success", $"Certificate '{certificateToDelete.CertificateNumber}' deleted successfully.");
             }
             catch (Exception ex)
             {
-                // Show error toast
                 ToastService.ShowError("Error", $"Error deleting certificate: {ex.Message}");
             }
             finally

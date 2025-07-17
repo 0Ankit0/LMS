@@ -1,4 +1,5 @@
 @page "/admin/forumposts"
+@rendermode @(new InteractiveServerRenderMode())
 
 
 @using LMS.Repositories
@@ -14,17 +15,23 @@
     </Button>
 </div>
 
-<DataTableComponent TItem="ForumPostModel" 
-                    DataProvider="ForumPostsDataProvider"
-                    PageSize="10">
-    <Columns>
-        <GridColumn TItem="ForumPostModel" HeaderText="Content" PropertyName="Content" />
-        <GridColumn TItem="ForumPostModel" HeaderText="Topic" PropertyName="TopicTitle" />
-        <GridColumn TItem="ForumPostModel" HeaderText="Author" PropertyName="AuthorName" />
-        <GridColumn TItem="ForumPostModel" HeaderText="Parent Post" PropertyName="ParentPostId" />
-        <GridColumn TItem="ForumPostModel" HeaderText="Created" PropertyName="CreatedAt" Format="yyyy-MM-dd HH:mm" />
-    </Columns>
-    <Actions>
+<DataTableComponent TItem="ForumPostModel" DataProvider="ForumPostsDataProvider" PageSize="10">
+    <GridColumn TItem="ForumPostModel" HeaderText="Content" PropertyName="Content">
+        @context.Content
+    </GridColumn>
+    <GridColumn TItem="ForumPostModel" HeaderText="Topic" PropertyName="TopicTitle">
+        @context.TopicTitle
+    </GridColumn>
+    <GridColumn TItem="ForumPostModel" HeaderText="Author" PropertyName="AuthorName">
+        @context.AuthorName
+    </GridColumn>
+    <GridColumn TItem="ForumPostModel" HeaderText="Parent Post" PropertyName="ParentPostId">
+        @context.ParentPostId
+    </GridColumn>
+    <GridColumn TItem="ForumPostModel" HeaderText="Created" PropertyName="CreatedAt" Format="yyyy-MM-dd HH:mm">
+        @context.CreatedAt.ToString("yyyy-MM-dd HH:mm")
+    </GridColumn>
+    <GridColumn TItem="ForumPostModel" HeaderText="Actions" Sortable="false" Filterable="false">
         <div class="btn-group" role="group">
             <Button Color="ButtonColor.Primary" Size="ButtonSize.Small" Href='@($"/admin/forumposts/edit?id={context.Id}")'>
                 <Icon Name="IconName.Pencil" /> Edit
@@ -36,7 +43,7 @@
                 <Icon Name="IconName.Trash" /> Delete
             </Button>
         </div>
-    </Actions>
+    </GridColumn>
 </DataTableComponent>
 
 @code {
@@ -44,8 +51,8 @@
 
     private async Task<GridDataProviderResult<ForumPostModel>> ForumPostsDataProvider(GridDataProviderRequest<ForumPostModel> request)
     {
-        if (forumPosts is null) // pull forum posts only one time for client-side filtering, sorting, and paging
-            forumPosts = await GetForumPosts(); // call a service or an API to pull the forum posts
+        if (forumPosts is null)
+            forumPosts = await GetForumPosts();
 
         return await Task.FromResult(request.ApplyTo(forumPosts));
     }
@@ -57,7 +64,7 @@
             var request = new PaginationRequest
             {
                 PageNumber = 1,
-                PageSize = 1000 // Get all for client-side pagination
+                PageSize = 1000
             };
 
             var paginatedResult = await ForumRepository.GetAllForumPostsPaginatedAsync(request);

@@ -1,0 +1,486 @@
+@page "/admin/analytics"
+@rendermode @(new InteractiveServerRenderMode())
+
+@using BlazorBootstrap
+
+<PageTitle>Analytics - Admin</PageTitle>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="mb-0">Analytics Dashboard</h1>
+        <p class="text-muted">Comprehensive insights into your LMS performance</p>
+    </div>
+    <div class="d-flex gap-2">
+        <Button Color="ButtonColor.Secondary" @onclick="RefreshData">
+            <Icon Name="IconName.ArrowClockwise" />
+            Refresh Data
+        </Button>
+        <Button Color="ButtonColor.Primary" @onclick="ExportReport">
+            <Icon Name="IconName.Download" />
+            Export Report
+        </Button>
+    </div>
+</div>
+
+<!-- Key Performance Indicators -->
+<div class="row g-4 mb-4">
+    <div class="col-lg-3 col-md-6">
+        <Card Class="border-primary">
+            <CardBody>
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-primary">Total Revenue</h6>
+                        <h3 class="mb-0">$@totalRevenue.ToString("N0")</h3>
+                        <small class="text-success">+12.5% from last month</small>
+                    </div>
+                    <Icon Name="IconName.CurrencyDollar" Class="fs-1 text-primary opacity-75" />
+                </div>
+            </CardBody>
+        </Card>
+    </div>
+    <div class="col-lg-3 col-md-6">
+        <Card Class="border-success">
+            <CardBody>
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-success">Active Students</h6>
+                        <h3 class="mb-0">@activeStudents</h3>
+                        <small class="text-success">+8.2% from last month</small>
+                    </div>
+                    <Icon Name="IconName.PeopleFill" Class="fs-1 text-success opacity-75" />
+                </div>
+            </CardBody>
+        </Card>
+    </div>
+    <div class="col-lg-3 col-md-6">
+        <Card Class="border-warning">
+            <CardBody>
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-warning">Completion Rate</h6>
+                        <h3 class="mb-0">@completionRate%</h3>
+                        <small class="text-danger">-2.1% from last month</small>
+                    </div>
+                    <Icon Name="IconName.CheckCircle" Class="fs-1 text-warning opacity-75" />
+                </div>
+            </CardBody>
+        </Card>
+    </div>
+    <div class="col-lg-3 col-md-6">
+        <Card Class="border-info">
+            <CardBody>
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-info">Avg. Session Time</h6>
+                        <h3 class="mb-0">@avgSessionTime min</h3>
+                        <small class="text-success">+5.7% from last month</small>
+                    </div>
+                    <Icon Name="IconName.Clock" Class="fs-1 text-info opacity-75" />
+                </div>
+            </CardBody>
+        </Card>
+    </div>
+</div>
+
+<!-- Main Analytics Charts -->
+<div class="row g-4 mb-4">
+    <div class="col-lg-8">
+        <Card>
+            <CardHeader>
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">Revenue & Enrollment Trends</h5>
+                    <div class="btn-group" role="group">
+                        <input type="radio" class="btn-check" name="timeRange" id="lastWeek" @onchange="@(() => ChangeTimeRange("week"))" checked="@(selectedTimeRange == "week")">
+                        <label class="btn btn-outline-primary btn-sm" for="lastWeek">7 Days</label>
+                        
+                        <input type="radio" class="btn-check" name="timeRange" id="lastMonth" @onchange="@(() => ChangeTimeRange("month"))" checked="@(selectedTimeRange == "month")">
+                        <label class="btn btn-outline-primary btn-sm" for="lastMonth">30 Days</label>
+                        
+                        <input type="radio" class="btn-check" name="timeRange" id="lastYear" @onchange="@(() => ChangeTimeRange("year"))" checked="@(selectedTimeRange == "year")">
+                        <label class="btn btn-outline-primary btn-sm" for="lastYear">1 Year</label>
+                    </div>
+                </div>
+            </CardHeader>
+            <CardBody>
+                <LineChart @ref="revenueChart" Width="700" Height="400" />
+            </CardBody>
+        </Card>
+    </div>
+    <div class="col-lg-4">
+        <Card>
+            <CardHeader>
+                <h5 class="card-title mb-0">Course Performance</h5>
+            </CardHeader>
+            <CardBody>
+                <BarChart @ref="performanceChart" Width="350" Height="400" />
+            </CardBody>
+        </Card>
+    </div>
+</div>
+
+<div class="row g-4 mb-4">
+    <div class="col-lg-6">
+        <Card>
+            <CardHeader>
+                <h5 class="card-title mb-0">Student Engagement by Device</h5>
+            </CardHeader>
+            <CardBody>
+                <DoughnutChart @ref="deviceChart" Width="400" Height="300" />
+            </CardBody>
+        </Card>
+    </div>
+    <div class="col-lg-6">
+        <Card>
+            <CardHeader>
+                <h5 class="card-title mb-0">Learning Progress Distribution</h5>
+            </CardHeader>
+            <CardBody>
+                <PolarAreaChart @ref="progressChart" Width="400" Height="300" />
+            </CardBody>
+        </Card>
+    </div>
+</div>
+
+<div class="row g-4 mb-4">
+    <div class="col-12">
+        <Card>
+            <CardHeader>
+                <h5 class="card-title mb-0">Course Categories Performance Matrix</h5>
+            </CardHeader>
+            <CardBody>
+                <BarChart @ref="categoryMatrix" Width="800" Height="350" />
+            </CardBody>
+        </Card>
+    </div>
+</div>
+
+<!-- Recent Activity Table -->
+<div class="row g-4">
+    <div class="col-12">
+        <Card>
+            <CardHeader>
+                <h5 class="card-title mb-0">Recent Student Activity</h5>
+            </CardHeader>
+            <CardBody>
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Student</th>
+                                <th>Course</th>
+                                <th>Activity</th>
+                                <th>Progress</th>
+                                <th>Last Active</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var activity in recentActivities)
+                            {
+                                <tr>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <div class="avatar-sm bg-primary rounded-circle me-2 d-flex align-items-center justify-content-center">
+                                                <span class="text-white">@activity.StudentName.Substring(0, 1)</span>
+                                            </div>
+                                            @activity.StudentName
+                                        </div>
+                                    </td>
+                                    <td>@activity.CourseName</td>
+                                    <td>@activity.Activity</td>
+                                    <td>
+                                        <div class="progress" style="height: 6px;">
+                                            <div class="progress-bar" role="progressbar" style="width: @activity.Progress%" aria-valuenow="@activity.Progress" aria-valuemin="0" aria-valuemax="100"></div>
+                                        </div>
+                                        <small class="text-muted">@activity.Progress%</small>
+                                    </td>
+                                    <td>@activity.LastActive.ToString("MMM dd, HH:mm")</td>
+                                    <td>
+                                        <Badge Color="@GetStatusBadgeColor(activity.Status)">@activity.Status</Badge>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </CardBody>
+        </Card>
+    </div>
+</div>
+
+@code {
+    private LineChart revenueChart = default!;
+    private BarChart performanceChart = default!;
+    private DoughnutChart deviceChart = default!;
+    private PolarAreaChart progressChart = default!;
+    private BarChart categoryMatrix = default!;
+
+    private string selectedTimeRange = "month";
+    private int totalRevenue = 45000;
+    private int activeStudents = 1248;
+    private int completionRate = 78;
+    private int avgSessionTime = 45;
+
+    private List<StudentActivity> recentActivities = new();
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            GenerateDummyData();
+            await InitializeCharts();
+        }
+    }
+
+    private async Task InitializeCharts()
+    {
+        await InitializeRevenueChart();
+        await InitializePerformanceChart();
+        await InitializeDeviceChart();
+        await InitializeProgressChart();
+        await InitializeCategoryMatrix();
+    }
+
+    private async Task InitializeRevenueChart()
+    {
+        var labels = selectedTimeRange switch
+        {
+            "week" => new List<string> { "Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun" },
+            "month" => new List<string> { "Week 1", "Week 2", "Week 3", "Week 4" },
+            "year" => new List<string> { "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec" },
+            _ => new List<string> { "Week 1", "Week 2", "Week 3", "Week 4" }
+        };
+
+        var revenueData = selectedTimeRange switch
+        {
+            "week" => new List<double?> { 1200, 1500, 1800, 1600, 2200, 2800, 3200 },
+            "month" => new List<double?> { 8500, 9200, 10800, 11500 },
+            "year" => new List<double?> { 25000, 28000, 32000, 35000, 38000, 42000, 45000, 48000, 52000, 55000, 58000, 62000 },
+            _ => new List<double?> { 8500, 9200, 10800, 11500 }
+        };
+
+        var enrollmentData = selectedTimeRange switch
+        {
+            "week" => new List<double?> { 12, 18, 25, 22, 35, 45, 52 },
+            "month" => new List<double?> { 85, 120, 145, 180 },
+            "year" => new List<double?> { 320, 380, 420, 480, 520, 580, 620, 680, 720, 780, 840, 920 },
+            _ => new List<double?> { 85, 120, 145, 180 }
+        };
+
+        var chartData = new ChartData
+        {
+            Labels = labels,
+            Datasets = new List<IChartDataset>
+            {
+                new LineChartDataset
+                {
+                    Label = "Revenue ($)",
+                    Data = revenueData,
+                    BackgroundColor = "rgba(54, 162, 235, 0.2)",
+                    BorderColor = "rgba(54, 162, 235, 1)",
+                    BorderWidth = 3,
+                    Fill = true
+                },
+                new LineChartDataset
+                {
+                    Label = "New Enrollments",
+                    Data = enrollmentData,
+                    BackgroundColor = "rgba(255, 99, 132, 0.2)",
+                    BorderColor = "rgba(255, 99, 132, 1)",
+                    BorderWidth = 3,
+                    Fill = true
+                }
+            }
+        };
+
+        var chartOptions = new LineChartOptions
+        {
+            Responsive = true,
+            Interaction = new Interaction { Mode = InteractionMode.Index }
+        };
+
+        await revenueChart.InitializeAsync(chartData, chartOptions);
+    }
+
+    private async Task InitializePerformanceChart()
+    {
+        var chartData = new ChartData
+        {
+            Labels = new List<string> { "Excellent", "Good", "Average", "Below Avg", "Poor" },
+            Datasets = new List<IChartDataset>
+            {
+                new BarChartDataset
+                {
+                    Label = "Course Performance",
+                    Data = new List<double?> { 45, 65, 80, 35, 15 },
+                    BackgroundColor = new List<string>
+                    {
+                        "rgba(34, 197, 94, 0.8)",
+                        "rgba(59, 130, 246, 0.8)",
+                        "rgba(251, 191, 36, 0.8)",
+                        "rgba(245, 101, 101, 0.8)",
+                        "rgba(239, 68, 68, 0.8)"
+                    }
+                }
+            }
+        };
+
+        var chartOptions = new BarChartOptions
+        {
+            Responsive = true
+        };
+
+        await performanceChart.InitializeAsync(chartData, chartOptions);
+    }
+
+    private async Task InitializeDeviceChart()
+    {
+        var chartData = new ChartData
+        {
+            Labels = new List<string> { "Desktop", "Mobile", "Tablet" },
+            Datasets = new List<IChartDataset>
+            {
+                new DoughnutChartDataset
+                {
+                    Data = new List<double?> { 55, 35, 10 },
+                    BackgroundColor = new List<string>
+                    {
+                        "rgba(59, 130, 246, 0.8)",
+                        "rgba(34, 197, 94, 0.8)",
+                        "rgba(251, 191, 36, 0.8)"
+                    }
+                }
+            }
+        };
+
+        var chartOptions = new DoughnutChartOptions
+        {
+            Responsive = true
+        };
+
+        await deviceChart.InitializeAsync(chartData, chartOptions);
+    }
+
+    private async Task InitializeProgressChart()
+    {
+        var chartData = new ChartData
+        {
+            Labels = new List<string> { "0-20%", "21-40%", "41-60%", "61-80%", "81-100%" },
+            Datasets = new List<IChartDataset>
+            {
+                new PolarAreaChartDataset
+                {
+                    Data = new List<double?> { 15, 25, 35, 45, 80 },
+                    BackgroundColor = new List<string>
+                    {
+                        "rgba(239, 68, 68, 0.8)",
+                        "rgba(245, 101, 101, 0.8)",
+                        "rgba(251, 191, 36, 0.8)",
+                        "rgba(59, 130, 246, 0.8)",
+                        "rgba(34, 197, 94, 0.8)"
+                    }
+                }
+            }
+        };
+
+        var chartOptions = new PolarAreaChartOptions
+        {
+            Responsive = true
+        };
+
+        await progressChart.InitializeAsync(chartData, chartOptions);
+    }
+
+    private async Task InitializeCategoryMatrix()
+    {
+        var chartData = new ChartData
+        {
+            Labels = new List<string> { "Programming", "Design", "Business", "Marketing", "Data Science", "Languages" },
+            Datasets = new List<IChartDataset>
+            {
+                new BarChartDataset
+                {
+                    Label = "Enrollment",
+                    Data = new List<double?> { 450, 320, 280, 180, 150, 120 },
+                    BackgroundColor = new List<string> { "rgba(54, 162, 235, 0.8)", "rgba(54, 162, 235, 0.8)", "rgba(54, 162, 235, 0.8)", "rgba(54, 162, 235, 0.8)", "rgba(54, 162, 235, 0.8)", "rgba(54, 162, 235, 0.8)" }
+                },
+                new BarChartDataset
+                {
+                    Label = "Completion",
+                    Data = new List<double?> { 380, 280, 240, 150, 120, 100 },
+                    BackgroundColor = new List<string> { "rgba(34, 197, 94, 0.8)", "rgba(34, 197, 94, 0.8)", "rgba(34, 197, 94, 0.8)", "rgba(34, 197, 94, 0.8)", "rgba(34, 197, 94, 0.8)", "rgba(34, 197, 94, 0.8)" }
+                },
+                new BarChartDataset
+                {
+                    Label = "Revenue",
+                    Data = new List<double?> { 28000, 18000, 15000, 9000, 8500, 6000 },
+                    BackgroundColor = new List<string> { "rgba(251, 191, 36, 0.8)", "rgba(251, 191, 36, 0.8)", "rgba(251, 191, 36, 0.8)", "rgba(251, 191, 36, 0.8)", "rgba(251, 191, 36, 0.8)", "rgba(251, 191, 36, 0.8)" }
+                }
+            }
+        };
+
+        var chartOptions = new BarChartOptions
+        {
+            Responsive = true
+        };
+
+        await categoryMatrix.InitializeAsync(chartData, chartOptions);
+    }
+
+    private async Task ChangeTimeRange(string range)
+    {
+        selectedTimeRange = range;
+        await InitializeRevenueChart();
+        StateHasChanged();
+    }
+
+    private async Task RefreshData()
+    {
+        GenerateDummyData();
+        await InitializeCharts();
+        StateHasChanged();
+    }
+
+    private async Task ExportReport()
+    {
+        // Simulate export functionality
+        await Task.Delay(1000);
+        // In real implementation, this would generate and download a report
+    }
+
+    private void GenerateDummyData()
+    {
+        var random = new Random();
+        totalRevenue = random.Next(35000, 65000);
+        activeStudents = random.Next(1000, 1500);
+        completionRate = random.Next(70, 85);
+        avgSessionTime = random.Next(35, 55);
+
+        recentActivities = new List<StudentActivity>
+        {
+            new() { StudentName = "John Doe", CourseName = "Advanced C#", Activity = "Completed Module 3", Progress = 75, LastActive = DateTime.Now.AddMinutes(-15), Status = "Active" },
+            new() { StudentName = "Jane Smith", CourseName = "UI/UX Design", Activity = "Started Assessment", Progress = 60, LastActive = DateTime.Now.AddHours(-2), Status = "Active" },
+            new() { StudentName = "Mike Johnson", CourseName = "Data Science", Activity = "Watched Video", Progress = 45, LastActive = DateTime.Now.AddHours(-5), Status = "Active" },
+            new() { StudentName = "Sarah Wilson", CourseName = "Digital Marketing", Activity = "Submitted Assignment", Progress = 90, LastActive = DateTime.Now.AddMinutes(-30), Status = "Completed" },
+            new() { StudentName = "David Brown", CourseName = "Python Basics", Activity = "Failed Quiz", Progress = 25, LastActive = DateTime.Now.AddDays(-1), Status = "Struggling" }
+        };
+    }
+
+    private BadgeColor GetStatusBadgeColor(string status) => status switch
+    {
+        "Active" => BadgeColor.Success,
+        "Completed" => BadgeColor.Primary,
+        "Struggling" => BadgeColor.Warning,
+        _ => BadgeColor.Secondary
+    };
+
+    public class StudentActivity
+    {
+        public string StudentName { get; set; } = string.Empty;
+        public string CourseName { get; set; } = string.Empty;
+        public string Activity { get; set; } = string.Empty;
+        public int Progress { get; set; }
+        public DateTime LastActive { get; set; }
+        public string Status { get; set; } = string.Empty;
+    }
+}

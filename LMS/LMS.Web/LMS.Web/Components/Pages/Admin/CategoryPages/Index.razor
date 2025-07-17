@@ -1,7 +1,7 @@
 ﻿@page "/admin/categories"
+@rendermode @(new InteractiveServerRenderMode())
 
 @using LMS.Repositories
-@using LMS.Web.Components.Shared
 @using LMS.Web.Services
 @inject ICategoryRepository CategoryRepository
 @inject LMS.Web.Services.ToastService ToastService
@@ -19,70 +19,79 @@
         </div>
     </CardHeader>
     <CardBody>
-        <Grid TItem="CategoryModel"
-              DataProvider="CategoriesDataProvider"
-              AllowPaging="true"
-              AllowSorting="true"
-              AllowFiltering="true">
-            <GridColumn TItem="CategoryModel" HeaderText="Name" PropertyName="Name" SortKeySelector="item => item.Name" Filterable="true" />
-            <GridColumn TItem="CategoryModel" HeaderText="Description" PropertyName="Description" Filterable="true" />
-            <GridColumn TItem="CategoryModel" HeaderText="Color" PropertyName="Color">
-                <div class="d-flex align-items-center">
-                    <div class="me-2" style="width: 20px; height: 20px; background-color: @context.Color; border: 1px solid #ccc; border-radius: 4px;"></div>
-                    @context.Color
-                </div>
-            </GridColumn>
-            <GridColumn TItem="CategoryModel" HeaderText="Active" SortKeySelector="item => item.IsActive">
-                <Badge Color="@(context.IsActive? BadgeColor.Success: BadgeColor.Secondary)">
-                    @(context.IsActive ? "Yes" : "No")
-                </Badge>
-            </GridColumn>
-            <GridColumn TItem="CategoryModel" HeaderText="Parent Category" PropertyName="ParentCategoryName" Filterable="true" />
-            <GridColumn TItem="CategoryModel" HeaderText="Course Count" PropertyName="CourseCount" SortKeySelector="item => item.CourseCount" HeaderTextAlignment="Alignment.End" TextAlignment="Alignment.End" />
-            <GridColumn TItem="CategoryModel" HeaderText="Actions">
-                <div class="btn-group" role="group">
-                    <Button Color="ButtonColor.Primary" Size="ButtonSize.Small" Href='@($"/admin/categories/edit?id={context.Id}")'>
-                        <Icon Name="IconName.Pencil" /> Edit
-                    </Button>
-                    <Button Color="ButtonColor.Info" Size="ButtonSize.Small" Href='@($"/admin/categories/details?id={context.Id}")'>
-                        <Icon Name="IconName.Eye" /> Details
-                    </Button>
-                    <Button Color="ButtonColor.Danger" Size="ButtonSize.Small" @onclick="() => ConfirmDelete(context)">
-                        <Icon Name="IconName.Trash" /> Delete
-                    </Button>
-                </div>
-            </GridColumn>
-        </Grid>
+        <DataTableComponent TItem="CategoryModel" DataProvider="CategoriesDataProvider" AllowPaging="true"
+            AllowSorting="true" AllowFiltering="true" PageSize="10">
+            <Columns>
+                <GridColumn TItem="CategoryModel" HeaderText="Name" PropertyName="Name"
+                    SortKeySelector="item => item.Name" Filterable="true">
+                    @context.Name
+                </GridColumn>
+                <GridColumn TItem="CategoryModel" HeaderText="Description" PropertyName="Description" Filterable="true">
+                    @context.Description
+                </GridColumn>
+                <GridColumn TItem="CategoryModel" HeaderText="Color" PropertyName="Color">
+                    <div class="d-flex align-items-center">
+                        <div class="me-2"
+                            style="width: 20px; height: 20px; background-color: @context.Color; border: 1px solid #ccc; border-radius: 4px;">
+                        </div>
+                        @context.Color
+                    </div>
+                </GridColumn>
+                <GridColumn TItem="CategoryModel" HeaderText="Active" SortKeySelector="item => item.IsActive">
+                    <Badge Color="@(context.IsActive? BadgeColor.Success: BadgeColor.Secondary)">
+                        @(context.IsActive ? "Yes" : "No")
+                    </Badge>
+                </GridColumn>
+                <GridColumn TItem="CategoryModel" HeaderText="Parent Category" PropertyName="ParentCategoryName"
+                    Filterable="true">
+                    @context.ParentCategoryName
+                </GridColumn>
+                <GridColumn TItem="CategoryModel" HeaderText="Course Count" PropertyName="CourseCount"
+                    SortKeySelector="item => item.CourseCount" HeaderTextAlignment="Alignment.End"
+                    TextAlignment="Alignment.End">
+                    @context.CourseCount
+                </GridColumn>
+                <GridColumn TItem="CategoryModel" HeaderText="Actions" Sortable="false" Filterable="false">
+                    <div class="btn-group" role="group">
+                        <Button Color="ButtonColor.Primary" Size="ButtonSize.Small"
+                            Href='@($"/admin/categories/edit?id={context.Id}")'>
+                            <Icon Name="IconName.Pencil" /> Edit
+                        </Button>
+                        <Button Color="ButtonColor.Info" Size="ButtonSize.Small"
+                            Href='@($"/admin/categories/details?id={context.Id}")'>
+                            <Icon Name="IconName.Eye" /> Details
+                        </Button>
+                        <Button Color="ButtonColor.Danger" Size="ButtonSize.Small"
+                            @onclick="() => ConfirmDelete(context)">
+                            <Icon Name="IconName.Trash" /> Delete
+                        </Button>
+                    </div>
+                </GridColumn>
+            </Columns>
+        </DataTableComponent>
     </CardBody>
 </Card>
 
 <!-- Delete Confirmation Modal -->
-<ModalComponent @ref="deleteModal"
-                Title="Confirm Delete"
-                Message="@($"Are you sure you want to delete the category '{categoryToDelete?.Name}'? This action cannot be undone.")"
-                ConfirmButtonText="Delete"
-                ConfirmButtonColor="ButtonColor.Danger"
-                OnConfirm="DeleteCategory" />
+<ModalComponent @ref="deleteModal" Title="Confirm Delete"
+    Message="@($"Are you sure you want to delete the category '{categoryToDelete?.Name}'? This action cannot be undone.")"
+    ConfirmButtonText="Delete" ConfirmButtonColor="ButtonColor.Danger" OnConfirm="DeleteCategory" />
 
 @code {
-    // Removed unused field 'categories' to fix CS0414
-
     private ModalComponent deleteModal = default!;
     private CategoryModel? categoryToDelete;
 
-    private async Task<GridDataProviderResult<CategoryModel>> CategoriesDataProvider(GridDataProviderRequest<CategoryModel> request)
+    private async Task<GridDataProviderResult<CategoryModel>> CategoriesDataProvider(GridDataProviderRequest<CategoryModel>
+    request)
     {
         try
         {
-            // Only pass supported properties to PaginationRequest
             var result = await CategoryRepository.GetCategoriesPaginatedAsync(new PaginationRequest
             {
                 PageNumber = request.PageNumber,
                 PageSize = request.PageSize
-                // Removed unsupported: Filter, SortBy, SortDirection
             });
 
-            // If no data is returned from the server, use dummy data
             var data = (result.Items == null || !result.Items.Any()) ? AddDummyCategories() : result.Items;
             var totalCount = (result.Items == null || !result.Items.Any()) ? data.Count() : result.TotalCount;
 
@@ -103,48 +112,47 @@
         }
     }
 
-    // Dummy data generator for categories
     private List<CategoryModel> AddDummyCategories()
     {
         return new List<CategoryModel>
-        {
-            new CategoryModel
-            {
-                Id = 1,
-                Name = "Programming",
-                Description = "All programming related courses",
-                Color = "#007bff",
-                IsActive = true,
-                ParentCategoryId = null,
-                ParentCategoryName = null,
-                SubCategories = new List<CategoryModel>(),
-                CourseCount = 10
-            },
-            new CategoryModel
-            {
-                Id = 2,
-                Name = "Design",
-                Description = "Design and UI/UX courses",
-                Color = "#28a745",
-                IsActive = true,
-                ParentCategoryId = null,
-                ParentCategoryName = null,
-                SubCategories = new List<CategoryModel>(),
-                CourseCount = 5
-            },
-            new CategoryModel
-            {
-                Id = 3,
-                Name = "Business",
-                Description = "Business and management courses",
-                Color = "#ffc107",
-                IsActive = false,
-                ParentCategoryId = null,
-                ParentCategoryName = null,
-                SubCategories = new List<CategoryModel>(),
-                CourseCount = 3
-            }
-        };
+{
+new CategoryModel
+{
+Id = 1,
+Name = "Programming",
+Description = "All programming related courses",
+Color = "#007bff",
+IsActive = true,
+ParentCategoryId = null,
+ParentCategoryName = null,
+SubCategories = new List<CategoryModel>(),
+CourseCount = 10
+},
+new CategoryModel
+{
+Id = 2,
+Name = "Design",
+Description = "Design and UI/UX courses",
+Color = "#28a745",
+IsActive = true,
+ParentCategoryId = null,
+ParentCategoryName = null,
+SubCategories = new List<CategoryModel>(),
+CourseCount = 5
+},
+new CategoryModel
+{
+Id = 3,
+Name = "Business",
+Description = "Business and management courses",
+Color = "#ffc107",
+IsActive = false,
+ParentCategoryId = null,
+ParentCategoryName = null,
+SubCategories = new List<CategoryModel>(),
+CourseCount = 3
+}
+};
     }
 
     private async Task ConfirmDelete(CategoryModel category)
@@ -159,7 +167,6 @@
         {
             try
             {
-                // Use the correct delete method from the repository
                 await CategoryRepository.DeleteCategoryAsync(categoryToDelete.Id);
                 ToastService.ShowSuccess("Success", $"Category '{categoryToDelete.Name}' deleted successfully.");
                 await RefreshGridDataAsync();

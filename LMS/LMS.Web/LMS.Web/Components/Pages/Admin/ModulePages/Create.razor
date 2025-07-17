@@ -47,13 +47,12 @@
             <div class="row">
                 <div class="col-md-6 mb-3">
                     <label for="courseid" class="form-label">Course <span class="text-danger">*</span></label>
-                    <SearchableSelectComponent TItem="DropdownOption<int>" 
-                                               TValue="int" 
-                                               DataProvider="SearchCoursesDataProvider"
-                                               ValueSelector="@(item => item.Value)" 
+                    <SearchableSelectComponent TItem="DropdownOption<int>" TValue="int"
+                                               OnLoad="async () => (await DropdownRepository.GetCoursesAsync(null, 20)).Cast<DropdownOption<int>>()"
+                                               ValueSelector="@(item => item.Value)"
                                                DisplaySelector="@(item => item.Text)"
                                                @bind-SelectedValue="Module.CourseId"
-                                               Placeholder="Select a course..." 
+                                               Placeholder="Select a course..."
                                                EmptyText="No courses found" />
                     <ValidationMessage For="() => Module.CourseId" class="text-danger" />
                 </div>

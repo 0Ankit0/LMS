@@ -1,4 +1,5 @@
 ﻿@page "/admin/assessments"
+@rendermode @(new InteractiveServerRenderMode())
 
 @using LMS.Repositories
 @using LMS.Web.Components.Shared
@@ -19,66 +20,77 @@
         </div>
     </CardHeader>
     <CardBody>
-        <Grid TItem="AssessmentModel"
-              DataProvider="AssessmentDataProvider"
-              AllowPaging="true"
-              AllowSorting="true"
-              AllowFiltering="true">
-            <GridColumn TItem="AssessmentModel" HeaderText="Title" PropertyName="Title" />
-            <GridColumn TItem="AssessmentModel" HeaderText="Description" PropertyName="Description" />
-            <GridColumn TItem="AssessmentModel" HeaderText="Course ID" PropertyName="CourseId" />
-            <GridColumn TItem="AssessmentModel" HeaderText="Type" PropertyName="Type" />
-            <GridColumn TItem="AssessmentModel" HeaderText="Max Attempts" PropertyName="MaxAttempts" />
-            <GridColumn TItem="AssessmentModel" HeaderText="Passing Score" PropertyName="PassingScore" />
-            <GridColumn TItem="AssessmentModel" HeaderText="Randomized">
-                @((context as AssessmentModel)?.IsRandomized == true ? "Yes" : "No")
-            </GridColumn>
-            <GridColumn TItem="AssessmentModel" HeaderText="Available From" PropertyName="AvailableFrom"
-                        Format="yyyy-MM-dd" />
-            <GridColumn TItem="AssessmentModel" HeaderText="Actions">
-                <div class="btn-group" role="group">
-                    <Button Color="ButtonColor.Primary" Size="ButtonSize.Small"
+        <DataTableComponent TItem="AssessmentModel" DataProvider="AssessmentDataProvider" AllowPaging="true"
+            AllowSorting="true" AllowFiltering="true" PageSize="10">
+            <Columns>
+                <GridColumn TItem="AssessmentModel" HeaderText="Title" PropertyName="Title">
+                    @context.Title
+                </GridColumn>
+                <GridColumn TItem="AssessmentModel" HeaderText="Description" PropertyName="Description">
+                    @context.Description
+                </GridColumn>
+                <GridColumn TItem="AssessmentModel" HeaderText="Course ID" PropertyName="CourseId">
+                    @context.CourseId
+                </GridColumn>
+                <GridColumn TItem="AssessmentModel" HeaderText="Type" PropertyName="Type">
+                    @context.Type
+                </GridColumn>
+                <GridColumn TItem="AssessmentModel" HeaderText="Max Attempts" PropertyName="MaxAttempts">
+                    @context.MaxAttempts
+                </GridColumn>
+                <GridColumn TItem="AssessmentModel" HeaderText="Passing Score" PropertyName="PassingScore">
+                    @context.PassingScore
+                </GridColumn>
+                <GridColumn TItem="AssessmentModel" HeaderText="Randomized">
+                    @(context.IsRandomized ? "Yes" : "No")
+                </GridColumn>
+                <GridColumn TItem="AssessmentModel" HeaderText="Available From" PropertyName="AvailableFrom"
+                    Format="yyyy-MM-dd">
+                    @context.AvailableFrom?.ToString("yyyy-MM-dd")
+                </GridColumn>
+                <GridColumn TItem="AssessmentModel" HeaderText="Actions" Sortable="false" Filterable="false">
+                    <div class="btn-group" role="group">
+                        <Button Color="ButtonColor.Primary" Size="ButtonSize.Small"
                             Href='@($"/admin/assessments/edit?id={context.Id}")'>
-                        <Icon Name="IconName.Pencil" /> Edit
-                    </Button>
-                    <Button Color="ButtonColor.Success" Size="ButtonSize.Small" Href='@($"/admin/assessments/manage?id={context.Id}")'>
-                        <Icon Name="IconName.Wrench" /> Manage
-                    </Button>
-                    <Button Color="ButtonColor.Info" Size="ButtonSize.Small"
+                            <Icon Name="IconName.Pencil" /> Edit
+                        </Button>
+                        <Button Color="ButtonColor.Success" Size="ButtonSize.Small"
+                            Href='@($"/admin/assessments/manage?id={context.Id}")'>
+                            <Icon Name="IconName.Wrench" /> Manage
+                        </Button>
+                        <Button Color="ButtonColor.Info" Size="ButtonSize.Small"
                             Href='@($"/admin/assessments/details?id={context.Id}")'>
-                        <Icon Name="IconName.Eye" /> Details
-                    </Button>
-                    <Button Color="ButtonColor.Danger" Size="ButtonSize.Small" @onclick="() => ConfirmDelete(context)">
-                        <Icon Name="IconName.Trash" /> Delete
-                    </Button>
-                </div>
-            </GridColumn>
-        </Grid>
+                            <Icon Name="IconName.Eye" /> Details
+                        </Button>
+                        <Button Color="ButtonColor.Danger" Size="ButtonSize.Small"
+                            @onclick="() => ConfirmDelete(context)">
+                            <Icon Name="IconName.Trash" /> Delete
+                        </Button>
+                    </div>
+                </GridColumn>
+            </Columns>
+        </DataTableComponent>
     </CardBody>
 </Card>
 
 <!-- Delete Confirmation Modal -->
-<ModalComponent @ref="deleteModal"
-                Title="Confirm Delete"
-                Message="@($"Are you sure you want to delete the assessment '{assessmentToDelete?.Title}'? This action cannot be undone.")"
-                ConfirmButtonText="Delete"
-                ConfirmButtonColor="ButtonColor.Danger"
-                OnConfirm="DeleteAssessment" />
+<ModalComponent @ref="deleteModal" Title="Confirm Delete"
+    Message="@($"Are you sure you want to delete the assessment '{assessmentToDelete?.Title}'? This action cannot be undone.")"
+    ConfirmButtonText="Delete" ConfirmButtonColor="ButtonColor.Danger" OnConfirm="DeleteAssessment" />
 
 @code {
     private ModalComponent deleteModal = default!;
     private AssessmentModel? assessmentToDelete;
 
-    private async Task<GridDataProviderResult<AssessmentModel>> AssessmentDataProvider(GridDataProviderRequest<AssessmentModel> request)
+    private async Task<GridDataProviderResult<AssessmentModel>>
+    AssessmentDataProvider(GridDataProviderRequest<AssessmentModel> request)
     {
         try
         {
-            // Only pass supported properties to PaginationRequest
             var result = await AssessmentRepository.GetAssessmentsPaginatedAsync(new PaginationRequest
             {
                 PageNumber = request.PageNumber,
                 PageSize = request.PageSize
-                // Remove unsupported properties: Filter, SortBy, SortDirection
             });
 
             return new GridDataProviderResult<AssessmentModel>
@@ -110,7 +122,6 @@
         {
             try
             {
-                // Use the correct delete method from the repository
                 await AssessmentRepository.DeleteAssessmentAsync(assessmentToDelete.Id);
                 ToastService.ShowSuccess("Success", $"Assessment '{assessmentToDelete.Title}' deleted successfully.");
                 await RefreshGridDataAsync();

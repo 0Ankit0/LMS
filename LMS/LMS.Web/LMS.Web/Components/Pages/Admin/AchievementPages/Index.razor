@@ -1,7 +1,7 @@
 ﻿@page "/admin/achievements"
 @using LMS.Repositories
 @inject IAchievementRepository AchievementRepository
-
+@rendermode @(new InteractiveServerRenderMode())
 <PageTitle>Achievements - Admin</PageTitle>
 
 <div class="d-flex justify-content-between align-items-center mb-4">
@@ -12,18 +12,26 @@
     </Button>
 </div>
 
-<DataTableComponent TItem="AchievementModel" DataProvider="AchievementDataProvider">
-    <Columns>
-        <GridColumn TItem="AchievementModel" HeaderText="Name" PropertyName="Name" />
-        <GridColumn TItem="AchievementModel" HeaderText="Description" PropertyName="Description" />
-        <GridColumn TItem="AchievementModel" HeaderText="Points" PropertyName="Points" />
-        <GridColumn TItem="AchievementModel" HeaderText="Type" PropertyName="Type" />
-        <GridColumn TItem="AchievementModel" HeaderText="Active">
-            @((context as AchievementModel)?.IsActive == true ? "Yes" : "No")
-        </GridColumn>
-        <GridColumn TItem="AchievementModel" HeaderText="Users Earned" PropertyName="UsersEarnedCount" />
-    </Columns>
-    <Actions>
+<DataTableComponent TItem="AchievementModel" DataProvider="AchievementDataProvider" PageSize="10">
+    <GridColumn TItem="AchievementModel" HeaderText="Name" PropertyName="Name">
+        @context.Name
+    </GridColumn>
+    <GridColumn TItem="AchievementModel" HeaderText="Description" PropertyName="Description">
+        @context.Description
+    </GridColumn>
+    <GridColumn TItem="AchievementModel" HeaderText="Points" PropertyName="Points">
+        @context.Points
+    </GridColumn>
+    <GridColumn TItem="AchievementModel" HeaderText="Type" PropertyName="Type">
+        @context.Type
+    </GridColumn>
+    <GridColumn TItem="AchievementModel" HeaderText="Active">
+        @(context.IsActive ? "Yes" : "No")
+    </GridColumn>
+    <GridColumn TItem="AchievementModel" HeaderText="Users Earned" PropertyName="UsersEarnedCount">
+        @context.UsersEarnedCount
+    </GridColumn>
+    <GridColumn TItem="AchievementModel" HeaderText="Actions" Sortable="false" Filterable="false">
         <div class="btn-group" role="group">
             <Button Color="ButtonColor.Primary" Size="ButtonSize.Small"
                 Href='@($"/admin/achievements/edit?id={context.Id}")'>
@@ -38,7 +46,7 @@
                 <Icon Name="IconName.Trash" /> Delete
             </Button>
         </div>
-    </Actions>
+    </GridColumn>
 </DataTableComponent>
 
 @code {
@@ -64,11 +72,14 @@
                     result = new PaginatedResult<AchievementModel>
                     {
                         Items = new List<AchievementModel>
-                        {
-                            new AchievementModel { Id = 1, Name = "First Course Completion", Description = "Completed your first course.", Points = 100, Type = "Course", IsActive = true, CreatedAt = DateTime.Now, UsersEarnedCount = 5 },
-                            new AchievementModel { Id = 2, Name = "Top Learner", Description = "Achieved top score in a quiz.", Points = 200, Type = "Quiz", IsActive = true, CreatedAt = DateTime.Now, UsersEarnedCount = 2 },
-                            new AchievementModel { Id = 3, Name = "Forum Contributor", Description = "Made 10 forum posts.", Points = 50, Type = "Forum", IsActive = true, CreatedAt = DateTime.Now, UsersEarnedCount = 8 }
-                        },
+        {
+new AchievementModel { Id = 1, Name = "First Course Completion", Description = "Completed your first course.", Points =
+100, Type = "Course", IsActive = true, CreatedAt = DateTime.Now, UsersEarnedCount = 5 },
+new AchievementModel { Id = 2, Name = "Top Learner", Description = "Achieved top score in a quiz.", Points = 200, Type =
+"Quiz", IsActive = true, CreatedAt = DateTime.Now, UsersEarnedCount = 2 },
+new AchievementModel { Id = 3, Name = "Forum Contributor", Description = "Made 10 forum posts.", Points = 50, Type =
+"Forum", IsActive = true, CreatedAt = DateTime.Now, UsersEarnedCount = 8 }
+        },
                         TotalCount = 3,
                         PageNumber = request.PageNumber,
                         PageSize = request.PageSize

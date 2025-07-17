@@ -60,13 +60,12 @@
                 </div>
                 <div class="col-md-6 mb-3">
                     <label for="parentcategoryid" class="form-label">Parent Category</label>
-                    <SearchableSelectComponent TItem="DropdownOption<int>" 
-                                               TValue="int?" 
-                                               DataProvider="SearchCategoriesDataProvider"
-                                               ValueSelector="@(item => item.Value)" 
+                    <SearchableSelectComponent TItem="DropdownOption<int>" TValue="int?"
+                                               OnLoad="async () => (await DropdownRepository.GetCategoriesAsync(null, 20)).Cast<DropdownOption<int>>()"
+                                               ValueSelector="@(item => item.Value)"
                                                DisplaySelector="@(item => item.Text)"
                                                @bind-SelectedValue="Category.ParentCategoryId"
-                                               Placeholder="Select parent category (optional)..." 
+                                               Placeholder="Select parent category (optional)..."
                                                EmptyText="No categories found" />
                     <ValidationMessage For="() => Category.ParentCategoryId" class="text-danger" />
                 </div>
@@ -94,28 +93,6 @@
 @code {
     private CreateCategoryRequest Category { get; set; } = new();
     private bool isSubmitting = false;
-
-    private async Task<AutoCompleteDataProviderResult<DropdownOption<int>>> SearchCategoriesDataProvider(AutoCompleteDataProviderRequest<DropdownOption<int>> request)
-    {
-        try
-        {
-            var categories = await DropdownRepository.GetCategoriesAsync(search: request.Filter.Value, take: 20);
-            return new AutoCompleteDataProviderResult<DropdownOption<int>>
-            {
-                Data = categories,
-                TotalCount = categories.Count
-            };
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error loading categories: {ex.Message}");
-            return new AutoCompleteDataProviderResult<DropdownOption<int>>
-            {
-                Data = new List<DropdownOption<int>>(),
-                TotalCount = 0
-            };
-        }
-    }
 
     private async Task AddCategory()
     {

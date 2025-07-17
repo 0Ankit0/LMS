@@ -1,4 +1,5 @@
 @page "/admin/enrollments"
+@rendermode @(new InteractiveServerRenderMode())
 
 @using LMS.Repositories
 @using LMS.Web.Components.Shared
@@ -19,15 +20,23 @@
         </div>
     </div>
     <CardBody>
-        <Grid TItem="EnrollmentModel" 
-              DataProvider="EnrollmentsDataProvider"
-              AllowPaging="true" 
-              AllowSorting="true"
-              AllowFiltering="true">
-            <GridColumn TItem="EnrollmentModel" HeaderText="User ID" PropertyName="UserId" SortKeySelector="item => item.UserId" Filterable="true" />
-            <GridColumn TItem="EnrollmentModel" HeaderText="User Name" PropertyName="UserName" SortKeySelector="item => item.UserName" Filterable="true" />
-            <GridColumn TItem="EnrollmentModel" HeaderText="Course ID" PropertyName="CourseId" SortKeySelector="item => item.CourseId" HeaderTextAlignment="Alignment.End" TextAlignment="Alignment.End" />
-            <GridColumn TItem="EnrollmentModel" HeaderText="Course Title" PropertyName="CourseTitle" SortKeySelector="item => item.CourseTitle" Filterable="true" />
+        <DataTableComponent TItem="EnrollmentModel"
+                            DataProvider="EnrollmentsDataProvider"
+                            AllowPaging="true"
+                            AllowSorting="true"
+                            AllowFiltering="true">
+            <GridColumn TItem="EnrollmentModel" HeaderText="User ID" PropertyName="UserId" SortKeySelector="item => item.UserId" Filterable="true">
+                @context.UserId
+            </GridColumn>
+            <GridColumn TItem="EnrollmentModel" HeaderText="User Name" PropertyName="UserName" SortKeySelector="item => item.UserName" Filterable="true">
+                @context.UserName
+            </GridColumn>
+            <GridColumn TItem="EnrollmentModel" HeaderText="Course ID" PropertyName="CourseId" SortKeySelector="item => item.CourseId" HeaderTextAlignment="Alignment.End" TextAlignment="Alignment.End">
+                @context.CourseId
+            </GridColumn>
+            <GridColumn TItem="EnrollmentModel" HeaderText="Course Title" PropertyName="CourseTitle" SortKeySelector="item => item.CourseTitle" Filterable="true">
+                @context.CourseTitle
+            </GridColumn>
             <GridColumn TItem="EnrollmentModel" HeaderText="Enrolled" SortKeySelector="item => item.EnrolledAt">
                 @context.EnrolledAt.ToString("yyyy-MM-dd")
             </GridColumn>
@@ -45,7 +54,7 @@
             <GridColumn TItem="EnrollmentModel" HeaderText="Final Grade" HeaderTextAlignment="Alignment.End" TextAlignment="Alignment.End">
                 @(context.FinalGrade?.ToString("F1") ?? "N/A")
             </GridColumn>
-            <GridColumn TItem="EnrollmentModel" HeaderText="Actions">
+            <GridColumn TItem="EnrollmentModel" HeaderText="Actions" Sortable="false" Filterable="false">
                 <div class="btn-group" role="group">
                     <Button Color="ButtonColor.Primary" Size="ButtonSize.Small" Href='@($"/admin/enrollments/edit?id={context.Id}")'>
                         <Icon Name="IconName.Pencil" /> Edit
@@ -58,13 +67,13 @@
                     </Button>
                 </div>
             </GridColumn>
-        </Grid>
+        </DataTableComponent>
     </CardBody>
 </Card>
 
 <!-- Delete Confirmation Modal -->
-<ModalComponent @ref="deleteModal" 
-                Title="Confirm Delete" 
+<ModalComponent @ref="deleteModal"
+                Title="Confirm Delete"
                 Message="@($"Are you sure you want to delete the enrollment for '{enrollmentToDelete?.UserName}' in '{enrollmentToDelete?.CourseTitle}'? This action cannot be undone.")"
                 ConfirmButtonText="Delete"
                 ConfirmButtonColor="ButtonColor.Danger"

@@ -46,13 +46,12 @@
 
             <div class="mb-3">
                 <label for="moduleid" class="form-label">Module <span class="text-danger">*</span></label>
-                <SearchableSelectComponent TItem="DropdownOption<int>" 
-                                           TValue="int" 
-                                           DataProvider="SearchModulesDataProvider"
-                                           ValueSelector="@(item => item.Value)" 
+                <SearchableSelectComponent TItem="DropdownOption<int>" TValue="int"
+                                           OnLoad="async () => (await DropdownRepository.GetModulesAsync(null, 20)).Cast<DropdownOption<int>>()"
+                                           ValueSelector="@(item => item.Value)"
                                            DisplaySelector="@(item => item.Text)"
                                            @bind-SelectedValue="Lesson.ModuleId"
-                                           Placeholder="Search and select module..." 
+                                           Placeholder="Search and select module..."
                                            EmptyText="No modules found" />
                 <ValidationMessage For="() => Lesson.ModuleId" class="text-danger" />
             </div>
@@ -142,28 +141,6 @@
     {
         get => (int)Lesson.EstimatedDuration.TotalMinutes;
         set => Lesson.EstimatedDuration = TimeSpan.FromMinutes(value);
-    }
-
-    private async Task<AutoCompleteDataProviderResult<DropdownOption<int>>> SearchModulesDataProvider(AutoCompleteDataProviderRequest<DropdownOption<int>> request)
-    {
-        try
-        {
-            var modules = await DropdownRepository.GetModulesAsync(search: request.Filter.Value, take: 20);
-            return new AutoCompleteDataProviderResult<DropdownOption<int>>
-            {
-                Data = modules,
-                TotalCount = modules.Count
-            };
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error loading modules: {ex.Message}");
-            return new AutoCompleteDataProviderResult<DropdownOption<int>>
-            {
-                Data = new List<DropdownOption<int>>(),
-                TotalCount = 0
-            };
-        }
     }
 
     private async Task AddLesson()

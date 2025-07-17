@@ -1,4 +1,5 @@
 @page "/admin/lessons"  
+@rendermode @(new InteractiveServerRenderMode())
 @using LMS.Web.Components.Shared  
 @using LMS.Repositories  
 @using LMS.Web.Services
@@ -20,27 +21,35 @@
         </div>
     </div>
     <CardBody>
-        <Grid TItem="LessonModel" 
-              DataProvider="LessonsDataProvider"
-              AllowPaging="true" 
-              AllowSorting="true"
-              AllowFiltering="true">
-            <GridColumn TItem="LessonModel" HeaderText="Title" PropertyName="Title" SortKeySelector="item => item.Title" Filterable="true" />
-            <GridColumn TItem="LessonModel" HeaderText="Description" PropertyName="Description" Filterable="true" />
-            <GridColumn TItem="LessonModel" HeaderText="Module ID" PropertyName="ModuleId" SortKeySelector="item => item.ModuleId" HeaderTextAlignment="Alignment.End" TextAlignment="Alignment.End" />
+        <DataTableComponent TItem="LessonModel"
+                            DataProvider="LessonsDataProvider"
+                            AllowPaging="true"
+                            AllowSorting="true"
+                            AllowFiltering="true">
+            <GridColumn TItem="LessonModel" HeaderText="Title" PropertyName="Title" SortKeySelector="item => item.Title" Filterable="true">
+                @context.Title
+            </GridColumn>
+            <GridColumn TItem="LessonModel" HeaderText="Description" PropertyName="Description" Filterable="true">
+                @context.Description
+            </GridColumn>
+            <GridColumn TItem="LessonModel" HeaderText="Module ID" PropertyName="ModuleId" SortKeySelector="item => item.ModuleId" HeaderTextAlignment="Alignment.End" TextAlignment="Alignment.End">
+                @context.ModuleId
+            </GridColumn>
             <GridColumn TItem="LessonModel" HeaderText="Type" PropertyName="Type" SortKeySelector="item => item.Type ?? string.Empty" Filterable="true">
                 <Badge Color="@GetTypeBadgeColor(context.Type)">@context.Type</Badge>
             </GridColumn>
             <GridColumn TItem="LessonModel" HeaderText="Duration" SortKeySelector="item => item.EstimatedDuration">
                 @context.EstimatedDuration.ToString(@"mm\:ss")
             </GridColumn>
-            <GridColumn TItem="LessonModel" HeaderText="Order" PropertyName="OrderIndex" SortKeySelector="item => item.OrderIndex" HeaderTextAlignment="Alignment.End" TextAlignment="Alignment.End" />
+            <GridColumn TItem="LessonModel" HeaderText="Order" PropertyName="OrderIndex" SortKeySelector="item => item.OrderIndex" HeaderTextAlignment="Alignment.End" TextAlignment="Alignment.End">
+                @context.OrderIndex
+            </GridColumn>
             <GridColumn TItem="LessonModel" HeaderText="Required" SortKeySelector="item => item.IsRequired">
                 <Badge Color="@(context.IsRequired ? BadgeColor.Primary : BadgeColor.Secondary)">
                     @(context.IsRequired ? "Yes" : "No")
                 </Badge>
             </GridColumn>
-            <GridColumn TItem="LessonModel" HeaderText="Actions">
+            <GridColumn TItem="LessonModel" HeaderText="Actions" Sortable="false" Filterable="false">
                 <div class="btn-group" role="group">
                     <Button Color="ButtonColor.Primary" Size="ButtonSize.Small" Href='@($"/admin/lessons/edit?id={context.Id}")'>
                         <Icon Name="IconName.Pencil" /> Edit
@@ -53,13 +62,13 @@
                     </Button>
                 </div>
             </GridColumn>
-        </Grid>
+        </DataTableComponent>
     </CardBody>
 </Card>  
 
 <!-- Delete Confirmation Modal -->
-<ModalComponent @ref="deleteModal" 
-                Title="Confirm Delete" 
+<ModalComponent @ref="deleteModal"
+                Title="Confirm Delete"
                 Message="@($"Are you sure you want to delete the lesson '{lessonToDelete?.Title}'? This action cannot be undone.")"
                 ConfirmButtonText="Delete"
                 ConfirmButtonColor="ButtonColor.Danger"
@@ -78,7 +87,6 @@
             {
                 PageNumber = request.PageNumber,
                 PageSize = request.PageSize
-                // Removed unsupported: Filter, SortBy, SortDirection
             });
 
             return new GridDataProviderResult<LessonModel>
@@ -130,7 +138,6 @@
         await InvokeAsync(StateHasChanged);
     }
 
-    // Add missing GetTypeBadgeColor helper
     private BadgeColor GetTypeBadgeColor(string? type)
     {
         return type?.ToLower() switch

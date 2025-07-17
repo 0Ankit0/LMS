@@ -1,4 +1,5 @@
 @page "/admin/modules"
+@rendermode @(new InteractiveServerRenderMode())
 
 @using LMS.Repositories
 @using LMS.Web.Components.Shared
@@ -19,15 +20,23 @@
         </div>
     </div>
     <CardBody>
-        <Grid TItem="ModuleModel" 
-              DataProvider="ModulesDataProvider"
-              AllowPaging="true" 
-              AllowSorting="true"
-              AllowFiltering="true">
-            <GridColumn TItem="ModuleModel" HeaderText="Title" PropertyName="Title" SortKeySelector="item => item.Title" Filterable="true" />
-            <GridColumn TItem="ModuleModel" HeaderText="Description" PropertyName="Description" Filterable="true" />
-            <GridColumn TItem="ModuleModel" HeaderText="Course ID" PropertyName="CourseId" SortKeySelector="item => item.CourseId" HeaderTextAlignment="Alignment.End" TextAlignment="Alignment.End" />
-            <GridColumn TItem="ModuleModel" HeaderText="Order" PropertyName="OrderIndex" SortKeySelector="item => item.OrderIndex" HeaderTextAlignment="Alignment.End" TextAlignment="Alignment.End" />
+        <DataTableComponent TItem="ModuleModel"
+                            DataProvider="ModulesDataProvider"
+                            AllowPaging="true"
+                            AllowSorting="true"
+                            AllowFiltering="true">
+            <GridColumn TItem="ModuleModel" HeaderText="Title" PropertyName="Title" SortKeySelector="item => item.Title" Filterable="true">
+                @context.Title
+            </GridColumn>
+            <GridColumn TItem="ModuleModel" HeaderText="Description" PropertyName="Description" Filterable="true">
+                @context.Description
+            </GridColumn>
+            <GridColumn TItem="ModuleModel" HeaderText="Course ID" PropertyName="CourseId" SortKeySelector="item => item.CourseId" HeaderTextAlignment="Alignment.End" TextAlignment="Alignment.End">
+                @context.CourseId
+            </GridColumn>
+            <GridColumn TItem="ModuleModel" HeaderText="Order" PropertyName="OrderIndex" SortKeySelector="item => item.OrderIndex" HeaderTextAlignment="Alignment.End" TextAlignment="Alignment.End">
+                @context.OrderIndex
+            </GridColumn>
             <GridColumn TItem="ModuleModel" HeaderText="Required" SortKeySelector="item => item.IsRequired">
                 <Badge Color="@(context.IsRequired ? BadgeColor.Primary : BadgeColor.Secondary)">
                     @(context.IsRequired ? "Yes" : "No")
@@ -41,7 +50,7 @@
             <GridColumn TItem="ModuleModel" HeaderText="Lessons" SortKeySelector="item => item.Lessons.Count" HeaderTextAlignment="Alignment.End" TextAlignment="Alignment.End">
                 @(context.Lessons?.Count ?? 0)
             </GridColumn>
-            <GridColumn TItem="ModuleModel" HeaderText="Actions">
+            <GridColumn TItem="ModuleModel" HeaderText="Actions" Sortable="false" Filterable="false">
                 <div class="btn-group" role="group">
                     <Button Color="ButtonColor.Primary" Size="ButtonSize.Small" Href='@($"/admin/modules/edit?id={context.Id}")'>
                         <Icon Name="IconName.Pencil" /> Edit
@@ -54,13 +63,13 @@
                     </Button>
                 </div>
             </GridColumn>
-        </Grid>
+        </DataTableComponent>
     </CardBody>
 </Card>
 
 <!-- Delete Confirmation Modal -->
-<ModalComponent @ref="deleteModal" 
-                Title="Confirm Delete" 
+<ModalComponent @ref="deleteModal"
+                Title="Confirm Delete"
                 Message="@($"Are you sure you want to delete the module '{moduleToDelete?.Title}'? This action cannot be undone.")"
                 ConfirmButtonText="Delete"
                 ConfirmButtonColor="ButtonColor.Danger"
@@ -79,7 +88,6 @@
             {
                 PageNumber = request.PageNumber,
                 PageSize = request.PageSize
-                // Removed unsupported: Filter, SortBy, SortDirection
             });
 
             return new GridDataProviderResult<ModuleModel>

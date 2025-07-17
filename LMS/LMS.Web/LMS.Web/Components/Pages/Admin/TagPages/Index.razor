@@ -1,4 +1,5 @@
 @page "/admin/tags"
+@rendermode @(new InteractiveServerRenderMode())
 @using LMS.Repositories
 
 @inject ITagRepository TagRepository
@@ -13,14 +14,16 @@
     </Button>
 </div>
 
-<DataTableComponent TItem="TagModel" 
+<DataTableComponent TItem="TagModel"
                     DataProvider="TagsDataProvider"
                     PageSize="10">
-    <Columns>
-        <GridColumn TItem="TagModel" HeaderText="Name" PropertyName="Name" />
-        <GridColumn TItem="TagModel" HeaderText="Color" PropertyName="Color" />
-    </Columns>
-    <Actions>
+    <GridColumn TItem="TagModel" HeaderText="Name" PropertyName="Name">
+        @context.Name
+    </GridColumn>
+    <GridColumn TItem="TagModel" HeaderText="Color" PropertyName="Color">
+        @context.Color
+    </GridColumn>
+    <GridColumn TItem="TagModel" HeaderText="Actions" Sortable="false" Filterable="false">
         <div class="btn-group" role="group">
             <Button Color="ButtonColor.Primary" Size="ButtonSize.Small" Href='@($"/admin/tags/edit?id={context.Id}")'>
                 <Icon Name="IconName.Pencil" /> Edit
@@ -32,7 +35,7 @@
                 <Icon Name="IconName.Trash" /> Delete
             </Button>
         </div>
-    </Actions>
+    </GridColumn>
 </DataTableComponent>
 
 @code {
@@ -40,8 +43,8 @@
 
     private async Task<GridDataProviderResult<TagModel>> TagsDataProvider(GridDataProviderRequest<TagModel> request)
     {
-        if (tags is null) // pull tags only one time for client-side filtering, sorting, and paging
-            tags = await GetTags(); // call a service or an API to pull the tags
+        if (tags is null)
+            tags = await GetTags();
 
         return await Task.FromResult(request.ApplyTo(tags));
     }
@@ -53,7 +56,7 @@
             var request = new PaginationRequest
             {
                 PageNumber = 1,
-                PageSize = 1000 // Get all for client-side pagination
+                PageSize = 1000
             };
 
             var paginatedResult = await TagRepository.GetTagsPaginatedAsync(request);

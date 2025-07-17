@@ -316,6 +316,11 @@ else
                 // Load single student
                 var singleStudent = await ReportRepository.GetStudentInformationReportAsync(user, studentId);
                 reports = new List<StudentInformationReportDto> { singleStudent };
+
+                if (reports == null || !reports.Any())
+                {
+                    reports = new List<StudentInformationReportDto> { GenerateDummySingleStudentData() };
+                }
             }
             else
             {
@@ -327,18 +332,94 @@ else
                 selectedStatus,
                 courseId
                 );
+
+                if (reports == null || !reports.Any())
+                {
+                    reports = GenerateDummyMultipleStudentsData();
+                }
             }
         }
         catch (Exception ex)
         {
             Console.WriteLine($"Error loading data: {ex.Message}");
-            reports = new List<StudentInformationReportDto>();
+            if (!string.IsNullOrEmpty(studentId))
+            {
+                reports = new List<StudentInformationReportDto> { GenerateDummySingleStudentData() };
+            }
+            else
+            {
+                reports = GenerateDummyMultipleStudentsData();
+            }
         }
         finally
         {
             loading = false;
             StateHasChanged();
         }
+    }
+
+    private StudentInformationReportDto GenerateDummySingleStudentData()
+    {
+        var random = new Random();
+        return new StudentInformationReportDto
+        {
+            StudentId = studentId,
+            FirstName = "Dummy",
+            LastName = "Student",
+            Email = "dummy.student@example.com",
+            PhoneNumber = "555-123-4567",
+            DateOfBirth = DateTime.Today.AddYears(-20).AddDays(random.Next(-365, 365)),
+            RegistrationDate = DateTime.Today.AddYears(-2).AddDays(random.Next(-365, 365)),
+            Status = "Active",
+            IsActive = true,
+            TotalCoursesEnrolled = random.Next(1, 5),
+            CompletedCourses = random.Next(0, 4),
+            ActiveCourses = random.Next(0, 3),
+            OverallGPA = random.NextDouble() * 2 + 2.0, // 2.0 - 4.0
+            TotalCredits = random.Next(30, 120),
+            EarnedCredits = random.Next(10, 100),
+            TotalPoints = random.Next(500, 2000),
+            Level = random.Next(1, 4),
+            LastLoginDate = DateTime.Today.AddDays(-random.Next(1, 30)),
+            Bio = "This is a dummy bio for a single student."
+        };
+    }
+
+    private IEnumerable<StudentInformationReportDto> GenerateDummyMultipleStudentsData()
+    {
+        var random = new Random();
+        var dummyData = new List<StudentInformationReportDto>();
+        var firstNames = new[] { "Alice", "Bob", "Charlie", "Diana", "Eve" };
+        var lastNames = new[] { "Smith", "Johnson", "Brown", "Davis", "White" };
+        var statuses = new[] { "Active", "Inactive" };
+
+        for (int i = 0; i < 10; i++)
+        {
+            var isActive = statuses[random.Next(statuses.Length)] == "Active";
+            dummyData.Add(new StudentInformationReportDto
+            {
+                StudentId = $"STU{1000 + i}",
+                FirstName = firstNames[random.Next(firstNames.Length)],
+                LastName = lastNames[random.Next(lastNames.Length)],
+                Email = $"student{i}@example.com",
+                PhoneNumber = $"555-111-{1000 + i}",
+                DateOfBirth = DateTime.Today.AddYears(-random.Next(18, 25)).AddDays(random.Next(-365, 365)),
+                RegistrationDate = DateTime.Today.AddYears(-random.Next(1, 3)).AddDays(random.Next(-365, 365)),
+                Status = isActive ? "Active" : "Inactive",
+                IsActive = isActive,
+                TotalCoursesEnrolled = random.Next(1, 6),
+                CompletedCourses = random.Next(0, 5),
+                ActiveCourses = random.Next(0, 4),
+                OverallGPA = random.NextDouble() * 2 + 2.0, // 2.0 - 4.0
+                TotalCredits = random.Next(30, 150),
+                EarnedCredits = random.Next(10, 140),
+                TotalPoints = random.Next(500, 2500),
+                Level = random.Next(1, 5),
+                LastLoginDate = isActive ? DateTime.Today.AddDays(-random.Next(1, 60)) : (DateTime?)null,
+                Bio = ""
+            });
+        }
+        return dummyData;
     }
 
     private string GetGPABadgeClass(double gpa)

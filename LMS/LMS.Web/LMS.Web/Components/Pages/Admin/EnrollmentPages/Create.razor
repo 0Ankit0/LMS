@@ -32,26 +32,24 @@
 
             <div class="mb-3">
                 <label for="userid" class="form-label">User <span class="text-danger">*</span></label>
-                <SearchableSelectComponent TItem="DropdownOption<string>" 
-                                           TValue="string" 
-                                           DataProvider="SearchUsersDataProvider"
-                                           ValueSelector="@(item => item.Value)" 
+                <SearchableSelectComponent TItem="DropdownOption<string>" TValue="string"
+                                           OnLoad="async () => (await DropdownRepository.GetUsersAsync(null, 20)).Cast<DropdownOption<string>>()"
+                                           ValueSelector="@(item => item.Value)"
                                            DisplaySelector="@(item => item.Text)"
                                            @bind-SelectedValue="Enrollment.UserId"
-                                           Placeholder="Select a user..." 
+                                           Placeholder="Select a user..."
                                            EmptyText="No users found" />
                 <ValidationMessage For="() => Enrollment.UserId" class="text-danger" />
             </div>
 
             <div class="mb-3">
                 <label for="courseid" class="form-label">Course <span class="text-danger">*</span></label>
-                <SearchableSelectComponent TItem="DropdownOption<int>" 
-                                           TValue="int" 
-                                           DataProvider="SearchCoursesDataProvider"
-                                           ValueSelector="@(item => item.Value)" 
+                <SearchableSelectComponent TItem="DropdownOption<int>" TValue="int"
+                                           OnLoad="async () => (await DropdownRepository.GetCoursesAsync(null, 20)).Cast<DropdownOption<int>>()"
+                                           ValueSelector="@(item => item.Value)"
                                            DisplaySelector="@(item => item.Text)"
                                            @bind-SelectedValue="Enrollment.CourseId"
-                                           Placeholder="Select a course..." 
+                                           Placeholder="Select a course..."
                                            EmptyText="No courses found" />
                 <ValidationMessage For="() => Enrollment.CourseId" class="text-danger" />
             </div>
