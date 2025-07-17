@@ -1,12 +1,17 @@
 @inherits LayoutComponentBase
 
-<div class="auth-layout">
-    <main class="auth-main">
-        <div>
-            <ManageNav></ManageNav>
-        </div>
-        <div class="container p-2" style="max-width: 100%;">
-            @Body
-        </div>
-    </main>
-</div>
+<CustomErrorBoundary ShowDetailedErrors="true">
+    <div class="auth-layout">
+        <main class="auth-main">
+            <div>
+                <ManageNav></ManageNav>
+            </div>
+            <div class="container p-2" style="max-width: 100%;">
+                @Body
+            </div>
+        </main>
+    </div>
+</CustomErrorBoundary>
+
+<!-- Toast Container -->
+<ToastContainer />
