@@ -8,3 +8,15 @@
         <FocusOnNavigate RouteData="routeData" Selector="h1" />
     </Found>
 </Router>
+@code {
+    [Route("/")]
+    public partial class RedirectToHome : ComponentBase
+    {
+        [Inject] NavigationManager NavigationManager { get; set; } = default!;
+
+        protected override void OnInitialized()
+        {
+            NavigationManager.NavigateTo("/home", true);
+        }
+    }
+}
