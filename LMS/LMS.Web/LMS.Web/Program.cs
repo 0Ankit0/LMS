@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using LMS.Infrastructure.Data;
 using LMS.Web.Infrastructure;
+using LMS.Web.Services;
 using BlazorBootstrap;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -48,6 +49,9 @@ builder.Services.AddIdentityCore<User>(options => options.SignIn.RequireConfirme
     .AddDefaultTokenProviders();
 
 builder.Services.AddSingleton<IEmailSender<User>, IdentityNoOpEmailSender>();
+
+// Add custom toast service
+builder.Services.AddScoped<LMS.Web.Services.ToastService>();
 
 // Configure HttpClient with proper base address for server-side components
 builder.Services.AddScoped(sp =>
