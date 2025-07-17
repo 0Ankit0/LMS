@@ -1,200 +1,100 @@
 @typeparam TItem
 @typeparam TValue
-@using System.Timers
-@inject IJSRuntime JSRuntime
+@using BlazorBootstrap
 
-<div class="searchable-select @CssClass">
-    <Dropdown>
-        <DropdownToggleButton Color="ButtonColor.Light" disabled="@IsDisabled">
-            @if (SelectedValue != null && Items != null)
-            {
-                var selectedItem = Items.FirstOrDefault(item => ValueSelector(item)?.Equals(SelectedValue) == true);
-                if (selectedItem != null)
-                {
-                    <span>@DisplaySelector(selectedItem)</span>
-                }
-                else
-                {
-                    <span class="text-muted">@Placeholder</span>
-                }
-            }
-            else
-            {
-                <span class="text-muted">@Placeholder</span>
-            }
-        </DropdownToggleButton>
-        <DropdownMenu>
-            <div class="p-2">
-                <input type="text" class="form-control" placeholder="Search..." @bind="searchTerm" @bind:event="oninput" />
-            </div>
-            @if (isLoading)
-            {
-                <div class="dropdown-item text-center">
-                    <Spinner />
-                    <span class="ms-2">Loading...</span>
-                </div>
-            }
-            else if (!filteredItems.Any())
-            {
-                <div class="dropdown-item text-muted text-center">
-                    @(string.IsNullOrWhiteSpace(searchTerm) ? "No items available" : "No items found")
-                </div>
-            }
-            else
-            {
-                <div class="searchable-select-items">
-                    @foreach (var item in filteredItems.Take(displayCount))
-                    {
-                        <DropdownItem @onclick="() => SelectItem(item)">
-                            @DisplaySelector(item)
-                        </DropdownItem>
-                    }
-
-                    @if (filteredItems.Count() > displayCount)
-                    {
-                        <div class="dropdown-item text-center">
-                            <Button Color="ButtonColor.Primary" Size="ButtonSize.Small" @onclick="LoadMore">
-                                Load More (@(filteredItems.Count() - displayCount) remaining)
-                            </Button>
-                        </div>
-                    }
-                </div>
-            }
-            @if (AllowClear && SelectedValue != null)
-            {
-                <DropdownDivider />
-                <DropdownItem @onclick="ClearSelection">
-                    <Icon Name="IconName.XCircle" />
-                    Clear Selection
-                </DropdownItem>
-            }
-        </DropdownMenu>
-    </Dropdown>
-</div>
-
-<style>
-    .searchable-select-items {
-        max-height: 240px;
-        overflow-y: auto;
-    }
-</style>
+<AutoComplete TItem="TItem" 
+              TValue="string" 
+              @bind-Value="StringValue" 
+              DataProvider="AutoCompleteDataProvider"
+              PropertyName="@DisplayPropertyName" 
+              Placeholder="@Placeholder" 
+              Disabled="@IsDisabled" 
+              Class="@CssClass"
+              EmptyText="@EmptyText" />
 
 @code {
-    [Parameter, EditorRequired] public IEnumerable<TItem>? Items { get; set; }
-    [Parameter, EditorRequired] public Func<TItem, TValue> ValueSelector { get; set; } = default!;
-    [Parameter, EditorRequired] public Func<TItem, string> DisplaySelector { get; set; } = default!;
     [Parameter] public TValue? SelectedValue { get; set; }
     [Parameter] public EventCallback<TValue?> SelectedValueChanged { get; set; }
+    [Parameter] public IEnumerable<TItem>? Items { get; set; }
+    [Parameter, EditorRequired] public Func<TItem, string> DisplaySelector { get; set; } = default!;
+    [Parameter, EditorRequired] public Func<TItem, TValue> ValueSelector { get; set; } = default!;
+    [Parameter] public string DisplayPropertyName { get; set; } = "Name";
     [Parameter] public string Placeholder { get; set; } = "Select an item...";
+    [Parameter] public string EmptyText { get; set; } = "No items found";
     [Parameter] public string CssClass { get; set; } = "";
     [Parameter] public bool IsDisabled { get; set; } = false;
-    [Parameter] public bool IsReadOnly { get; set; } = false;
-    [Parameter] public bool IsInvalid { get; set; } = false;
-    [Parameter] public bool AllowClear { get; set; } = true;
-    [Parameter] public int PageSize { get; set; } = 20;
-    [Parameter] public Func<string, Task<IEnumerable<TItem>>>? SearchFunction { get; set; }
+    [Parameter] public Func<Task<IEnumerable<TItem>>>? OnLoad { get; set; }
 
-    private string searchTerm = "";
-    private bool isLoading = false;
-    private int displayCount = 20;
-    private IEnumerable<TItem> filteredItems = Enumerable.Empty<TItem>();
-    private System.Timers.Timer? debounceTimer;
-
-    protected override void OnInitialized()
+    private string? StringValue
     {
-        debounceTimer = new System.Timers.Timer(300);
-        debounceTimer.Elapsed += OnSearchDebounced;
-        debounceTimer.AutoReset = false;
-
-        FilterItems();
-    }
-
-    protected override void OnParametersSet()
-    {
-        FilterItems();
-    }
-
-    private async void OnSearchDebounced(object? sender, ElapsedEventArgs e)
-    {
-        await InvokeAsync(async () =>
+        get
         {
-            await PerformSearch();
-            StateHasChanged();
-        });
+            if (SelectedValue == null || Items == null) return null;
+            var item = Items.FirstOrDefault(i => EqualityComparer<TValue>.Default.Equals(ValueSelector(i), SelectedValue));
+            return item != null ? DisplaySelector(item) : null;
+        }
+        set
+        {
+            if (string.IsNullOrEmpty(value) || Items == null)
+            {
+                SelectedValue = default;
+            }
+            else
+            {
+                var item = Items.FirstOrDefault(i => DisplaySelector(i) == value);
+                SelectedValue = item != null ? ValueSelector(item) : default;
+            }
+            _ = SelectedValueChanged.InvokeAsync(SelectedValue);
+        }
     }
 
-    private async Task PerformSearch()
+    protected override async Task OnInitializedAsync()
     {
-        if (SearchFunction != null && !string.IsNullOrWhiteSpace(searchTerm))
+        try
         {
-            isLoading = true;
-            try
+            if (OnLoad != null && Items == null)
             {
-                var searchResults = await SearchFunction(searchTerm);
-                filteredItems = searchResults;
-                displayCount = PageSize;
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Search error: {ex.Message}");
-                filteredItems = Enumerable.Empty<TItem>();
-            }
-            finally
-            {
-                isLoading = false;
+                Items = await OnLoad();
             }
         }
-        else
+        catch (Exception ex)
         {
-            FilterItems();
+            // Log the exception if you have a logger
+            Console.WriteLine($"Error loading items: {ex.Message}");
+            Items = Enumerable.Empty<TItem>();
         }
     }
 
-    private void FilterItems()
+    private async Task<AutoCompleteDataProviderResult<TItem>>
+    AutoCompleteDataProvider(AutoCompleteDataProviderRequest<TItem> request)
     {
-        if (Items == null)
+        try
         {
-            filteredItems = Enumerable.Empty<TItem>();
-            return;
-        }
+            var items = Items ?? Enumerable.Empty<TItem>();
 
-        if (string.IsNullOrWhiteSpace(searchTerm))
+            if (request.Filter != null && !string.IsNullOrWhiteSpace(request.Filter.Value))
+            {
+                items = items.Where(item => DisplaySelector(item).Contains(request.Filter.Value, StringComparison.OrdinalIgnoreCase));
+            }
+
+            return await Task.FromResult(new AutoCompleteDataProviderResult<TItem>
+            {
+                Data = items,
+                TotalCount = items.Count()
+            });
+        }
+        catch (Exception ex)
         {
-            filteredItems = Items;
+            // Log the exception if you have a logger
+            Console.WriteLine($"Error in AutoComplete data provider: {ex.Message}");
+            return await Task.FromResult(new AutoCompleteDataProviderResult<TItem>
+            {
+                Data = Enumerable.Empty<TItem>(),
+                TotalCount = 0
+            });
         }
-        else
-        {
-            filteredItems = Items.Where(item =>
-            DisplaySelector(item).Contains(searchTerm, StringComparison.OrdinalIgnoreCase));
-        }
-
-        displayCount = PageSize;
-    }
-
-    private async Task SelectItem(TItem item)
-    {
-        var value = ValueSelector(item);
-        SelectedValue = value;
-        await SelectedValueChanged.InvokeAsync(value);
-        StateHasChanged();
-    }
-
-    private async Task ClearSelection()
-    {
-        SelectedValue = default(TValue);
-        await SelectedValueChanged.InvokeAsync(default(TValue));
-        FilterItems();
-        StateHasChanged();
-    }
-
-    private void LoadMore()
-    {
-        displayCount = Math.Min(displayCount + PageSize, filteredItems.Count());
-        StateHasChanged();
-    }
-
-    public void Dispose()
-    {
-        debounceTimer?.Dispose();
     }
 }
+
+                
+                                                                       

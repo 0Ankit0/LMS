@@ -1,47 +1,38 @@
 @typeparam TItem
+@using BlazorBootstrap
 
 <div class="card">
     <div class="card-body">
-        @if (PaginatedResult != null)
-        {
-            if (PaginatedResult.Items.Any())
-            {
-                <Grid TItem="TItem" Class="table table-striped table-hover" Data="PaginatedResult.Items">
-                    @Columns
-                    @if (Actions != null)
-                    {
-                        <GridColumn TItem="TItem" HeaderText="Actions">
-                            @Actions(context)
-                        </GridColumn>
-                    }
-                </Grid>
+        <Grid TItem="TItem" 
+              Class="table table-hover table-bordered table-striped" 
+              DataProvider="DataProvider"
+              AllowPaging="true" 
+              AllowSorting="true"
+              AllowFiltering="AllowFiltering"
+              PageSize="PageSize" 
+              PageSizeSelectorVisible="true"
+              PageSizeSelectorItems="@(new int[] { 5, 10, 25, 50 })" 
+              Responsive="true"
+              EmptyText="No records found">
 
-                <PaginationComponent TItem="TItem" PaginatedResult="PaginatedResult" OnPageChanged="OnPageChanged"
-                    OnPageSizeChanged="OnPageSizeChanged" />
-            }
-            else
-            {
-                <div class="text-center py-4">
-                    <p class="text-muted">@EmptyMessage</p>
-                </div>
-            }
-        }
-        else
-        {
-            <div class="text-center">
-                <div class="spinner-border" role="status">
-                    <span class="visually-hidden">Loading...</span>
-                </div>
-            </div>
-        }
+            <GridColumns>
+                @Columns
+                @if (Actions != null)
+                {
+                    <GridColumn TItem="TItem" HeaderText="Actions" Sortable="false" Filterable="false">
+                        @Actions(context)
+                    </GridColumn>
+                }
+            </GridColumns>
+
+        </Grid>
     </div>
 </div>
 
 @code {
-    [Parameter, EditorRequired] public PaginatedResult<TItem>? PaginatedResult { get; set; }
+    [Parameter, EditorRequired] public GridDataProviderDelegate<TItem> DataProvider { get; set; } = default!;
     [Parameter] public RenderFragment? Columns { get; set; }
     [Parameter] public RenderFragment<TItem>? Actions { get; set; }
-    [Parameter] public string EmptyMessage { get; set; } = "No items found.";
-    [Parameter] public EventCallback<int> OnPageChanged { get; set; }
-    [Parameter] public EventCallback<int> OnPageSizeChanged { get; set; }
+    [Parameter] public int PageSize { get; set; } = 10;
+    [Parameter] public bool AllowFiltering { get; set; } = false;
 }

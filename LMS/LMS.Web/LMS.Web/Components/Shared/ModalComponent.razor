@@ -1,0 +1,87 @@
+@using BlazorBootstrap
+
+<BlazorBootstrap.Modal @ref="modal" 
+       Title="@Title" 
+       Size="@Size" 
+       UseStaticBackdrop="@UseStaticBackdrop"
+       CloseOnEscape="@CloseOnEscape"
+       IsVerticallyCentered="@IsVerticallyCentered"
+       IsScrollable="@IsScrollable"
+       OnShowing="@OnShowing"
+       OnShown="@OnShown"
+       OnHiding="@OnHiding"
+       OnHidden="@OnHidden">
+    <BodyTemplate>
+        @if (BodyTemplate != null)
+        {
+            @BodyTemplate
+        }
+        else if (!string.IsNullOrEmpty(Message))
+        {
+            <p>@Message</p>
+        }
+    </BodyTemplate>
+    <FooterTemplate>
+        @if (FooterTemplate != null)
+        {
+            @FooterTemplate
+        }
+        else if (ShowDefaultButtons)
+        {
+            <BlazorBootstrap.Button Color="ButtonColor.Secondary" @onclick="OnCancelClick">@CancelButtonText</BlazorBootstrap.Button>
+            @if (ShowConfirmButton)
+            {
+                <BlazorBootstrap.Button Color="@ConfirmButtonColor" @onclick="OnConfirmClick">@ConfirmButtonText</BlazorBootstrap.Button>
+            }
+        }
+    </FooterTemplate>
+</BlazorBootstrap.Modal>
+
+@code {
+    private BlazorBootstrap.Modal modal = default!;
+
+    [Parameter] public string Title { get; set; } = "";
+    [Parameter] public string Message { get; set; } = "";
+    [Parameter] public ModalSize Size { get; set; } = ModalSize.Regular;
+    [Parameter] public bool UseStaticBackdrop { get; set; } = false;
+    [Parameter] public bool CloseOnEscape { get; set; } = true;
+    [Parameter] public bool IsVerticallyCentered { get; set; } = false;
+    [Parameter] public bool IsScrollable { get; set; } = false;
+    [Parameter] public bool ShowDefaultButtons { get; set; } = true;
+    [Parameter] public bool ShowConfirmButton { get; set; } = true;
+    [Parameter] public string CancelButtonText { get; set; } = "Cancel";
+    [Parameter] public string ConfirmButtonText { get; set; } = "OK";
+    [Parameter] public ButtonColor ConfirmButtonColor { get; set; } = ButtonColor.Primary;
+
+    [Parameter] public RenderFragment? BodyTemplate { get; set; }
+    [Parameter] public RenderFragment? FooterTemplate { get; set; }
+
+    [Parameter] public EventCallback OnShowing { get; set; }
+    [Parameter] public EventCallback OnShown { get; set; }
+    [Parameter] public EventCallback OnHiding { get; set; }
+    [Parameter] public EventCallback OnHidden { get; set; }
+    [Parameter] public EventCallback OnCancel { get; set; }
+    [Parameter] public EventCallback OnConfirm { get; set; }
+
+    public async Task ShowAsync()
+    {
+        await modal.ShowAsync();
+    }
+
+    public async Task HideAsync()
+    {
+        await modal.HideAsync();
+    }
+
+    private async Task OnCancelClick()
+    {
+        await OnCancel.InvokeAsync();
+        await HideAsync();
+    }
+
+    private async Task OnConfirmClick()
+    {
+        await OnConfirm.InvokeAsync();
+        await HideAsync();
+    }
+}

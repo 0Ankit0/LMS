@@ -1,0 +1,43 @@
+@using BlazorBootstrap
+@using LMS.Web.Services
+@implements IDisposable
+@inject LMS.Web.Services.ToastService ToastService
+
+<Toasts class="p-3" AutoHide="true" Delay="5000" Placement="ToastsPlacement.TopRight" />
+
+@code {
+    [Inject] private BlazorBootstrap.ToastService BBToastService { get; set; } = default!;
+
+    protected override void OnInitialized()
+    {
+        // Subscribe to our custom toast service events
+        ToastService.OnShow += ShowToast;
+    }
+
+    private void ShowToast(string type, string title, string message)
+    {
+        var toastType = type.ToLower() switch
+        {
+            "success" => ToastType.Success,
+            "danger" => ToastType.Danger,
+            "warning" => ToastType.Warning,
+            "info" => ToastType.Info,
+            _ => ToastType.Primary
+        };
+
+        var toastMessage = new ToastMessage
+        {
+            Type = toastType,
+            Title = title,
+            HelpText = DateTime.Now.ToString("HH:mm:ss"),
+            Message = message,
+        };
+
+        BBToastService.Notify(toastMessage);
+    }
+
+    public void Dispose()
+    {
+        ToastService.OnShow -= ShowToast;
+    }
+}
