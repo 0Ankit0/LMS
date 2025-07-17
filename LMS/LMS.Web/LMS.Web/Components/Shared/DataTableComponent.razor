@@ -6,9 +6,9 @@
         <Grid TItem="TItem" 
               Class="table table-hover table-bordered table-striped" 
               DataProvider="DataProvider"
-              AllowPaging="true" 
-              AllowSorting="true"
-              AllowFiltering="AllowFiltering"
+              AllowPaging="@AllowPaging" 
+              AllowSorting="@AllowSorting"
+              AllowFiltering="@AllowFiltering"
               PageSize="PageSize" 
               PageSizeSelectorVisible="true"
               PageSizeSelectorItems="@(new int[] { 5, 10, 25, 50 })" 
@@ -35,4 +35,6 @@
     [Parameter] public RenderFragment<TItem>? Actions { get; set; }
     [Parameter] public int PageSize { get; set; } = 10;
     [Parameter] public bool AllowFiltering { get; set; } = false;
+    [Parameter] public bool AllowPaging { get; set; } = true;
+    [Parameter] public bool AllowSorting { get; set; } = true;
 }

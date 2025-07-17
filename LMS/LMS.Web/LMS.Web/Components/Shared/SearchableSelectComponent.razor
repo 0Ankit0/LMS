@@ -2,13 +2,12 @@
 @typeparam TValue
 @using BlazorBootstrap
 
-<AutoComplete TItem="TItem" 
-              TValue="string" 
-              @bind-Value="StringValue" 
+<AutoComplete TItem="TItem"
+              @bind-Value="StringValue"
               DataProvider="AutoCompleteDataProvider"
-              PropertyName="@DisplayPropertyName" 
-              Placeholder="@Placeholder" 
-              Disabled="@IsDisabled" 
+              PropertyName="@DisplayPropertyName"
+              Placeholder="@Placeholder"
+              Disabled="@IsDisabled"
               Class="@CssClass"
               EmptyText="@EmptyText" />
 
@@ -95,6 +94,3 @@
         }
     }
 }
-
-                
-                                                                       
