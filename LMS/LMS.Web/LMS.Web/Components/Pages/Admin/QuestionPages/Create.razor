@@ -1,89 +1,135 @@
 @page "/admin/questions/create"
 
 @using LMS.Repositories
+@using LMS.Web.Components.Shared
+@using LMS.Web.Services
+
 @inject IAssessmentRepository AssessmentRepository
 @inject NavigationManager NavigationManager
+@inject LMS.Web.Services.ToastService ToastService
 @rendermode @(new InteractiveServerRenderMode())
 
-<PageTitle>Create</PageTitle>
+<PageTitle>Create Question - Admin</PageTitle>
 
-<h1>Create</h1>
-
-<h2>Question</h2>
-<hr />
-<div class="row">
-    <div class="col-md-4">
-        <EditForm Model="Question" OnValidSubmit="AddQuestion">
-            <AntiforgeryToken />
-            <DataAnnotationsValidator />
-            <ValidationSummary class="text-danger" role="alert" />
-            <div class="mb-3">
-                <label for="text" class="form-label">Text:</label>
-                <InputText id="text" @bind-Value="Question.Text" class="form-control" aria-required="true" />
-                <ValidationMessage For="() => Question.Text" class="text-danger" />
-            </div>
-            <div class="mb-3">
-                <label for="assessmentid" class="form-label">AssessmentId:</label>
-                <InputNumber id="assessmentid" @bind-Value="Question.AssessmentId" class="form-control" />
-                <ValidationMessage For="() => Question.AssessmentId" class="text-danger" />
-            </div>
-            <div class="mb-3">
-                <label for="type" class="form-label">Type:</label>
-                <InputSelect id="type" @bind-Value="Question.Type" class="form-control">
-                    @foreach (var enumValue in Enum.GetValues(typeof(QuestionType)))
-                    {
-                        <option value="@enumValue">@enumValue.ToString()</option>
-                    }
-                </InputSelect>
-                <ValidationMessage For="() => Question.Type" class="text-danger" />
-            </div>
-            <div class="mb-3">
-                <label for="points" class="form-label">Points:</label>
-                <InputNumber id="points" @bind-Value="Question.Points" class="form-control" />
-                <ValidationMessage For="() => Question.Points" class="text-danger" />
-            </div>
-            <div class="mb-3">
-                <label for="orderindex" class="form-label">OrderIndex:</label>
-                <InputNumber id="orderindex" @bind-Value="Question.OrderIndex" class="form-control" />
-                <ValidationMessage For="() => Question.OrderIndex" class="text-danger" />
-            </div>
-            <div class="mb-3">
-                <label for="explanation" class="form-label">Explanation:</label>
-                <InputText id="explanation" @bind-Value="Question.Explanation" class="form-control" />
-                <ValidationMessage For="() => Question.Explanation" class="text-danger" />
-            </div>
-            <div class="mb-3">
-                <label for="isrequired" class="form-label">IsRequired:</label>
-                <InputCheckbox id="isrequired" @bind-Value="Question.IsRequired" class="form-check-input" />
-                <ValidationMessage For="() => Question.IsRequired" class="text-danger" />
-            </div>
-            <button type="submit" class="btn btn-primary">Create</button>
-        </EditForm>
-    </div>
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="mb-0">Create New Question</h1>
+    <Button Color="ButtonColor.Secondary" Href="/admin/questions">
+        <Icon Name="IconName.ArrowLeft" />
+        Back to Questions
+    </Button>
 </div>
 
-<div>
-    <a href="/admin/questions">Back to List</a>
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Question Information</h5>
+            </div>
+            <div class="card-body">
+                <EditForm Model="Question" OnValidSubmit="AddQuestion">
+                    <AntiforgeryToken />
+                    <DataAnnotationsValidator />
+                    <ValidationSummary class="alert alert-danger" role="alert" />
+
+                    <div class="mb-3">
+                        <label for="text" class="form-label">Question Text <span class="text-danger">*</span></label>
+                        <InputTextArea id="text" @bind-Value="Question.Text" class="form-control" rows="3" aria-required="true" 
+                                       placeholder="Enter the question text" />
+                        <ValidationMessage For="() => Question.Text" class="text-danger" />
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="assessmentid" class="form-label">Assessment ID <span class="text-danger">*</span></label>
+                            <InputNumber id="assessmentid" @bind-Value="Question.AssessmentId" class="form-control" 
+                                         placeholder="Enter assessment ID" />
+                            <ValidationMessage For="() => Question.AssessmentId" class="text-danger" />
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="type" class="form-label">Question Type</label>
+                            <InputSelect id="type" @bind-Value="Question.Type" class="form-select">
+                                @foreach (var enumValue in Enum.GetValues(typeof(QuestionType)))
+                                {
+                                    <option value="@enumValue">@enumValue.ToString()</option>
+                                }
+                            </InputSelect>
+                            <ValidationMessage For="() => Question.Type" class="text-danger" />
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="points" class="form-label">Points</label>
+                            <InputNumber id="points" @bind-Value="Question.Points" class="form-control" 
+                                         placeholder="1" />
+                            <ValidationMessage For="() => Question.Points" class="text-danger" />
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="orderindex" class="form-label">Order Index</label>
+                            <InputNumber id="orderindex" @bind-Value="Question.OrderIndex" class="form-control" 
+                                         placeholder="1" />
+                            <ValidationMessage For="() => Question.OrderIndex" class="text-danger" />
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="explanation" class="form-label">Explanation</label>
+                        <InputTextArea id="explanation" @bind-Value="Question.Explanation" class="form-control" rows="3"
+                                       placeholder="Provide an explanation for the correct answer (optional)" />
+                        <ValidationMessage For="() => Question.Explanation" class="text-danger" />
+                    </div>
+
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <InputCheckbox id="isrequired" @bind-Value="Question.IsRequired" class="form-check-input" />
+                            <label for="isrequired" class="form-check-label">Is Required</label>
+                            <ValidationMessage For="() => Question.IsRequired" class="text-danger" />
+                        </div>
+                    </div>
+
+                    <div class="d-flex gap-2">
+                        <Button Color="ButtonColor.Primary" Type="ButtonType.Submit" Loading="@isSubmitting">
+                            <Icon Name="IconName.CheckCircle" />
+                            Create Question
+                        </Button>
+                        <Button Color="ButtonColor.Secondary" Href="/admin/questions">Cancel</Button>
+                    </div>
+                </EditForm>
+            </div>
+        </div>
+    </div>
 </div>
 
 @code {
     [SupplyParameterFromForm]
     private CreateQuestionRequest Question { get; set; } = new();
+    private bool isSubmitting = false;
 
     private async Task AddQuestion()
     {
+        if (isSubmitting) return;
+        
+        isSubmitting = true;
         try
         {
             var result = await AssessmentRepository.CreateQuestionAsync(Question);
             if (result != null)
             {
+                ToastService.ShowSuccess("Success", "Question created successfully!");
                 NavigationManager.NavigateTo("/admin/questions");
+            }
+            else
+            {
+                ToastService.ShowError("Error", "Failed to create question. Please try again.");
             }
         }
         catch (Exception ex)
         {
-            // Handle error - could add error display logic here
-            Console.WriteLine($"Error creating question: {ex.Message}");
+            ToastService.ShowError("Error", $"Error creating question: {ex.Message}");
+        }
+        finally
+        {
+            isSubmitting = false;
         }
     }
 }

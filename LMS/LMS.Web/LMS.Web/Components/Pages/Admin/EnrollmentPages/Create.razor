@@ -1,93 +1,146 @@
 @page "/admin/enrollments/create"
 
 @using LMS.Repositories
+@using LMS.Web.Components.Shared
+@using LMS.Web.Services
 
 @inject IEnrollmentRepository EnrollmentRepository
 @inject IDropdownRepository DropdownRepository
 @inject NavigationManager NavigationManager
+@inject LMS.Web.Services.ToastService ToastService
 @rendermode @(new InteractiveServerRenderMode())
 
-<PageTitle>Create</PageTitle>
+<PageTitle>Create Enrollment - Admin</PageTitle>
 
-<h1>Create</h1>
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="mb-0">Create New Enrollment</h1>
+    <Button Color="ButtonColor.Secondary" Href="/admin/enrollments">
+        <Icon Name="IconName.ArrowLeft" />
+        Back to Enrollments
+    </Button>
+</div>
 
-<h2>Enrollment</h2>
-<hr />
-<div class="row">
-    <div class="col-md-4">
-        <EditForm Model="Enrollment" OnValidSubmit="HandleValidSubmit">
+<Card>
+    <div class="card-header">
+        <h5 class="card-title mb-0">Enrollment Information</h5>
+    </div>
+    <CardBody>
+        <EditForm Model="Enrollment" OnValidSubmit="AddEnrollment">
             <AntiforgeryToken />
             <DataAnnotationsValidator />
-            <ValidationSummary class="text-danger" role="alert" />
+            <ValidationSummary class="alert alert-danger" role="alert" />
+
             <div class="mb-3">
                 <label for="userid" class="form-label">User <span class="text-danger">*</span></label>
-                <SearchableSelectComponent TItem="DropdownOption<string>" TValue="string" Items="@userOptions"
-                                           ValueSelector="@(item => item.Value)" DisplaySelector="@(item => item.Text)"
-                                           SearchFunction="@SearchUsers" SelectedValue="@Enrollment.UserId"
-                                           OnSelectedValueChanged="@((string value) => Enrollment.UserId = value)"
-                                           Placeholder="Select a user..." class="form-control" />
+                <SearchableSelectComponent TItem="DropdownOption<string>" 
+                                           TValue="string" 
+                                           DataProvider="SearchUsersDataProvider"
+                                           ValueSelector="@(item => item.Value)" 
+                                           DisplaySelector="@(item => item.Text)"
+                                           @bind-SelectedValue="Enrollment.UserId"
+                                           Placeholder="Select a user..." 
+                                           EmptyText="No users found" />
                 <ValidationMessage For="() => Enrollment.UserId" class="text-danger" />
             </div>
+
             <div class="mb-3">
                 <label for="courseid" class="form-label">Course <span class="text-danger">*</span></label>
-                <SearchableSelectComponent TItem="DropdownOption<int>" TValue="int" Items="@courseOptions"
-                                           ValueSelector="@(item => item.Value)" DisplaySelector="@(item => item.Text)"
-                                           SearchFunction="@SearchCourses" SelectedValue="@Enrollment.CourseId"
-                                           OnSelectedValueChanged="@((int value) => Enrollment.CourseId = value)"
-                                           Placeholder="Select a course..." class="form-control" />
+                <SearchableSelectComponent TItem="DropdownOption<int>" 
+                                           TValue="int" 
+                                           DataProvider="SearchCoursesDataProvider"
+                                           ValueSelector="@(item => item.Value)" 
+                                           DisplaySelector="@(item => item.Text)"
+                                           @bind-SelectedValue="Enrollment.CourseId"
+                                           Placeholder="Select a course..." 
+                                           EmptyText="No courses found" />
                 <ValidationMessage For="() => Enrollment.CourseId" class="text-danger" />
             </div>
-            <button type="submit" class="btn btn-primary">Create</button>
-        </EditForm>
-    </div>
-</div>
 
-<div>
-    <a href="/enrollments">Back to List</a>
-</div>
+            <div class="d-flex gap-2">
+                <Button Color="ButtonColor.Primary" Type="ButtonType.Submit" Loading="@isSubmitting">
+                    <Icon Name="IconName.CheckCircle" />
+                    Create Enrollment
+                </Button>
+                <Button Color="ButtonColor.Secondary" Href="/admin/enrollments">Cancel</Button>
+            </div>
+        </EditForm>
+    </CardBody>
+</Card>
 
 @code {
+    [SupplyParameterFromForm]
     private CreateEnrollmentRequest Enrollment { get; set; } = new();
+    private bool isSubmitting = false;
 
-    private List<DropdownOption<string>> userOptions = new();
-    private List<DropdownOption<int>> courseOptions = new();
-
-    protected override async Task OnInitializedAsync()
+    private async Task<AutoCompleteDataProviderResult<DropdownOption<string>>> SearchUsersDataProvider(AutoCompleteDataProviderRequest<DropdownOption<string>> request)
     {
-        // Load initial options
-        userOptions = await DropdownRepository.GetUsersAsync(search: "", take: 20);
-        courseOptions = await DropdownRepository.GetCoursesAsync(search: "", take: 20);
+        try
+        {
+            var users = await DropdownRepository.GetUsersAsync(search: request.Filter.Value, take: 20);
+            return new AutoCompleteDataProviderResult<DropdownOption<string>>
+            {
+                Data = users,
+                TotalCount = users.Count
+            };
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading users: {ex.Message}");
+            return new AutoCompleteDataProviderResult<DropdownOption<string>>
+            {
+                Data = new List<DropdownOption<string>>(),
+                TotalCount = 0
+            };
+        }
     }
 
-    private async Task<IEnumerable<DropdownOption<string>>> SearchUsers(string searchTerm)
+    private async Task<AutoCompleteDataProviderResult<DropdownOption<int>>> SearchCoursesDataProvider(AutoCompleteDataProviderRequest<DropdownOption<int>> request)
     {
-        return await DropdownRepository.GetUsersAsync(searchTerm, take: 20);
-    }
-
-    private async Task<IEnumerable<DropdownOption<int>>> SearchCourses(string searchTerm)
-    {
-        return await DropdownRepository.GetCoursesAsync(searchTerm, take: 20);
-    }
-
-    private Task HandleValidSubmit(EditContext context)
-    {
-        return AddEnrollment();
+        try
+        {
+            var courses = await DropdownRepository.GetCoursesAsync(search: request.Filter.Value, take: 20);
+            return new AutoCompleteDataProviderResult<DropdownOption<int>>
+            {
+                Data = courses,
+                TotalCount = courses.Count
+            };
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading courses: {ex.Message}");
+            return new AutoCompleteDataProviderResult<DropdownOption<int>>
+            {
+                Data = new List<DropdownOption<int>>(),
+                TotalCount = 0
+            };
+        }
     }
 
     private async Task AddEnrollment()
     {
+        if (isSubmitting) return;
+        
+        isSubmitting = true;
         try
         {
             var result = await EnrollmentRepository.CreateEnrollmentAsync(Enrollment.UserId, Enrollment);
             if (result != null)
             {
+                ToastService.ShowSuccess("Success", "Enrollment created successfully!");
                 NavigationManager.NavigateTo("/admin/enrollments");
+            }
+            else
+            {
+                ToastService.ShowError("Error", "Failed to create enrollment. Please try again.");
             }
         }
         catch (Exception ex)
         {
-            // Handle error - could add error display logic here
-            Console.WriteLine($"Error creating enrollment: {ex.Message}");
+            ToastService.ShowError("Error", $"Error creating enrollment: {ex.Message}");
+        }
+        finally
+        {
+            isSubmitting = false;
         }
     }
 }

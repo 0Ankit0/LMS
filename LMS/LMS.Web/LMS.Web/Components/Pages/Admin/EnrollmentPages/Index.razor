@@ -1,118 +1,147 @@
 @page "/admin/enrollments"
 
-
 @using LMS.Repositories
+@using LMS.Web.Components.Shared
+@using LMS.Web.Services
 @inject IEnrollmentRepository EnrollmentRepository
+@inject LMS.Web.Services.ToastService ToastService
 
 <PageTitle>Enrollments - Admin</PageTitle>
 
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h1 class="mb-0">Enrollments</h1>
-    <Button Color="ButtonColor.Primary" Href="/admin/enrollments/create">
-        <Icon Name="IconName.PlusCircle" />
-        Add New Enrollment
-    </Button>
-</div>
-
-<div class="card">
-    <div class="card-body">
-        @if (paginatedEnrollments != null)
-        {
-            if (paginatedEnrollments.Items.Any())
-            {
-                <Grid TItem="EnrollmentModel" Class="table table-striped table-hover" Data="paginatedEnrollments.Items">
-                    <GridColumn TItem="EnrollmentModel" HeaderText="User ID" PropertyName="UserId" />
-                    <GridColumn TItem="EnrollmentModel" HeaderText="User Name" PropertyName="UserName" />
-                    <GridColumn TItem="EnrollmentModel" HeaderText="Course ID" PropertyName="CourseId" />
-                    <GridColumn TItem="EnrollmentModel" HeaderText="Course Title" PropertyName="CourseTitle" />
-                    <GridColumn TItem="EnrollmentModel" HeaderText="Enrolled" PropertyName="EnrolledAt" Format="yyyy-MM-dd" />
-                    <GridColumn TItem="EnrollmentModel" HeaderText="Status" PropertyName="Status" />
-                    <GridColumn TItem="EnrollmentModel" HeaderText="Progress %" PropertyName="ProgressPercentage" />
-                    <GridColumn TItem="EnrollmentModel" HeaderText="Final Grade" PropertyName="FinalGrade" />
-
-                    <GridColumn TItem="EnrollmentModel" HeaderText="Actions">
-                        <div class="btn-group" role="group">
-                            <Button Color="ButtonColor.Primary" Size="ButtonSize.Small" Href='@($"/admin/enrollments/edit?id={context.Id}")'>
-                                <Icon Name="IconName.Pencil" /> Edit
-                            </Button>
-                            <Button Color="ButtonColor.Info" Size="ButtonSize.Small" Href='@($"/admin/enrollments/details?id={context.Id}")'>
-                                <Icon Name="IconName.Eye" /> Details
-                            </Button>
-                            <Button Color="ButtonColor.Danger" Size="ButtonSize.Small" Href='@($"/admin/enrollments/delete?id={context.Id}")'>
-                                <Icon Name="IconName.Trash" /> Delete
-                            </Button>
-                        </div>
-                    </GridColumn>
-                </Grid>
-
-                <PaginationComponent TItem="EnrollmentModel" PaginatedResult="paginatedEnrollments"
-                    OnPageChanged="OnPageChanged" OnPageSizeChanged="OnPageSizeChanged" />
-            }
-            else
-            {
-                <div class="text-center py-4">
-                    <p class="text-muted">No enrollments found.</p>
-                </div>
-            }
-        }
-        else
-        {
-            <div class="text-center">
-                <div class="spinner-border" role="status">
-                    <span class="visually-hidden">Loading...</span>
-                </div>
-            </div>
-        }
+<Card>
+    <div class="card-header">
+        <div class="d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Enrollments</h5>
+            <Button Color="ButtonColor.Primary" Href="/admin/enrollments/create">
+                <Icon Name="IconName.PlusCircle" />
+                Add New Enrollment
+            </Button>
+        </div>
     </div>
-</div>
+    <CardBody>
+        <Grid TItem="EnrollmentModel" 
+              DataProvider="EnrollmentsDataProvider"
+              AllowPaging="true" 
+              AllowSorting="true"
+              AllowFiltering="true">
+            <GridColumn TItem="EnrollmentModel" HeaderText="User ID" PropertyName="UserId" SortKeySelector="item => item.UserId" Filterable="true" />
+            <GridColumn TItem="EnrollmentModel" HeaderText="User Name" PropertyName="UserName" SortKeySelector="item => item.UserName" Filterable="true" />
+            <GridColumn TItem="EnrollmentModel" HeaderText="Course ID" PropertyName="CourseId" SortKeySelector="item => item.CourseId" HeaderTextAlignment="Alignment.End" TextAlignment="Alignment.End" />
+            <GridColumn TItem="EnrollmentModel" HeaderText="Course Title" PropertyName="CourseTitle" SortKeySelector="item => item.CourseTitle" Filterable="true" />
+            <GridColumn TItem="EnrollmentModel" HeaderText="Enrolled" SortKeySelector="item => item.EnrolledAt">
+                @context.EnrolledAt.ToString("yyyy-MM-dd")
+            </GridColumn>
+            <GridColumn TItem="EnrollmentModel" HeaderText="Status" PropertyName="Status" SortKeySelector="item => item.Status ?? string.Empty" Filterable="true">
+                <Badge Color="@GetStatusBadgeColor(context.Status)">@context.Status</Badge>
+            </GridColumn>
+            <GridColumn TItem="EnrollmentModel" HeaderText="Progress %" SortKeySelector="item => item.ProgressPercentage" HeaderTextAlignment="Alignment.End" TextAlignment="Alignment.End">
+                <div class="d-flex align-items-center">
+                    <div class="me-2" style="width: 60px;">
+                        <Progress Value="(int)context.ProgressPercentage" />
+                    </div>
+                    <span>@(context.ProgressPercentage.ToString("F1"))%</span>
+                </div>
+            </GridColumn>
+            <GridColumn TItem="EnrollmentModel" HeaderText="Final Grade" HeaderTextAlignment="Alignment.End" TextAlignment="Alignment.End">
+                @(context.FinalGrade?.ToString("F1") ?? "N/A")
+            </GridColumn>
+            <GridColumn TItem="EnrollmentModel" HeaderText="Actions">
+                <div class="btn-group" role="group">
+                    <Button Color="ButtonColor.Primary" Size="ButtonSize.Small" Href='@($"/admin/enrollments/edit?id={context.Id}")'>
+                        <Icon Name="IconName.Pencil" /> Edit
+                    </Button>
+                    <Button Color="ButtonColor.Info" Size="ButtonSize.Small" Href='@($"/admin/enrollments/details?id={context.Id}")'>
+                        <Icon Name="IconName.Eye" /> Details
+                    </Button>
+                    <Button Color="ButtonColor.Danger" Size="ButtonSize.Small" @onclick="() => ConfirmDelete(context)">
+                        <Icon Name="IconName.Trash" /> Delete
+                    </Button>
+                </div>
+            </GridColumn>
+        </Grid>
+    </CardBody>
+</Card>
+
+<!-- Delete Confirmation Modal -->
+<ModalComponent @ref="deleteModal" 
+                Title="Confirm Delete" 
+                Message="@($"Are you sure you want to delete the enrollment for '{enrollmentToDelete?.UserName}' in '{enrollmentToDelete?.CourseTitle}'? This action cannot be undone.")"
+                ConfirmButtonText="Delete"
+                ConfirmButtonColor="ButtonColor.Danger"
+                OnConfirm="DeleteEnrollment" />
 
 @code {
-    private PaginatedResult<EnrollmentModel>? paginatedEnrollments;
-    private int currentPage = 1;
-    private int pageSize = 10;
+    private ModalComponent deleteModal = default!;
+    private EnrollmentModel? enrollmentToDelete;
 
-    protected override async Task OnInitializedAsync()
+    private async Task<GridDataProviderResult<EnrollmentModel>> EnrollmentsDataProvider(GridDataProviderRequest<EnrollmentModel> request)
     {
-        await LoadEnrollmentsAsync();
-    }
-
-    private async Task LoadEnrollmentsAsync()
-    {
-        var request = new PaginationRequest
+        try
         {
-            PageNumber = currentPage,
-            PageSize = pageSize
-        };
-        paginatedEnrollments = await EnrollmentRepository.GetEnrollmentsPaginatedAsync(request);
-
-        if (paginatedEnrollments == null || !paginatedEnrollments.Items.Any())
-        {
-            paginatedEnrollments = new PaginatedResult<EnrollmentModel>
+            var result = await EnrollmentRepository.GetEnrollmentsPaginatedAsync(new PaginationRequest
             {
-                Items = new List<EnrollmentModel>
-                {
-                    new EnrollmentModel { Id = 1, UserId = "user1", UserName = "John Doe", CourseId = 101, CourseTitle = "Introduction to Blazor", EnrolledAt = DateTime.Now.AddMonths(-2), Status = "Active", ProgressPercentage = 75.0, FinalGrade = 0.0 },
-                    new EnrollmentModel { Id = 2, UserId = "user2", UserName = "Jane Smith", CourseId = 102, CourseTitle = "Advanced C#", EnrolledAt = DateTime.Now.AddMonths(-5), Status = "Completed", ProgressPercentage = 100.0, FinalGrade = 88.0 },
-                    new EnrollmentModel { Id = 3, UserId = "user3", UserName = "Peter Jones", CourseId = 101, CourseTitle = "Introduction to Blazor", EnrolledAt = DateTime.Now.AddMonths(-1), Status = "Active", ProgressPercentage = 30.0, FinalGrade = 0.0 }
-                },
-                TotalCount = 3,
-                PageNumber = currentPage,
-                PageSize = pageSize
+                PageNumber = request.PageNumber,
+                PageSize = request.PageSize
+            });
+
+            return new GridDataProviderResult<EnrollmentModel>
+            {
+                Data = result.Items,
+                TotalCount = result.TotalCount
+            };
+        }
+        catch (Exception ex)
+        {
+            ToastService.ShowError("Error", $"Error loading enrollments: {ex.Message}");
+            return new GridDataProviderResult<EnrollmentModel>
+            {
+                Data = Enumerable.Empty<EnrollmentModel>(),
+                TotalCount = 0
             };
         }
     }
 
-    private async Task OnPageChanged(int page)
+    private async Task ConfirmDelete(EnrollmentModel enrollment)
     {
-        currentPage = page;
-        await LoadEnrollmentsAsync();
+        enrollmentToDelete = enrollment;
+        await deleteModal.ShowAsync();
     }
 
-    private async Task OnPageSizeChanged(int size)
+    private async Task DeleteEnrollment()
     {
-        pageSize = size;
-        currentPage = 1;
-        await LoadEnrollmentsAsync();
+        if (enrollmentToDelete != null)
+        {
+            try
+            {
+                await EnrollmentRepository.DeleteEnrollmentAsync(enrollmentToDelete.Id);
+                ToastService.ShowSuccess("Success", $"Enrollment for '{enrollmentToDelete.UserName}' deleted successfully.");
+                await RefreshGridDataAsync();
+            }
+            catch (Exception ex)
+            {
+                ToastService.ShowError("Error", $"Error deleting enrollment: {ex.Message}");
+            }
+            finally
+            {
+                enrollmentToDelete = null;
+            }
+        }
+    }
+
+    private async Task RefreshGridDataAsync()
+    {
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private BadgeColor GetStatusBadgeColor(string? status)
+    {
+        return status?.ToLower() switch
+        {
+            "active" => BadgeColor.Success,
+            "completed" => BadgeColor.Info,
+            "dropped" => BadgeColor.Danger,
+            _ => BadgeColor.Secondary
+        };
     }
 }
 

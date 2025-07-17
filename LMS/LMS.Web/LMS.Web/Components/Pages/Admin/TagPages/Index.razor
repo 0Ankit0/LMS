@@ -13,98 +13,65 @@
     </Button>
 </div>
 
-<div class="card">
-    <div class="card-body">
-        @if (paginatedTags != null)
-        {
-            if (paginatedTags.Items.Any())
-            {
-                <Grid TItem="TagModel" Class="table table-striped table-hover" Data="paginatedTags.Items">
-                    <GridColumn TItem="TagModel" HeaderText="Name" PropertyName="Name" />
-                    <GridColumn TItem="TagModel" HeaderText="Color" PropertyName="Color" />
-
-                    <GridColumn TItem="TagModel" HeaderText="Actions">
-                        <div class="btn-group" role="group">
-                            <Button Color="ButtonColor.Primary" Size="ButtonSize.Small" Href='@($"/admin/tags/edit?id={context.Id}")'>
-                                <Icon Name="IconName.Pencil" /> Edit
-                            </Button>
-                            <Button Color="ButtonColor.Info" Size="ButtonSize.Small" Href='@($"/admin/tags/details?id={context.Id}")'>
-                                <Icon Name="IconName.Eye" /> Details
-                            </Button>
-                            <Button Color="ButtonColor.Danger" Size="ButtonSize.Small" Href='@($"/admin/tags/delete?id={context.Id}")'>
-                                <Icon Name="IconName.Trash" /> Delete
-                            </Button>
-                        </div>
-                    </GridColumn>
-                </Grid>
-
-                <PaginationComponent TItem="TagModel" PaginatedResult="paginatedTags" OnPageChanged="OnPageChanged"
-                    OnPageSizeChanged="OnPageSizeChanged" />
-            }
-            else
-            {
-                <div class="text-center py-4">
-                    <p class="text-muted">No tags found.</p>
-                </div>
-            }
-        }
-        else
-        {
-            <div class="text-center">
-                <div class="spinner-border" role="status">
-                    <span class="visually-hidden">Loading...</span>
-                </div>
-            </div>
-        }
-    </div>
-</div>
+<DataTableComponent TItem="TagModel" 
+                    DataProvider="TagsDataProvider"
+                    PageSize="10">
+    <Columns>
+        <GridColumn TItem="TagModel" HeaderText="Name" PropertyName="Name" />
+        <GridColumn TItem="TagModel" HeaderText="Color" PropertyName="Color" />
+    </Columns>
+    <Actions>
+        <div class="btn-group" role="group">
+            <Button Color="ButtonColor.Primary" Size="ButtonSize.Small" Href='@($"/admin/tags/edit?id={context.Id}")'>
+                <Icon Name="IconName.Pencil" /> Edit
+            </Button>
+            <Button Color="ButtonColor.Info" Size="ButtonSize.Small" Href='@($"/admin/tags/details?id={context.Id}")'>
+                <Icon Name="IconName.Eye" /> Details
+            </Button>
+            <Button Color="ButtonColor.Danger" Size="ButtonSize.Small" Href='@($"/admin/tags/delete?id={context.Id}")'>
+                <Icon Name="IconName.Trash" /> Delete
+            </Button>
+        </div>
+    </Actions>
+</DataTableComponent>
 
 @code {
-    private PaginatedResult<TagModel>? paginatedTags;
-    private int currentPage = 1;
-    private int pageSize = 10;
+    private IEnumerable<TagModel> tags = default!;
 
-    protected override async Task OnInitializedAsync()
+    private async Task<GridDataProviderResult<TagModel>> TagsDataProvider(GridDataProviderRequest<TagModel> request)
     {
-        await LoadTagsAsync();
+        if (tags is null) // pull tags only one time for client-side filtering, sorting, and paging
+            tags = await GetTags(); // call a service or an API to pull the tags
+
+        return await Task.FromResult(request.ApplyTo(tags));
     }
 
-    private async Task LoadTagsAsync()
+    private async Task<IEnumerable<TagModel>> GetTags()
     {
-        var request = new PaginationRequest
+        try
         {
-            PageNumber = currentPage,
-            PageSize = pageSize
-        };
-        paginatedTags = await TagRepository.GetTagsPaginatedAsync(request);
-
-        if (paginatedTags == null || !paginatedTags.Items.Any())
-        {
-            paginatedTags = new PaginatedResult<TagModel>
+            var request = new PaginationRequest
             {
-                Items = new List<TagModel>
-                {
-                    new TagModel { Id = 1, Name = "Programming", Color = "#007bff", IsActive = true, CourseCount = 10 },
-                    new TagModel { Id = 2, Name = "Web Development", Color = "#28a745", IsActive = true, CourseCount = 15 },
-                    new TagModel { Id = 3, Name = "Data Science", Color = "#ffc107", IsActive = true, CourseCount = 8 }
-                },
-                TotalCount = 3,
-                PageNumber = currentPage,
-                PageSize = pageSize
+                PageNumber = 1,
+                PageSize = 1000 // Get all for client-side pagination
             };
+
+            var paginatedResult = await TagRepository.GetTagsPaginatedAsync(request);
+            return paginatedResult?.Items ?? GetMockTags();
+        }
+        catch
+        {
+            return GetMockTags();
         }
     }
 
-    private async Task OnPageChanged(int page)
+    private IEnumerable<TagModel> GetMockTags()
     {
-        currentPage = page;
-        await LoadTagsAsync();
-    }
-
-    private async Task OnPageSizeChanged(int size)
-    {
-        pageSize = size;
-        currentPage = 1;
-        await LoadTagsAsync();
+        return new List<TagModel>
+        {
+            new TagModel { Id = 1, Name = "Programming", Color = "#007bff", IsActive = true, CourseCount = 10 },
+            new TagModel { Id = 2, Name = "Web Development", Color = "#28a745", IsActive = true, CourseCount = 15 },
+            new TagModel { Id = 3, Name = "Data Science", Color = "#ffc107", IsActive = true, CourseCount = 8 }
+        };
     }
 }

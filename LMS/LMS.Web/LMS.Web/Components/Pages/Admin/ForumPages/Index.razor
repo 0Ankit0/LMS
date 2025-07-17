@@ -4,119 +4,136 @@
 @using LMS.Data.DTOs
 @using LMS.Data.Entities
 @using LMS.Web.Components.Shared 
+@using LMS.Web.Services
 
 @inject IForumRepository ForumRepository
+@inject LMS.Web.Services.ToastService ToastService
 
 <PageTitle>Forums - Admin</PageTitle>
 
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h1 class="mb-0">Forums</h1>
-    <Button Color="ButtonColor.Primary" Href="/admin/forums/create">
-        <Icon Name="IconName.PlusCircle" />
-        Add New Forum
-    </Button>
-</div>
-
-<div class="card">
-    <div class="card-body">
-        @if (paginatedForums != null)
-        {
-            if (paginatedForums.Items.Any())
-            {
-                <Grid TItem="ForumModel" Class="table table-striped table-hover" Data="paginatedForums.Items">
-                    <GridColumn TItem="ForumModel" HeaderText="Title" PropertyName="Title" />
-                    <GridColumn TItem="ForumModel" HeaderText="Description" PropertyName="Description" />
-                    <GridColumn TItem="ForumModel" HeaderText="Course ID" PropertyName="CourseId" />
-                    <GridColumn TItem="ForumModel" HeaderText="General">
-                        @((context as ForumModel)?.IsGeneral == true ? "Yes" : "No")
-                    </GridColumn>
-                    <GridColumn TItem="ForumModel" HeaderText="Active">
-                        @((context as ForumModel)?.IsActive == true ? "Yes" : "No")
-                    </GridColumn>
-                    <GridColumn TItem="ForumModel" HeaderText="Topics" PropertyName="TopicCount" />
-                    <GridColumn TItem="ForumModel" HeaderText="Actions">
-                        <div class="btn-group" role="group">
-                            <Button Color="ButtonColor.Primary" Size="ButtonSize.Small" Href='@($"/admin/forums/edit?id={context.Id}")'>
-                                <Icon Name="IconName.Pencil" /> Edit
-                            </Button>
-                            <Button Color="ButtonColor.Info" Size="ButtonSize.Small" Href='@($"/admin/forums/details?id={context.Id}")'>
-                                <Icon Name="IconName.Eye" /> Details
-                            </Button>
-                            <Button Color="ButtonColor.Danger" Size="ButtonSize.Small" Href='@($"/admin/forums/delete?id={context.Id}")'>
-                                <Icon Name="IconName.Trash" /> Delete
-                            </Button>
-                        </div>
-                    </GridColumn>
-                </Grid>
-
-                <PaginationComponent TItem="ForumModel" PaginatedResult="paginatedForums"
-                    OnPageChanged="OnPageChanged" OnPageSizeChanged="OnPageSizeChanged" />
-            }
-            else
-            {
-                <div class="text-center py-4">
-                    <p class="text-muted">No forums found.</p>
-                </div>
-            }
-        }
-        else
-        {
-            <div class="text-center">
-                <div class="spinner-border" role="status">
-                    <span class="visually-hidden">Loading...</span>
-                </div>
-            </div>
-        }
+<Card>
+    <div class="card-header">
+        <div class="d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Forums</h5>
+            <Button Color="ButtonColor.Primary" Href="/admin/forums/create">
+                <Icon Name="IconName.PlusCircle" />
+                Add New Forum
+            </Button>
+        </div>
     </div>
-</div>
+    <CardBody>
+        <Grid TItem="ForumModel" 
+              DataProvider="ForumsDataProvider"
+              AllowPaging="true" 
+              AllowSorting="true"
+              AllowFiltering="true">
+            <GridColumn TItem="ForumModel" HeaderText="Title" PropertyName="Title" SortKeySelector="item => item.Title" Filterable="true" />
+            <GridColumn TItem="ForumModel" HeaderText="Description" PropertyName="Description" Filterable="true" />
+            <GridColumn TItem="ForumModel" HeaderText="Course ID" PropertyName="CourseId" SortKeySelector="item => item.CourseId" HeaderTextAlignment="Alignment.End" TextAlignment="Alignment.End">
+                @(context.CourseId?.ToString() ?? "N/A")
+            </GridColumn>
+            <GridColumn TItem="ForumModel" HeaderText="General" SortKeySelector="item => item.IsGeneral">
+                <Badge Color="@(context.IsGeneral ? BadgeColor.Info : BadgeColor.Secondary)">
+                    @(context.IsGeneral ? "General" : "Course")
+                </Badge>
+            </GridColumn>
+            <GridColumn TItem="ForumModel" HeaderText="Active" SortKeySelector="item => item.IsActive">
+                <Badge Color="@(context.IsActive ? BadgeColor.Success : BadgeColor.Secondary)">
+                    @(context.IsActive ? "Yes" : "No")
+                </Badge>
+            </GridColumn>
+            <GridColumn TItem="ForumModel" HeaderText="Topics" PropertyName="TopicCount" SortKeySelector="item => item.TopicCount" HeaderTextAlignment="Alignment.End" TextAlignment="Alignment.End" />
+            <GridColumn TItem="ForumModel" HeaderText="Created" SortKeySelector="item => item.CreatedAt">
+                @context.CreatedAt.ToString("yyyy-MM-dd")
+            </GridColumn>
+            <GridColumn TItem="ForumModel" HeaderText="Actions">
+                <div class="btn-group" role="group">
+                    <Button Color="ButtonColor.Primary" Size="ButtonSize.Small" Href='@($"/admin/forums/edit?id={context.Id}")'>
+                        <Icon Name="IconName.Pencil" /> Edit
+                    </Button>
+                    <Button Color="ButtonColor.Info" Size="ButtonSize.Small" Href='@($"/admin/forums/details?id={context.Id}")'>
+                        <Icon Name="IconName.Eye" /> Details
+                    </Button>
+                    <Button Color="ButtonColor.Danger" Size="ButtonSize.Small" @onclick="() => ConfirmDelete(context)">
+                        <Icon Name="IconName.Trash" /> Delete
+                    </Button>
+                </div>
+            </GridColumn>
+        </Grid>
+    </CardBody>
+</Card>
+
+<!-- Delete Confirmation Modal -->
+<ModalComponent @ref="deleteModal" 
+                Title="Confirm Delete" 
+                Message="@($"Are you sure you want to delete the forum '{forumToDelete?.Title}'? This action cannot be undone.")"
+                ConfirmButtonText="Delete"
+                ConfirmButtonColor="ButtonColor.Danger"
+                OnConfirm="DeleteForum" />
 
 @code {
-    private PaginatedResult<ForumModel>? paginatedForums;
-    private int currentPage = 1;
-    private int pageSize = 10;
+    private IEnumerable<ForumModel> forums = default!;
+    private ModalComponent deleteModal = default!;
+    private ForumModel? forumToDelete;
 
-    protected override async Task OnInitializedAsync()
+    private async Task<GridDataProviderResult<ForumModel>> ForumsDataProvider(GridDataProviderRequest<ForumModel> request)
     {
-        await LoadForumsAsync();
-    }
-
-    private async Task LoadForumsAsync()
-    {
-        var request = new PaginationRequest
+        try
         {
-            PageNumber = currentPage,
-            PageSize = pageSize
-        };
-        paginatedForums = await ForumRepository.GetForumsPaginatedAsync(request);
-
-        if (paginatedForums == null || !paginatedForums.Items.Any())
-        {
-            paginatedForums = new PaginatedResult<ForumModel>
+            var result = await ForumRepository.GetForumsPaginatedAsync(new PaginationRequest
             {
-                Items = new List<ForumModel>
-                {
-                    new ForumModel { Id = 1, Title = "General Discussion", Description = "A place for all general discussions.", IsGeneral = true, IsActive = true, TopicCount = 15, CreatedAt = DateTime.Now.AddMonths(-6) },
-                    new ForumModel { Id = 2, Title = "C# Course Forum", Description = "Discussions related to the C# programming course.", CourseId = 101, CourseName = "Introduction to C#", IsGeneral = false, IsActive = true, TopicCount = 25, CreatedAt = DateTime.Now.AddMonths(-3) },
-                    new ForumModel { Id = 3, Title = "Web Dev Q&A", Description = "Ask questions about web development.", CourseId = 102, CourseName = "Advanced JavaScript", IsGeneral = false, IsActive = true, TopicCount = 30, CreatedAt = DateTime.Now.AddMonths(-1) }
-                },
-                TotalCount = 3,
-                PageNumber = currentPage,
-                PageSize = pageSize
+                PageNumber = request.PageNumber,
+                PageSize = request.PageSize
+                // Removed unsupported: Filter, SortBy, SortDirection
+            });
+
+            return new GridDataProviderResult<ForumModel>
+            {
+                Data = result.Items,
+                TotalCount = result.TotalCount
+            };
+        }
+        catch (Exception ex)
+        {
+            ToastService.ShowError("Error", $"Error loading forums: {ex.Message}");
+            return new GridDataProviderResult<ForumModel>
+            {
+                Data = Enumerable.Empty<ForumModel>(),
+                TotalCount = 0
             };
         }
     }
 
-    private async Task OnPageChanged(int page)
+    private async Task ConfirmDelete(ForumModel forum)
     {
-        currentPage = page;
-        await LoadForumsAsync();
+        forumToDelete = forum;
+        await deleteModal.ShowAsync();
     }
 
-    private async Task OnPageSizeChanged(int size)
+    private async Task DeleteForum()
     {
-        pageSize = size;
-        currentPage = 1;
-        await LoadForumsAsync();
+        if (forumToDelete != null)
+        {
+            try
+            {
+                await ForumRepository.DeleteForumAsync(forumToDelete.Id);
+                ToastService.ShowSuccess("Success", $"Forum '{forumToDelete.Title}' deleted successfully.");
+                await RefreshGridDataAsync();
+            }
+            catch (Exception ex)
+            {
+                ToastService.ShowError("Error", $"Error deleting forum: {ex.Message}");
+            }
+            finally
+            {
+                forumToDelete = null;
+            }
+        }
+    }
+
+    private async Task RefreshGridDataAsync()
+    {
+        await InvokeAsync(StateHasChanged);
     }
 }
 

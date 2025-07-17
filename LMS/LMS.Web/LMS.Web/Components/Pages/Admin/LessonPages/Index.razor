@@ -1,118 +1,145 @@
 @page "/admin/lessons"  
 @using LMS.Web.Components.Shared  
 @using LMS.Repositories  
+@using LMS.Web.Services
 @using Microsoft.AspNetCore.Components
 
 @inject ILessonRepository LessonRepository  
+@inject LMS.Web.Services.ToastService ToastService
 
 <PageTitle>Lessons - Admin</PageTitle>  
 
-<div class="d-flex justify-content-between align-items-center mb-4">  
-    <h1 class="mb-0">Lessons</h1>  
-    <a href="/admin/lessons/create" class="btn btn-primary">  
-        <i class="bi bi-plus-circle me-2"></i>Add New Lesson  
-    </a>  
-</div>  
+<Card>
+    <div class="card-header">
+        <div class="d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Lessons</h5>
+            <Button Color="ButtonColor.Primary" Href="/admin/lessons/create">
+                <Icon Name="IconName.PlusCircle" />
+                Add New Lesson
+            </Button>
+        </div>
+    </div>
+    <CardBody>
+        <Grid TItem="LessonModel" 
+              DataProvider="LessonsDataProvider"
+              AllowPaging="true" 
+              AllowSorting="true"
+              AllowFiltering="true">
+            <GridColumn TItem="LessonModel" HeaderText="Title" PropertyName="Title" SortKeySelector="item => item.Title" Filterable="true" />
+            <GridColumn TItem="LessonModel" HeaderText="Description" PropertyName="Description" Filterable="true" />
+            <GridColumn TItem="LessonModel" HeaderText="Module ID" PropertyName="ModuleId" SortKeySelector="item => item.ModuleId" HeaderTextAlignment="Alignment.End" TextAlignment="Alignment.End" />
+            <GridColumn TItem="LessonModel" HeaderText="Type" PropertyName="Type" SortKeySelector="item => item.Type ?? string.Empty" Filterable="true">
+                <Badge Color="@GetTypeBadgeColor(context.Type)">@context.Type</Badge>
+            </GridColumn>
+            <GridColumn TItem="LessonModel" HeaderText="Duration" SortKeySelector="item => item.EstimatedDuration">
+                @context.EstimatedDuration.ToString(@"mm\:ss")
+            </GridColumn>
+            <GridColumn TItem="LessonModel" HeaderText="Order" PropertyName="OrderIndex" SortKeySelector="item => item.OrderIndex" HeaderTextAlignment="Alignment.End" TextAlignment="Alignment.End" />
+            <GridColumn TItem="LessonModel" HeaderText="Required" SortKeySelector="item => item.IsRequired">
+                <Badge Color="@(context.IsRequired ? BadgeColor.Primary : BadgeColor.Secondary)">
+                    @(context.IsRequired ? "Yes" : "No")
+                </Badge>
+            </GridColumn>
+            <GridColumn TItem="LessonModel" HeaderText="Actions">
+                <div class="btn-group" role="group">
+                    <Button Color="ButtonColor.Primary" Size="ButtonSize.Small" Href='@($"/admin/lessons/edit?id={context.Id}")'>
+                        <Icon Name="IconName.Pencil" /> Edit
+                    </Button>
+                    <Button Color="ButtonColor.Info" Size="ButtonSize.Small" Href='@($"/admin/lessons/details?id={context.Id}")'>
+                        <Icon Name="IconName.Eye" /> Details
+                    </Button>
+                    <Button Color="ButtonColor.Danger" Size="ButtonSize.Small" @onclick="() => ConfirmDelete(context)">
+                        <Icon Name="IconName.Trash" /> Delete
+                    </Button>
+                </div>
+            </GridColumn>
+        </Grid>
+    </CardBody>
+</Card>  
 
-<div class="card">  
-    <div class="card-body">  
-        @if (paginatedLessons != null)  
-        {  
-            if (paginatedLessons.Items.Any())  
-            {  
-                <Grid TItem="LessonModel" Class="table table-striped table-hover" Data="paginatedLessons.Items">
-                    <GridColumn TItem="LessonModel" HeaderText="Title" PropertyName="Title" />
-                    <GridColumn TItem="LessonModel" HeaderText="Description" PropertyName="Description" />
-                    <GridColumn TItem="LessonModel" HeaderText="Module ID" PropertyName="ModuleId" />
-                    <GridColumn TItem="LessonModel" HeaderText="Type" PropertyName="Type" />
-                    <GridColumn TItem="LessonModel" HeaderText="Duration" PropertyName="EstimatedDuration" />
-                    <GridColumn TItem="LessonModel" HeaderText="Order" PropertyName="OrderIndex" />
-                    <GridColumn TItem="LessonModel" HeaderText="Required">
-                        @((context as LessonModel)?.IsRequired == true ? "Yes" : "No")
-                    </GridColumn>
+<!-- Delete Confirmation Modal -->
+<ModalComponent @ref="deleteModal" 
+                Title="Confirm Delete" 
+                Message="@($"Are you sure you want to delete the lesson '{lessonToDelete?.Title}'? This action cannot be undone.")"
+                ConfirmButtonText="Delete"
+                ConfirmButtonColor="ButtonColor.Danger"
+                OnConfirm="DeleteLesson" />
 
-                    <GridColumn TItem="LessonModel" HeaderText="Actions">
-                        <div class="btn-group" role="group">
-                            <Button Color="ButtonColor.Primary" Size="ButtonSize.Small" Href='@($"/admin/lessons/edit?id={context.Id}")'>
-                                <Icon Name="IconName.Pencil" /> Edit
-                            </Button>
-                            <Button Color="ButtonColor.Info" Size="ButtonSize.Small" Href='@($"/admin/lessons/details?id={context.Id}")'>
-                                <Icon Name="IconName.Eye" /> Details
-                            </Button>
-                            <Button Color="ButtonColor.Danger" Size="ButtonSize.Small" Href='@($"/admin/lessons/delete?id={context.Id}")'>
-                                <Icon Name="IconName.Trash" /> Delete
-                            </Button>
-                        </div>
-                    </GridColumn>
-                </Grid>  
+@code {
+    private IEnumerable<LessonModel> lessons = default!;
+    private ModalComponent deleteModal = default!;
+    private LessonModel? lessonToDelete;
 
-                <PaginationComponent TItem="LessonModel" PaginatedResult="paginatedLessons" OnPageChanged="OnPageChanged"  
-                    OnPageSizeChanged="OnPageSizeChanged" />  
-            }  
-            else  
-            {  
-                <div class="text-center py-4">  
-                    <p class="text-muted">No lessons found.</p>  
-                </div>  
-            }  
-        }  
-        else  
-        {  
-            <div class="text-center">  
-                <div class="spinner-border" role="status">  
-                    <span class="visually-hidden">Loading...</span>  
-                </div>  
-            </div>  
-        }  
-    </div>  
-</div>  
-
-@code {  
-    private PaginatedResult<LessonModel>? paginatedLessons;  
-    private int currentPage = 1;  
-    private int pageSize = 10;  
-
-    protected override async Task OnInitializedAsync()  
-    {  
-        await LoadLessonsAsync();  
-    }  
-
-    private async Task LoadLessonsAsync()  
-    {  
-        var request = new PaginationRequest  
-        {  
-            PageNumber = currentPage,  
-            PageSize = pageSize  
-        };  
-        paginatedLessons = await LessonRepository.GetLessonsPaginatedAsync(request);
-
-        if (paginatedLessons == null || !paginatedLessons.Items.Any())
+    private async Task<GridDataProviderResult<LessonModel>> LessonsDataProvider(GridDataProviderRequest<LessonModel> request)
+    {
+        try
         {
-            paginatedLessons = new PaginatedResult<LessonModel>
+            var result = await LessonRepository.GetLessonsPaginatedAsync(new PaginationRequest
             {
-                Items = new List<LessonModel>
-                {
-                    new LessonModel { Id = 1, Title = "Introduction to Variables", Description = "Understanding data types and variables in C#.", ModuleId = 1, ModuleName = "C# Basics", Type = "Video", EstimatedDuration = TimeSpan.FromMinutes(15), OrderIndex = 1, IsRequired = true },
-                    new LessonModel { Id = 2, Title = "Control Flow Statements", Description = "Learning about if-else, switch, and loops.", ModuleId = 1, ModuleName = "C# Basics", Type = "Text", EstimatedDuration = TimeSpan.FromMinutes(20), OrderIndex = 2, IsRequired = true },
-                    new LessonModel { Id = 3, Title = "Functions and Methods", Description = "Defining and calling functions in C#.", ModuleId = 1, ModuleName = "C# Basics", Type = "Quiz", EstimatedDuration = TimeSpan.FromMinutes(10), OrderIndex = 3, IsRequired = false }
-                },
-                TotalCount = 3,
-                PageNumber = currentPage,
-                PageSize = pageSize
+                PageNumber = request.PageNumber,
+                PageSize = request.PageSize
+                // Removed unsupported: Filter, SortBy, SortDirection
+            });
+
+            return new GridDataProviderResult<LessonModel>
+            {
+                Data = result.Items,
+                TotalCount = result.TotalCount
             };
-        }  
-    }  
+        }
+        catch (Exception ex)
+        {
+            ToastService.ShowError("Error", $"Error loading lessons: {ex.Message}");
+            return new GridDataProviderResult<LessonModel>
+            {
+                Data = Enumerable.Empty<LessonModel>(),
+                TotalCount = 0
+            };
+        }
+    }
 
-    private async Task OnPageChanged(int page)  
-    {  
-        currentPage = page;  
-        await LoadLessonsAsync();  
-    }  
+    private async Task ConfirmDelete(LessonModel lesson)
+    {
+        lessonToDelete = lesson;
+        await deleteModal.ShowAsync();
+    }
 
-    private async Task OnPageSizeChanged(int size)  
-    {  
-        pageSize = size;  
-        currentPage = 1;  
-        await LoadLessonsAsync();  
-    }  
+    private async Task DeleteLesson()
+    {
+        if (lessonToDelete != null)
+        {
+            try
+            {
+                await LessonRepository.DeleteLessonAsync(lessonToDelete.Id);
+                ToastService.ShowSuccess("Success", $"Lesson '{lessonToDelete.Title}' deleted successfully.");
+                await RefreshGridDataAsync();
+            }
+            catch (Exception ex)
+            {
+                ToastService.ShowError("Error", $"Error deleting lesson: {ex.Message}");
+            }
+            finally
+            {
+                lessonToDelete = null;
+            }
+        }
+    }
+
+    private async Task RefreshGridDataAsync()
+    {
+        await InvokeAsync(StateHasChanged);
+    }
+
+    // Add missing GetTypeBadgeColor helper
+    private BadgeColor GetTypeBadgeColor(string? type)
+    {
+        return type?.ToLower() switch
+        {
+            "video" => BadgeColor.Info,
+            "document" => BadgeColor.Secondary,
+            "quiz" => BadgeColor.Warning,
+            "scorm" => BadgeColor.Dark,
+            _ => BadgeColor.Primary
+        };
+    }
 }

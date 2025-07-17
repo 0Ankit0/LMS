@@ -1,120 +1,133 @@
 @page "/admin/modules"
 
-
 @using LMS.Repositories
+@using LMS.Web.Components.Shared
+@using LMS.Web.Services
 @inject IModuleRepository ModuleRepository
+@inject LMS.Web.Services.ToastService ToastService
 
 <PageTitle>Modules - Admin</PageTitle>
 
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h1 class="mb-0">Modules</h1>
-    <Button Color="ButtonColor.Primary" Href="/admin/modules/create">
-        <Icon Name="IconName.PlusCircle" />
-        Add New Module
-    </Button>
-</div>
-
-<div class="card">
-    <div class="card-body">
-        @if (paginatedModules != null)
-        {
-            if (paginatedModules.Items.Any())
-            {
-                <Grid TItem="ModuleModel" Class="table table-striped table-hover" Data="paginatedModules.Items">
-                    <GridColumn TItem="ModuleModel" HeaderText="Title" PropertyName="Title" />
-                    <GridColumn TItem="ModuleModel" HeaderText="Description" PropertyName="Description" />
-                    <GridColumn TItem="ModuleModel" HeaderText="Course ID" PropertyName="CourseId" />
-                    <GridColumn TItem="ModuleModel" HeaderText="Order" PropertyName="OrderIndex" />
-                    <GridColumn TItem="ModuleModel" HeaderText="Required">
-                        @((context as ModuleModel)?.IsRequired == true ? "Yes" : "No")
-                    </GridColumn>
-                    <GridColumn TItem="ModuleModel" HeaderText="Active">
-                        @((context as ModuleModel)?.IsActive == true ? "Yes" : "No")
-                    </GridColumn>
-                    <GridColumn TItem="ModuleModel" HeaderText="Lessons" PropertyName="Lessons.Count" />
-
-                    <GridColumn TItem="ModuleModel" HeaderText="Actions">
-                        <div class="btn-group" role="group">
-                            <Button Color="ButtonColor.Primary" Size="ButtonSize.Small" Href='@($"/admin/modules/edit?id={context.Id}")'>
-                                <Icon Name="IconName.Pencil" /> Edit
-                            </Button>
-                            <Button Color="ButtonColor.Info" Size="ButtonSize.Small" Href='@($"/admin/modules/details?id={context.Id}")'>
-                                <Icon Name="IconName.Eye" /> Details
-                            </Button>
-                            <Button Color="ButtonColor.Danger" Size="ButtonSize.Small" Href='@($"/admin/modules/delete?id={context.Id}")'>
-                                <Icon Name="IconName.Trash" /> Delete
-                            </Button>
-                        </div>
-                    </GridColumn>
-                </Grid>
-
-                <PaginationComponent TItem="ModuleModel" PaginatedResult="paginatedModules"
-                    OnPageChanged="OnPageChanged" OnPageSizeChanged="OnPageSizeChanged" />
-            }
-            else
-            {
-                <div class="text-center py-4">
-                    <p class="text-muted">No modules found.</p>
-                </div>
-            }
-        }
-        else
-        {
-            <div class="text-center">
-                <div class="spinner-border" role="status">
-                    <span class="visually-hidden">Loading...</span>
-                </div>
-            </div>
-        }
+<Card>
+    <div class="card-header">
+        <div class="d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Modules</h5>
+            <Button Color="ButtonColor.Primary" Href="/admin/modules/create">
+                <Icon Name="IconName.PlusCircle" />
+                Add New Module
+            </Button>
+        </div>
     </div>
-</div>
+    <CardBody>
+        <Grid TItem="ModuleModel" 
+              DataProvider="ModulesDataProvider"
+              AllowPaging="true" 
+              AllowSorting="true"
+              AllowFiltering="true">
+            <GridColumn TItem="ModuleModel" HeaderText="Title" PropertyName="Title" SortKeySelector="item => item.Title" Filterable="true" />
+            <GridColumn TItem="ModuleModel" HeaderText="Description" PropertyName="Description" Filterable="true" />
+            <GridColumn TItem="ModuleModel" HeaderText="Course ID" PropertyName="CourseId" SortKeySelector="item => item.CourseId" HeaderTextAlignment="Alignment.End" TextAlignment="Alignment.End" />
+            <GridColumn TItem="ModuleModel" HeaderText="Order" PropertyName="OrderIndex" SortKeySelector="item => item.OrderIndex" HeaderTextAlignment="Alignment.End" TextAlignment="Alignment.End" />
+            <GridColumn TItem="ModuleModel" HeaderText="Required" SortKeySelector="item => item.IsRequired">
+                <Badge Color="@(context.IsRequired ? BadgeColor.Primary : BadgeColor.Secondary)">
+                    @(context.IsRequired ? "Yes" : "No")
+                </Badge>
+            </GridColumn>
+            <GridColumn TItem="ModuleModel" HeaderText="Active" SortKeySelector="item => item.IsActive">
+                <Badge Color="@(context.IsActive ? BadgeColor.Success : BadgeColor.Secondary)">
+                    @(context.IsActive ? "Yes" : "No")
+                </Badge>
+            </GridColumn>
+            <GridColumn TItem="ModuleModel" HeaderText="Lessons" SortKeySelector="item => item.Lessons.Count" HeaderTextAlignment="Alignment.End" TextAlignment="Alignment.End">
+                @(context.Lessons?.Count ?? 0)
+            </GridColumn>
+            <GridColumn TItem="ModuleModel" HeaderText="Actions">
+                <div class="btn-group" role="group">
+                    <Button Color="ButtonColor.Primary" Size="ButtonSize.Small" Href='@($"/admin/modules/edit?id={context.Id}")'>
+                        <Icon Name="IconName.Pencil" /> Edit
+                    </Button>
+                    <Button Color="ButtonColor.Info" Size="ButtonSize.Small" Href='@($"/admin/modules/details?id={context.Id}")'>
+                        <Icon Name="IconName.Eye" /> Details
+                    </Button>
+                    <Button Color="ButtonColor.Danger" Size="ButtonSize.Small" @onclick="() => ConfirmDelete(context)">
+                        <Icon Name="IconName.Trash" /> Delete
+                    </Button>
+                </div>
+            </GridColumn>
+        </Grid>
+    </CardBody>
+</Card>
+
+<!-- Delete Confirmation Modal -->
+<ModalComponent @ref="deleteModal" 
+                Title="Confirm Delete" 
+                Message="@($"Are you sure you want to delete the module '{moduleToDelete?.Title}'? This action cannot be undone.")"
+                ConfirmButtonText="Delete"
+                ConfirmButtonColor="ButtonColor.Danger"
+                OnConfirm="DeleteModule" />
 
 @code {
-    private PaginatedResult<ModuleModel>? paginatedModules;
-    private int currentPage = 1;
-    private int pageSize = 10;
+    private IEnumerable<ModuleModel> modules = default!;
+    private ModalComponent deleteModal = default!;
+    private ModuleModel? moduleToDelete;
 
-    protected override async Task OnInitializedAsync()
+    private async Task<GridDataProviderResult<ModuleModel>> ModulesDataProvider(GridDataProviderRequest<ModuleModel> request)
     {
-        await LoadModulesAsync();
-    }
-
-    private async Task LoadModulesAsync()
-    {
-        var request = new PaginationRequest
+        try
         {
-            PageNumber = currentPage,
-            PageSize = pageSize
-        };
-        paginatedModules = await ModuleRepository.GetModulesPaginatedAsync(request);
-
-        if (paginatedModules == null || !paginatedModules.Items.Any())
-        {
-            paginatedModules = new PaginatedResult<ModuleModel>
+            var result = await ModuleRepository.GetModulesPaginatedAsync(new PaginationRequest
             {
-                Items = new List<ModuleModel>
-                {
-                    new ModuleModel { Id = 1, Title = "C# Basics", Description = "Fundamental concepts of C#.", CourseId = 1, CourseName = "Introduction to C#", OrderIndex = 1, IsRequired = true, IsActive = true, Lessons = new List<LessonModel>() },
-                    new ModuleModel { Id = 2, Title = "Advanced C# Features", Description = "Exploring advanced topics like LINQ and async/await.", CourseId = 1, CourseName = "Introduction to C#", OrderIndex = 2, IsRequired = true, IsActive = true, Lessons = new List<LessonModel>() },
-                    new ModuleModel { Id = 3, Title = "Introduction to ASP.NET Core", Description = "Building web applications with ASP.NET Core.", CourseId = 2, CourseName = "Web Development", OrderIndex = 1, IsRequired = true, IsActive = true, Lessons = new List<LessonModel>() }
-                },
-                TotalCount = 3,
-                PageNumber = currentPage,
-                PageSize = pageSize
+                PageNumber = request.PageNumber,
+                PageSize = request.PageSize
+                // Removed unsupported: Filter, SortBy, SortDirection
+            });
+
+            return new GridDataProviderResult<ModuleModel>
+            {
+                Data = result.Items,
+                TotalCount = result.TotalCount
+            };
+        }
+        catch (Exception ex)
+        {
+            ToastService.ShowError("Error", $"Error loading modules: {ex.Message}");
+            return new GridDataProviderResult<ModuleModel>
+            {
+                Data = Enumerable.Empty<ModuleModel>(),
+                TotalCount = 0
             };
         }
     }
 
-    private async Task OnPageChanged(int page)
+    private async Task ConfirmDelete(ModuleModel module)
     {
-        currentPage = page;
-        await LoadModulesAsync();
+        moduleToDelete = module;
+        await deleteModal.ShowAsync();
     }
 
-    private async Task OnPageSizeChanged(int size)
+    private async Task DeleteModule()
     {
-        pageSize = size;
-        currentPage = 1;
-        await LoadModulesAsync();
+        if (moduleToDelete != null)
+        {
+            try
+            {
+                await ModuleRepository.DeleteModuleAsync(moduleToDelete.Id);
+                ToastService.ShowSuccess("Success", $"Module '{moduleToDelete.Title}' deleted successfully.");
+                await RefreshGridDataAsync();
+            }
+            catch (Exception ex)
+            {
+                ToastService.ShowError("Error", $"Error deleting module: {ex.Message}");
+            }
+            finally
+            {
+                moduleToDelete = null;
+            }
+        }
+    }
+
+    private async Task RefreshGridDataAsync()
+    {
+        await InvokeAsync(StateHasChanged);
     }
 }

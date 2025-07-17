@@ -1,132 +1,147 @@
 ﻿@page "/admin/categories/create"
 
 @using LMS.Repositories
+@using LMS.Web.Components.Shared
+@using LMS.Web.Services
 
 @inject ICategoryRepository CategoryRepository
 @inject IDropdownRepository DropdownRepository
 @inject NavigationManager NavigationManager
+@inject LMS.Web.Services.ToastService ToastService
 @rendermode @(new InteractiveServerRenderMode())
 
 <PageTitle>Create Category - Admin</PageTitle>
 
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h1 class="mb-0">Create New Category</h1>
-    <a href="/admin/categories" class="btn btn-outline-secondary">
-        <i class="bi bi-arrow-left me-2"></i>Back to Categories
-    </a>
+    <Button Color="ButtonColor.Secondary" Href="/admin/categories">
+        <Icon Name="IconName.ArrowLeft" />
+        Back to Categories
+    </Button>
 </div>
 
-<div class="row">
-    <div class="col-lg-8">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="card-title mb-0">Category Information</h5>
+<Card>
+    <CardHeader>
+        <h5 class="card-title mb-0">Category Information</h5>
+    </CardHeader>
+    <CardBody>
+        <EditForm Model="Category" OnValidSubmit="AddCategory">
+            <AntiforgeryToken />
+            <DataAnnotationsValidator />
+            <ValidationSummary class="alert alert-danger" role="alert" />
+
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label for="name" class="form-label">Name <span class="text-danger">*</span></label>
+                    <InputText id="name" @bind-Value="Category.Name" class="form-control" aria-required="true"
+                               placeholder="Enter category name" />
+                    <ValidationMessage For="() => Category.Name" class="text-danger" />
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label for="color" class="form-label">Color</label>
+                    <InputText id="color" @bind-Value="Category.Color" class="form-control" type="color" />
+                    <ValidationMessage For="() => Category.Color" class="text-danger" />
+                </div>
             </div>
-            <div class="card-body">
-                <EditForm Model="Category" OnValidSubmit="HandleValidSubmit">
-                    <AntiforgeryToken />
-                    <DataAnnotationsValidator />
-                    <ValidationSummary class="alert alert-danger" role="alert" />
 
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label for="name" class="form-label">Name <span class="text-danger">*</span></label>
-                            <InputText id="name" @bind-Value="Category.Name" class="form-control" aria-required="true"
-                                       placeholder="Enter category name" />
-                            <ValidationMessage For="() => Category.Name" class="text-danger" />
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label for="color" class="form-label">Color</label>
-                            <InputText id="color" @bind-Value="Category.Color" class="form-control" type="color" />
-                            <ValidationMessage For="() => Category.Color" class="text-danger" />
-                        </div>
-                    </div>
-
-                    <div class="mb-3">
-                        <label for="description" class="form-label">Description</label>
-                        <InputTextArea id="description" @bind-Value="Category.Description" class="form-control" rows="3"
-                                       placeholder="Enter category description" />
-                        <ValidationMessage For="() => Category.Description" class="text-danger" />
-                    </div>
-
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label for="iconurl" class="form-label">Icon URL</label>
-                            <InputText id="iconurl" @bind-Value="Category.IconUrl" class="form-control"
-                                       placeholder="https://example.com/icon.png" />
-                            <ValidationMessage For="() => Category.IconUrl" class="text-danger" />
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label for="parentcategoryid" class="form-label">Parent Category</label>
-                            <select class="form-select" @bind="Category.ParentCategoryId">
-                                <option value="">Select parent category (optional)...</option>
-                                @foreach (var option in categoryOptions)
-                                {
-                                    <option value="@option.Value">@option.Text</option>
-                                }
-                            </select>
-                            <ValidationMessage For="() => Category.ParentCategoryId" class="text-danger" />
-                        </div>
-                    </div>
-
-                    <div class="mb-3">
-                        <div class="form-check">
-                            <InputCheckbox id="isactive" @bind-Value="Category.IsActive" class="form-check-input" />
-                            <label for="isactive" class="form-check-label">Is Active</label>
-                            <ValidationMessage For="() => Category.IsActive" class="text-danger" />
-                        </div>
-                    </div>
-
-                    <div class="d-flex gap-2">
-                        <button type="submit" class="btn btn-primary">
-                            <i class="bi bi-check-circle me-2"></i>Create Category
-                        </button>
-                        <a href="/admin/categories" class="btn btn-secondary">Cancel</a>
-                    </div>
-                </EditForm>
+            <div class="mb-3">
+                <label for="description" class="form-label">Description</label>
+                <InputTextArea id="description" @bind-Value="Category.Description" class="form-control" rows="3"
+                               placeholder="Enter category description" />
+                <ValidationMessage For="() => Category.Description" class="text-danger" />
             </div>
-        </div>
-    </div>
-</div>
+
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label for="iconurl" class="form-label">Icon URL</label>
+                    <InputText id="iconurl" @bind-Value="Category.IconUrl" class="form-control"
+                               placeholder="https://example.com/icon.png" />
+                    <ValidationMessage For="() => Category.IconUrl" class="text-danger" />
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label for="parentcategoryid" class="form-label">Parent Category</label>
+                    <SearchableSelectComponent TItem="DropdownOption<int>" 
+                                               TValue="int?" 
+                                               DataProvider="SearchCategoriesDataProvider"
+                                               ValueSelector="@(item => item.Value)" 
+                                               DisplaySelector="@(item => item.Text)"
+                                               @bind-SelectedValue="Category.ParentCategoryId"
+                                               Placeholder="Select parent category (optional)..." 
+                                               EmptyText="No categories found" />
+                    <ValidationMessage For="() => Category.ParentCategoryId" class="text-danger" />
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <div class="form-check">
+                    <InputCheckbox id="isactive" @bind-Value="Category.IsActive" class="form-check-input" />
+                    <label for="isactive" class="form-check-label">Is Active</label>
+                    <ValidationMessage For="() => Category.IsActive" class="text-danger" />
+                </div>
+            </div>
+
+            <div class="d-flex gap-2">
+                <Button Color="ButtonColor.Primary" Type="ButtonType.Submit" Loading="@isSubmitting">
+                    <Icon Name="IconName.CheckCircle" />
+                    Create Category
+                </Button>
+                <Button Color="ButtonColor.Secondary" Href="/admin/categories">Cancel</Button>
+            </div>
+        </EditForm>
+    </CardBody>
+</Card>
 
 @code {
     private CreateCategoryRequest Category { get; set; } = new();
-    private List<DropdownOption<int>> categoryOptions = new();
+    private bool isSubmitting = false;
 
-    protected override async Task OnInitializedAsync()
+    private async Task<AutoCompleteDataProviderResult<DropdownOption<int>>> SearchCategoriesDataProvider(AutoCompleteDataProviderRequest<DropdownOption<int>> request)
     {
         try
         {
-            var categories = await DropdownRepository.GetCategoriesAsync(search: "", take: 20);
-            categoryOptions = categories ?? new List<DropdownOption<int>>();
+            var categories = await DropdownRepository.GetCategoriesAsync(search: request.Filter.Value, take: 20);
+            return new AutoCompleteDataProviderResult<DropdownOption<int>>
+            {
+                Data = categories,
+                TotalCount = categories.Count
+            };
         }
         catch (Exception ex)
         {
             Console.WriteLine($"Error loading categories: {ex.Message}");
-            categoryOptions = new List<DropdownOption<int>>();
+            return new AutoCompleteDataProviderResult<DropdownOption<int>>
+            {
+                Data = new List<DropdownOption<int>>(),
+                TotalCount = 0
+            };
         }
-    }
-
-    private Task HandleValidSubmit(EditContext context)
-    {
-        return AddCategory();
     }
 
     private async Task AddCategory()
     {
-        Console.WriteLine("AddCategory method called!"); // Debug log
+        if (isSubmitting) return;
+        
+        isSubmitting = true;
         try
         {
             var result = await CategoryRepository.CreateCategoryAsync(Category);
             if (result != null)
             {
+                ToastService.ShowSuccess("Success", "Category created successfully!");
                 NavigationManager.NavigateTo("/admin/categories");
+            }
+            else
+            {
+                ToastService.ShowError("Error", "Failed to create category. Please try again.");
             }
         }
         catch (Exception ex)
         {
-            // Handle error - could add error display logic here
-            Console.WriteLine($"Error creating category: {ex.Message}");
+            ToastService.ShowError("Error", $"Error creating category: {ex.Message}");
+        }
+        finally
+        {
+            isSubmitting = false;
         }
     }
 }

@@ -1,133 +1,182 @@
 ﻿@page "/admin/categories"
 
-
 @using LMS.Repositories
+@using LMS.Web.Components.Shared
+@using LMS.Web.Services
 @inject ICategoryRepository CategoryRepository
+@inject LMS.Web.Services.ToastService ToastService
 
 <PageTitle>Categories - Admin</PageTitle>
 
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h1 class="mb-0">Categories</h1>
-    <Button Color="ButtonColor.Primary" Href="/admin/categories/create">
-        <Icon Name="IconName.PlusCircle" />
-        Add New Category
-    </Button>
-</div>
-
-<div class="card">
-    <div class="card-body">
-        @if (paginatedResult != null)
-        {
-            if (paginatedResult.Items.Any())
-            {
-                <Grid TItem="CategoryModel" Class="table table-striped table-hover" Data="paginatedResult.Items">
-                    <GridColumn TItem="CategoryModel" HeaderText="Name" PropertyName="Name" />
-                    <GridColumn TItem="CategoryModel" HeaderText="Description" PropertyName="Description" />
-                    <GridColumn TItem="CategoryModel" HeaderText="Color" PropertyName="Color" />
-                    <GridColumn TItem="CategoryModel" HeaderText="Active">
-                        @((context as CategoryModel)?.IsActive == true ? "Yes" : "No")
-                    </GridColumn>
-                    <GridColumn TItem="CategoryModel" HeaderText="Parent Category" PropertyName="ParentCategoryName" />
-                    <GridColumn TItem="CategoryModel" HeaderText="Course Count" PropertyName="CourseCount" />
-
-                    <GridColumn TItem="CategoryModel" HeaderText="Actions">
-                        <div class="btn-group" role="group">
-                            <Button Color="ButtonColor.Primary" Size="ButtonSize.Small" Href='@($"/admin/categories/edit?id={context.Id}")'>
-                                <Icon Name="IconName.Pencil" /> Edit
-                            </Button>
-                            <Button Color="ButtonColor.Info" Size="ButtonSize.Small" Href='@($"/admin/categories/details?id={context.Id}")'>
-                                <Icon Name="IconName.Eye" /> Details
-                            </Button>
-                            <Button Color="ButtonColor.Danger" Size="ButtonSize.Small" Href='@($"/admin/categories/delete?id={context.Id}")'>
-                                <Icon Name="IconName.Trash" /> Delete
-                            </Button>
-                        </div>
-                    </GridColumn>
-                </Grid>
-
-                <PaginationComponent TItem="CategoryModel" PaginatedResult="paginatedResult" OnPageChanged="OnPageChanged"
-                    OnPageSizeChanged="OnPageSizeChanged" />
-            }
-            else
-            {
-                <div class="text-center py-4">
-                    <p class="text-muted">No categories found.</p>
+<Card>
+    <CardHeader>
+        <div class="d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Categories</h5>
+            <Button Color="ButtonColor.Primary" Href="/admin/categories/create">
+                <Icon Name="IconName.PlusCircle" />
+                Add New Category
+            </Button>
+        </div>
+    </CardHeader>
+    <CardBody>
+        <Grid TItem="CategoryModel"
+              DataProvider="CategoriesDataProvider"
+              AllowPaging="true"
+              AllowSorting="true"
+              AllowFiltering="true">
+            <GridColumn TItem="CategoryModel" HeaderText="Name" PropertyName="Name" SortKeySelector="item => item.Name" Filterable="true" />
+            <GridColumn TItem="CategoryModel" HeaderText="Description" PropertyName="Description" Filterable="true" />
+            <GridColumn TItem="CategoryModel" HeaderText="Color" PropertyName="Color">
+                <div class="d-flex align-items-center">
+                    <div class="me-2" style="width: 20px; height: 20px; background-color: @context.Color; border: 1px solid #ccc; border-radius: 4px;"></div>
+                    @context.Color
                 </div>
-            }
-        }
-        else
-        {
-            <div class="text-center">
-                <div class="spinner-border" role="status">
-                    <span class="visually-hidden">Loading...</span>
+            </GridColumn>
+            <GridColumn TItem="CategoryModel" HeaderText="Active" SortKeySelector="item => item.IsActive">
+                <Badge Color="@(context.IsActive? BadgeColor.Success: BadgeColor.Secondary)">
+                    @(context.IsActive ? "Yes" : "No")
+                </Badge>
+            </GridColumn>
+            <GridColumn TItem="CategoryModel" HeaderText="Parent Category" PropertyName="ParentCategoryName" Filterable="true" />
+            <GridColumn TItem="CategoryModel" HeaderText="Course Count" PropertyName="CourseCount" SortKeySelector="item => item.CourseCount" HeaderTextAlignment="Alignment.End" TextAlignment="Alignment.End" />
+            <GridColumn TItem="CategoryModel" HeaderText="Actions">
+                <div class="btn-group" role="group">
+                    <Button Color="ButtonColor.Primary" Size="ButtonSize.Small" Href='@($"/admin/categories/edit?id={context.Id}")'>
+                        <Icon Name="IconName.Pencil" /> Edit
+                    </Button>
+                    <Button Color="ButtonColor.Info" Size="ButtonSize.Small" Href='@($"/admin/categories/details?id={context.Id}")'>
+                        <Icon Name="IconName.Eye" /> Details
+                    </Button>
+                    <Button Color="ButtonColor.Danger" Size="ButtonSize.Small" @onclick="() => ConfirmDelete(context)">
+                        <Icon Name="IconName.Trash" /> Delete
+                    </Button>
                 </div>
-            </div>
-        }
-    </div>
-</div>
+            </GridColumn>
+        </Grid>
+    </CardBody>
+</Card>
+
+<!-- Delete Confirmation Modal -->
+<ModalComponent @ref="deleteModal"
+                Title="Confirm Delete"
+                Message="@($"Are you sure you want to delete the category '{categoryToDelete?.Name}'? This action cannot be undone.")"
+                ConfirmButtonText="Delete"
+                ConfirmButtonColor="ButtonColor.Danger"
+                OnConfirm="DeleteCategory" />
 
 @code {
-    private PaginatedResult<CategoryModel>? paginatedResult;
-    private int currentPage = 1;
-    private int pageSize = 10;
-    private bool isLoading = false;
+    // Removed unused field 'categories' to fix CS0414
 
-    protected override async Task OnInitializedAsync()
-    {
-        await LoadDataAsync();
-    }
+    private ModalComponent deleteModal = default!;
+    private CategoryModel? categoryToDelete;
 
-    private async Task LoadDataAsync()
+    private async Task<GridDataProviderResult<CategoryModel>> CategoriesDataProvider(GridDataProviderRequest<CategoryModel> request)
     {
-        isLoading = true;
         try
         {
-            var request = new PaginationRequest
+            // Only pass supported properties to PaginationRequest
+            var result = await CategoryRepository.GetCategoriesPaginatedAsync(new PaginationRequest
             {
-                PageNumber = currentPage,
-                PageSize = pageSize
+                PageNumber = request.PageNumber,
+                PageSize = request.PageSize
+                // Removed unsupported: Filter, SortBy, SortDirection
+            });
+
+            // If no data is returned from the server, use dummy data
+            var data = (result.Items == null || !result.Items.Any()) ? AddDummyCategories() : result.Items;
+            var totalCount = (result.Items == null || !result.Items.Any()) ? data.Count() : result.TotalCount;
+
+            return new GridDataProviderResult<CategoryModel>
+            {
+                Data = data,
+                TotalCount = totalCount
             };
-
-            paginatedResult = await CategoryRepository.GetCategoriesPaginatedAsync(request);
-
-            if (paginatedResult == null || !paginatedResult.Items.Any())
+        }
+        catch (Exception ex)
+        {
+            ToastService.ShowError("Error", $"Error loading categories: {ex.Message}");
+            return new GridDataProviderResult<CategoryModel>
             {
-                paginatedResult = new PaginatedResult<CategoryModel>
-                {
-                    Items = new List<CategoryModel>
-                    {
-                        new CategoryModel { Id = 1, Name = "Programming", Description = "Courses related to programming languages.", Color = "#FF5733", IsActive = true, CourseCount = 15 },
-                        new CategoryModel { Id = 2, Name = "Web Development", Description = "Courses on front-end and back-end web technologies.", Color = "#33FF57", IsActive = true, ParentCategoryId = 1, ParentCategoryName = "Programming", CourseCount = 20 },
-                        new CategoryModel { Id = 3, Name = "Data Science", Description = "Courses on data analysis, machine learning, and AI.", Color = "#3357FF", IsActive = true, CourseCount = 10 }
-                    },
-                    TotalCount = 3,
-                    PageNumber = currentPage,
-                    PageSize = pageSize
-                };
+                Data = Enumerable.Empty<CategoryModel>(),
+                TotalCount = 0
+            };
+        }
+    }
+
+    // Dummy data generator for categories
+    private List<CategoryModel> AddDummyCategories()
+    {
+        return new List<CategoryModel>
+        {
+            new CategoryModel
+            {
+                Id = 1,
+                Name = "Programming",
+                Description = "All programming related courses",
+                Color = "#007bff",
+                IsActive = true,
+                ParentCategoryId = null,
+                ParentCategoryName = null,
+                SubCategories = new List<CategoryModel>(),
+                CourseCount = 10
+            },
+            new CategoryModel
+            {
+                Id = 2,
+                Name = "Design",
+                Description = "Design and UI/UX courses",
+                Color = "#28a745",
+                IsActive = true,
+                ParentCategoryId = null,
+                ParentCategoryName = null,
+                SubCategories = new List<CategoryModel>(),
+                CourseCount = 5
+            },
+            new CategoryModel
+            {
+                Id = 3,
+                Name = "Business",
+                Description = "Business and management courses",
+                Color = "#ffc107",
+                IsActive = false,
+                ParentCategoryId = null,
+                ParentCategoryName = null,
+                SubCategories = new List<CategoryModel>(),
+                CourseCount = 3
+            }
+        };
+    }
+
+    private async Task ConfirmDelete(CategoryModel category)
+    {
+        categoryToDelete = category;
+        await deleteModal.ShowAsync();
+    }
+
+    private async Task DeleteCategory()
+    {
+        if (categoryToDelete != null)
+        {
+            try
+            {
+                // Use the correct delete method from the repository
+                await CategoryRepository.DeleteCategoryAsync(categoryToDelete.Id);
+                ToastService.ShowSuccess("Success", $"Category '{categoryToDelete.Name}' deleted successfully.");
+                await RefreshGridDataAsync();
+            }
+            catch (Exception ex)
+            {
+                ToastService.ShowError("Error", $"Error deleting category: {ex.Message}");
+            }
+            finally
+            {
+                categoryToDelete = null;
             }
         }
-        finally
-        {
-            isLoading = false;
-        }
     }
 
-    private async Task OnPageChanged(int page)
+    private async Task RefreshGridDataAsync()
     {
-        if (page != currentPage && !isLoading)
-        {
-            currentPage = page;
-            await LoadDataAsync();
-        }
-    }
-
-    private async Task OnPageSizeChanged(int newPageSize)
-    {
-        if (newPageSize != pageSize && !isLoading)
-        {
-            pageSize = newPageSize;
-            currentPage = 1; // Reset to first page when changing page size
-            await LoadDataAsync();
-        }
+        await InvokeAsync(StateHasChanged);
     }
 }

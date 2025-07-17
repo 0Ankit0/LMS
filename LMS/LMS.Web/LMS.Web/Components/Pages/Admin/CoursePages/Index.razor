@@ -1,131 +1,146 @@
 ﻿@page "/admin/courses"
 @using LMS.Repositories
+@using LMS.Web.Components.Shared
+@using LMS.Web.Services
 @inject ICourseRepository CourseRepository
+@inject LMS.Web.Services.ToastService ToastService
 
 <PageTitle>Courses - Admin</PageTitle>
 
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h1 class="mb-0">Courses</h1>
-    <Button Color="ButtonColor.Primary" Href="/admin/courses/create">
-        <Icon Name="IconName.PlusCircle" />
-        Add New Course
-    </Button>
-</div>
-
-<div class="card">
-    <div class="card-body">
-        @if (paginatedResult != null)
-        {
-            @if (paginatedResult.Items.Any())
-            {
-                <Grid TItem="CourseModel" Class="table table-striped table-hover" Data="paginatedResult.Items">
-                    <GridColumn TItem="CourseModel" HeaderText="Title" PropertyName="Title" />
-                    <GridColumn TItem="CourseModel" HeaderText="Description" PropertyName="Description" />
-                    <GridColumn TItem="CourseModel" HeaderText="Level" PropertyName="Level" />
-                    <GridColumn TItem="CourseModel" HeaderText="Status" PropertyName="Status" />
-                    <GridColumn TItem="CourseModel" HeaderText="Max Enrollments" PropertyName="MaxEnrollments" />
-                    <GridColumn TItem="CourseModel" HeaderText="Start Date" PropertyName="StartDate" Format="yyyy-MM-dd" />
-                    <GridColumn TItem="CourseModel" HeaderText="End Date" PropertyName="EndDate" Format="yyyy-MM-dd" />
-                    <GridColumn TItem="CourseModel" HeaderText="Instructor" PropertyName="InstructorName" />
-
-                    <GridColumn TItem="CourseModel" HeaderText="Actions">
-                        <div class="btn-group" role="group">
-                            <Button Color="ButtonColor.Primary" Size="ButtonSize.Small" Href='@($"/admin/courses/edit?id={context.Id}")'>
-                                <Icon Name="IconName.Pencil" /> Edit
-                            </Button>
-                            <Button Color="ButtonColor.Info" Size="ButtonSize.Small" Href='@($"/admin/courses/details?id={context.Id}")'>
-                                <Icon Name="IconName.Eye" /> Details
-                            </Button>
-                            <Button Color="ButtonColor.Danger" Size="ButtonSize.Small" Href='@($"/admin/courses/delete?id={context.Id}")'>
-                                <Icon Name="IconName.Trash" /> Delete
-                            </Button>
-                        </div>
-                    </GridColumn>
-                </Grid>
-
-                <PaginationComponent TItem="CourseModel" PaginatedResult="paginatedResult"
-                    OnPageChanged="OnPageChanged" OnPageSizeChanged="OnPageSizeChanged" />
-            }
-            else
-            {
-                <div class="text-center py-4">
-                    <p class="text-muted">No courses found.</p>
+<Card>
+    <CardHeader>
+        <div class="d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Courses</h5>
+            <Button Color="ButtonColor.Primary" Href="/admin/courses/create">
+                <Icon Name="IconName.PlusCircle" />
+                Add New Course
+            </Button>
+        </div>
+    </CardHeader>
+    <CardBody>
+        <Grid TItem="CourseModel"
+              DataProvider="CoursesDataProvider"
+              PageSize="10"
+              AllowFiltering="true"
+              AllowPaging="true"
+              AllowSorting="true">
+            <GridColumn TItem="CourseModel" HeaderText="Title" PropertyName="Title" SortKeySelector="item => item.Title" Filterable="true" />
+            <GridColumn TItem="CourseModel" HeaderText="Description" PropertyName="Description" Filterable="true" />
+            <GridColumn TItem="CourseModel" HeaderText="Level" PropertyName="Level" SortKeySelector="item => item.Level" />
+            <GridColumn TItem="CourseModel" HeaderText="Status" PropertyName="Status" SortKeySelector="item => item.Status" />
+            <GridColumn TItem="CourseModel" HeaderText="Max Enrollments" PropertyName="MaxEnrollments" SortKeySelector="item => item.MaxEnrollments" HeaderTextAlignment="Alignment.End" TextAlignment="Alignment.End" />
+            <GridColumn TItem="CourseModel" HeaderText="Start Date" PropertyName="StartDate" SortKeySelector="item => item.StartDate">
+                @context.StartDate.ToString("yyyy-MM-dd")
+            </GridColumn>
+            <GridColumn TItem="CourseModel" HeaderText="End Date" PropertyName="EndDate" SortKeySelector="item => item.EndDate">
+                @(context.EndDate?.ToString("yyyy-MM-dd") ?? "N/A")
+            </GridColumn>
+            <GridColumn TItem="CourseModel" HeaderText="Instructor" PropertyName="InstructorName" Filterable="true" />
+            <GridColumn TItem="CourseModel" HeaderText="Actions">
+                <div class="btn-group" role="group">
+                    <Button Color="ButtonColor.Primary" Size="ButtonSize.Small" Href='@($"/admin/courses/edit?id={context.Id}")'>
+                        <Icon Name="IconName.Pencil" /> Edit
+                    </Button>
+                    <Button Color="ButtonColor.Success" Size="ButtonSize.Small" Href='@($"/admin/courses/manage?id={context.Id}")'>
+                        <Icon Name="IconName.Wrench" /> Manage
+                    </Button>
+                    <Button Color="ButtonColor.Info" Size="ButtonSize.Small" Href='@($"/admin/courses/details?id={context.Id}")'>
+                        <Icon Name="IconName.Eye" /> Details
+                    </Button>
+                    <Button Color="ButtonColor.Danger" Size="ButtonSize.Small" @onclick="() => ConfirmDelete(context)">
+                        <Icon Name="IconName.Trash" /> Delete
+                    </Button>
                 </div>
-            }
-        }
-        else
-        {
-            <div class="text-center">
-                <div class="spinner-border" role="status">
-                    <span class="visually-hidden">Loading...</span>
-                </div>
-            </div>
-        }
-    </div>
-</div>
+            </GridColumn>
+        </Grid>
+    </CardBody>
+</Card>
+
+<!-- Delete Confirmation Modal -->
+<ModalComponent @ref="deleteModal"
+                Title="Confirm Delete"
+                Message="@($"Are you sure you want to delete the course '{courseToDelete?.Title}'? This action cannot be undone.")"
+                ConfirmButtonText="Delete"
+                ConfirmButtonColor="ButtonColor.Danger"
+                OnConfirm="DeleteCourse" />
 
 @code {
-    private PaginatedResult<CourseModel>? paginatedResult;
-    private int currentPage = 1;
-    private int pageSize = 10;
-    private bool isLoading = false;
+    // Removed unused field 'courses' to fix CS0414
 
-    protected override async Task OnInitializedAsync()
-    {
-        await LoadDataAsync();
-    }
+    private ModalComponent deleteModal = default!;
+    private CourseModel? courseToDelete;
 
-    private async Task LoadDataAsync()
+    private async Task<GridDataProviderResult<CourseModel>> CoursesDataProvider(GridDataProviderRequest<CourseModel> request)
     {
-        isLoading = true;
         try
         {
-            var request = new PaginationRequest
+            var result = await CourseRepository.GetCoursesPaginatedAsync(new PaginationRequest
             {
-                PageNumber = currentPage,
-                PageSize = pageSize
+                PageNumber = request.PageNumber,
+                PageSize = request.PageSize
+            });
+
+            // If no data from API, generate dummy data
+            var data = (result == null || result.Items == null || !result.Items.Any()) ? AddDummyCourses() : result.Items;
+            var totalCount = (result == null || result.Items == null || !result.Items.Any()) ? data.Count : result.TotalCount;
+
+            return new GridDataProviderResult<CourseModel>
+            {
+                Data = data,
+                TotalCount = totalCount
             };
-
-            paginatedResult = await CourseRepository.GetCoursesPaginatedAsync(request);
-
-            if (paginatedResult == null || !paginatedResult.Items.Any())
+        }
+        catch (Exception ex)
+        {
+            ToastService.ShowError("Error", $"Error loading courses: {ex.Message}");
+            return new GridDataProviderResult<CourseModel>
             {
-                paginatedResult = new PaginatedResult<CourseModel>
-                {
-                    Items = new List<CourseModel>
-                    {
-                        new CourseModel { Id = 1, Title = "Introduction to C#", Description = "Learn the basics of C# programming.", Level = "Beginner", Status = "Published", MaxEnrollments = 100, StartDate = DateTime.Now.AddDays(-30), EndDate = DateTime.Now.AddDays(60), InstructorName = "Alice Smith" },
-                        new CourseModel { Id = 2, Title = "Advanced JavaScript", Description = "Deep dive into modern JavaScript.", Level = "Advanced", Status = "Published", MaxEnrollments = 50, StartDate = DateTime.Now.AddDays(-15), EndDate = DateTime.Now.AddDays(45), InstructorName = "Bob Johnson" },
-                        new CourseModel { Id = 3, Title = "Data Science with Python", Description = "Explore data science concepts using Python.", Level = "Intermediate", Status = "Draft", MaxEnrollments = 75, StartDate = DateTime.Now.AddDays(10), EndDate = DateTime.Now.AddDays(90), InstructorName = "Charlie Brown" }
-                    },
-                    TotalCount = 3,
-                    PageNumber = currentPage,
-                    PageSize = pageSize
-                };
+                Data = Enumerable.Empty<CourseModel>(),
+                TotalCount = 0
+            };
+        }
+    }
+
+    // Dummy data generator for courses
+    private List<CourseModel> AddDummyCourses()
+    {
+        return new List<CourseModel>
+        {
+            new CourseModel { Id = 1, Title = "Sample Course 1", Description = "Dummy course 1", Level = "Beginner", Status = "Active", MaxEnrollments = 100, StartDate = DateTime.Today, EndDate = DateTime.Today.AddMonths(1), InstructorName = "John Doe" },
+            new CourseModel { Id = 2, Title = "Sample Course 2", Description = "Dummy course 2", Level = "Intermediate", Status = "Inactive", MaxEnrollments = 50, StartDate = DateTime.Today.AddDays(-10), EndDate = DateTime.Today.AddMonths(2), InstructorName = "Jane Smith" }
+        };
+    }
+
+    private async Task ConfirmDelete(CourseModel course)
+    {
+        courseToDelete = course;
+        await deleteModal.ShowAsync();
+    }
+
+    private async Task DeleteCourse()
+    {
+        if (courseToDelete != null)
+        {
+            try
+            {
+                // Use the correct delete method from the repository
+                await CourseRepository.DeleteCourseAsync(courseToDelete.Id);
+                ToastService.ShowSuccess("Success", $"Course '{courseToDelete.Title}' deleted successfully.");
+                await RefreshGridDataAsync();
+            }
+            catch (Exception ex)
+            {
+                ToastService.ShowError("Error", $"Error deleting course: {ex.Message}");
+            }
+            finally
+            {
+                courseToDelete = null;
             }
         }
-        finally
-        {
-            isLoading = false;
-        }
     }
 
-    private async Task OnPageChanged(int page)
+    private async Task RefreshGridDataAsync()
     {
-        if (page != currentPage && !isLoading)
-        {
-            currentPage = page;
-            await LoadDataAsync();
-        }
-    }
-
-    private async Task OnPageSizeChanged(int newPageSize)
-    {
-        if (newPageSize != pageSize && !isLoading)
-        {
-            pageSize = newPageSize;
-            currentPage = 1; // Reset to first page when changing page size
-            await LoadDataAsync();
-        }
+        await InvokeAsync(StateHasChanged);
     }
 }

@@ -1,92 +1,132 @@
 @page "/admin/forums/create"
 
 @using LMS.Repositories
+@using LMS.Web.Components.Shared
+@using LMS.Web.Services
 
 @inject IForumRepository ForumRepository
 @inject IDropdownRepository DropdownRepository
 @inject NavigationManager NavigationManager
+@inject LMS.Web.Services.ToastService ToastService
 @rendermode @(new InteractiveServerRenderMode())
 
-<PageTitle>Create</PageTitle>
+<PageTitle>Create Forum - Admin</PageTitle>
 
-<h1>Create</h1>
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="mb-0">Create New Forum</h1>
+    <Button Color="ButtonColor.Secondary" Href="/admin/forums">
+        <Icon Name="IconName.ArrowLeft" />
+        Back to Forums
+    </Button>
+</div>
 
-<h2>Forum</h2>
-<hr />
-<div class="row">
-    <div class="col-md-4">
-        <EditForm Model="Forum" OnValidSubmit="HandleValidSubmit">
+<Card>
+    <div class="card-header">
+        <h5 class="card-title mb-0">Forum Information</h5>
+    </div>
+    <CardBody>
+        <EditForm Model="Forum" OnValidSubmit="AddForum">
             <AntiforgeryToken />
             <DataAnnotationsValidator />
-            <ValidationSummary class="text-danger" role="alert" />
+            <ValidationSummary class="alert alert-danger" role="alert" />
+
             <div class="mb-3">
-                <label for="title" class="form-label">Title:</label>
-                <InputText id="title" @bind-Value="Forum.Title" class="form-control" aria-required="true" />
+                <label for="title" class="form-label">Title <span class="text-danger">*</span></label>
+                <InputText id="title" @bind-Value="Forum.Title" class="form-control" aria-required="true" 
+                           placeholder="Enter forum title" />
                 <ValidationMessage For="() => Forum.Title" class="text-danger" />
             </div>
+
             <div class="mb-3">
-                <label for="description" class="form-label">Description:</label>
-                <InputText id="description" @bind-Value="Forum.Description" class="form-control" />
+                <label for="description" class="form-label">Description</label>
+                <InputTextArea id="description" @bind-Value="Forum.Description" class="form-control" rows="3"
+                               placeholder="Enter forum description" />
                 <ValidationMessage For="() => Forum.Description" class="text-danger" />
             </div>
+
             <div class="mb-3">
                 <label for="courseid" class="form-label">Course</label>
-                <SearchableSelectComponent TItem="DropdownOption<int>" TValue="int?" Items="@courseOptions"
-                                           ValueSelector="@(item => (int?)item.Value)" DisplaySelector="@(item => item.Text)"
-                                           SearchFunction="@SearchCourses" SelectedValue="@Forum.CourseId"
-                                           OnSelectedValueChanged="@((int? value) => Forum.CourseId = value)"
-                                           Placeholder="Select a course (optional)..." class="form-control" />
+                <SearchableSelectComponent TItem="DropdownOption<int>" 
+                                           TValue="int?" 
+                                           DataProvider="SearchCoursesDataProvider"
+                                           ValueSelector="@(item => (int?)item.Value)" 
+                                           DisplaySelector="@(item => item.Text)"
+                                           @bind-SelectedValue="Forum.CourseId"
+                                           Placeholder="Select a course (optional)..." 
+                                           EmptyText="No courses found" />
                 <ValidationMessage For="() => Forum.CourseId" class="text-danger" />
             </div>
-            <div class="mb-3">
-                <label for="isgeneral" class="form-label">IsGeneral:</label>
-                <InputCheckbox id="isgeneral" @bind-Value="Forum.IsGeneral" class="form-check-input" />
-                <ValidationMessage For="() => Forum.IsGeneral" class="text-danger" />
-            </div>
-            <button type="submit" class="btn btn-primary">Create</button>
-        </EditForm>
-    </div>
-</div>
 
-<div>
-    <a href="/admin/forums">Back to List</a>
-</div>
+            <div class="mb-3">
+                <div class="form-check">
+                    <InputCheckbox id="isgeneral" @bind-Value="Forum.IsGeneral" class="form-check-input" />
+                    <label for="isgeneral" class="form-check-label">Is General Forum</label>
+                    <ValidationMessage For="() => Forum.IsGeneral" class="text-danger" />
+                </div>
+            </div>
+
+            <div class="d-flex gap-2">
+                <Button Color="ButtonColor.Primary" Type="ButtonType.Submit" Loading="@isSubmitting">
+                    <Icon Name="IconName.CheckCircle" />
+                    Create Forum
+                </Button>
+                <Button Color="ButtonColor.Secondary" Href="/admin/forums">Cancel</Button>
+            </div>
+        </EditForm>
+    </CardBody>
+</Card>
 
 @code {
     private CreateForumRequest Forum { get; set; } = new();
+    private bool isSubmitting = false;
 
-    private List<DropdownOption<int>> courseOptions = new();
-
-    protected override async Task OnInitializedAsync()
+    private async Task<AutoCompleteDataProviderResult<DropdownOption<int>>> SearchCoursesDataProvider(AutoCompleteDataProviderRequest<DropdownOption<int>> request)
     {
-        // Load initial options
-        courseOptions = await DropdownRepository.GetCoursesAsync(search: "", take: 20);
-    }
-
-    private async Task<IEnumerable<DropdownOption<int>>> SearchCourses(string searchTerm)
-    {
-        return await DropdownRepository.GetCoursesAsync(searchTerm, take: 20);
-    }
-
-    private Task HandleValidSubmit(EditContext context)
-    {
-        return AddForum();
+        try
+        {
+            var courses = await DropdownRepository.GetCoursesAsync(search: request.Filter.Value, take: 20);
+            return new AutoCompleteDataProviderResult<DropdownOption<int>>
+            {
+                Data = courses,
+                TotalCount = courses.Count
+            };
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading courses: {ex.Message}");
+            return new AutoCompleteDataProviderResult<DropdownOption<int>>
+            {
+                Data = new List<DropdownOption<int>>(),
+                TotalCount = 0
+            };
+        }
     }
 
     private async Task AddForum()
     {
+        if (isSubmitting) return;
+        
+        isSubmitting = true;
         try
         {
             var result = await ForumRepository.CreateForumAsync(Forum);
             if (result != null)
             {
+                ToastService.ShowSuccess("Success", "Forum created successfully!");
                 NavigationManager.NavigateTo("/admin/forums");
+            }
+            else
+            {
+                ToastService.ShowError("Error", "Failed to create forum. Please try again.");
             }
         }
         catch (Exception ex)
         {
-            // Handle error - could add error display logic here
-            Console.WriteLine($"Error creating forum: {ex.Message}");
+            ToastService.ShowError("Error", $"Error creating forum: {ex.Message}");
+        }
+        finally
+        {
+            isSubmitting = false;
         }
     }
 }

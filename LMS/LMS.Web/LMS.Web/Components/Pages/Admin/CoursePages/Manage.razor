@@ -1,0 +1,169 @@
+@page "/admin/courses/manage"
+@using LMS.Repositories
+@using LMS.Web.Components.Shared
+@using LMS.Web.Services
+@inject ICourseRepository CourseRepository
+@inject IModuleRepository ModuleRepository
+@inject ILessonRepository LessonRepository
+@inject NavigationManager NavigationManager
+@inject LMS.Web.Services.ToastService ToastService
+
+<PageTitle>Manage Course - Admin</PageTitle>
+
+@if (course != null)
+{
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="mb-0">Manage Course: @course.Title</h1>
+        <Button Color="ButtonColor.Secondary" Href="/admin/courses">
+            <Icon Name="IconName.ArrowLeft" />
+            Back to Courses
+        </Button>
+    </div>
+
+    <div class="row">
+        <div class="col-md-4">
+            <Card>
+                <CardHeader>
+                    <h5 class="mb-0">Add New Module</h5>
+                </CardHeader>
+                <CardBody>
+                    <EditForm Model="newModule" OnValidSubmit="AddModule">
+                        <DataAnnotationsValidator />
+                        <ValidationSummary />
+
+                        <div class="mb-3">
+                            <label class="form-label">Title</label>
+                            <InputText @bind-Value="newModule.Title" class="form-control" />
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Description</label>
+                            <InputTextArea @bind-Value="newModule.Description" class="form-control" />
+                        </div>
+
+                        <Button Color="ButtonColor.Primary" Type="ButtonType.Submit">Add Module</Button>
+                    </EditForm>
+                </CardBody>
+            </Card>
+        </div>
+        <div class="col-md-8">
+            <Card>
+                <CardHeader>
+                    <h5 class="mb-0">Modules</h5>
+                </CardHeader>
+                <CardBody>
+                    @if (course.Modules.Any())
+                    {
+                        <Accordion>
+                            @foreach (var module in course.Modules)
+                            {
+                                <AccordionItem>
+                                    <Title>@module.Title</Title>
+                                    <Body>
+                                        <div class="d-flex justify-content-between align-items-center mb-2">
+                                            <h6 class="mb-0">Lessons</h6>
+                                            <Button Color="ButtonColor.Primary" Size="ButtonSize.Small" @onclick="() => ShowAddLessonModal(module.Id)">
+                                                <Icon Name="IconName.Plus" /> Add Lesson
+                                            </Button>
+                                        </div>
+                                        <ul class="list-group">
+                                            @foreach (var lesson in module.Lessons)
+                                            {
+                                                <li class="list-group-item">@lesson.Title</li>
+                                            }
+                                        </ul>
+                                    </Body>
+                                </AccordionItem>
+                            }
+                        </Accordion>
+                    }
+                    else
+                    {
+                        <p>No modules have been added to this course yet.</p>
+                    }
+                </CardBody>
+            </Card>
+        </div>
+    </div>
+}
+else
+{
+    <p><em>Loading...</em></p>
+}
+
+<Modal @ref="addLessonModal" Title="Add New Lesson">
+    <BodyTemplate>
+        <EditForm Model="newLesson" OnValidSubmit="AddLesson">
+            <DataAnnotationsValidator />
+            <ValidationSummary />
+
+            <div class="mb-3">
+                <label class="form-label">Title</label>
+                <InputText @bind-Value="newLesson.Title" class="form-control" />
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Description</label>
+                <InputTextArea @bind-Value="newLesson.Description" class="form-control" />
+            </div>
+
+            <Button Color="ButtonColor.Primary" Type="ButtonType.Submit">Add Lesson</Button>
+        </EditForm>
+    </BodyTemplate>
+</Modal>
+
+@code {
+    [Parameter]
+    [SupplyParameterFromQuery]
+    public int Id { get; set; }
+
+    private CourseModel course;
+    private CreateModuleRequest newModule = new();
+    private CreateLessonRequest newLesson = new();
+    private Modal addLessonModal;
+    private int selectedModuleId;
+
+    protected override async Task OnInitializedAsync()
+    {
+        course = await CourseRepository.GetCourseByIdAsync(Id);
+    }
+
+    private async Task AddModule()
+    {
+        newModule.CourseId = Id;
+        var result = await ModuleRepository.CreateModuleAsync(newModule);
+        if (result != null)
+        {
+            course = await CourseRepository.GetCourseByIdAsync(Id);
+            newModule = new();
+            ToastService.ShowSuccess("Success", "Module created successfully!");
+        }
+        else
+        {
+            ToastService.ShowError("Error", "Failed to create module. Please try again.");
+        }
+    }
+
+    private void ShowAddLessonModal(int moduleId)
+    {
+        selectedModuleId = moduleId;
+        addLessonModal.ShowAsync();
+    }
+
+    private async Task AddLesson()
+    {
+        newLesson.ModuleId = selectedModuleId;
+        var result = await LessonRepository.CreateLessonAsync(newLesson);
+        if (result != null)
+        {
+            course = await CourseRepository.GetCourseByIdAsync(Id);
+            newLesson = new();
+            addLessonModal.HideAsync();
+            ToastService.ShowSuccess("Success", "Lesson created successfully!");
+        }
+        else
+        {
+            ToastService.ShowError("Error", "Failed to create lesson. Please try again.");
+        }
+    }
+}

@@ -1,97 +1,141 @@
 @page "/admin/modules/create"
 
 @using LMS.Repositories
+@using LMS.Web.Components.Shared
+@using LMS.Web.Services
 
 @inject ICourseRepository CourseRepository
 @inject IDropdownRepository DropdownRepository
 @inject NavigationManager NavigationManager
+@inject LMS.Web.Services.ToastService ToastService
 @rendermode @(new InteractiveServerRenderMode())
 
-<PageTitle>Create</PageTitle>
+<PageTitle>Create Module - Admin</PageTitle>
 
-<h1>Create</h1>
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="mb-0">Create New Module</h1>
+    <Button Color="ButtonColor.Secondary" Href="/admin/modules">
+        <Icon Name="IconName.ArrowLeft" />
+        Back to Modules
+    </Button>
+</div>
 
-<h2>Module</h2>
-<hr />
-<div class="row">
-    <div class="col-md-4">
-        <EditForm Model="Module" OnValidSubmit="HandleValidSubmit">
+<Card>
+    <div class="card-header">
+        <h5 class="card-title mb-0">Module Information</h5>
+    </div>
+    <CardBody>
+        <EditForm Model="Module" OnValidSubmit="AddModule">
             <AntiforgeryToken />
             <DataAnnotationsValidator />
-            <ValidationSummary class="text-danger" role="alert" />
+            <ValidationSummary class="alert alert-danger" role="alert" />
+
             <div class="mb-3">
-                <label for="title" class="form-label">Title:</label>
-                <InputText id="title" @bind-Value="Module.Title" class="form-control" aria-required="true" />
+                <label for="title" class="form-label">Title <span class="text-danger">*</span></label>
+                <InputText id="title" @bind-Value="Module.Title" class="form-control" aria-required="true" 
+                           placeholder="Enter module title" />
                 <ValidationMessage For="() => Module.Title" class="text-danger" />
             </div>
+
             <div class="mb-3">
-                <label for="description" class="form-label">Description:</label>
-                <InputText id="description" @bind-Value="Module.Description" class="form-control" />
+                <label for="description" class="form-label">Description</label>
+                <InputTextArea id="description" @bind-Value="Module.Description" class="form-control" rows="3"
+                               placeholder="Enter module description" />
                 <ValidationMessage For="() => Module.Description" class="text-danger" />
             </div>
-            <div class="mb-3">
-                <label for="courseid" class="form-label">Course <span class="text-danger">*</span></label>
-                <SearchableSelectComponent TItem="DropdownOption<int>" TValue="int" Items="@courseOptions"
-                                           ValueSelector="@(item => item.Value)" DisplaySelector="@(item => item.Text)"
-                                           SearchFunction="@SearchCourses" SelectedValue="@Module.CourseId"
-                                           OnSelectedValueChanged="@((int value) => Module.CourseId = value)" Placeholder="Select a course..."
-                                           class="form-control" />
-                <ValidationMessage For="() => Module.CourseId" class="text-danger" />
-            </div>
-            <div class="mb-3">
-                <label for="orderindex" class="form-label">OrderIndex:</label>
-                <InputNumber id="orderindex" @bind-Value="Module.OrderIndex" class="form-control" />
-                <ValidationMessage For="() => Module.OrderIndex" class="text-danger" />
-            </div>
-            <div class="mb-3">
-                <label for="isrequired" class="form-label">IsRequired:</label>
-                <InputCheckbox id="isrequired" @bind-Value="Module.IsRequired" class="form-check-input" />
-                <ValidationMessage For="() => Module.IsRequired" class="text-danger" />
-            </div>
-            <button type="submit" class="btn btn-primary">Create</button>
-        </EditForm>
-    </div>
-</div>
 
-<div>
-    <a href="/admin/modules">Back to List</a>
-</div>
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label for="courseid" class="form-label">Course <span class="text-danger">*</span></label>
+                    <SearchableSelectComponent TItem="DropdownOption<int>" 
+                                               TValue="int" 
+                                               DataProvider="SearchCoursesDataProvider"
+                                               ValueSelector="@(item => item.Value)" 
+                                               DisplaySelector="@(item => item.Text)"
+                                               @bind-SelectedValue="Module.CourseId"
+                                               Placeholder="Select a course..." 
+                                               EmptyText="No courses found" />
+                    <ValidationMessage For="() => Module.CourseId" class="text-danger" />
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label for="orderindex" class="form-label">Order Index</label>
+                    <InputNumber id="orderindex" @bind-Value="Module.OrderIndex" class="form-control" 
+                                 placeholder="1" />
+                    <ValidationMessage For="() => Module.OrderIndex" class="text-danger" />
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <div class="form-check">
+                    <InputCheckbox id="isrequired" @bind-Value="Module.IsRequired" class="form-check-input" />
+                    <label for="isrequired" class="form-check-label">Is Required</label>
+                    <ValidationMessage For="() => Module.IsRequired" class="text-danger" />
+                </div>
+            </div>
+
+            <div class="d-flex gap-2">
+                <Button Color="ButtonColor.Primary" Type="ButtonType.Submit" Loading="@isSubmitting">
+                    <Icon Name="IconName.CheckCircle" />
+                    Create Module
+                </Button>
+                <Button Color="ButtonColor.Secondary" Href="/admin/modules">Cancel</Button>
+            </div>
+        </EditForm>
+    </CardBody>
+</Card>
 
 @code {
+    [SupplyParameterFromForm]
     private CreateModuleRequest Module { get; set; } = new();
+    private bool isSubmitting = false;
 
-    private List<DropdownOption<int>> courseOptions = new();
-
-    protected override async Task OnInitializedAsync()
+    private async Task<AutoCompleteDataProviderResult<DropdownOption<int>>> SearchCoursesDataProvider(AutoCompleteDataProviderRequest<DropdownOption<int>> request)
     {
-        // Load initial options
-        courseOptions = await DropdownRepository.GetCoursesAsync(search: "", take: 20);
-    }
-
-    private async Task<IEnumerable<DropdownOption<int>>> SearchCourses(string searchTerm)
-    {
-        return await DropdownRepository.GetCoursesAsync(searchTerm, take: 20);
-    }
-
-    private Task HandleValidSubmit(EditContext context)
-    {
-        return AddModule();
+        try
+        {
+            var courses = await DropdownRepository.GetCoursesAsync(search: request.Filter.Value, take: 20);
+            return new AutoCompleteDataProviderResult<DropdownOption<int>>
+            {
+                Data = courses,
+                TotalCount = courses.Count
+            };
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading courses: {ex.Message}");
+            return new AutoCompleteDataProviderResult<DropdownOption<int>>
+            {
+                Data = new List<DropdownOption<int>>(),
+                TotalCount = 0
+            };
+        }
     }
 
     private async Task AddModule()
     {
+        if (isSubmitting) return;
+        
+        isSubmitting = true;
         try
         {
             var result = await CourseRepository.CreateModuleAsync(Module);
             if (result != null)
             {
+                ToastService.ShowSuccess("Success", "Module created successfully!");
                 NavigationManager.NavigateTo("/admin/modules");
+            }
+            else
+            {
+                ToastService.ShowError("Error", "Failed to create module. Please try again.");
             }
         }
         catch (Exception ex)
         {
-            // Handle error - could add error display logic here
-            Console.WriteLine($"Error creating module: {ex.Message}");
+            ToastService.ShowError("Error", $"Error creating module: {ex.Message}");
+        }
+        finally
+        {
+            isSubmitting = false;
         }
     }
 }

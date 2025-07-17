@@ -12,79 +12,84 @@
     </Button>
 </div>
 
-<Grid TItem="AchievementModel" Class="table table-striped table-hover" Data="paginatedAchievements?.Items">
-    <GridColumn TItem="AchievementModel" HeaderText="Name" PropertyName="Name" />
-    <GridColumn TItem="AchievementModel" HeaderText="Description" PropertyName="Description" />
-    <GridColumn TItem="AchievementModel" HeaderText="Points" PropertyName="Points" />
-    <GridColumn TItem="AchievementModel" HeaderText="Type" PropertyName="Type" />
-    <GridColumn TItem="AchievementModel" HeaderText="Active">
-        @((context as AchievementModel)?.IsActive == true ? "Yes" : "No")
-    </GridColumn>
-    <GridColumn TItem="AchievementModel" HeaderText="Users Earned" PropertyName="UsersEarnedCount" />
-    <GridColumn TItem="AchievementModel" HeaderText="Actions">
+<DataTableComponent TItem="AchievementModel" DataProvider="AchievementDataProvider">
+    <Columns>
+        <GridColumn TItem="AchievementModel" HeaderText="Name" PropertyName="Name" />
+        <GridColumn TItem="AchievementModel" HeaderText="Description" PropertyName="Description" />
+        <GridColumn TItem="AchievementModel" HeaderText="Points" PropertyName="Points" />
+        <GridColumn TItem="AchievementModel" HeaderText="Type" PropertyName="Type" />
+        <GridColumn TItem="AchievementModel" HeaderText="Active">
+            @((context as AchievementModel)?.IsActive == true ? "Yes" : "No")
+        </GridColumn>
+        <GridColumn TItem="AchievementModel" HeaderText="Users Earned" PropertyName="UsersEarnedCount" />
+    </Columns>
+    <Actions>
         <div class="btn-group" role="group">
-            <Button Color="ButtonColor.Primary" Size="ButtonSize.Small" Href='@($"/admin/achievements/edit?id={context.Id}")'>
+            <Button Color="ButtonColor.Primary" Size="ButtonSize.Small"
+                Href='@($"/admin/achievements/edit?id={context.Id}")'>
                 <Icon Name="IconName.Pencil" /> Edit
             </Button>
-            <Button Color="ButtonColor.Info" Size="ButtonSize.Small" Href='@($"/admin/achievements/details?id={context.Id}")'>
+            <Button Color="ButtonColor.Info" Size="ButtonSize.Small"
+                Href='@($"/admin/achievements/details?id={context.Id}")'>
                 <Icon Name="IconName.Eye" /> Details
             </Button>
-            <Button Color="ButtonColor.Danger" Size="ButtonSize.Small" Href='@($"/admin/achievements/delete?id={context.Id}")'>
+            <Button Color="ButtonColor.Danger" Size="ButtonSize.Small"
+                Href='@($"/admin/achievements/delete?id={context.Id}")'>
                 <Icon Name="IconName.Trash" /> Delete
             </Button>
         </div>
-    </GridColumn>
-</Grid>
-
-<PaginationComponent TItem="AchievementModel" PaginatedResult="paginatedAchievements" OnPageChanged="OnPageChanged"
-    OnPageSizeChanged="OnPageSizeChanged" />
+    </Actions>
+</DataTableComponent>
 
 @code {
-    private PaginatedResult<AchievementModel>? paginatedAchievements;
-    private int currentPage = 1;
-    private int pageSize = 10;
+    private GridDataProviderDelegate<AchievementModel> AchievementDataProvider { get; set; } = default!;
 
-    protected override async Task OnInitializedAsync()
+    protected override void OnInitialized()
     {
-        await LoadAchievementsAsync();
-    }
-
-    private async Task LoadAchievementsAsync()
-    {
-        var request = new PaginationRequest
+        AchievementDataProvider = async request =>
         {
-            PageNumber = currentPage,
-            PageSize = pageSize
-        };
-        paginatedAchievements = await AchievementRepository.GetAllAchievementsPaginatedAsync(request);
-
-        if (paginatedAchievements == null || !paginatedAchievements.Items.Any())
-        {
-            paginatedAchievements = new PaginatedResult<AchievementModel>
+            try
             {
-                Items = new List<AchievementModel>
+                var paginationRequest = new PaginationRequest
                 {
-                    new AchievementModel { Id = 1, Name = "First Course Completion", Description = "Completed your first course.", Points = 100, Type = "Course", IsActive = true, CreatedAt = DateTime.Now, UsersEarnedCount = 5 },
-                    new AchievementModel { Id = 2, Name = "Top Learner", Description = "Achieved top score in a quiz.", Points = 200, Type = "Quiz", IsActive = true, CreatedAt = DateTime.Now, UsersEarnedCount = 2 },
-                    new AchievementModel { Id = 3, Name = "Forum Contributor", Description = "Made 10 forum posts.", Points = 50, Type = "Forum", IsActive = true, CreatedAt = DateTime.Now, UsersEarnedCount = 8 }
-                },
-                TotalCount = 3,
-                PageNumber = currentPage,
-                PageSize = pageSize
-            };
-        }
-    }
+                    PageNumber = request.PageNumber,
+                    PageSize = request.PageSize
+                };
 
-    private async Task OnPageChanged(int page)
-    {
-        currentPage = page;
-        await LoadAchievementsAsync();
-    }
+                var result = await AchievementRepository.GetAllAchievementsPaginatedAsync(paginationRequest);
 
-    private async Task OnPageSizeChanged(int size)
-    {
-        pageSize = size;
-        currentPage = 1;
-        await LoadAchievementsAsync();
+                // Fallback data if repository returns null or empty
+                if (result == null || !result.Items.Any())
+                {
+                    result = new PaginatedResult<AchievementModel>
+                    {
+                        Items = new List<AchievementModel>
+                        {
+                            new AchievementModel { Id = 1, Name = "First Course Completion", Description = "Completed your first course.", Points = 100, Type = "Course", IsActive = true, CreatedAt = DateTime.Now, UsersEarnedCount = 5 },
+                            new AchievementModel { Id = 2, Name = "Top Learner", Description = "Achieved top score in a quiz.", Points = 200, Type = "Quiz", IsActive = true, CreatedAt = DateTime.Now, UsersEarnedCount = 2 },
+                            new AchievementModel { Id = 3, Name = "Forum Contributor", Description = "Made 10 forum posts.", Points = 50, Type = "Forum", IsActive = true, CreatedAt = DateTime.Now, UsersEarnedCount = 8 }
+                        },
+                        TotalCount = 3,
+                        PageNumber = request.PageNumber,
+                        PageSize = request.PageSize
+                    };
+                }
+
+                return await Task.FromResult(new GridDataProviderResult<AchievementModel>
+                {
+                    Data = result.Items,
+                    TotalCount = result.TotalCount
+                });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error loading achievements: {ex.Message}");
+                return await Task.FromResult(new GridDataProviderResult<AchievementModel>
+                {
+                    Data = Enumerable.Empty<AchievementModel>(),
+                    TotalCount = 0
+                });
+            }
+        };
     }
 }

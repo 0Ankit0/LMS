@@ -14,119 +14,69 @@
     </Button>
 </div>
 
-<div class="card">
-    <div class="card-body">
-        @if (paginatedResult != null)
-        {
-            <PaginationComponent TItem="ForumPostModel" CurrentPage="@currentPage" PageSize="@pageSize"
-                TotalCount="@paginatedResult.TotalCount" TotalPages="@paginatedResult.TotalPages"
-                OnPageChanged="OnPageChanged" OnPageSizeChanged="OnPageSizeChanged" />
-
-            @if (paginatedResult.Items.Any())
-            {
-                <Grid TItem="ForumPostModel" Class="table table-striped table-hover" Data="paginatedResult.Items">
-                    <GridColumn TItem="ForumPostModel" HeaderText="Content" PropertyName="Content" />
-                    <GridColumn TItem="ForumPostModel" HeaderText="Topic" PropertyName="TopicTitle" />
-                    <GridColumn TItem="ForumPostModel" HeaderText="Author" PropertyName="AuthorName" />
-                    <GridColumn TItem="ForumPostModel" HeaderText="Parent Post" PropertyName="ParentPostId" />
-                    <GridColumn TItem="ForumPostModel" HeaderText="Created" PropertyName="CreatedAt" Format="yyyy-MM-dd HH:mm" />
-
-                    <GridColumn TItem="ForumPostModel" HeaderText="Actions">
-                        <div class="btn-group" role="group">
-                            <Button Color="ButtonColor.Primary" Size="ButtonSize.Small" Href='@($"/admin/forumposts/edit?id={context.Id}")'>
-                                <Icon Name="IconName.Pencil" /> Edit
-                            </Button>
-                            <Button Color="ButtonColor.Info" Size="ButtonSize.Small" Href='@($"/admin/forumposts/details?id={context.Id}")'>
-                                <Icon Name="IconName.Eye" /> Details
-                            </Button>
-                            <Button Color="ButtonColor.Danger" Size="ButtonSize.Small" Href='@($"/admin/forumposts/delete?id={context.Id}")'>
-                                <Icon Name="IconName.Trash" /> Delete
-                            </Button>
-                        </div>
-                    </GridColumn>
-                </Grid>
-            }
-            else
-            {
-                <div class="text-center py-4">
-                    <p class="text-muted">No forum posts found.</p>
-                </div>
-            }
-        }
-        else
-        {
-            <div class="text-center">
-                <div class="spinner-border" role="status">
-                    <span class="visually-hidden">Loading...</span>
-                </div>
-            </div>
-        }
-    </div>
-</div>
+<DataTableComponent TItem="ForumPostModel" 
+                    DataProvider="ForumPostsDataProvider"
+                    PageSize="10">
+    <Columns>
+        <GridColumn TItem="ForumPostModel" HeaderText="Content" PropertyName="Content" />
+        <GridColumn TItem="ForumPostModel" HeaderText="Topic" PropertyName="TopicTitle" />
+        <GridColumn TItem="ForumPostModel" HeaderText="Author" PropertyName="AuthorName" />
+        <GridColumn TItem="ForumPostModel" HeaderText="Parent Post" PropertyName="ParentPostId" />
+        <GridColumn TItem="ForumPostModel" HeaderText="Created" PropertyName="CreatedAt" Format="yyyy-MM-dd HH:mm" />
+    </Columns>
+    <Actions>
+        <div class="btn-group" role="group">
+            <Button Color="ButtonColor.Primary" Size="ButtonSize.Small" Href='@($"/admin/forumposts/edit?id={context.Id}")'>
+                <Icon Name="IconName.Pencil" /> Edit
+            </Button>
+            <Button Color="ButtonColor.Info" Size="ButtonSize.Small" Href='@($"/admin/forumposts/details?id={context.Id}")'>
+                <Icon Name="IconName.Eye" /> Details
+            </Button>
+            <Button Color="ButtonColor.Danger" Size="ButtonSize.Small" Href='@($"/admin/forumposts/delete?id={context.Id}")'>
+                <Icon Name="IconName.Trash" /> Delete
+            </Button>
+        </div>
+    </Actions>
+</DataTableComponent>
 
 @code {
-    private PaginatedResult<ForumPostModel>? paginatedResult;
-    private int currentPage = 1;
-    private int pageSize = 10;
-    private bool isLoading = false;
+    private IEnumerable<ForumPostModel> forumPosts = default!;
 
-    protected override async Task OnInitializedAsync()
+    private async Task<GridDataProviderResult<ForumPostModel>> ForumPostsDataProvider(GridDataProviderRequest<ForumPostModel> request)
     {
-        await LoadDataAsync();
+        if (forumPosts is null) // pull forum posts only one time for client-side filtering, sorting, and paging
+            forumPosts = await GetForumPosts(); // call a service or an API to pull the forum posts
+
+        return await Task.FromResult(request.ApplyTo(forumPosts));
     }
 
-    private async Task LoadDataAsync()
+    private async Task<IEnumerable<ForumPostModel>> GetForumPosts()
     {
-        isLoading = true;
         try
         {
             var request = new PaginationRequest
             {
-                PageNumber = currentPage,
-                PageSize = pageSize
+                PageNumber = 1,
+                PageSize = 1000 // Get all for client-side pagination
             };
 
-            paginatedResult = await ForumRepository.GetAllForumPostsPaginatedAsync(request);
-
-            if (paginatedResult == null || !paginatedResult.Items.Any())
-            {
-                paginatedResult = new PaginatedResult<ForumPostModel>
-                {
-                    Items = new List<ForumPostModel>
-                    {
-                        new ForumPostModel { Id = 1, Content = "This is the first post in the general discussion forum.", TopicTitle = "Welcome to the Forum!", AuthorName = "Admin", CreatedAt = DateTime.Now.AddDays(-10) },
-                        new ForumPostModel { Id = 2, Content = "I have a question about C# generics.", TopicTitle = "C# Generics", AuthorName = "John Doe", CreatedAt = DateTime.Now.AddDays(-5) },
-                        new ForumPostModel { Id = 3, Content = "Reply to John Doe: You can use `List<T>` for generic lists.", TopicTitle = "C# Generics", AuthorName = "Jane Smith", ParentPostId = 2, CreatedAt = DateTime.Now.AddDays(-4) }
-                    },
-                    TotalCount = 3,
-                    PageNumber = currentPage,
-                    PageSize = pageSize
-                };
-            }
+            var paginatedResult = await ForumRepository.GetAllForumPostsPaginatedAsync(request);
+            return paginatedResult?.Items ?? GetMockForumPosts();
         }
-        finally
+        catch
         {
-            isLoading = false;
+            return GetMockForumPosts();
         }
     }
 
-    private async Task OnPageChanged(int page)
+    private IEnumerable<ForumPostModel> GetMockForumPosts()
     {
-        if (page != currentPage && !isLoading)
+        return new List<ForumPostModel>
         {
-            currentPage = page;
-            await LoadDataAsync();
-        }
-    }
-
-    private async Task OnPageSizeChanged(int newPageSize)
-    {
-        if (newPageSize != pageSize && !isLoading)
-        {
-            pageSize = newPageSize;
-            currentPage = 1; // Reset to first page when changing page size
-            await LoadDataAsync();
-        }
+            new ForumPostModel { Id = 1, Content = "This is the first post in the general discussion forum.", TopicTitle = "Welcome to the Forum!", AuthorName = "Admin", CreatedAt = DateTime.Now.AddDays(-10) },
+            new ForumPostModel { Id = 2, Content = "I have a question about C# generics.", TopicTitle = "C# Generics", AuthorName = "John Doe", CreatedAt = DateTime.Now.AddDays(-5) },
+            new ForumPostModel { Id = 3, Content = "Reply to John Doe: You can use `List<T>` for generic lists.", TopicTitle = "C# Generics", AuthorName = "Jane Smith", ParentPostId = 2, CreatedAt = DateTime.Now.AddDays(-4) }
+        };
     }
 }
 

@@ -2,10 +2,13 @@
 
 @using LMS.Repositories
 @using LMS.Data.DTOs
+@using LMS.Web.Components.Shared
+@using LMS.Web.Services
 
 @inject ICertificateRepository CertificateRepository
 @inject IDropdownRepository DropdownRepository
 @inject NavigationManager NavigationManager
+@inject LMS.Web.Services.ToastService ToastService
 @rendermode @(new InteractiveServerRenderMode())
 
 <PageTitle>Create Certificate - Admin</PageTitle>
@@ -32,21 +35,27 @@
 
                     <div class="mb-3">
                         <label for="userid" class="form-label">User <span class="text-danger">*</span></label>
-                        <SearchableSelectComponent TItem="DropdownOption<string>" TValue="string" Items="@userOptions"
-                                                   ValueSelector="@(item => item.Value)" DisplaySelector="@(item => item.Text)"
-                                                   SearchFunction="@SearchUsers" SelectedValue="@Certificate.UserId"
-                                                   OnSelectedValueChanged="@((string value) => Certificate.UserId = value)"
-                                                   Placeholder="Select a user..." />
+                        <SearchableSelectComponent TItem="DropdownOption<string>" 
+                                                   TValue="string" 
+                                                   DataProvider="SearchUsersDataProvider"
+                                                   ValueSelector="@(item => item.Value)" 
+                                                   DisplaySelector="@(item => item.Text)"
+                                                   @bind-SelectedValue="Certificate.UserId"
+                                                   Placeholder="Select a user..." 
+                                                   EmptyText="No users found" />
                         <ValidationMessage For="() => Certificate.UserId" class="text-danger" />
                     </div>
 
                     <div class="mb-3">
                         <label for="courseid" class="form-label">Course <span class="text-danger">*</span></label>
-                        <SearchableSelectComponent TItem="DropdownOption<int>" TValue="int" Items="@courseOptions"
-                                                   ValueSelector="@(item => item.Value)" DisplaySelector="@(item => item.Text)"
-                                                   SearchFunction="@SearchCourses" SelectedValue="@Certificate.CourseId"
-                                                   OnSelectedValueChanged="@((int value) => Certificate.CourseId = value)"
-                                                   Placeholder="Select a course..." />
+                        <SearchableSelectComponent TItem="DropdownOption<int>" 
+                                                   TValue="int" 
+                                                   DataProvider="SearchCoursesDataProvider"
+                                                   ValueSelector="@(item => item.Value)" 
+                                                   DisplaySelector="@(item => item.Text)"
+                                                   @bind-SelectedValue="Certificate.CourseId"
+                                                   Placeholder="Select a course..." 
+                                                   EmptyText="No courses found" />
                         <ValidationMessage For="() => Certificate.CourseId" class="text-danger" />
                     </div>
 
@@ -64,7 +73,7 @@
                     </div>
 
                     <div class="d-flex gap-2">
-                        <Button Color="ButtonColor.Primary" Type="ButtonType.Submit">
+                        <Button Color="ButtonColor.Primary" Type="ButtonType.Submit" Loading="@isSubmitting">
                             <Icon Name="IconName.CheckCircle" />
                             Create Certificate
                         </Button>
@@ -78,39 +87,77 @@
 
 @code {
     private CreateCertificateRequest Certificate { get; set; } = new();
+    private bool isSubmitting = false;
 
-    private List<DropdownOption<string>> userOptions = new();
-    private List<DropdownOption<int>> courseOptions = new();
-
-    protected override async Task OnInitializedAsync()
+    private async Task<AutoCompleteDataProviderResult<DropdownOption<string>>> SearchUsersDataProvider(AutoCompleteDataProviderRequest<DropdownOption<string>> request)
     {
-        userOptions = await DropdownRepository.GetUsersAsync(search: "", take: 20);
-        courseOptions = await DropdownRepository.GetCoursesAsync(search: "", take: 20);
+        try
+        {
+            var users = await DropdownRepository.GetUsersAsync(search: request.Filter.Value, take: 20);
+            return new AutoCompleteDataProviderResult<DropdownOption<string>>
+            {
+                Data = users,
+                TotalCount = users.Count
+            };
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading users: {ex.Message}");
+            return new AutoCompleteDataProviderResult<DropdownOption<string>>
+            {
+                Data = new List<DropdownOption<string>>(),
+                TotalCount = 0
+            };
+        }
     }
 
-    private async Task<IEnumerable<DropdownOption<string>>> SearchUsers(string searchTerm)
+    private async Task<AutoCompleteDataProviderResult<DropdownOption<int>>> SearchCoursesDataProvider(AutoCompleteDataProviderRequest<DropdownOption<int>> request)
     {
-        return await DropdownRepository.GetUsersAsync(searchTerm, take: 20);
-    }
-
-    private async Task<IEnumerable<DropdownOption<int>>> SearchCourses(string searchTerm)
-    {
-        return await DropdownRepository.GetCoursesAsync(searchTerm, take: 20);
+        try
+        {
+            var courses = await DropdownRepository.GetCoursesAsync(search: request.Filter.Value, take: 20);
+            return new AutoCompleteDataProviderResult<DropdownOption<int>>
+            {
+                Data = courses,
+                TotalCount = courses.Count
+            };
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading courses: {ex.Message}");
+            return new AutoCompleteDataProviderResult<DropdownOption<int>>
+            {
+                Data = new List<DropdownOption<int>>(),
+                TotalCount = 0
+            };
+        }
     }
 
     private async Task AddCertificate()
     {
+        if (isSubmitting) return;
+        
+        isSubmitting = true;
         try
         {
             var result = await CertificateRepository.IssueCertificateAsync(Certificate);
             if (result != null)
             {
+                ToastService.ShowSuccess("Success", "Certificate created successfully!");
                 NavigationManager.NavigateTo("/admin/certificates");
+            }
+            else
+            {
+                ToastService.ShowError("Error", "Failed to create certificate. Please try again.");
             }
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error creating certificate: {ex.Message}");
+            ToastService.ShowError("Error", $"Error creating certificate: {ex.Message}");
+        }
+        finally
+        {
+            isSubmitting = false;
         }
     }
 }

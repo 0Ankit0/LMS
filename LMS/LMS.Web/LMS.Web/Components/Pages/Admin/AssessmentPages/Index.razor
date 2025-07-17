@@ -1,119 +1,133 @@
 ﻿@page "/admin/assessments"
 
-
 @using LMS.Repositories
+@using LMS.Web.Components.Shared
+@using LMS.Web.Services
 @inject IAssessmentRepository AssessmentRepository
+@inject LMS.Web.Services.ToastService ToastService
 
 <PageTitle>Assessments - Admin</PageTitle>
 
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h1 class="mb-0">Assessments</h1>
-    <Button Color="ButtonColor.Primary" Href="/admin/assessments/create">
-        <Icon Name="IconName.PlusCircle" />
-        Add New Assessment
-    </Button>
-</div>
-
-<div class="card">
-    <div class="card-body">
-        @if (paginatedAssessments != null)
-        {
-            if (paginatedAssessments.Items.Any())
-            {
-                <Grid TItem="AssessmentModel" Class="table table-striped table-hover" Data="paginatedAssessments.Items">
-                    <GridColumn TItem="AssessmentModel" HeaderText="Title" PropertyName="Title" />
-                    <GridColumn TItem="AssessmentModel" HeaderText="Description" PropertyName="Description" />
-                    <GridColumn TItem="AssessmentModel" HeaderText="Course ID" PropertyName="CourseId" />
-                    <GridColumn TItem="AssessmentModel" HeaderText="Type" PropertyName="Type" />
-                    <GridColumn TItem="AssessmentModel" HeaderText="Max Attempts" PropertyName="MaxAttempts" />
-                    <GridColumn TItem="AssessmentModel" HeaderText="Passing Score" PropertyName="PassingScore" />
-                    <GridColumn TItem="AssessmentModel" HeaderText="Randomized">
-                        @((context as AssessmentModel)?.IsRandomized == true ? "Yes" : "No")
-                    </GridColumn>
-                    <GridColumn TItem="AssessmentModel" HeaderText="Available From" PropertyName="AvailableFrom" Format="yyyy-MM-dd" />
-
-                    <GridColumn TItem="AssessmentModel" HeaderText="Actions">
-                        <div class="btn-group" role="group">
-                            <Button Color="ButtonColor.Primary" Size="ButtonSize.Small" Href='@($"/admin/assessments/edit?id={context.Id}")'>
-                                <Icon Name="IconName.Pencil" /> Edit
-                            </Button>
-                            <Button Color="ButtonColor.Info" Size="ButtonSize.Small" Href='@($"/admin/assessments/details?id={context.Id}")'>
-                                <Icon Name="IconName.Eye" /> Details
-                            </Button>
-                            <Button Color="ButtonColor.Danger" Size="ButtonSize.Small" Href='@($"/admin/assessments/delete?id={context.Id}")'>
-                                <Icon Name="IconName.Trash" /> Delete
-                            </Button>
-                        </div>
-                    </GridColumn>
-                </Grid>
-
-                <PaginationComponent TItem="AssessmentModel" PaginatedResult="paginatedAssessments"
-                    OnPageChanged="OnPageChanged" OnPageSizeChanged="OnPageSizeChanged" />
-            }
-            else
-            {
-                <div class="text-center py-4">
-                    <p class="text-muted">No assessments found.</p>
+<Card>
+    <CardHeader>
+        <div class="d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Assessments</h5>
+            <Button Color="ButtonColor.Primary" Href="/admin/assessments/create">
+                <Icon Name="IconName.PlusCircle" />
+                Add New Assessment
+            </Button>
+        </div>
+    </CardHeader>
+    <CardBody>
+        <Grid TItem="AssessmentModel"
+              DataProvider="AssessmentDataProvider"
+              AllowPaging="true"
+              AllowSorting="true"
+              AllowFiltering="true">
+            <GridColumn TItem="AssessmentModel" HeaderText="Title" PropertyName="Title" />
+            <GridColumn TItem="AssessmentModel" HeaderText="Description" PropertyName="Description" />
+            <GridColumn TItem="AssessmentModel" HeaderText="Course ID" PropertyName="CourseId" />
+            <GridColumn TItem="AssessmentModel" HeaderText="Type" PropertyName="Type" />
+            <GridColumn TItem="AssessmentModel" HeaderText="Max Attempts" PropertyName="MaxAttempts" />
+            <GridColumn TItem="AssessmentModel" HeaderText="Passing Score" PropertyName="PassingScore" />
+            <GridColumn TItem="AssessmentModel" HeaderText="Randomized">
+                @((context as AssessmentModel)?.IsRandomized == true ? "Yes" : "No")
+            </GridColumn>
+            <GridColumn TItem="AssessmentModel" HeaderText="Available From" PropertyName="AvailableFrom"
+                        Format="yyyy-MM-dd" />
+            <GridColumn TItem="AssessmentModel" HeaderText="Actions">
+                <div class="btn-group" role="group">
+                    <Button Color="ButtonColor.Primary" Size="ButtonSize.Small"
+                            Href='@($"/admin/assessments/edit?id={context.Id}")'>
+                        <Icon Name="IconName.Pencil" /> Edit
+                    </Button>
+                    <Button Color="ButtonColor.Success" Size="ButtonSize.Small" Href='@($"/admin/assessments/manage?id={context.Id}")'>
+                        <Icon Name="IconName.Wrench" /> Manage
+                    </Button>
+                    <Button Color="ButtonColor.Info" Size="ButtonSize.Small"
+                            Href='@($"/admin/assessments/details?id={context.Id}")'>
+                        <Icon Name="IconName.Eye" /> Details
+                    </Button>
+                    <Button Color="ButtonColor.Danger" Size="ButtonSize.Small" @onclick="() => ConfirmDelete(context)">
+                        <Icon Name="IconName.Trash" /> Delete
+                    </Button>
                 </div>
-            }
-        }
-        else
-        {
-            <div class="text-center">
-                <div class="spinner-border" role="status">
-                    <span class="visually-hidden">Loading...</span>
-                </div>
-            </div>
-        }
-    </div>
-</div>
+            </GridColumn>
+        </Grid>
+    </CardBody>
+</Card>
+
+<!-- Delete Confirmation Modal -->
+<ModalComponent @ref="deleteModal"
+                Title="Confirm Delete"
+                Message="@($"Are you sure you want to delete the assessment '{assessmentToDelete?.Title}'? This action cannot be undone.")"
+                ConfirmButtonText="Delete"
+                ConfirmButtonColor="ButtonColor.Danger"
+                OnConfirm="DeleteAssessment" />
 
 @code {
-    private PaginatedResult<AssessmentModel>? paginatedAssessments;
-    private int currentPage = 1;
-    private int pageSize = 10;
+    private ModalComponent deleteModal = default!;
+    private AssessmentModel? assessmentToDelete;
 
-    protected override async Task OnInitializedAsync()
+    private async Task<GridDataProviderResult<AssessmentModel>> AssessmentDataProvider(GridDataProviderRequest<AssessmentModel> request)
     {
-        await LoadAssessmentsAsync();
-    }
-
-    private async Task LoadAssessmentsAsync()
-    {
-        var request = new PaginationRequest
+        try
         {
-            PageNumber = currentPage,
-            PageSize = pageSize
-        };
-        paginatedAssessments = await AssessmentRepository.GetAssessmentsPaginatedAsync(request);
-
-        if (paginatedAssessments == null || !paginatedAssessments.Items.Any())
-        {
-            paginatedAssessments = new PaginatedResult<AssessmentModel>
+            // Only pass supported properties to PaginationRequest
+            var result = await AssessmentRepository.GetAssessmentsPaginatedAsync(new PaginationRequest
             {
-                Items = new List<AssessmentModel>
-                {
-                    new AssessmentModel { Id = 1, Title = "Introduction to C# Quiz", Description = "Basic concepts of C#.", CourseId = 1, CourseName = "C# Programming", Type = "Quiz", MaxAttempts = 3, PassingScore = 70.0, IsRandomized = true, AvailableFrom = DateTime.Now.AddDays(-7) },
-                    new AssessmentModel { Id = 2, Title = "Advanced SQL Exam", Description = "Complex SQL queries and database design.", CourseId = 2, CourseName = "Database Management", Type = "Exam", MaxAttempts = 1, PassingScore = 80.0, IsRandomized = false, AvailableFrom = DateTime.Now.AddDays(-14) },
-                    new AssessmentModel { Id = 3, Title = "Web Development Project", Description = "Build a simple web application.", CourseId = 3, CourseName = "Full-Stack Web Dev", Type = "Project", MaxAttempts = 1, PassingScore = 60.0, IsRandomized = false, AvailableFrom = DateTime.Now.AddDays(-30) }
-                },
-                TotalCount = 3,
-                PageNumber = currentPage,
-                PageSize = pageSize
+                PageNumber = request.PageNumber,
+                PageSize = request.PageSize
+                // Remove unsupported properties: Filter, SortBy, SortDirection
+            });
+
+            return new GridDataProviderResult<AssessmentModel>
+            {
+                Data = result.Items,
+                TotalCount = result.TotalCount
+            };
+        }
+        catch (Exception ex)
+        {
+            ToastService.ShowError("Error", $"Error loading assessments: {ex.Message}");
+            return new GridDataProviderResult<AssessmentModel>
+            {
+                Data = Enumerable.Empty<AssessmentModel>(),
+                TotalCount = 0
             };
         }
     }
 
-    private async Task OnPageChanged(int page)
+    private async Task ConfirmDelete(AssessmentModel assessment)
     {
-        currentPage = page;
-        await LoadAssessmentsAsync();
+        assessmentToDelete = assessment;
+        await deleteModal.ShowAsync();
     }
 
-    private async Task OnPageSizeChanged(int size)
+    private async Task DeleteAssessment()
     {
-        pageSize = size;
-        currentPage = 1;
-        await LoadAssessmentsAsync();
+        if (assessmentToDelete != null)
+        {
+            try
+            {
+                // Use the correct delete method from the repository
+                await AssessmentRepository.DeleteAssessmentAsync(assessmentToDelete.Id);
+                ToastService.ShowSuccess("Success", $"Assessment '{assessmentToDelete.Title}' deleted successfully.");
+                await RefreshGridDataAsync();
+            }
+            catch (Exception ex)
+            {
+                ToastService.ShowError("Error", $"Error deleting assessment: {ex.Message}");
+            }
+            finally
+            {
+                assessmentToDelete = null;
+            }
+        }
+    }
+
+    private async Task RefreshGridDataAsync()
+    {
+        await InvokeAsync(StateHasChanged);
     }
 }
