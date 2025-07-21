@@ -1,14 +1,15 @@
 @rendermode InteractiveAuto
-
+@inject HttpClient Http
+@inject NavigationManager NavigationManager
 
 <div class="top-row ps-3 navbar navbar-dark">
     <div class="container-fluid d-flex align-items-center justify-content-end">
         <button class="navbar-collapse-toggle" @onclick="ToggleNavbar"
-            title="@(isNavbarCollapsed ? "Expand sidebar" : "Collapse sidebar")">
+                title="@(isNavbarCollapsed ? "Expand sidebar" : "Collapse sidebar")">
             <span class="bi @(isNavbarCollapsed ? "bi-chevron-right" : "bi-chevron-left")"></span>
         </button>
         <button class="navbar-toggler" @onclick="ToggleMobileMenu" title="Toggle navigation menu"
-            aria-label="Toggle navigation menu">
+                aria-label="Toggle navigation menu">
             <span class="bar"></span>
             <span class="bar"></span>
             <span class="bar"></span>
@@ -48,32 +49,52 @@
                 <span class="nav-text" style="line-height: 1.2; font-size: 0.97rem;">Courses</span>
             </NavLink>
         </div>
+        <!-- Logout nav item -->
+        <div class="nav-item" data-tooltip="Logout">
+            <button class="nav-link btn btn-link" @onclick="Logout" title="Logout">
+                <span class="bi bi-box-arrow-right" aria-hidden="true"></span>
+                <span class="nav-text" style="line-height: 1.2; font-size: 0.97rem;">Logout</span>
+            </button>
+        </div>
     </nav>
 </div>
 
 @code {
-    private bool isNavbarCollapsed = false; // Start expanded by default for admin
-    private bool isMobileMenuOpen = false; // Mobile menu state
+    private bool isNavbarCollapsed = false;
+    private bool isMobileMenuOpen = false;
 
-    private void ToggleNavbar()
-    {
-        isNavbarCollapsed = !isNavbarCollapsed;
-    }
+    private void ToggleNavbar() => isNavbarCollapsed = !isNavbarCollapsed;
 
-    private void ToggleMobileMenu()
-    {
-        isMobileMenuOpen = !isMobileMenuOpen;
-    }
+    private void ToggleMobileMenu() => isMobileMenuOpen = !isMobileMenuOpen;
 
     private string GetNavScrollableClasses()
     {
         var classes = new List<string>();
-
         if (isNavbarCollapsed)
-        {
             classes.Add("collapsed");
-        }
-
         return string.Join(" ", classes);
+    }
+
+    private async Task Logout()
+    {
+        // Set the target return URL after logout (adjust as needed)
+        var returnUrl = "Account/Login";
+        var formData = new Dictionary<string, string>
+        {
+            { "returnUrl", returnUrl }
+        };
+        var content = new FormUrlEncodedContent(formData);
+
+        // Make POST call to the API Logout endpoint
+        var response = await Http.PostAsync("/Account/Logout", content);
+        if (response.IsSuccessStatusCode)
+        {
+            // Navigate to the return URL on successful logout. Force load clears cached user data.
+            NavigationManager.NavigateTo(returnUrl, forceLoad: true);
+        }
+        else
+        {
+            Console.WriteLine("Logout failed: " + response.ReasonPhrase);
+        }
     }
 }

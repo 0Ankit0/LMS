@@ -1,32 +1,22 @@
 @inherits LayoutComponentBase
 @attribute [Authorize]
 
-<CustomErrorBoundary ShowDetailedErrors="true">
-    <div class="page">
-        <div class="sidebar">
-            <ReportNavMenu />
+<div class="page">
+    <div class="sidebar">
+        <ReportNavMenu />
+    </div>
+
+    <main>
+        <div class="top-row">
+            <ManageNav />
         </div>
 
-        <main>
-            <div class="top-row px-4">
-                <div class="d-flex justify-content-between align-items-center w-100">
-                    <div class="d-flex align-items-center">
-                        <h1 class="page-title">📊 Reports & Analytics</h1>
-                    </div>
-                    <div class="top-row-controls">
-                        <ManageNav></ManageNav>
-                    </div>
-                </div>
-            </div>
+        <div class="container-fluid">
+            @Body
+        </div>
+    </main>
+</div>
 
-            <article class="content px-4">
-                @Body
-            </article>
-        </main>
-    </div>
-</CustomErrorBoundary>
-
-<!-- Custom Toast Container -->
 <ToastContainer />
 
 @* Chart.js and Dashboard Scripts *@
