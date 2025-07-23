@@ -67,13 +67,13 @@
                 <div class="col-md-6 mb-3">
                     <label for="instructorid" class="form-label">Instructor <span
                             class="text-danger">*</span></label>
-                    <SearchableSelectComponent TItem="DropdownOption<string>" 
-                                               TValue="string" 
-                                               DataProvider="SearchInstructorsDataProvider"
-                                               ValueSelector="@(item => item.Value)" 
+                    <SearchableSelectComponent TItem="DropdownOption<string>"
+                                               TValue="string"
+                                               OnLoad="LoadInstructorsAsync"
+                                               ValueSelector="@(item => item.Value)"
                                                DisplaySelector="@(item => item.Text)"
                                                @bind-SelectedValue="Course.InstructorId"
-                                               Placeholder="Search and select instructor..." 
+                                               Placeholder="Search and select instructor..."
                                                EmptyText="No instructors found" />
                     <ValidationMessage For="() => Course.InstructorId" class="text-danger" />
                 </div>
@@ -162,25 +162,17 @@
         set => Course.EstimatedDuration = TimeSpan.FromHours(value);
     }
 
-    private async Task<AutoCompleteDataProviderResult<DropdownOption<string>>> SearchInstructorsDataProvider(AutoCompleteDataProviderRequest<DropdownOption<string>> request)
+    private async Task<IEnumerable<DropdownOption<string>>> LoadInstructorsAsync()
     {
         try
         {
-            var instructors = await DropdownRepository.GetInstructorsAsync(search: request.Filter.Value, take: 20);
-            return new AutoCompleteDataProviderResult<DropdownOption<string>>
-            {
-                Data = instructors,
-                TotalCount = instructors.Count
-            };
+            var instructors = await DropdownRepository.GetInstructorsAsync(search: null, take: 100);
+            return instructors;
         }
         catch (Exception ex)
         {
             Console.WriteLine($"Error loading instructors: {ex.Message}");
-            return new AutoCompleteDataProviderResult<DropdownOption<string>>
-            {
-                Data = new List<DropdownOption<string>>(),
-                TotalCount = 0
-            };
+            return Enumerable.Empty<DropdownOption<string>>();
         }
     }
 

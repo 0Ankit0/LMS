@@ -126,7 +126,27 @@ else
 
     protected override async Task OnInitializedAsync()
     {
+        // Try to get course from server
         course = await CourseRepository.GetCourseByIdAsync(Id);
+
+        if (course == null)
+        {
+            course = AddDummyCourses().FirstOrDefault(c => c.Id == Id) ?? AddDummyCourses().First();
+        }
+        else if (course.Modules == null || !course.Modules.Any())
+        {
+            course.Modules = AddDummyModules(course.Id);
+        }
+        else
+        {
+            foreach (var module in course.Modules)
+            {
+                if (module.Lessons == null || !module.Lessons.Any())
+                {
+                    module.Lessons = AddDummyLessons(module.Id);
+                }
+            }
+        }
     }
 
     private async Task AddModule()
@@ -135,7 +155,8 @@ else
         var result = await ModuleRepository.CreateModuleAsync(newModule);
         if (result != null)
         {
-            course = await CourseRepository.GetCourseByIdAsync(Id);
+            course = await CourseRepository.GetCourseByIdAsync(Id)
+                     ?? AddDummyCourses().FirstOrDefault(c => c.Id == Id) ?? AddDummyCourses().First();
             newModule = new();
             ToastService.ShowSuccess("Success", "Module created successfully!");
         }
@@ -157,7 +178,8 @@ else
         var result = await LessonRepository.CreateLessonAsync(newLesson);
         if (result != null)
         {
-            course = await CourseRepository.GetCourseByIdAsync(Id);
+            course = await CourseRepository.GetCourseByIdAsync(Id)
+                     ?? AddDummyCourses().FirstOrDefault(c => c.Id == Id) ?? AddDummyCourses().First();
             newLesson = new();
             addLessonModal.HideAsync();
             ToastService.ShowSuccess("Success", "Lesson created successfully!");
@@ -166,5 +188,104 @@ else
         {
             ToastService.ShowError("Error", "Failed to create lesson. Please try again.");
         }
+    }
+
+    // Dummy data helpers
+    private List<CourseModel> AddDummyCourses()
+    {
+        return new List<CourseModel>
+        {
+            new CourseModel
+            {
+                Id = 1,
+                Title = "Introduction to Programming",
+                Description = "Learn the basics of programming",
+                Level = "Beginner",
+                Status = "Published",
+                MaxEnrollments = 100,
+                StartDate = DateTime.Now.AddDays(7),
+                EndDate = DateTime.Now.AddDays(67),
+                InstructorId = "instructor-1",
+                InstructorName = "John Doe",
+                EstimatedDuration = TimeSpan.FromHours(40),
+                Modules = AddDummyModules(1)
+            },
+            new CourseModel
+            {
+                Id = 2,
+                Title = "Modern Web Development",
+                Description = "Master modern web development techniques",
+                Level = "Advanced",
+                Status = "Published",
+                MaxEnrollments = 50,
+                StartDate = DateTime.Now.AddDays(14),
+                EndDate = DateTime.Now.AddDays(104),
+                InstructorId = "instructor-2",
+                InstructorName = "Jane Smith",
+                EstimatedDuration = TimeSpan.FromHours(60),
+                Modules = AddDummyModules(2)
+            },
+            new CourseModel
+            {
+                Id = 3,
+                Title = "Data Science Essentials",
+                Description = "An introduction to data science and analytics",
+                Level = "Intermediate",
+                Status = "Draft",
+                MaxEnrollments = 75,
+                StartDate = DateTime.Now.AddDays(21),
+                EndDate = DateTime.Now.AddDays(81),
+                InstructorId = "instructor-3",
+                InstructorName = "Dr. Robert Johnson",
+                EstimatedDuration = TimeSpan.FromHours(50),
+                Modules = AddDummyModules(3)
+            }
+        };
+    }
+
+    private List<ModuleModel> AddDummyModules(int courseId)
+    {
+        // Using helper to create modules ensures Title and Description are set
+        var modules = new List<ModuleModel>
+        {
+            CreateModule(courseId * 10 + 1, $"Module 1 - Course {courseId}", $"This is the first module for course {courseId}", courseId),
+            CreateModule(courseId * 10 + 2, $"Module 2 - Course {courseId}", $"This is the second module for course {courseId}", courseId)
+        };
+        return modules;
+    }
+
+    private ModuleModel CreateModule(int id, string title, string description, int courseId)
+    {
+        return new ModuleModel
+        {
+            Id = id,
+            Title = title,
+            Description = description,
+            CourseId = courseId,
+            Lessons = AddDummyLessons(id)
+        };
+    }
+
+    private List<LessonModel> AddDummyLessons(int moduleId)
+    {
+        // Using helper for lessons as well
+        var lessons = new List<LessonModel>
+        {
+            CreateLesson(moduleId * 100 + 1, $"Lesson 1 - Module {moduleId}", $"This is the first lesson for module {moduleId}", moduleId, "Video"),
+            CreateLesson(moduleId * 100 + 2, $"Lesson 2 - Module {moduleId}", $"This is the second lesson for module {moduleId}", moduleId, "Reading")
+        };
+        return lessons;
+    }
+
+    private LessonModel CreateLesson(int id, string title, string description, int moduleId, string type)
+    {
+        return new LessonModel
+        {
+            Id = id,
+            Title = title,
+            Description = description,
+            ModuleId = moduleId,
+            Type = type
+        };
     }
 }

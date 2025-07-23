@@ -1,8 +1,8 @@
 @page "/admin/modules"
+@attribute [OutputCache(Duration = 60)]
 @rendermode @(new InteractiveServerRenderMode())
 
 @using LMS.Repositories
-@using LMS.Web.Components.Shared
 @using LMS.Web.Services
 @inject IModuleRepository ModuleRepository
 @inject LMS.Web.Services.ToastService ToastService
@@ -10,77 +10,79 @@
 <PageTitle>Modules - Admin</PageTitle>
 
 <Card>
-    <div class="card-header">
+    <CardHeader>
         <div class="d-flex justify-content-between align-items-center">
             <h5 class="mb-0">Modules</h5>
-            <Button Color="ButtonColor.Primary" Href="/admin/modules/create">
-                <Icon Name="IconName.PlusCircle" />
+            <a href="/admin/modules/create" class="btn btn-primary">
+                <i class="bi bi-plus-circle"></i>
                 Add New Module
-            </Button>
+            </a>
         </div>
-    </div>
+    </CardHeader>
     <CardBody>
-        <DataTableComponent TItem="ModuleModel"
-                            DataProvider="ModulesDataProvider"
-                            AllowPaging="true"
-                            AllowSorting="true"
-                            AllowFiltering="true">
-            <GridColumn TItem="ModuleModel" HeaderText="Title" PropertyName="Title" SortKeySelector="item => item.Title" Filterable="true">
-                @context.Title
-            </GridColumn>
-            <GridColumn TItem="ModuleModel" HeaderText="Description" PropertyName="Description" Filterable="true">
-                @context.Description
-            </GridColumn>
-            <GridColumn TItem="ModuleModel" HeaderText="Course ID" PropertyName="CourseId" SortKeySelector="item => item.CourseId" HeaderTextAlignment="Alignment.End" TextAlignment="Alignment.End">
-                @context.CourseId
-            </GridColumn>
-            <GridColumn TItem="ModuleModel" HeaderText="Order" PropertyName="OrderIndex" SortKeySelector="item => item.OrderIndex" HeaderTextAlignment="Alignment.End" TextAlignment="Alignment.End">
-                @context.OrderIndex
-            </GridColumn>
-            <GridColumn TItem="ModuleModel" HeaderText="Required" SortKeySelector="item => item.IsRequired">
-                <Badge Color="@(context.IsRequired ? BadgeColor.Primary : BadgeColor.Secondary)">
-                    @(context.IsRequired ? "Yes" : "No")
-                </Badge>
-            </GridColumn>
-            <GridColumn TItem="ModuleModel" HeaderText="Active" SortKeySelector="item => item.IsActive">
-                <Badge Color="@(context.IsActive ? BadgeColor.Success : BadgeColor.Secondary)">
-                    @(context.IsActive ? "Yes" : "No")
-                </Badge>
-            </GridColumn>
-            <GridColumn TItem="ModuleModel" HeaderText="Lessons" SortKeySelector="item => item.Lessons.Count" HeaderTextAlignment="Alignment.End" TextAlignment="Alignment.End">
-                @(context.Lessons?.Count ?? 0)
-            </GridColumn>
-            <GridColumn TItem="ModuleModel" HeaderText="Actions" Sortable="false" Filterable="false">
-                <div class="btn-group" role="group">
-                    <Button Color="ButtonColor.Primary" Size="ButtonSize.Small" Href='@($"/admin/modules/edit?id={context.Id}")'>
-                        <Icon Name="IconName.Pencil" /> Edit
-                    </Button>
-                    <Button Color="ButtonColor.Info" Size="ButtonSize.Small" Href='@($"/admin/modules/details?id={context.Id}")'>
-                        <Icon Name="IconName.Eye" /> Details
-                    </Button>
-                    <Button Color="ButtonColor.Danger" Size="ButtonSize.Small" @onclick="() => ConfirmDelete(context)">
-                        <Icon Name="IconName.Trash" /> Delete
-                    </Button>
-                </div>
-            </GridColumn>
+        <DataTableComponent TItem="ModuleModel" DataProvider="ModulesDataProvider" AllowPaging="true"
+            AllowSorting="true" AllowFiltering="true" PageSize="10">
+            <Columns>
+                <GridColumn TItem="ModuleModel" HeaderText="Title" PropertyName="Title"
+                    SortKeySelector="item => item.Title" Filterable="true">
+                    @context.Title
+                </GridColumn>
+                <GridColumn TItem="ModuleModel" HeaderText="Description" PropertyName="Description" Filterable="true">
+                    @context.Description
+                </GridColumn>
+                <GridColumn TItem="ModuleModel" HeaderText="Course ID" PropertyName="CourseId"
+                    SortKeySelector="item => item.CourseId" HeaderTextAlignment="Alignment.End"
+                    TextAlignment="Alignment.End">
+                    @context.CourseId
+                </GridColumn>
+                <GridColumn TItem="ModuleModel" HeaderText="Order" PropertyName="OrderIndex"
+                    SortKeySelector="item => item.OrderIndex" HeaderTextAlignment="Alignment.End"
+                    TextAlignment="Alignment.End">
+                    @context.OrderIndex
+                </GridColumn>
+                <GridColumn TItem="ModuleModel" HeaderText="Required" SortKeySelector="item => item.IsRequired">
+                    <Badge Color="@(context.IsRequired? BadgeColor.Primary: BadgeColor.Secondary)">
+                        @(context.IsRequired ? "Yes" : "No")
+                    </Badge>
+                </GridColumn>
+                <GridColumn TItem="ModuleModel" HeaderText="Active" SortKeySelector="item => item.IsActive">
+                    <Badge Color="@(context.IsActive? BadgeColor.Success: BadgeColor.Secondary)">
+                        @(context.IsActive ? "Yes" : "No")
+                    </Badge>
+                </GridColumn>
+                <GridColumn TItem="ModuleModel" HeaderText="Lessons" SortKeySelector="item => item.Lessons.Count"
+                    HeaderTextAlignment="Alignment.End" TextAlignment="Alignment.End">
+                    @context.Lessons.Count
+                </GridColumn>
+                <GridColumn TItem="ModuleModel" HeaderText="Actions" Sortable="false" Filterable="false">
+                    <div class="btn-group" role="group">
+                        <a href='@($"/admin/modules/edit?id={context.Id}")' class="btn btn-primary btn-sm">
+                            <i class="bi bi-pencil"></i> Edit
+                        </a>
+                        <a href='@($"/admin/modules/details?id={context.Id}")' class="btn btn-info btn-sm">
+                            <i class="bi bi-eye"></i> Details
+                        </a>
+                        <button class="btn btn-danger btn-sm" @onclick="() => ConfirmDelete(context)">
+                            <i class="bi bi-trash"></i> Delete
+                        </button>
+                    </div>
+                </GridColumn>
+            </Columns>
         </DataTableComponent>
     </CardBody>
 </Card>
 
 <!-- Delete Confirmation Modal -->
-<ModalComponent @ref="deleteModal"
-                Title="Confirm Delete"
-                Message="@($"Are you sure you want to delete the module '{moduleToDelete?.Title}'? This action cannot be undone.")"
-                ConfirmButtonText="Delete"
-                ConfirmButtonColor="ButtonColor.Danger"
-                OnConfirm="DeleteModule" />
+<ModalComponent @ref="deleteModal" Title="Confirm Delete"
+    Message="@($"Are you sure you want to delete the module '{moduleToDelete?.Title}'? This action cannot be undone.")"
+    ConfirmButtonText="Delete" ConfirmButtonColor="ButtonColor.Danger" OnConfirm="DeleteModule" />
 
 @code {
-    private IEnumerable<ModuleModel> modules = default!;
     private ModalComponent deleteModal = default!;
     private ModuleModel? moduleToDelete;
 
-    private async Task<GridDataProviderResult<ModuleModel>> ModulesDataProvider(GridDataProviderRequest<ModuleModel> request)
+    private async Task<GridDataProviderResult<ModuleModel>> ModulesDataProvider(GridDataProviderRequest<ModuleModel>
+    request)
     {
         try
         {
@@ -90,10 +92,13 @@
                 PageSize = request.PageSize
             });
 
+            var data = (result.Items == null || !result.Items.Any()) ? AddDummyModules() : result.Items;
+            var totalCount = (result.Items == null || !result.Items.Any()) ? data.Count() : result.TotalCount;
+
             return new GridDataProviderResult<ModuleModel>
             {
-                Data = result.Items,
-                TotalCount = result.TotalCount
+                Data = data,
+                TotalCount = totalCount
             };
         }
         catch (Exception ex)
@@ -105,6 +110,46 @@
                 TotalCount = 0
             };
         }
+    }
+
+    private List<ModuleModel> AddDummyModules()
+    {
+        return new List<ModuleModel>
+        {
+            new ModuleModel
+            {
+                Id = 1,
+                Title = "Introduction to Programming Fundamentals",
+                Description = "Basic programming concepts and principles",
+                CourseId = 1,
+                OrderIndex = 1,
+                IsRequired = true,
+                IsActive = true,
+                Lessons = new List<LessonModel>()
+            },
+            new ModuleModel
+            {
+                Id = 2,
+                Title = "Data Structures and Algorithms",
+                Description = "Learn about common data structures and algorithms",
+                CourseId = 1,
+                OrderIndex = 2,
+                IsRequired = true,
+                IsActive = true,
+                Lessons = new List<LessonModel>()
+            },
+            new ModuleModel
+            {
+                Id = 3,
+                Title = "Web Development Basics",
+                Description = "HTML, CSS, and JavaScript fundamentals",
+                CourseId = 2,
+                OrderIndex = 1,
+                IsRequired = false,
+                IsActive = false,
+                Lessons = new List<LessonModel>()
+            }
+        };
     }
 
     private async Task ConfirmDelete(ModuleModel module)

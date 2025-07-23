@@ -1,4 +1,5 @@
 @page "/admin/forumposts"
+@attribute [OutputCache(Duration = 60)]
 @rendermode @(new InteractiveServerRenderMode())
 
 
@@ -9,41 +10,41 @@
 
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h1 class="mb-0">Forum Posts</h1>
-    <Button Color="ButtonColor.Primary" Href="/admin/forumposts/create">
-        <Icon Name="IconName.PlusCircle" />
+    <a href="/admin/forumposts/create" class="btn btn-primary">
+        <i class="bi bi-plus-circle"></i>
         Add New Forum Post
-    </Button>
+    </a>
 </div>
 
 <DataTableComponent TItem="ForumPostModel" DataProvider="ForumPostsDataProvider" PageSize="10">
-    <GridColumn TItem="ForumPostModel" HeaderText="Content" PropertyName="Content">
+    <DataTableColumn TItem="ForumPostModel" HeaderText="Content" PropertyName="Content">
         @context.Content
-    </GridColumn>
-    <GridColumn TItem="ForumPostModel" HeaderText="Topic" PropertyName="TopicTitle">
+    </DataTableColumn>
+    <DataTableColumn TItem="ForumPostModel" HeaderText="Topic" PropertyName="TopicTitle">
         @context.TopicTitle
-    </GridColumn>
-    <GridColumn TItem="ForumPostModel" HeaderText="Author" PropertyName="AuthorName">
+    </DataTableColumn>
+    <DataTableColumn TItem="ForumPostModel" HeaderText="Author" PropertyName="AuthorName">
         @context.AuthorName
-    </GridColumn>
-    <GridColumn TItem="ForumPostModel" HeaderText="Parent Post" PropertyName="ParentPostId">
+    </DataTableColumn>
+    <DataTableColumn TItem="ForumPostModel" HeaderText="Parent Post" PropertyName="ParentPostId">
         @context.ParentPostId
-    </GridColumn>
-    <GridColumn TItem="ForumPostModel" HeaderText="Created" PropertyName="CreatedAt" Format="yyyy-MM-dd HH:mm">
+    </DataTableColumn>
+    <DataTableColumn TItem="ForumPostModel" HeaderText="Created" PropertyName="CreatedAt" Format="yyyy-MM-dd HH:mm">
         @context.CreatedAt.ToString("yyyy-MM-dd HH:mm")
-    </GridColumn>
-    <GridColumn TItem="ForumPostModel" HeaderText="Actions" Sortable="false" Filterable="false">
+    </DataTableColumn>
+    <DataTableColumn TItem="ForumPostModel" HeaderText="Actions" Sortable="false" Filterable="false">
         <div class="btn-group" role="group">
-            <Button Color="ButtonColor.Primary" Size="ButtonSize.Small" Href='@($"/admin/forumposts/edit?id={context.Id}")'>
-                <Icon Name="IconName.Pencil" /> Edit
-            </Button>
-            <Button Color="ButtonColor.Info" Size="ButtonSize.Small" Href='@($"/admin/forumposts/details?id={context.Id}")'>
-                <Icon Name="IconName.Eye" /> Details
-            </Button>
-            <Button Color="ButtonColor.Danger" Size="ButtonSize.Small" Href='@($"/admin/forumposts/delete?id={context.Id}")'>
-                <Icon Name="IconName.Trash" /> Delete
-            </Button>
+            <a href='@($"/admin/forumposts/edit?id={context.Id}")' class="btn btn-primary btn-sm">
+                <i class="bi bi-pencil"></i> Edit
+            </a>
+            <a href='@($"/admin/forumposts/details?id={context.Id}")' class="btn btn-info btn-sm">
+                <i class="bi bi-eye"></i> Details
+            </a>
+            <a href='@($"/admin/forumposts/delete?id={context.Id}")' class="btn btn-danger btn-sm">
+                <i class="bi bi-trash"></i> Delete
+            </a>
         </div>
-    </GridColumn>
+    </DataTableColumn>
 </DataTableComponent>
 
 @code {

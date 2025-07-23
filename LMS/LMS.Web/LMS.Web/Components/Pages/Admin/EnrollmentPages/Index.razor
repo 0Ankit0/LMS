@@ -1,4 +1,5 @@
 @page "/admin/enrollments"
+@attribute [OutputCache(Duration = 60)]
 @rendermode @(new InteractiveServerRenderMode())
 
 @using LMS.Repositories
@@ -10,80 +11,84 @@
 <PageTitle>Enrollments - Admin</PageTitle>
 
 <Card>
-    <div class="card-header">
+    <CardHeader>
         <div class="d-flex justify-content-between align-items-center">
             <h5 class="mb-0">Enrollments</h5>
-            <Button Color="ButtonColor.Primary" Href="/admin/enrollments/create">
-                <Icon Name="IconName.PlusCircle" />
+            <a href="/admin/enrollments/create" class="btn btn-primary">
+                <i class="bi bi-plus-circle"></i>
                 Add New Enrollment
-            </Button>
+            </a>
         </div>
-    </div>
+    </CardHeader>
     <CardBody>
-        <DataTableComponent TItem="EnrollmentModel"
-                            DataProvider="EnrollmentsDataProvider"
-                            AllowPaging="true"
-                            AllowSorting="true"
-                            AllowFiltering="true">
-            <GridColumn TItem="EnrollmentModel" HeaderText="User ID" PropertyName="UserId" SortKeySelector="item => item.UserId" Filterable="true">
+        <DataTableComponent TItem="EnrollmentModel" DataProvider="EnrollmentsDataProvider" AllowPaging="true"
+            AllowSorting="true" AllowFiltering="true">
+            <DataTableColumn TItem="EnrollmentModel" HeaderText="User ID" PropertyName="UserId"
+                SortKeySelector="item => item.UserId" Filterable="true">
                 @context.UserId
-            </GridColumn>
-            <GridColumn TItem="EnrollmentModel" HeaderText="User Name" PropertyName="UserName" SortKeySelector="item => item.UserName" Filterable="true">
+            </DataTableColumn>
+            <DataTableColumn TItem="EnrollmentModel" HeaderText="User Name" PropertyName="UserName"
+                SortKeySelector="item => item.UserName" Filterable="true">
                 @context.UserName
-            </GridColumn>
-            <GridColumn TItem="EnrollmentModel" HeaderText="Course ID" PropertyName="CourseId" SortKeySelector="item => item.CourseId" HeaderTextAlignment="Alignment.End" TextAlignment="Alignment.End">
+            </DataTableColumn>
+            <DataTableColumn TItem="EnrollmentModel" HeaderText="Course ID" PropertyName="CourseId"
+                SortKeySelector="item => item.CourseId" HeaderTextAlignment="Alignment.End"
+                TextAlignment="Alignment.End">
                 @context.CourseId
-            </GridColumn>
-            <GridColumn TItem="EnrollmentModel" HeaderText="Course Title" PropertyName="CourseTitle" SortKeySelector="item => item.CourseTitle" Filterable="true">
+            </DataTableColumn>
+            <DataTableColumn TItem="EnrollmentModel" HeaderText="Course Title" PropertyName="CourseTitle"
+                SortKeySelector="item => item.CourseTitle" Filterable="true">
                 @context.CourseTitle
-            </GridColumn>
-            <GridColumn TItem="EnrollmentModel" HeaderText="Enrolled" SortKeySelector="item => item.EnrolledAt">
+            </DataTableColumn>
+            <DataTableColumn TItem="EnrollmentModel" HeaderText="Enrolled" SortKeySelector="item => item.EnrolledAt">
                 @context.EnrolledAt.ToString("yyyy-MM-dd")
-            </GridColumn>
-            <GridColumn TItem="EnrollmentModel" HeaderText="Status" PropertyName="Status" SortKeySelector="item => item.Status ?? string.Empty" Filterable="true">
+            </DataTableColumn>
+            <DataTableColumn TItem="EnrollmentModel" HeaderText="Status" PropertyName="Status"
+                SortKeySelector="item => item.Status ?? string.Empty" Filterable="true">
                 <Badge Color="@GetStatusBadgeColor(context.Status)">@context.Status</Badge>
-            </GridColumn>
-            <GridColumn TItem="EnrollmentModel" HeaderText="Progress %" SortKeySelector="item => item.ProgressPercentage" HeaderTextAlignment="Alignment.End" TextAlignment="Alignment.End">
+            </DataTableColumn>
+            <DataTableColumn TItem="EnrollmentModel" HeaderText="Progress %"
+                SortKeySelector="item => item.ProgressPercentage" HeaderTextAlignment="Alignment.End"
+                TextAlignment="Alignment.End">
                 <div class="d-flex align-items-center">
                     <div class="me-2" style="width: 60px;">
                         <Progress Value="(int)context.ProgressPercentage" />
                     </div>
                     <span>@(context.ProgressPercentage.ToString("F1"))%</span>
                 </div>
-            </GridColumn>
-            <GridColumn TItem="EnrollmentModel" HeaderText="Final Grade" HeaderTextAlignment="Alignment.End" TextAlignment="Alignment.End">
+            </DataTableColumn>
+            <DataTableColumn TItem="EnrollmentModel" HeaderText="Final Grade" HeaderTextAlignment="Alignment.End"
+                TextAlignment="Alignment.End">
                 @(context.FinalGrade?.ToString("F1") ?? "N/A")
-            </GridColumn>
-            <GridColumn TItem="EnrollmentModel" HeaderText="Actions" Sortable="false" Filterable="false">
+            </DataTableColumn>
+            <DataTableColumn TItem="EnrollmentModel" HeaderText="Actions" Sortable="false" Filterable="false">
                 <div class="btn-group" role="group">
-                    <Button Color="ButtonColor.Primary" Size="ButtonSize.Small" Href='@($"/admin/enrollments/edit?id={context.Id}")'>
-                        <Icon Name="IconName.Pencil" /> Edit
-                    </Button>
-                    <Button Color="ButtonColor.Info" Size="ButtonSize.Small" Href='@($"/admin/enrollments/details?id={context.Id}")'>
-                        <Icon Name="IconName.Eye" /> Details
-                    </Button>
-                    <Button Color="ButtonColor.Danger" Size="ButtonSize.Small" @onclick="() => ConfirmDelete(context)">
-                        <Icon Name="IconName.Trash" /> Delete
-                    </Button>
+                    <a href='@($"/admin/enrollments/edit?id={context.Id}")' class="btn btn-primary btn-sm">
+                        <i class="bi bi-pencil"></i> Edit
+                    </a>
+                    <a href='@($"/admin/enrollments/details?id={context.Id}")' class="btn btn-info btn-sm">
+                        <i class="bi bi-eye"></i> Details
+                    </a>
+                    <button class="btn btn-danger btn-sm" @onclick="() => ConfirmDelete(context)">
+                        <i class="bi bi-trash"></i> Delete
+                    </button>
                 </div>
-            </GridColumn>
+            </DataTableColumn>
         </DataTableComponent>
     </CardBody>
 </Card>
 
 <!-- Delete Confirmation Modal -->
-<ModalComponent @ref="deleteModal"
-                Title="Confirm Delete"
-                Message="@($"Are you sure you want to delete the enrollment for '{enrollmentToDelete?.UserName}' in '{enrollmentToDelete?.CourseTitle}'? This action cannot be undone.")"
-                ConfirmButtonText="Delete"
-                ConfirmButtonColor="ButtonColor.Danger"
-                OnConfirm="DeleteEnrollment" />
+<ModalComponent @ref="deleteModal" Title="Confirm Delete"
+    Message="@($"Are you sure you want to delete the enrollment for '{enrollmentToDelete?.UserName}' in '{enrollmentToDelete?.CourseTitle}'? This action cannot be undone.")"
+    ConfirmButtonText="Delete" ConfirmButtonColor="ButtonColor.Danger" OnConfirm="DeleteEnrollment" />
 
 @code {
     private ModalComponent deleteModal = default!;
     private EnrollmentModel? enrollmentToDelete;
 
-    private async Task<GridDataProviderResult<EnrollmentModel>> EnrollmentsDataProvider(GridDataProviderRequest<EnrollmentModel> request)
+    private async Task<GridDataProviderResult<EnrollmentModel>>
+    EnrollmentsDataProvider(GridDataProviderRequest<EnrollmentModel> request)
     {
         try
         {

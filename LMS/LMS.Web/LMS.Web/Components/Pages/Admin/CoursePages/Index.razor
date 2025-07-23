@@ -1,10 +1,11 @@
 ﻿@page "/admin/courses"
-@rendermode @(new InteractiveServerRenderMode())
+@attribute [OutputCache(Duration = 60)]
+@rendermode InteractiveServer
 @using LMS.Repositories
-@using LMS.Web.Components.Shared
 @using LMS.Web.Services
 @inject ICourseRepository CourseRepository
 @inject LMS.Web.Services.ToastService ToastService
+@inject NavigationManager Navigation
 
 <PageTitle>Courses - Admin</PageTitle>
 
@@ -12,70 +13,72 @@
     <CardHeader>
         <div class="d-flex justify-content-between align-items-center">
             <h5 class="mb-0">Courses</h5>
-            <Button Color="ButtonColor.Primary" Href="/admin/courses/create">
-                <Icon Name="IconName.PlusCircle" />
+            <a href="/admin/courses/create" class="btn btn-primary">
+                <i class="bi bi-plus-circle"></i>
                 Add New Course
-            </Button>
+            </a>
         </div>
     </CardHeader>
     <CardBody>
-        <DataTableComponent TItem="CourseModel"
-                            DataProvider="CoursesDataProvider"
-                            PageSize="10"
-                            AllowFiltering="true"
-                            AllowPaging="true"
-                            AllowSorting="true">
-            <GridColumn TItem="CourseModel" HeaderText="Title" PropertyName="Title" SortKeySelector="item => item.Title" Filterable="true">
-                @context.Title
-            </GridColumn>
-            <GridColumn TItem="CourseModel" HeaderText="Description" PropertyName="Description" Filterable="true">
-                @context.Description
-            </GridColumn>
-            <GridColumn TItem="CourseModel" HeaderText="Level" PropertyName="Level" SortKeySelector="item => item.Level">
-                @context.Level
-            </GridColumn>
-            <GridColumn TItem="CourseModel" HeaderText="Status" PropertyName="Status" SortKeySelector="item => item.Status">
-                @context.Status
-            </GridColumn>
-            <GridColumn TItem="CourseModel" HeaderText="Max Enrollments" PropertyName="MaxEnrollments" SortKeySelector="item => item.MaxEnrollments" HeaderTextAlignment="Alignment.End" TextAlignment="Alignment.End">
-                @context.MaxEnrollments
-            </GridColumn>
-            <GridColumn TItem="CourseModel" HeaderText="Start Date" PropertyName="StartDate" SortKeySelector="item => item.StartDate">
-                @context.StartDate.ToString("yyyy-MM-dd")
-            </GridColumn>
-            <GridColumn TItem="CourseModel" HeaderText="End Date" PropertyName="EndDate" SortKeySelector="item => item.EndDate">
-                @(context.EndDate?.ToString("yyyy-MM-dd") ?? "N/A")
-            </GridColumn>
-            <GridColumn TItem="CourseModel" HeaderText="Instructor" PropertyName="InstructorName" Filterable="true">
-                @context.InstructorName
-            </GridColumn>
-            <GridColumn TItem="CourseModel" HeaderText="Actions" Sortable="false" Filterable="false">
-                <div class="btn-group" role="group">
-                    <Button Color="ButtonColor.Primary" Size="ButtonSize.Small" Href='@($"/admin/courses/edit?id={context.Id}")'>
-                        <Icon Name="IconName.Pencil" /> Edit
-                    </Button>
-                    <Button Color="ButtonColor.Success" Size="ButtonSize.Small" Href='@($"/admin/courses/manage?id={context.Id}")'>
-                        <Icon Name="IconName.Wrench" /> Manage
-                    </Button>
-                    <Button Color="ButtonColor.Info" Size="ButtonSize.Small" Href='@($"/admin/courses/details?id={context.Id}")'>
-                        <Icon Name="IconName.Eye" /> Details
-                    </Button>
-                    <Button Color="ButtonColor.Danger" Size="ButtonSize.Small" @onclick="() => ConfirmDelete(context)">
-                        <Icon Name="IconName.Trash" /> Delete
-                    </Button>
-                </div>
-            </GridColumn>
+        <DataTableComponent TItem="CourseModel" DataProvider="CoursesDataProvider" AllowPaging="true"
+                            AllowSorting="true" AllowFiltering="true" PageSize="10">
+            <Columns>
+                <GridColumn TItem="CourseModel" HeaderText="Title" PropertyName="Title"
+                            SortKeySelector="item => item.Title" Filterable="true">
+                    @context.Title
+                </GridColumn>
+                <GridColumn TItem="CourseModel" HeaderText="Description" PropertyName="Description" Filterable="true">
+                    @context.Description
+                </GridColumn>
+                <GridColumn TItem="CourseModel" HeaderText="Level" PropertyName="Level"
+                            SortKeySelector="item => item.Level">
+                    @context.Level
+                </GridColumn>
+                <GridColumn TItem="CourseModel" HeaderText="Status" PropertyName="Status"
+                            SortKeySelector="item => item.Status">
+                    @context.Status
+                </GridColumn>
+                <GridColumn TItem="CourseModel" HeaderText="Max Enrollments" PropertyName="MaxEnrollments"
+                            SortKeySelector="item => item.MaxEnrollments" HeaderTextAlignment="Alignment.End"
+                            TextAlignment="Alignment.End">
+                    @context.MaxEnrollments
+                </GridColumn>
+                <GridColumn TItem="CourseModel" HeaderText="Start Date" PropertyName="StartDate"
+                            SortKeySelector="item => item.StartDate">
+                    @context.StartDate.ToString("yyyy-MM-dd")
+                </GridColumn>
+                <GridColumn TItem="CourseModel" HeaderText="End Date" PropertyName="EndDate"
+                            SortKeySelector="item => item.EndDate">
+                    @(context.EndDate?.ToString("yyyy-MM-dd") ?? "N/A")
+                </GridColumn>
+                <GridColumn TItem="CourseModel" HeaderText="Instructor" PropertyName="InstructorName" Filterable="true">
+                    @context.InstructorName
+                </GridColumn>
+                <GridColumn TItem="CourseModel" HeaderText="Actions" Sortable="false" Filterable="false">
+                    <div class="btn-group" role="group">
+                        <a href="/admin/courses/edit?id=@context.Id" class="btn btn-primary btn-sm">
+                            <i class="bi bi-pencil"></i> Edit
+                        </a>
+                        <a href="/admin/courses/manage?id=@context.Id" class="btn btn-success btn-sm">
+                            <i class="bi bi-wrench"></i> Manage
+                        </a>
+                        <a href="/admin/courses/details?id=@context.Id" class="btn btn-info btn-sm">
+                            <i class="bi bi-eye"></i> Details
+                        </a>
+                        <button class="btn btn-danger btn-sm" @onclick="() => ConfirmDelete(context)">
+                            <i class="bi bi-trash"></i> Delete
+                        </button>
+                    </div>
+                </GridColumn>
+            </Columns>
         </DataTableComponent>
     </CardBody>
 </Card>
 
 <!-- Delete Confirmation Modal -->
-<ModalComponent @ref="deleteModal"
-                Title="Confirm Delete"
+<ModalComponent @ref="deleteModal" Title="Confirm Delete"
                 Message="@($"Are you sure you want to delete the course '{courseToDelete?.Title}'? This action cannot be undone.")"
-                ConfirmButtonText="Delete"
-                ConfirmButtonColor="ButtonColor.Danger"
-                OnConfirm="DeleteCourse" />
+                ConfirmButtonText="Delete" ConfirmButtonColor="ButtonColor.Danger" OnConfirm="DeleteCourse" />
 
 @code {
     private ModalComponent deleteModal = default!;
@@ -91,8 +94,8 @@
                 PageSize = request.PageSize
             });
 
-            var data = (result == null || result.Items == null || !result.Items.Any()) ? AddDummyCourses() : result.Items;
-            var totalCount = (result == null || result.Items == null || !result.Items.Any()) ? data.Count : result.TotalCount;
+            var data = (result.Items == null || !result.Items.Any()) ? AddDummyCourses() : result.Items;
+            var totalCount = (result.Items == null || !result.Items.Any()) ? data.Count() : result.TotalCount;
 
             return new GridDataProviderResult<CourseModel>
             {
@@ -115,8 +118,42 @@
     {
         return new List<CourseModel>
         {
-            new CourseModel { Id = 1, Title = "Sample Course 1", Description = "Dummy course 1", Level = "Beginner", Status = "Active", MaxEnrollments = 100, StartDate = DateTime.Today, EndDate = DateTime.Today.AddMonths(1), InstructorName = "John Doe" },
-            new CourseModel { Id = 2, Title = "Sample Course 2", Description = "Dummy course 2", Level = "Intermediate", Status = "Inactive", MaxEnrollments = 50, StartDate = DateTime.Today.AddDays(-10), EndDate = DateTime.Today.AddMonths(2), InstructorName = "Jane Smith" }
+            new CourseModel
+            {
+                Id = 1,
+                Title = "Introduction to Programming",
+                Description = "Learn the basics of programming",
+                Level = "Beginner",
+                Status = "Published",
+                MaxEnrollments = 100,
+                StartDate = DateTime.Now.AddDays(7),
+                EndDate = DateTime.Now.AddDays(67),
+                InstructorName = "John Doe"
+            },
+            new CourseModel
+            {
+                Id = 2,
+                Title = "Modern Web Development",
+                Description = "Master modern web development techniques",
+                Level = "Advanced",
+                Status = "Published",
+                MaxEnrollments = 50,
+                StartDate = DateTime.Now.AddDays(14),
+                EndDate = DateTime.Now.AddDays(104),
+                InstructorName = "Jane Smith"
+            },
+            new CourseModel
+            {
+                Id = 3,
+                Title = "Data Science Essentials",
+                Description = "An introduction to data science and analytics",
+                Level = "Intermediate",
+                Status = "Draft",
+                MaxEnrollments = 75,
+                StartDate = DateTime.Now.AddDays(21),
+                EndDate = DateTime.Now.AddDays(81),
+                InstructorName = "Dr. Robert Johnson"
+            }
         };
     }
 
@@ -151,4 +188,6 @@
     {
         await InvokeAsync(StateHasChanged);
     }
+
+    
 }

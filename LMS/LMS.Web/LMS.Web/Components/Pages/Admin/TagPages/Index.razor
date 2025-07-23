@@ -1,80 +1,137 @@
 @page "/admin/tags"
+@attribute [OutputCache(Duration = 60)]
 @rendermode @(new InteractiveServerRenderMode())
-@using LMS.Repositories
 
+@using LMS.Repositories
+@using LMS.Web.Services
 @inject ITagRepository TagRepository
+@inject LMS.Web.Services.ToastService ToastService
 
 <PageTitle>Tags - Admin</PageTitle>
 
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h1 class="mb-0">Tags</h1>
-    <Button Color="ButtonColor.Primary" Href="/admin/tags/create">
-        <Icon Name="IconName.PlusCircle" />
-        Add New Tag
-    </Button>
-</div>
-
-<DataTableComponent TItem="TagModel"
-                    DataProvider="TagsDataProvider"
-                    PageSize="10">
-    <GridColumn TItem="TagModel" HeaderText="Name" PropertyName="Name">
-        @context.Name
-    </GridColumn>
-    <GridColumn TItem="TagModel" HeaderText="Color" PropertyName="Color">
-        @context.Color
-    </GridColumn>
-    <GridColumn TItem="TagModel" HeaderText="Actions" Sortable="false" Filterable="false">
-        <div class="btn-group" role="group">
-            <Button Color="ButtonColor.Primary" Size="ButtonSize.Small" Href='@($"/admin/tags/edit?id={context.Id}")'>
-                <Icon Name="IconName.Pencil" /> Edit
-            </Button>
-            <Button Color="ButtonColor.Info" Size="ButtonSize.Small" Href='@($"/admin/tags/details?id={context.Id}")'>
-                <Icon Name="IconName.Eye" /> Details
-            </Button>
-            <Button Color="ButtonColor.Danger" Size="ButtonSize.Small" Href='@($"/admin/tags/delete?id={context.Id}")'>
-                <Icon Name="IconName.Trash" /> Delete
-            </Button>
+<Card>
+    <CardHeader>
+        <div class="d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Tags</h5>
+            <a href="/admin/tags/create" class="btn btn-primary">
+                <i class="bi bi-plus-circle"></i>
+                Add New Tag
+            </a>
         </div>
-    </GridColumn>
-</DataTableComponent>
+    </CardHeader>
+    <CardBody>
+        <DataTableComponent TItem="TagModel" DataProvider="TagsDataProvider" AllowPaging="true" AllowSorting="true"
+            AllowFiltering="true" PageSize="10">
+            <Columns>
+                <GridColumn TItem="TagModel" HeaderText="Name" PropertyName="Name" Filterable="true">
+                    @context.Name
+                </GridColumn>
+                <GridColumn TItem="TagModel" HeaderText="Color" PropertyName="Color">
+                    <div class="d-flex align-items-center">
+                        <div class="me-2"
+                            style="width: 20px; height: 20px; background-color: @context.Color; border: 1px solid #ccc; border-radius: 4px;">
+                        </div>
+                        @context.Color
+                    </div>
+                </GridColumn>
+                <GridColumn TItem="TagModel" HeaderText="Actions" Sortable="false" Filterable="false">
+                    <div class="btn-group" role="group">
+                        <a href='@($"/admin/tags/edit?id={context.Id}")' class="btn btn-primary btn-sm">
+                            <i class="bi bi-pencil"></i> Edit
+                        </a>
+                        <a href='@($"/admin/tags/details?id={context.Id}")' class="btn btn-info btn-sm">
+                            <i class="bi bi-eye"></i> Details
+                        </a>
+                        <button class="btn btn-danger btn-sm" @onclick="() => ConfirmDelete(context)">
+                            <i class="bi bi-trash"></i> Delete
+                        </button>
+                    </div>
+                </GridColumn>
+            </Columns>
+        </DataTableComponent>
+    </CardBody>
+</Card>
+
+<!-- Delete Confirmation Modal -->
+<ModalComponent @ref="deleteModal" Title="Confirm Delete"
+    Message="@($"Are you sure you want to delete the tag '{tagToDelete?.Name}'? This action cannot be undone.")"
+    ConfirmButtonText="Delete" ConfirmButtonColor="ButtonColor.Danger" OnConfirm="DeleteTag" />
 
 @code {
-    private IEnumerable<TagModel> tags = default!;
+    private ModalComponent deleteModal = default!;
+    private TagModel? tagToDelete;
 
     private async Task<GridDataProviderResult<TagModel>> TagsDataProvider(GridDataProviderRequest<TagModel> request)
     {
-        if (tags is null)
-            tags = await GetTags();
-
-        return await Task.FromResult(request.ApplyTo(tags));
-    }
-
-    private async Task<IEnumerable<TagModel>> GetTags()
-    {
         try
         {
-            var request = new PaginationRequest
+            var result = await TagRepository.GetTagsPaginatedAsync(new PaginationRequest
             {
-                PageNumber = 1,
-                PageSize = 1000
-            };
+                PageNumber = request.PageNumber,
+                PageSize = request.PageSize
+            });
 
-            var paginatedResult = await TagRepository.GetTagsPaginatedAsync(request);
-            return paginatedResult?.Items ?? GetMockTags();
+            var data = (result.Items == null || !result.Items.Any()) ? AddDummyTags() : result.Items;
+            var totalCount = (result.Items == null || !result.Items.Any()) ? data.Count() : result.TotalCount;
+
+            return new GridDataProviderResult<TagModel>
+            {
+                Data = data,
+                TotalCount = totalCount
+            };
         }
-        catch
+        catch (Exception ex)
         {
-            return GetMockTags();
+            ToastService.ShowError("Error", $"Error loading tags: {ex.Message}");
+            return new GridDataProviderResult<TagModel>
+            {
+                Data = Enumerable.Empty<TagModel>(),
+                TotalCount = 0
+            };
         }
     }
 
-    private IEnumerable<TagModel> GetMockTags()
+    private List<TagModel> AddDummyTags()
     {
         return new List<TagModel>
+{
+new TagModel { Id = 1, Name = "Programming", Color = "#007bff" },
+new TagModel { Id = 2, Name = "Web Development", Color = "#28a745" },
+new TagModel { Id = 3, Name = "Data Science", Color = "#dc3545" },
+new TagModel { Id = 4, Name = "Beginner", Color = "#ffc107" },
+new TagModel { Id = 5, Name = "Advanced", Color = "#6f42c1" }
+};
+    }
+
+    private async Task ConfirmDelete(TagModel tag)
+    {
+        tagToDelete = tag;
+        await deleteModal.ShowAsync();
+    }
+
+    private async Task DeleteTag()
+    {
+        if (tagToDelete != null)
         {
-            new TagModel { Id = 1, Name = "Programming", Color = "#007bff", IsActive = true, CourseCount = 10 },
-            new TagModel { Id = 2, Name = "Web Development", Color = "#28a745", IsActive = true, CourseCount = 15 },
-            new TagModel { Id = 3, Name = "Data Science", Color = "#ffc107", IsActive = true, CourseCount = 8 }
-        };
+            try
+            {
+                await TagRepository.DeleteTagAsync(tagToDelete.Id);
+                ToastService.ShowSuccess("Success", $"Tag '{tagToDelete.Name}' deleted successfully.");
+                await RefreshGridDataAsync();
+            }
+            catch (Exception ex)
+            {
+                ToastService.ShowError("Error", $"Error deleting tag: {ex.Message}");
+            }
+            finally
+            {
+                tagToDelete = null;
+            }
+        }
+    }
+
+    private async Task RefreshGridDataAsync()
+    {
+        await InvokeAsync(StateHasChanged);
     }
 }
