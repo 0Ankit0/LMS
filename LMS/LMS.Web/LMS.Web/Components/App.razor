@@ -17,11 +17,9 @@
 </head>
 
 <body>
-    <Routes @rendermode="PageRenderMode" />
+    <Routes @rendermode="RenderModeForPage" />
     
-    <script src="_content/MudBlazor/MudBlazor.min.js"></script>
-    <!-- Blazor Framework -->
-    <script src="_framework/blazor.web.js"></script>
+    <script src="js/site.min.js"></script>
 </body>
 
 </html>
@@ -30,6 +28,7 @@
     [CascadingParameter]
     private HttpContext HttpContext { get; set; } = default!;
 
-    private IComponentRenderMode? PageRenderMode =>
-        HttpContext.AcceptsInteractiveRouting() ? InteractiveAuto : null;
+    private IComponentRenderMode? RenderModeForPage => HttpContext.Request.Path.StartsWithSegments("/admin")
+        ? new InteractiveServerRenderMode(prerender: true)
+        : new InteractiveWebAssemblyRenderMode(prerender: false);
 }

@@ -10,7 +10,12 @@
 
   <ItemGroup>
     
+    <PackageReference Include="BuildBundlerMinifier" Version="3.2.449" />
+    
+    <PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="9.0.7" />
+    
     <PackageReference Include="MudBlazor" Version="8.10.0" />
+    <PackageReference Include="Blazored.LocalStorage" Version="4.5.0" />
     <ProjectReference Include="..\..\LMS.Data\LMS.Data.csproj" />
     <ProjectReference Include="..\..\LMS.ServiceDefaults\LMS.ServiceDefaults.csproj" />
     <ProjectReference Include="..\LMS.Web.Client\LMS.Web.Client.csproj" />

@@ -9,6 +9,7 @@ using LMS.Infrastructure.Data;
 using LMS.Web.Infrastructure;
 using LMS.Web.Services;
 using MudBlazor.Services;
+using Blazored.LocalStorage;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -67,8 +68,18 @@ builder.Services.AddScoped(sp =>
 // Add IHttpContextAccessor for the above service
 builder.Services.AddHttpContextAccessor();
 
-builder.Services.AddMudServices();
-builder.Services.AddEndpoints(typeof(Program).Assembly);
+builder.Services.AddMudServices(config =>
+{
+    config.SnackbarConfiguration.PositionClass = Defaults.Classes.Position.BottomRight;
+    config.SnackbarConfiguration.PreventDuplicates = false;
+    config.SnackbarConfiguration.NewestOnTop = false;
+    config.SnackbarConfiguration.ShowCloseIcon = true;
+    config.SnackbarConfiguration.VisibleStateDuration = 5000;
+    config.SnackbarConfiguration.HideTransitionDuration = 500;
+    config.SnackbarConfiguration.ShowTransitionDuration = 500;
+    config.SnackbarConfiguration.SnackbarVariant = Variant.Filled;
+});
+builder.Services.AddScoped<CachingService>();
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -95,7 +106,7 @@ app.UseOutputCache();
 app.MapStaticAssets();
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode()
-    .AddInteractiveWebAssemblyRenderMode()
+    .AddInteractiveWebAssemblyRenderMode(prerender: false)
     .AddAdditionalAssemblies(typeof(LMS.Web.Client._Imports).Assembly);
 
 // Add additional endpoints required by the Identity /Account Razor components.

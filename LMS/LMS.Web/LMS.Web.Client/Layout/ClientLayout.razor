@@ -1,63 +1,44 @@
 
-@using Microsoft.AspNetCore.Authorization
 @inherits LayoutComponentBase
 @attribute [Authorize]
 @inject NavigationManager NavigationManager
+@inject ThemeManager ThemeManager
 
-@code {
-    private bool ShowSidebar => !NavigationManager.Uri.Contains("/home");
-    private bool showPageLoader = false;
-
-    protected override void OnInitialized()
-    {
-        NavigationManager.LocationChanged += HandleLocationChanged;
-    }
-
-    protected override async Task OnAfterRenderAsync(bool firstRender)
-    {
-        if (showPageLoader)
-        {
-            showPageLoader = false;
-            await InvokeAsync(StateHasChanged);
-        }
-    }
-
-    private void HandleLocationChanged(object? sender, LocationChangedEventArgs e)
-    {
-        showPageLoader = true;
-        InvokeAsync(StateHasChanged);
-    }
-
-    public void Dispose()
-    {
-        NavigationManager.LocationChanged -= HandleLocationChanged;
-    }
-}
+<MudThemeProvider @ref="themeProvider" @bind-IsDarkMode="isDarkMode" Theme="ThemeManager.CurrentTheme" />
+<MudDialogProvider />
+<MudSnackbarProvider />
 
 <MudLayout>
-    @if (ShowSidebar)
-    {
-        <MudDrawer ClipMode="DrawerClipMode.Always" Elevation="2">
-            <MainSidebar />
-        </MudDrawer>
-    }
     <MudAppBar Elevation="1">
-        <Navbar></Navbar>
+        <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="@((e) => _drawerOpen = !_drawerOpen)" />
+        <MudSpacer />
+        <MudIconButton Icon="@Icons.Material.Filled.Brightness4" Color="Color.Inherit" OnClick="ToggleTheme" />
     </MudAppBar>
+    <MudDrawer @bind-Open="_drawerOpen" Elevation="2">
+        <MainSidebar />
+    </MudDrawer>
     <MudMainContent>
         <MudContainer MaxWidth="MaxWidth.False" Class="mt-4">
             @Body
         </MudContainer>
     </MudMainContent>
-
-    @if (showPageLoader)
-    {
-        <div class="page-loader">
-            <div class="spinner"></div>
-        </div>
-    }
 </MudLayout>
 
-<!-- Blazor Bootstrap Toasts -->
-<MudSnackbarProvider />
+@code {
+    private bool _drawerOpen = true;
+    private bool isDarkMode;
+    private MudThemeProvider themeProvider;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await ThemeManager.LoadThemeAsync();
+        isDarkMode = ThemeManager.CurrentTheme.Palette.IsDark;
+    }
+
+    private async Task ToggleTheme()
+    {
+        isDarkMode = !isDarkMode;
+        await ThemeManager.SetThemeAsync(isDarkMode ? "dark" : "light");
+    }
+}
 
