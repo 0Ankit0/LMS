@@ -1,17 +1,29 @@
-@using BlazorBootstrap;
+@using MudBlazor;
 @page "/user/lms/settings"
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @inject HttpClient HttpClient
 @inject ToastService ToastService
+@using LMS.Web.Client.Services
 
 <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-    <h1 class="h2"><Icon Name="IconName.Gear" Class="me-2" />Settings</h1>
+    <h1 class="h2"><MudIcon Icon="@Icons.Material.Filled.Settings" Class="me-2" />Settings</h1>
 </div>
 
 @if (isLoading)
 {
-    <div class="d-flex justify-content-center py-5">
-        <Spinner />
+    <div class="row">
+        <!-- Settings Navigation Skeleton -->
+        <div class="col-md-3">
+            @for (int i = 0; i < 5; i++)
+            {
+                <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="40px" Class="mb-2" />
+            }
+        </div>
+
+        <!-- Settings Content Skeleton -->
+        <div class="col-md-9">
+            <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="500px" />
+        </div>
     </div>
 }
 else
@@ -19,340 +31,221 @@ else
     <div class="row">
         <!-- Settings Navigation -->
         <div class="col-md-3">
-            <div class="list-group list-group-flush">
-                <Button class="@(activeTab == "profile" ? "list-group-item list-group-item-action active" : "list-group-item list-group-item-action")"
-                        @onclick='() => SetActiveTab("profile")'>
-                    <Icon Name="IconName.Person" Class="me-2" /> Profile
-                </Button>
-                <Button class="@(activeTab == "preferences" ? "list-group-item list-group-item-action active" : "list-group-item list-group-item-action")"
-                        @onclick='() => SetActiveTab("preferences")'>
-                    <Icon Name="IconName.Sliders" Class="me-2" /> Learning Preferences
-                </Button>
-                <Button class="@(activeTab == "notifications" ? "list-group-item list-group-item-action active" : "list-group-item list-group-item-action")"
-                        @onclick='() => SetActiveTab("notifications")'>
-                    <Icon Name="IconName.Bell" Class="me-2" /> Notifications
-                </Button>
-                <Button class="@(activeTab == "privacy" ? "list-group-item list-group-item-action active" : "list-group-item list-group-item-action")"
-                        @onclick='() => SetActiveTab("privacy")'>
-                    <Icon Name="IconName.ShieldCheck" Class="me-2" /> Privacy & Security
-                </Button>
-                <Button class="@(activeTab == "account" ? "list-group-item list-group-item-action active" : "list-group-item list-group-item-action")"
-                        @onclick='() => SetActiveTab("account")'>
-                    <Icon Name="IconName.PersonGear" Class="me-2" /> Account Settings
-                </Button>
-            </div>
+            <MudList T="string" Clickable="true">
+                <MudListItem T="string" OnClick='() => SetActiveTab("profile")' Class="@(activeTab == "profile" ? "mud-selected" : "")">
+                    <MudIcon Icon="@Icons.Material.Filled.Person" Class="me-2" /> Profile
+                </MudListItem>
+                <MudListItem T="string" OnClick='() => SetActiveTab("preferences")' Class="@(activeTab == "preferences" ? "mud-selected" : "")">
+                    <MudIcon Icon="@Icons.Material.Filled.Tune" Class="me-2" /> Learning Preferences
+                </MudListItem>
+                <MudListItem T="string" OnClick='() => SetActiveTab("notifications")' Class="@(activeTab == "notifications" ? "mud-selected" : "")">
+                    <MudIcon Icon="@Icons.Material.Filled.Notifications" Class="me-2" /> Notifications
+                </MudListItem>
+                <MudListItem T="string" OnClick='() => SetActiveTab("privacy")' Class="@(activeTab == "privacy" ? "mud-selected" : "")">
+                    <MudIcon Icon="@Icons.Material.Filled.Security" Class="me-2" /> Privacy & Security
+                </MudListItem>
+                <MudListItem T="string" OnClick='() => SetActiveTab("account")' Class="@(activeTab == "account" ? "mud-selected" : "")">
+                    <MudIcon Icon="@Icons.Material.Filled.AccountCircle" Class="me-2" /> Account Settings
+                </MudListItem>
+            </MudList>
         </div>
 
         <!-- Settings Content -->
         <div class="col-md-9">
             @if (activeTab == "profile")
             {
-                <Card>
-                    <CardHeader>
-                        <h5 class="mb-0"><Icon Name="IconName.Person" Class="me-2" />Profile Information</h5>
-                    </CardHeader>
-                    <CardBody>
-                        <EditForm Model="@profileModel" OnValidSubmit="SaveProfile">
-                            <DataAnnotationsValidator />
-                            <div class="row">
-                                <div class="col-md-6">
-                                    <div class="mb-3">
-                                        <label class="form-label">First Name</label>
-                                        <InputText @bind-Value="profileModel.FirstName" class="form-control" />
-                                    </div>
-                                </div>
-                                <div class="col-md-6">
-                                    <div class="mb-3">
-                                        <label class="form-label">Last Name</label>
-                                        <InputText @bind-Value="profileModel.LastName" class="form-control" />
-                                    </div>
-                                </div>
-                            </div>
+                <MudCard Elevation="2">
+                    <MudCardHeader>
+                        <MudText Typo="Typo.h6"><MudIcon Icon="@Icons.Material.Filled.Person" Class="me-2" />Profile Information</MudText>
+                    </MudCardHeader>
+                    <MudCardContent>
+                        <MudForm Model="@profileModel" OnValidSubmit="SaveProfile">
+                            <MudGrid>
+                                <MudItem xs="12" md="6">
+                                    <MudTextField @bind-Value="profileModel.FirstName" Label="First Name" Variant="Variant.Text" />
+                                </MudItem>
+                                <MudItem xs="12" md="6">
+                                    <MudTextField @bind-Value="profileModel.LastName" Label="Last Name" Variant="Variant.Text" />
+                                </MudItem>
+                            </MudGrid>
 
-                            <div class="mb-3">
-                                <label class="form-label">Email</label>
-                                <InputText @bind-Value="profileModel.Email" class="form-control" readonly />
-                                <small class="text-muted">Email cannot be changed from this page.</small>
-                            </div>
+                            <MudTextField @bind-Value="profileModel.Email" Label="Email" Variant="Variant.Text" ReadOnly="true" HelperText="Email cannot be changed from this page." />
 
-                            <div class="mb-3">
-                                <label class="form-label">Bio</label>
-                                <InputTextArea @bind-Value="profileModel.Bio" class="form-control" rows="3"
-                                               placeholder="Tell us about yourself..."></InputTextArea>
-                            </div>
+                            <MudTextField @bind-Value="profileModel.Bio" Label="Bio" Variant="Variant.Text" Lines="3"
+                                          Placeholder="Tell us about yourself..." />
 
-                            <div class="row">
-                                <div class="col-md-6">
-                                    <div class="mb-3">
-                                        <label class="form-label">Phone Number</label>
-                                        <InputText @bind-Value="profileModel.PhoneNumber" class="form-control" />
-                                    </div>
-                                </div>
-                                <div class="col-md-6">
-                                    <div class="mb-3">
-                                        <label class="form-label">Date of Birth</label>
-                                        <InputDate @bind-Value="profileModel.DateOfBirth" class="form-control" />
-                                    </div>
-                                </div>
-                            </div>
+                            <MudGrid>
+                                <MudItem xs="12" md="6">
+                                    <MudTextField @bind-Value="profileModel.PhoneNumber" Label="Phone Number" Variant="Variant.Text" />
+                                </MudItem>
+                                <MudItem xs="12" md="6">
+                                    <MudDatePicker @bind-Date="@profileModel.DateOfBirth" Label="Date of Birth" Variant="Variant.Text" />
+                                </MudItem>
+                            </MudGrid>
 
-                            <div class="row">
-                                <div class="col-md-6">
-                                    <div class="mb-3">
-                                        <label class="form-label">Country</label>
-                                        <select @bind="profileModel.Country" class="form-select">
-                                            <option value="">Select Country</option>
-                                            <option value="US">United States</option>
-                                            <option value="CA">Canada</option>
-                                            <option value="UK">United Kingdom</option>
-                                            <option value="AU">Australia</option>
-                                            <option value="DE">Germany</option>
-                                            <option value="FR">France</option>
-                                            <option value="JP">Japan</option>
-                                            <option value="IN">India</option>
-                                        </select>
-                                    </div>
-                                </div>
-                                <div class="col-md-6">
-                                    <div class="mb-3">
-                                        <label class="form-label">Time Zone</label>
-                                        <select @bind="profileModel.TimeZone" class="form-select">
-                                            <option value="">Select Time Zone</option>
-                                            <option value="UTC-8">Pacific Time (UTC-8)</option>
-                                            <option value="UTC-7">Mountain Time (UTC-7)</option>
-                                            <option value="UTC-6">Central Time (UTC-6)</option>
-                                            <option value="UTC-5">Eastern Time (UTC-5)</option>
-                                            <option value="UTC+0">GMT (UTC+0)</option>
-                                            <option value="UTC+1">Central European Time (UTC+1)</option>
-                                            <option value="UTC+9">Japan Standard Time (UTC+9)</option>
-                                        </select>
-                                    </div>
-                                </div>
-                            </div>
+                            <MudGrid>
+                                <MudItem xs="12" md="6">
+                                    <MudAutocomplete T="string" Label="Country" Variant="Variant.Text"
+                                                     @bind-Value="profileModel.Country"
+                                                     SearchFunc="@SearchCountries"
+                                                     Clearable="true"
+                                                     Placeholder="Select Country" />
+                                </MudItem>
+                                <MudItem xs="12" md="6">
+                                    <MudAutocomplete T="string" Label="Time Zone" Variant="Variant.Text"
+                                                     @bind-Value="profileModel.TimeZone"
+                                                     SearchFunc="@SearchTimeZones"
+                                                     Clearable="true"
+                                                     Placeholder="Select Time Zone" />
+                                </MudItem>
+                            </MudGrid>
 
-                            <Button Type="ButtonType.Submit" Color="ButtonColor.Primary">
-                                <Icon Name="IconName.Save" /> Save Profile
-                            </Button>
-                        </EditForm>
-                    </CardBody>
-                </Card>
+                            <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary">
+                                <MudIcon Icon="@Icons.Material.Filled.Save" Class="me-2" /> Save Profile
+                            </MudButton>
+                        </MudForm>
+                    </MudCardContent>
+                </MudCard>
             }
             else if (activeTab == "preferences")
             {
-                <Card>
-                    <CardHeader>
-                        <h5 class="mb-0"><Icon Name="IconName.Sliders" Class="me-2" />Learning Preferences</h5>
-                    </CardHeader>
-                    <CardBody>
-                        <EditForm Model="@preferencesModel" OnValidSubmit="SavePreferences">
-                            <div class="mb-4">
-                                <h6>Course Display</h6>
-                                <div class="form-check">
-                                    <input class="form-check-input" type="radio" name="courseView" id="grid-view"
-                                           @onchange='() => preferencesModel.CourseDisplayMode = "grid"'
-                                           checked="@(preferencesModel.CourseDisplayMode == "grid")" />
-                                    <label class="form-check-label" for="grid-view">
-                                        Grid View
-                                    </label>
-                                </div>
-                                <div class="form-check">
-                                    <input class="form-check-input" type="radio" name="courseView" id="list-view"
-                                           @onchange='() => preferencesModel.CourseDisplayMode = "list"'
-                                           checked="@(preferencesModel.CourseDisplayMode == "list")" />
-                                    <label class="form-check-label" for="list-view">
-                                        List View
-                                    </label>
-                                </div>
-                            </div>
+                <MudCard>
+                    <MudCardHeader>
+                        <MudText Typo="Typo.h6"><MudIcon Icon="@Icons.Material.Filled.Tune" Class="me-2" />Learning Preferences</MudText>
+                    </MudCardHeader>
+                    <MudCardContent>
+                        <MudForm Model="@preferencesModel" OnValidSubmit="SavePreferences">
+                            <MudText Typo="Typo.h6" GutterBottom="true">Course Display</MudText>
+                            <MudRadioGroup @bind-Value="preferencesModel.CourseDisplayMode">
+                                <MudRadio Value="@("grid")" Color="Color.Primary">Grid View</MudRadio>
+                                <MudRadio Value="@("list")" Color="Color.Primary">List View</MudRadio>
+                            </MudRadioGroup>
 
-                            <div class="mb-4">
-                                <h6>Default Language</h6>
-                                <select @bind="preferencesModel.PreferredLanguage" class="form-select">
-                                    <option value="en">English</option>
-                                    <option value="es">Spanish</option>
-                                    <option value="fr">French</option>
-                                    <option value="de">German</option>
-                                    <option value="ja">Japanese</option>
-                                    <option value="zh">Chinese</option>
-                                </select>
-                            </div>
+                            <MudText Typo="Typo.h6" GutterBottom="true" Class="mt-4">Default Language</MudText>
+                            <MudSelect @bind-Value="preferencesModel.PreferredLanguage" Label="Select Language" Variant="Variant.Outlined">
+                                <MudSelectItem Value="@("en")">English</MudSelectItem>
+                                <MudSelectItem Value="@("es")">Spanish</MudSelectItem>
+                                <MudSelectItem Value="@("fr")">French</MudSelectItem>
+                                <MudSelectItem Value="@("de")">German</MudSelectItem>
+                                <MudSelectItem Value="@("ja")">Japanese</MudSelectItem>
+                                <MudSelectItem Value="@("zh")">Chinese</MudSelectItem>
+                            </MudSelect>
 
-                            <div class="mb-4">
-                                <h6>Learning Reminders</h6>
-                                <Switch @bind="preferencesModel.DailyReminders" Label="Send daily learning reminders" />
-                                <Switch @bind="preferencesModel.DeadlineReminders" Label="Remind me of upcoming deadlines" />
-                            </div>
+                            <MudText Typo="Typo.h6" GutterBottom="true" Class="mt-4">Learning Reminders</MudText>
+                            <MudSwitch T="bool" @bind-Checked="preferencesModel.DailyReminders" Color="Color.Primary" Label="Send daily learning reminders" />
+                            <MudSwitch T="bool" @bind-Checked="preferencesModel.DeadlineReminders" Color="Color.Primary" Label="Remind me of upcoming deadlines" />
 
-                            <div class="mb-4">
-                                <h6>Accessibility</h6>
-                                <Switch @bind="preferencesModel.HighContrastMode" Label="High contrast mode" />
-                                <Switch @bind="preferencesModel.LargeTextMode" Label="Large text mode" />
-                            </div>
+                            <MudText Typo="Typo.h6" GutterBottom="true" Class="mt-4">Accessibility</MudText>
+                            <MudSwitch T="bool" @bind-Checked="preferencesModel.HighContrastMode" Color="Color.Primary" Label="High contrast mode" />
+                            <MudSwitch T="bool" @bind-Checked="preferencesModel.LargeTextMode" Color="Color.Primary" Label="Large text mode" />
 
-                            <Button Type="ButtonType.Submit" Color="ButtonColor.Primary">
-                                <Icon Name="IconName.Save" /> Save Preferences
-                            </Button>
-                        </EditForm>
-                    </CardBody>
-                </Card>
+                            <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Class="mt-4">
+                                <MudIcon Icon="@Icons.Material.Filled.Save" Class="me-2" /> Save Preferences
+                            </MudButton>
+                        </MudForm>
+                    </MudCardContent>
+                </MudCard>
             }
             else if (activeTab == "notifications")
             {
-                <Card>
-                    <CardHeader>
-                        <h5 class="mb-0"><Icon Name="IconName.Bell" Class="me-2" />Notification Settings</h5>
-                    </CardHeader>
-                    <CardBody>
-                        <EditForm Model="@notificationModel" OnValidSubmit="SaveNotifications">
-                            <div class="mb-4">
-                                <h6>Email Notifications</h6>
-                                <Switch @bind="notificationModel.CourseUpdates" Label="Course updates and announcements" />
-                                <Switch @bind="notificationModel.AssignmentReminders" Label="Assignment and quiz reminders" />
-                                <Switch @bind="notificationModel.ProgressReports" Label="Weekly progress reports" />
-                                <Switch @bind="notificationModel.AchievementNotifications" Label="Achievement and certificate notifications" />
-                            </div>
+                <MudCard>
+                    <MudCardHeader>
+                        <MudText Typo="Typo.h6"><MudIcon Icon="@Icons.Material.Filled.Notifications" Class="me-2" />Notification Settings</MudText>
+                    </MudCardHeader>
+                    <MudCardContent>
+                        <MudForm Model="@notificationModel" OnValidSubmit="SaveNotifications">
+                            <MudText Typo="Typo.h6" GutterBottom="true">Email Notifications</MudText>
+                            <MudSwitch T="bool" @bind-Checked="notificationModel.CourseUpdates" Color="Color.Primary" Label="Course updates and announcements" />
+                            <MudSwitch T="bool" @bind-Checked="notificationModel.AssignmentReminders" Color="Color.Primary" Label="Assignment and quiz reminders" />
+                            <MudSwitch T="bool" @bind-Checked="notificationModel.ProgressReports" Color="Color.Primary" Label="Weekly progress reports" />
+                            <MudSwitch T="bool" @bind-Checked="notificationModel.AchievementNotifications" Color="Color.Primary" Label="Achievement and certificate notifications" />
 
-                            <div class="mb-4">
-                                <h6>Push Notifications</h6>
-                                <Switch @bind="notificationModel.BrowserNotifications" Label="Browser notifications" />
-                                <Switch @bind="notificationModel.MobileNotifications" Label="Mobile app notifications" />
-                            </div>
+                            <MudText Typo="Typo.h6" GutterBottom="true" Class="mt-4">Push Notifications</MudText>
+                            <MudSwitch T="bool" @bind-Checked="notificationModel.BrowserNotifications" Color="Color.Primary" Label="Browser notifications" />
+                            <MudSwitch T="bool" @bind-Checked="notificationModel.MobileNotifications" Color="Color.Primary" Label="Mobile app notifications" />
 
-                            <div class="mb-4">
-                                <h6>Notification Frequency</h6>
-                                <select @bind="notificationModel.EmailFrequency" class="form-select">
-                                    <option value="immediate">Immediate</option>
-                                    <option value="daily">Daily digest</option>
-                                    <option value="weekly">Weekly digest</option>
-                                    <option value="never">Never</option>
-                                </select>
-                            </div>
+                            <MudText Typo="Typo.h6" GutterBottom="true" Class="mt-4">Notification Frequency</MudText>
+                            <MudSelect @bind-Value="notificationModel.EmailFrequency" Label="Select Frequency" Variant="Variant.Outlined">
+                                <MudSelectItem Value="@("immediate")">Immediate</MudSelectItem>
+                                <MudSelectItem Value="@("daily")">Daily digest</MudSelectItem>
+                                <MudSelectItem Value="@("weekly")">Weekly digest</MudSelectItem>
+                                <MudSelectItem Value="@("never")">Never</MudSelectItem>
+                            </MudSelect>
 
-                            <Button Type="ButtonType.Submit" Color="ButtonColor.Primary">
-                                <Icon Name="IconName.Save" /> Save Notification Settings
-                            </Button>
-                        </EditForm>
-                    </CardBody>
-                </Card>
+                            <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Class="mt-4">
+                                <MudIcon Icon="@Icons.Material.Filled.Save" Class="me-2" /> Save Notification Settings
+                            </MudButton>
+                        </MudForm>
+                    </MudCardContent>
+                </MudCard>
             }
             else if (activeTab == "privacy")
             {
-                <Card>
-                    <CardHeader>
-                        <h5 class="mb-0"><Icon Name="IconName.ShieldCheck" Class="me-2" />Privacy & Security</h5>
-                    </CardHeader>
-                    <CardBody>
-                        <EditForm Model="@privacyModel" OnValidSubmit="SavePrivacy">
-                            <div class="mb-4">
-                                <h6>Profile Visibility</h6>
-                                <div class="form-check">
-                                    <input class="form-check-input" type="radio" name="profileVisibility" id="public-profile"
-                                           @onchange='() => privacyModel.ProfileVisibility = "public"'
-                                           checked="@(privacyModel.ProfileVisibility == "public")" />
-                                    <label class="form-check-label" for="public-profile">
-                                        Public - Anyone can see my profile
-                                    </label>
-                                </div>
-                                <div class="form-check">
-                                    <input class="form-check-input" type="radio" name="profileVisibility" id="students-only"
-                                           @onchange='() => privacyModel.ProfileVisibility = "students"'
-                                           checked="@(privacyModel.ProfileVisibility == "students")" />
-                                    <label class="form-check-label" for="students-only">
-                                        Students only - Only other students can see my profile
-                                    </label>
-                                </div>
-                                <div class="form-check">
-                                    <input class="form-check-input" type="radio" name="profileVisibility" id="private-profile"
-                                           @onchange='() => privacyModel.ProfileVisibility = "private"'
-                                           checked="@(privacyModel.ProfileVisibility == "private")" />
-                                    <label class="form-check-label" for="private-profile">
-                                        Private - Only I can see my profile
-                                    </label>
-                                </div>
-                            </div>
+                <MudCard>
+                    <MudCardHeader>
+                        <MudText Typo="Typo.h6"><MudIcon Icon="@Icons.Material.Filled.Security" Class="me-2" />Privacy & Security</MudText>
+                    </MudCardHeader>
+                    <MudCardContent>
+                        <MudForm Model="@privacyModel" OnValidSubmit="SavePrivacy">
+                            <MudText Typo="Typo.h6" GutterBottom="true">Profile Visibility</MudText>
+                            <MudRadioGroup @bind-Value="privacyModel.ProfileVisibility">
+                                <MudRadio Value="@("public")" Color="Color.Primary">Public - Anyone can see my profile</MudRadio>
+                                <MudRadio Value="@("students")" Color="Color.Primary">Students only - Only other students can see my profile</MudRadio>
+                                <MudRadio Value="@("private")" Color="Color.Primary">Private - Only I can see my profile</MudRadio>
+                            </MudRadioGroup>
 
-                            <div class="mb-4">
-                                <h6>Data Sharing</h6>
-                                <Switch @bind="privacyModel.ShareProgress" Label="Share my progress with instructors" />
-                                <Switch @bind="privacyModel.AllowAnalytics" Label="Allow analytics data collection for course improvement" />
-                                <Switch @bind-value="privacyModel.MarketingCommunications" Label="Receive marketing communications and course recommendations" />
-                            </div>
+                            <MudText Typo="Typo.h6" GutterBottom="true" Class="mt-4">Data Sharing</MudText>
+                            <MudSwitch T="bool" @bind-Checked="privacyModel.ShareProgress" Color="Color.Primary" Label="Share my progress with instructors" />
+                            <MudSwitch T="bool" @bind-Checked="privacyModel.AllowAnalytics" Color="Color.Primary" Label="Allow analytics data collection for course improvement" />
+                            <MudSwitch T="bool" @bind-Checked="privacyModel.MarketingCommunications" Color="Color.Primary" Label="Receive marketing communications and course recommendations" />
 
-                            <div class="mb-4">
-                                <h6>Two-Factor Authentication</h6>
-                                <div class="d-flex justify-content-between align-items-center">
-                                    <div>
-                                        <strong>Status: </strong>
-                                        <Badge Color="@(privacyModel.TwoFactorEnabled? BadgeColor.Success: BadgeColor.Warning)">
-                                            @(privacyModel.TwoFactorEnabled ? "Enabled" : "Disabled")
-                                        </Badge>
-                                    </div>
-                                    <Button Color="@(privacyModel.TwoFactorEnabled? ButtonColor.Danger: ButtonColor.Primary)" Size="ButtonSize.Small"
-                                            @onclick="ToggleTwoFactor">
-                                        @(privacyModel.TwoFactorEnabled ? "Disable" : "Enable") 2FA
-                                    </Button>
+                            <MudText Typo="Typo.h6" GutterBottom="true" Class="mt-4">Two-Factor Authentication</MudText>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <MudText>Status: </MudText>
+                                    <MudChip T="string" Color="@(privacyModel.TwoFactorEnabled ? Color.Success : Color.Warning)">@(privacyModel.TwoFactorEnabled ? "Enabled" : "Disabled")</MudChip>
                                 </div>
-                                <small class="text-muted">
-                                    Two-factor authentication adds an extra layer of security to your account.
-                                </small>
+                                <MudButton Color="@(privacyModel.TwoFactorEnabled ? Color.Error : Color.Primary)" OnClick="ToggleTwoFactor">@(privacyModel.TwoFactorEnabled ? "Disable" : "Enable") 2FA</MudButton>
                             </div>
+                            <MudText Typo="Typo.caption" Class="text-muted">Two-factor authentication adds an extra layer of security to your account.</MudText>
 
-                            <Button Type="ButtonType.Submit" Color="ButtonColor.Primary">
-                                <Icon Name="IconName.Save" /> Save Privacy Settings
-                            </Button>
-                        </EditForm>
-                    </CardBody>
-                </Card>
+                            <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Class="mt-4">
+                                <MudIcon Icon="@Icons.Material.Filled.Save" Class="me-2" /> Save Privacy Settings
+                            </MudButton>
+                        </MudForm>
+                    </MudCardContent>
+                </MudCard>
             }
             else if (activeTab == "account")
             {
-                <Card>
-                    <CardHeader>
-                        <h5 class="mb-0"><Icon Name="IconName.PersonGear" Class="me-2" />Account Settings</h5>
-                    </CardHeader>
-                    <CardBody>
-                        <div class="mb-4">
-                            <h6>Change Password</h6>
-                            <EditForm Model="@passwordModel" OnValidSubmit="ChangePassword">
-                                <div class="mb-3">
-                                    <label class="form-label">Current Password</label>
-                                    <InputText @bind-value="passwordModel.CurrentPassword" class="form-control" />
-                                </div>
-                                <div class="mb-3">
-                                    <label class="form-label">New Password</label>
-                                    <InputText @bind-value="passwordModel.NewPassword" class="form-control" />
-                                </div>
-                                <div class="mb-3">
-                                    <label class="form-label">Confirm New Password</label>
-                                    <InputText @bind-value="passwordModel.ConfirmPassword" class="form-control" />
-                                </div>
-                                <Button Type="ButtonType.Submit" Color="ButtonColor.Primary">
-                                    <Icon Name="IconName.Key" /> Change Password
-                                </Button>
-                            </EditForm>
-                        </div>
+                <MudCard>
+                    <MudCardHeader>
+                        <MudText Typo="Typo.h6"><MudIcon Icon="@Icons.Material.Filled.AccountCircle" Class="me-2" />Account Settings</MudText>
+                    </MudCardHeader>
+                    <MudCardContent>
+                        <MudText Typo="Typo.h6" GutterBottom="true">Change Password</MudText>
+                        <MudForm Model="@passwordModel" OnValidSubmit="ChangePassword">
+                            <MudTextField @bind-Value="passwordModel.CurrentPassword" Label="Current Password" InputType="InputType.Password" />
+                            <MudTextField @bind-Value="passwordModel.NewPassword" Label="New Password" InputType="InputType.Password" />
+                            <MudTextField @bind-Value="passwordModel.ConfirmPassword" Label="Confirm New Password" InputType="InputType.Password" />
+                            <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Class="mt-4">
+                                <MudIcon Icon="@Icons.Material.Filled.Key" Class="me-2" /> Change Password
+                            </MudButton>
+                        </MudForm>
 
-                        <hr />
+                        <MudDivider Class="my-4" />
 
-                        <div class="mb-4">
-                            <h6>Export Data</h6>
-                            <p class="text-muted">Download a copy of your learning data and progress.</p>
-                            <Button Color="ButtonColor.Secondary" Outline="true" @onclick="ExportData">
-                                <Icon Name="IconName.Download" /> Export My Data
-                            </Button>
-                        </div>
+                        <MudText Typo="Typo.h6" GutterBottom="true">Export Data</MudText>
+                        <MudText Class="text-muted">Download a copy of your learning data and progress.</MudText>
+                        <MudButton Variant="Variant.Outlined" Color="Color.Secondary" OnClick="ExportData" StartIcon="@Icons.Material.Filled.Download" Class="mt-2">Export My Data</MudButton>
 
-                        <hr />
+                        <MudDivider Class="my-4" />
 
-                        <div class="mb-4">
-                            <h6 class="text-danger">Danger Zone</h6>
-                            <p class="text-muted">Permanently delete your account and all associated data.</p>
-                            <Button Color="ButtonColor.Danger" Outline="true" @onclick="ConfirmDeleteAccount">
-                                <Icon Name="IconName.Trash" /> Delete Account
-                            </Button>
-                        </div>
-                    </CardBody>
-                </Card>
+                        <MudText Typo="Typo.h6" GutterBottom="true" Color="Color.Error">Danger Zone</MudText>
+                        <MudText Class="text-muted">Permanently delete your account and all associated data.</MudText>
+                        <MudButton Variant="Variant.Outlined" Color="Color.Error" OnClick="ConfirmDeleteAccount" StartIcon="@Icons.Material.Filled.Delete" Class="mt-2">Delete Account</MudButton>
+                    </MudCardContent>
+                </MudCard>
             }
         </div>
     </div>
@@ -367,6 +260,23 @@ else
     private NotificationModel notificationModel = new();
     private PrivacyModel privacyModel = new();
     private PasswordChangeModel passwordModel = new();
+
+    private List<string> availableCountries = new() { "US", "CA", "UK", "AU", "DE", "FR", "JP", "IN" };
+    private List<string> availableTimeZones = new() { "UTC-8", "UTC-7", "UTC-6", "UTC-5", "UTC+0", "UTC+1", "UTC+9" };
+
+    private async Task<IEnumerable<string>> SearchCountries(string value, CancellationToken token)
+    {
+        if (string.IsNullOrEmpty(value))
+            return availableCountries;
+        return availableCountries.Where(x => x.Contains(value, StringComparison.InvariantCultureIgnoreCase));
+    }
+
+    private async Task<IEnumerable<string>> SearchTimeZones(string value, CancellationToken token)
+    {
+        if (string.IsNullOrEmpty(value))
+            return availableTimeZones;
+        return availableTimeZones.Where(x => x.Contains(value, StringComparison.InvariantCultureIgnoreCase));
+    }
 
     protected override async Task OnInitializedAsync()
     {
@@ -427,6 +337,7 @@ else
         privacyModel.ProfileVisibility = "students";
         privacyModel.ShareProgress = true;
         privacyModel.AllowAnalytics = true;
+        privacyModel.MarketingCommunications = false;
         privacyModel.TwoFactorEnabled = false;
     }
 
@@ -440,11 +351,11 @@ else
         try
         {
             // In real implementation, save to database via UserService
-            ToastService.Notify(new ToastMessage(ToastType.Success, "Profile saved successfully!"));
+            ToastService.ShowSuccess("Profile saved successfully!");
         }
         catch (Exception ex)
         {
-            ToastService.Notify(new ToastMessage(ToastType.Danger, $"Error saving profile: {ex.Message}"));
+            ToastService.ShowError($"Error saving profile: {ex.Message}");
         }
     }
 
@@ -453,11 +364,11 @@ else
         try
         {
             // In real implementation, save to database
-            ToastService.Notify(new ToastMessage(ToastType.Success, "Preferences saved successfully!"));
+            ToastService.ShowSuccess("Preferences saved successfully!");
         }
         catch (Exception ex)
         {
-            ToastService.Notify(new ToastMessage(ToastType.Danger, $"Error saving preferences: {ex.Message}"));
+            ToastService.ShowError($"Error saving preferences: {ex.Message}");
         }
     }
 
@@ -466,11 +377,11 @@ else
         try
         {
             // In real implementation, save to database
-            ToastService.Notify(new ToastMessage(ToastType.Success, "Notification settings saved successfully!"));
+            ToastService.ShowSuccess("Notification settings saved successfully!");
         }
         catch (Exception ex)
         {
-            ToastService.Notify(new ToastMessage(ToastType.Danger, $"Error saving notification settings: {ex.Message}"));
+            ToastService.ShowError($"Error saving notification settings: {ex.Message}");
         }
     }
 
@@ -479,11 +390,11 @@ else
         try
         {
             // In real implementation, save to database
-            ToastService.Notify(new ToastMessage(ToastType.Success, "Privacy settings saved successfully!"));
+            ToastService.ShowSuccess("Privacy settings saved successfully!");
         }
         catch (Exception ex)
         {
-            ToastService.Notify(new ToastMessage(ToastType.Danger, $"Error saving privacy settings: {ex.Message}"));
+            ToastService.ShowError($"Error saving privacy settings: {ex.Message}");
         }
     }
 
@@ -493,17 +404,17 @@ else
         {
             if (passwordModel.NewPassword != passwordModel.ConfirmPassword)
             {
-                ToastService.Notify(new ToastMessage(ToastType.Warning, "New passwords do not match!"));
+                ToastService.ShowWarning("New passwords do not match!");
                 return;
             }
 
             // In real implementation, change password via UserManager
-            ToastService.Notify(new ToastMessage(ToastType.Success, "Password changed successfully!"));
+            ToastService.ShowSuccess("Password changed successfully!");
             passwordModel = new PasswordChangeModel();
         }
         catch (Exception ex)
         {
-            ToastService.Notify(new ToastMessage(ToastType.Danger, $"Error changing password: {ex.Message}"));
+            ToastService.ShowError($"Error changing password: {ex.Message}");
         }
     }
 
@@ -513,24 +424,24 @@ else
         {
             privacyModel.TwoFactorEnabled = !privacyModel.TwoFactorEnabled;
             var status = privacyModel.TwoFactorEnabled ? "enabled" : "disabled";
-            ToastService.Notify(new ToastMessage(ToastType.Success, $"Two-factor authentication {status}!"));
+            ToastService.ShowSuccess($"Two-factor authentication {status}!");
         }
         catch (Exception ex)
         {
-            ToastService.Notify(new ToastMessage(ToastType.Danger, $"Error toggling 2FA: {ex.Message}"));
+            ToastService.ShowError($"Error toggling 2FA: {ex.Message}");
         }
     }
 
     private void ExportData()
     {
-        ToastService.Notify(new ToastMessage(ToastType.Info, "Data export initiated. You will receive an email when ready."));
+        ToastService.ShowInfo("Data export initiated. You will receive an email when ready.");
     }
 
     private void ConfirmDeleteAccount()
     {
         // For now, we'll use a simple toast notification approach
         // In a real implementation, you would implement proper confirmation dialog
-        ToastService.Notify(new ToastMessage(ToastType.Warning, "Account deletion functionality requires additional confirmation. Please contact support."));
+        ToastService.ShowWarning("Account deletion functionality requires additional confirmation. Please contact support.");
     }
 
     // Settings Models

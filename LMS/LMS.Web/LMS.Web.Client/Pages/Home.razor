@@ -1,103 +1,118 @@
 ﻿@page "/home"
 @inject NavigationManager NavigationManager
 @inject AuthenticationStateProvider AuthenticationStateProvider
-@using BlazorBootstrap
+@using MudBlazor
 
 <PageTitle>Home</PageTitle>
 
-<div class="container-fluid px-0">
-    <div class="row g-0 g-3">
-        <!-- Left: Navigation Cards -->
-        <div class="col-12 col-md-2 mb-4 mb-md-0 d-flex flex-column">
-            <Card Class="shadow-sm mb-3">
-                <CardBody Class="d-flex align-items-center" @onclick="@(() => NavigateToServer("/admin"))"
-                    style="cursor:pointer;">
-                    <Icon Name="IconName.Speedometer2" Class="me-2 fs-4 text-primary" />
-                    <span>Admin</span>
-                </CardBody>
-            </Card>
-            <Card Class="shadow-sm mb-3">
-                <CardBody Class="d-flex align-items-center" @onclick="@(() => NavigateToServer("/reports"))"
-                    style="cursor:pointer;">
-                    <Icon Name="IconName.Speedometer2" Class="me-2 fs-4 text-primary" />
-                    <span>Reports</span>
-                </CardBody>
-            </Card>
-            <Card Class="shadow-sm mb-3">
-                <CardBody Class="d-flex align-items-center" @onclick="@(() => NavigateTo("/user/lms/dashboard"))"
-                    style="cursor:pointer;">
-                    <Icon Name="IconName.Speedometer2" Class="me-2 fs-4 text-primary" />
-                    <span>Dashboard</span>
-                </CardBody>
-            </Card>
-            <Card Class="shadow-sm mb-3">
-                <CardBody Class="d-flex align-items-center" @onclick="@(() => NavigateTo("/user/lms/forums"))"
-                    style="cursor:pointer;">
-                    <Icon Name="IconName.JournalBookmark" Class="me-2 fs-4 text-success" />
-                    <span>Forums</span>
-                </CardBody>
-            </Card>
-            <Card Class="shadow-sm mb-3">
-                <CardBody Class="d-flex align-items-center" @onclick="@(() => NavigateTo("/user/lms/analytics"))"
-                    style="cursor:pointer;">
-                    <Icon Name="IconName.PersonCircle" Class="me-2 fs-4 text-info" />
-                    <span>Analytics</span>
-                </CardBody>
-            </Card>
-            <Card Class="shadow-sm mb-3">
-                <CardBody Class="d-flex align-items-center" @onclick="@(() => NavigateTo("/user/lms/my-courses"))"
-                    style="cursor:pointer;">
-                    <Icon Name="IconName.Trophy" Class="me-2 fs-4 text-warning" />
-                    <span>My Courses</span>
-                </CardBody>
-            </Card>
-        </div>
+@if (isLoading)
+{
+    <div class="container-fluid px-0">
+        <div class="row g-0 g-3">
+            <!-- Left: Navigation Cards Skeleton -->
+            <div class="col-12 col-md-2 mb-4 mb-md-0 d-flex flex-column">
+                @for (int i = 0; i < 6; i++)
+                {
+                    <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="60px" Class="mb-3" />
+                }
+            </div>
 
-        <!-- Middle: Announcements -->
-        <div class="col-12 col-md-6 mb-4 mb-md-0 d-flex flex-column">
-            <Card Class="border-0 mb-4 flex-grow-1 d-flex flex-column">
-                <CardHeader Class="bg-primary bg-opacity-50 text-white">
-                    <div class="d-flex justify-content-between align-items-center w-100">
-                        <span>
-                            <Icon Name="IconName.Megaphone" /> Announcements
-                        </span>
-                        <a href="/user/lms/announcement-list"
-                            class="btn btn-link btn-sm text-white text-decoration-underline p-0"
-                            style="font-size: 0.95em;">View All</a>
-                    </div>
-                </CardHeader>
-                <CardBody Class="p-0 flex-grow-1 d-flex flex-column hide-scrollbar"
-                    style="max-height: 80svh; overflow-y: auto;">
-                    <Announcements />
-                </CardBody>
-            </Card>
-        </div>
-        <!-- Right: Course List Search -->
-        <div class="col-12 col-md-4 mb-4 mb-md-0 d-flex flex-column">
-            <CourseListSearch User="currentUser" />
+            <!-- Middle: Announcements Skeleton -->
+            <div class="col-12 col-md-6 mb-4 mb-md-0 d-flex flex-column">
+                <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="400px" Class="mb-4 flex-grow-1" />
+            </div>
+            <!-- Right: Course List Search Skeleton -->
+            <div class="col-12 col-md-4 mb-4 mb-md-0 d-flex flex-column">
+                <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="400px" Class="w-100" />
+            </div>
         </div>
     </div>
-</div>
+}
+else
+{
+    <MudGrid Spacing="3">
+            <!-- Left: Navigation Cards -->
+            <MudItem xs="12" md="2">
+                <MudPaper Elevation="2" Class="d-flex flex-column">
+                    <MudCard Elevation="2" Class="mb-3">
+                        <MudCardContent Class="d-flex align-items-center" OnClick="@(() => NavigateToServer("/admin"))"
+                            Style="cursor:pointer;">
+                            <MudIcon Icon="@Icons.Material.Filled.Speed" Class="me-2 fs-4 text-primary" />
+                            <MudText>Admin</MudText>
+                        </MudCardContent>
+                    </MudCard>
+                    <MudCard Elevation="2" Class="mb-3">
+                        <MudCardContent Class="d-flex align-items-center" OnClick="@(() => NavigateToServer("/reports"))"
+                            Style="cursor:pointer;">
+                            <MudIcon Icon="@Icons.Material.Filled.Assessment" Class="me-2 fs-4 text-primary" />
+                            <MudText>Reports</MudText>
+                        </MudCardContent>
+                    </MudCard>
+                    <MudCard Elevation="2" Class="mb-3">
+                        <MudCardContent Class="d-flex align-items-center" OnClick="@(() => NavigateTo("/user/lms/dashboard"))"
+                            Style="cursor:pointer;">
+                            <MudIcon Icon="@Icons.Material.Filled.Dashboard" Class="me-2 fs-4 text-primary" />
+                            <MudText>Dashboard</MudText>
+                        </MudCardContent>
+                    </MudCard>
+                    <MudCard Elevation="2" Class="mb-3">
+                        <MudCardContent Class="d-flex align-items-center" OnClick="@(() => NavigateTo("/user/lms/forums"))"
+                            Style="cursor:pointer;">
+                            <MudIcon Icon="@Icons.Material.Filled.Forum" Class="me-2 fs-4 text-success" />
+                            <MudText>Forums</MudText>
+                        </MudCardContent>
+                    </MudCard>
+                    <MudCard Elevation="2" Class="mb-3">
+                        <MudCardContent Class="d-flex align-items-center" OnClick="@(() => NavigateTo("/user/lms/analytics"))"
+                            Style="cursor:pointer;">
+                            <MudIcon Icon="@Icons.Material.Filled.Analytics" Class="me-2 fs-4 text-info" />
+                            <MudText>Analytics</MudText>
+                        </MudCardContent>
+                    </MudCard>
+                    <MudCard Elevation="2" Class="mb-3">
+                        <MudCardContent Class="d-flex align-items-center" OnClick="@(() => NavigateTo("/user/lms/my-courses"))"
+                            Style="cursor:pointer;">
+                            <MudIcon Icon="@Icons.Material.Filled.School" Class="me-2 fs-4 text-warning" />
+                            <MudText>My Courses</MudText>
+                        </MudCardContent>
+                    </MudCard>
+                </MudPaper>
+            </MudItem>
 
-<style>
-    .hide-scrollbar {
-        scrollbar-width: none;
-        /* Firefox */
-        -ms-overflow-style: none;
-        /* IE and Edge */
-    }
-
-    .hide-scrollbar::-webkit-scrollbar {
-        display: none;
-        /* Chrome, Safari, Opera */
-    }
-</style>
+            <!-- Middle: Announcements -->
+            <MudItem xs="12" md="6">
+                <MudPaper Elevation="2" Class="d-flex flex-column flex-grow-1">
+                    <MudCard Elevation="2" Class="flex-grow-1 d-flex flex-column">
+                        <MudCardHeader Class="mud-bg-primary mud-text-white">
+                            <MudText Typo="Typo.h6">
+                                <MudIcon Icon="@Icons.Material.Filled.Campaign" Class="me-2" /> Announcements
+                            </MudText>
+                            <MudSpacer />
+                            <MudButton Variant="Variant.Text" Color="Color.Inherit" Size="Size.Small" Href="/user/lms/announcement-list" Style="text-decoration: none;">View All</MudButton>
+                        </MudCardHeader>
+                        <MudCardContent Class="p-0 flex-grow-1 d-flex flex-column hide-scrollbar"
+                            Style="max-height: 80svh; overflow-y: auto;">
+                            <Announcements />
+                        </MudCardContent>
+                    </MudCard>
+                </MudPaper>
+            </MudItem>
+            <!-- Right: Course List Search -->
+            <MudItem xs="12" md="4">
+                <CourseListSearch User="currentUser" />
+            </MudItem>
+        </MudGrid>
+}
 
 @code {
     private UserModel? currentUser;
+    private bool isLoading = true;
 
     protected override async Task OnInitializedAsync()
     {
+        // Simulate loading data
+        await Task.Delay(1000);
+
         var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
         var user = authState.User;
 
@@ -114,6 +129,8 @@
         {
             currentUser = null;
         }
+
+        isLoading = false;
     }
 
     private void NavigateTo(string url)

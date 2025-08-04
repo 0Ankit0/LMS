@@ -1,111 +1,84 @@
-@using BlazorBootstrap
+@using MudBlazor
 @page "/user/lms/courses/catalog"
 @inject HttpClient HttpClient
 
-<div class="course-catalog-layout">
+<MudGrid Spacing="3">
     <!-- Categories Sidebar -->
-    <div class="catalog-sidebar">
-        <div class="sidebar-header">
-            <h5 class="sidebar-title">Categories</h5>
-        </div>
-        <div class="sidebar-content">
-            <ListGroup class="category-list">
-                <ListGroupItem class="@(selectedCategory == "all" ? "active" : "")" @onclick='() => SelectCategory("all")'>
-                    <div class="category-icon">
-                        <Icon Name="IconName.BookmarkFill" />
-                    </div>
-                    <span class="category-text">All Courses</span>
-                </ListGroupItem>
-                <ListGroupItem class="@(selectedCategory == "development" ? "active" : "")" @onclick='() => SelectCategory("development")'>
-                    <div class="category-icon">
-                        <Icon Name="IconName.Laptop" />
-                    </div>
-                    <span class="category-text">Development</span>
-                </ListGroupItem>
-                <ListGroupItem class="@(selectedCategory == "business" ? "active" : "")" @onclick='() => SelectCategory("business")'>
-                    <div class="category-icon">
-                        <Icon Name="IconName.GraphUp" />
-                    </div>
-                    <span class="category-text">Business</span>
-                </ListGroupItem>
-                <ListGroupItem class="@(selectedCategory == "design" ? "active" : "")" @onclick='() => SelectCategory("design")'>
-                    <div class="category-icon">
-                        <Icon Name="IconName.PaintBucket" />
-                    </div>
-                    <span class="category-text">Design</span>
-                </ListGroupItem>
-                <ListGroupItem class="@(selectedCategory == "security" ? "active" : "")" @onclick='() => SelectCategory("security")'>
-                    <div class="category-icon">
-                        <Icon Name="IconName.ShieldCheck" />
-                    </div>
-                    <span class="category-text">Security</span>
-                </ListGroupItem>
-            </ListGroup>
+    <MudItem xs="12" md="3">
+        <MudPaper Elevation="2" Class="p-4">
+            <MudText Typo="Typo.h5" GutterBottom="true">Categories</MudText>
+            <MudNavMenu>
+                <MudNavLink Href="javascript:void(0)" OnClick='@(() => SelectCategory("all"))' Icon="@Icons.Material.Filled.AllInclusive">All Courses</MudNavLink>
+                <MudNavLink Href="javascript:void(0)" OnClick='@(() => SelectCategory("development"))' Icon="@Icons.Material.Filled.Code">Development</MudNavLink>
+                <MudNavLink Href="javascript:void(0)" OnClick='@(() => SelectCategory("business"))' Icon="@Icons.Material.Filled.BusinessCenter">Business</MudNavLink>
+                <MudNavLink Href="javascript:void(0)" OnClick='@(() => SelectCategory("design"))' Icon="@Icons.Material.Filled.Palette">Design</MudNavLink>
+                <MudNavLink Href="javascript:void(0)" OnClick='@(() => SelectCategory("security"))' Icon="@Icons.Material.Filled.Security">Security</MudNavLink>
+            </MudNavMenu>
 
-            <div class="filters-section">
-                <h6 class="filter-title">Filters</h6>
-                <div class="filter-group">
-                    <span class="filter-label">Level</span>
-                    <div class="filter-options">
-                        <CheckboxInput @bind-value="filters.Beginner" @onchange="ApplyFilters">Beginner</CheckboxInput>
-                        <CheckboxInput @bind-value="filters.Intermediate" @onchange="ApplyFilters">Intermediate</CheckboxInput>
-                        <CheckboxInput @bind-value="filters.Advanced" @onchange="ApplyFilters">Advanced</CheckboxInput>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
+            <MudText Typo="Typo.h6" Class="mt-4">Filters</MudText>
+            <MudText Typo="Typo.subtitle1" Class="mt-2">Level</MudText>
+            <MudCheckBox T="bool" @bind-Checked="filters.Beginner" Label="Beginner" Color="Color.Primary" OnChange="ApplyFilters" />
+            <MudCheckBox T="bool" @bind-Checked="filters.Intermediate" Label="Intermediate" Color="Color.Primary" OnChange="ApplyFilters" />
+            <MudCheckBox T="bool" @bind-checked="filters.Advanced" Label="Advanced" Color="Color.Primary" OnChange="ApplyFilters" />
+        </MudPaper>
+    </MudItem>
 
     <!-- Main Content Area -->
-    <div class="catalog-main">
-        <!-- Header -->
-        <div class="catalog-header">
-            <div class="header-info">
-                <h3 class="page-title">Course Catalog</h3>
-                <p class="page-subtitle">Discover and learn new skills</p>
-            </div>
-            <div class="header-actions">
-                <div class="search-container">
-                    <InputText @bind-Value="searchQuery" @bind-Value:event="oninput" Placeholder="Search courses, instructors, topics..." class="form-control" />
-                </div>
-                <div class="sort-dropdown">
-                    <Dropdown>
-                        <DropdownToggleButton Color="ButtonColor.Secondary" Outline="true">
-                            <Icon Name="IconName.Funnel" class="me-1" /> @GetSortDisplayText()
-                        </DropdownToggleButton>
-                        <DropdownMenu>
-                            <DropdownItem @onclick='() => SetSort("popular")' Active="@(sortBy == "popular")">Most Popular</DropdownItem>
-                            <DropdownItem @onclick='() => SetSort("newest")' Active="@(sortBy == "newest")">Newest</DropdownItem>
-                            <DropdownItem @onclick='() => SetSort("alphabetical")' Active="@(sortBy == "alphabetical")">A-Z</DropdownItem>
-                            <DropdownItem @onclick='() => SetSort("level")' Active="@(sortBy == "level")">By Level</DropdownItem>
-                        </DropdownMenu>
-                    </Dropdown>
-                </div>
-            </div>
-        </div>
+    <MudItem xs="12" md="9">
+        <MudPaper Elevation="2" Class="p-4">
+            <MudGrid Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center">
+                <MudItem>
+                    <MudText Typo="Typo.h3">Course Catalog</MudText>
+                    <MudText Typo="Typo.subtitle1">Discover and learn new skills</MudText>
+                </MudItem>
+                <MudItem>
+                    <MudTextField @bind-Value="searchQuery" Placeholder="Search courses, instructors, topics..." Variant="Variant.Outlined" Clearable="true" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" />
+                </MudItem>
+                <MudItem>
+                    <MudSelect T="string" Label="Sort By" Variant="Variant.Outlined" @bind-Value="sortBy" TextChanged="SetSort">
+                        <MudSelectItem Value='@("popular")'>Most Popular</MudSelectItem>
+                        <MudSelectItem Value='@("newest")'>Newest</MudSelectItem>
+                        <MudSelectItem Value='@("alphabetical")'>A-Z</MudSelectItem>
+                        <MudSelectItem Value='@("level")'>By Level</MudSelectItem>
+                    </MudSelect>
+                </MudItem>
+            </MudGrid>
 
-        <!-- Course Grid -->
-        <div class="courses-content">
-            <div class="course-grid">
-                @if (filteredCourses.Any())
+            <MudGrid Class="mt-4">
+                @if (isLoading)
                 {
-                    @foreach (var course in filteredCourses)
+                    @for (int i = 0; i < 6; i++)
                     {
-                        <CourseCard Course="course" IsBookmarked="bookmarkedCourses.Contains(course.Id)" OnBookmark="ToggleBookmark" />
+                        <MudItem xs="12" sm="6" md="4">
+                            <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="250px" />
+                        </MudItem>
                     }
                 }
                 else
                 {
-                    <div class="no-courses-found">
-                        <Icon Name="IconName.Search" Size="IconSize.x3" />
-                        <h5>No courses found</h5>
-                        <p>Try adjusting your search criteria or filters.</p>
-                    </div>
+                    @if (filteredCourses.Any())
+                    {
+                        @foreach (var course in filteredCourses)
+                        {
+                            <MudItem xs="12" sm="6" md="4">
+                                <CourseCard Course="course" IsBookmarked="bookmarkedCourses.Contains(course.Id)" OnBookmark="ToggleBookmark" />
+                            </MudItem>
+                        }
+                    }
+                    else
+                    {
+                        <MudItem xs="12">
+                            <MudAlert Severity="Severity.Info" Icon="@Icons.Material.Filled.SearchOff">
+                                <MudText Typo="Typo.h5">No courses found</MudText>
+                                <MudText>Try adjusting your search criteria or filters.</MudText>
+                            </MudAlert>
+                        </MudItem>
+                    }
                 }
-            </div>
-        </div>
-    </div>
-</div>
+            </MudGrid>
+        </MudPaper>
+    </MudItem>
+</MudGrid>
 
 
 @code {
@@ -224,17 +197,7 @@
         return $"{minutes}m";
     }
 
-    private string GetSortDisplayText()
-    {
-        return sortBy switch
-        {
-            "popular" => "Most Popular",
-            "newest" => "Newest",
-            "alphabetical" => "A-Z",
-            "level" => "By Level",
-            _ => "Sort by"
-        };
-    }
+    
 
     // Helper classes
     public class FilterModel

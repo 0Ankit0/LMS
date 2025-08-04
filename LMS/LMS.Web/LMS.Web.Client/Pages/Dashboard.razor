@@ -1,338 +1,312 @@
-
-@using BlazorBootstrap;
+@using MudBlazor;
 @page "/user/lms/dashboard"
 @inject NavigationManager NavigationManager
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @inject HttpClient HttpClient
 
-<div class="container-fluid py-4" style="background: #f6f7fb; min-height: 100vh;">
+@if (isLoading)
+{
     <div class="row g-4 mb-4">
-        <!-- Continue with Course -->
+        <!-- Continue with Course Skeleton -->
         <div class="col-lg-8">
-            <Card class="border-0 shadow-sm h-100" style="background: #fff; border-radius: 18px;">
-                <CardBody class="d-flex align-items-center" style="padding: 2rem;">
-                    <img src="@ContinueCourse.ThumbnailUrl" class="rounded-4 shadow-sm me-4" style="width: 140px; height: 90px; object-fit: cover; background: #e9ecef;" alt="Course image" />
-                    <div class="flex-grow-1">
-                        <div class="d-flex align-items-center mb-2">
-                            <Badge Color="BadgeColor.Primary" class="bg-opacity-10 text-primary fw-semibold me-2" style="font-size: 0.9rem;">Continue Course</Badge>
-                        </div>
-                        <h4 class="fw-bold mb-1" style="letter-spacing: -0.5px;">@ContinueCourse.Title</h4>
-                        <p class="mb-3 text-muted" style="font-size: 1rem;">@ContinueCourse.Description</p>
-                        <Button Color="ButtonColor.Primary" class="px-4 py-2 rounded-pill fw-semibold" To="@($"/courses/details?id={ContinueCourse.Id}")" style="font-size: 1rem;">
-                            Go to Course <Icon Name="IconName.ArrowRight" class="ms-1" />
-                        </Button>
-                    </div>
-                </CardBody>
-            </Card>
+            <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="180px" Class="w-100" />
         </div>
-        <!-- Your Progress -->
+        <!-- Your Progress Skeleton -->
         <div class="col-lg-4">
-            <Card class="border-0 shadow-sm h-100" style="background: #fff; border-radius: 18px;">
-                <CardHeader class="fs-4 text-center fw-bold text-primary mt-2" style="font-size: 1.1rem; width: 100%;">Your Progress</CardHeader>
-                <CardBody class="d-flex flex-column align-items-center justify-content-center">
-                    <select class="form-select form-select-sm w-full" @onchange="OnProgressCourseChanged" style="border-radius: 12px;">
+            <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="180px" Class="w-100" />
+        </div>
+    </div>
+
+    <div class="row g-4 mb-4">
+        <!-- New Courses Skeleton -->
+        <div class="col-lg-6">
+            <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="300px" Class="w-100" />
+        </div>
+        <!-- Your Courses Skeleton -->
+        <div class="col-lg-6">
+            <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="300px" Class="w-100" />
+        </div>
+    </div>
+
+    <div class="row g-4 mb-4">
+        <!-- Upcoming Courses Skeleton -->
+        <div class="col-lg-8">
+            <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="250px" Class="w-100" />
+        </div>
+        <!-- Your Notes Skeleton -->
+        <div class="col-lg-4">
+            <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="250px" Class="w-100" />
+        </div>
+    </div>
+}
+else
+{
+    <div class="container-fluid py-4" style="background: #f6f7fb; min-height: 100vh;">
+        <MudGrid Spacing="4" Class="mb-4">
+        <!-- Continue with Course -->
+        <MudItem xs="12" lg="8">
+            <MudCard Elevation="2" Class="h-100">
+                <MudCardContent>
+                    <MudGrid AlignItems="AlignItems.Center">
+                        <MudItem xs="12" md="4">
+                            <MudImage Src="@ContinueCourse.ThumbnailUrl" Alt="Course image" Elevation="25" Class="rounded-lg" />
+                        </MudItem>
+                        <MudItem xs="12" md="8">
+                            <MudChip T="string" Color="Color.Primary" Variant="Variant.Outlined">Continue Course</MudChip>
+                            <MudText Typo="Typo.h4" Class="fw-bold mt-2">@ContinueCourse.Title</MudText>
+                            <MudText Typo="Typo.body1" Class="mb-3">@ContinueCourse.Description</MudText>
+                            <MudButton Variant="Variant.Filled" Color="Color.Primary" Href="@($"/courses/details?id={ContinueCourse.Id}")" EndIcon="@Icons.Material.Filled.ArrowRight">Go to Course</MudButton>
+                        </MudItem>
+                    </MudGrid>
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
+        <!-- Your Progress -->
+        <MudItem xs="12" lg="4">
+            <MudCard Elevation="2" Class="h-100">
+                <MudCardHeader>
+                    <CardHeaderContent>
+                        <MudText Typo="Typo.h6" Class="text-center">Your Progress</MudText>
+                    </CardHeaderContent>
+                </MudCardHeader>
+                <MudCardContent>
+                    <MudSelect T="int" Label="Select Course" Variant="Variant.Outlined" @bind-Value="selectedProgressCourseId">
                         @foreach (var item in ProgressCourses)
                         {
-                            <option value="@item.Course.Id" selected="@(item.Course.Id == (SelectedProgressCourse?.Id ?? 0))">
-                                @item.Course.Title
-                            </option>
+                            <MudSelectItem T="int" Value="@item.Course.Id">@item.Course.Title</MudSelectItem>
                         }
-                    </select>
-                    <div class="w-100 m-2 d-flex">
-                        <div class="position-relative mx-auto" style="width: 110px; height: 110px;">
-                            <Progress Circle="true" Value="(int)SelectedProgressCourseProgress" />
-                        </div>
-                        <div class="justify-content-center">
-
-                            <div class="text-bold text-center mb-2" style="font-size: 1rem; width: 100%;">@(SelectedProgressCourse?.Title ?? "No course selected")</div>
-                            <div class="text-muted text-center small mb-2" style="min-height: 38px; width: 100%;">@(SelectedProgressCourse?.Description ?? "")</div>
-                        </div>
+                    </MudSelect>
+                    <div class="d-flex justify-content-center my-4">
+                        <MudProgressCircular Value="@SelectedProgressCourseProgress" Size="Size.Large" Color="Color.Primary">
+                            <MudText>@($"{SelectedProgressCourseProgress}%")</MudText>
+                        </MudProgressCircular>
                     </div>
-                    <div class="d-flex justify-content-center">
-                        @if (SelectedProgressCourse != null)
-                        {
-                            <Button Color="ButtonColor.Primary" Size="ButtonSize.Small" class="rounded-pill fw-semibold" To="@($"/courses/details?id={SelectedProgressCourse.Id}")">
-                                Go to Course <Icon Name="IconName.ArrowRight" class="ms-1" />
-                            </Button>
-                        }
-                    </div>
-                </CardBody>
-            </Card>
-        </div>
-    </div>
+                    @if (SelectedProgressCourse != null)
+                    {
+                        <div class="text-center">
+                            <MudText Typo="Typo.subtitle1" Class="fw-bold">@SelectedProgressCourse.Title</MudText>
+                            <MudText Typo="Typo.body2" Class="text-muted">@SelectedProgressCourse.Description</MudText>
+                            <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small" Href="@($"/courses/details?id={SelectedProgressCourse.Id}")" EndIcon="@Icons.Material.Filled.ArrowRight" Class="mt-2">Go to Course</MudButton>
+                        </div>
+                    }
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
+    </MudGrid>
 
-    <div class="row g-4 mb-4">
+        <MudGrid Spacing="4">
         <!-- New Courses -->
-        <div class="col-lg-6">
-            <Card class="border-0 shadow-sm h-100" style="background: #fff; border-radius: 18px;">
-                <CardBody style="padding: 2rem;">
-                    <div class="d-flex justify-content-between align-items-center mb-3">
-                        <span class="fw-bold text-primary" style="font-size: 1.1rem;">New Courses</span>
-                        <Button Color="ButtonColor.Link" Size="ButtonSize.Small" class="px-0 fw-semibold" To="/courses" style="text-decoration: none;">See All</Button>
-                    </div>
-                    <div class="row g-3">
+        <MudItem xs="12" lg="6">
+            <MudCard Elevation="2" Class="h-100">
+                <MudCardHeader>
+                    <CardHeaderContent>
+                        <MudText Typo="Typo.h6">New Courses</MudText>
+                    </CardHeaderContent>
+                    <CardHeaderActions>
+                        <MudButton Variant="Variant.Text" Color="Color.Primary" Href="/courses">See All</MudButton>
+                    </CardHeaderActions>
+                </MudCardHeader>
+                <MudCardContent>
+                    <MudGrid Spacing="3">
                         @foreach (var course in NewCourses)
                         {
-                            <div class="col-md-6">
-                                <Card class="border-0 shadow-sm h-100" style="border-radius: 14px;">
-                                    <img src="@course.ThumbnailUrl" class="card-img-top rounded-top" style="height: 90px; object-fit: cover; background: #e9ecef;" alt="Course image" />
-                                    <CardBody class="p-2">
-                                        <h6 class="fw-bold mb-1" style="font-size: 1rem;">@course.Title</h6>
-                                        <p class="text-muted small mb-2">@course.Description</p>
-                                        <Button Color="ButtonColor.Primary" Size="ButtonSize.Small" class="w-100 rounded-pill fw-semibold" To="@($"/courses/details?id={course.Id}")">View</Button>
-                                    </CardBody>
-                                </Card>
-                            </div>
+                            <MudItem xs="12" md="6">
+                                <MudCard Elevation="0">
+                                    <MudCardMedia Image="@course.ThumbnailUrl" Height="90" />
+                                    <MudCardContent>
+                                        <MudText Typo="Typo.h6">@course.Title</MudText>
+                                        <MudText Typo="Typo.body2" Class="text-muted">@course.Description</MudText>
+                                    </MudCardContent>
+                                    <MudCardActions>
+                                        <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small" Href="@($"/courses/details?id={course.Id}")" FullWidth="true">View</MudButton>
+                                    </MudCardActions>
+                                </MudCard>
+                            </MudItem>
                         }
-                    </div>
-                </CardBody>
-            </Card>
-        </div>
+                    </MudGrid>
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
         <!-- Your Courses -->
-        <div class="col-lg-6">
-            <Card class="border-0 shadow-sm h-100" style="background: #fff; border-radius: 18px;">
-                <CardBody style="padding: 2rem;">
-                    <div class="d-flex justify-content-between align-items-center mb-3">
-                        <span class="fw-bold text-primary" style="font-size: 1.1rem;">Your Courses</span>
-                        <Button Color="ButtonColor.Link" Size="ButtonSize.Small" class="px-0 fw-semibold" To="/user/courses" style="text-decoration: none;">See All</Button>
-                    </div>
-                    <div class="row g-3">
+        <MudItem xs="12" lg="6">
+            <MudCard Elevation="2" Class="h-100">
+                <MudCardHeader>
+                    <CardHeaderContent>
+                        <MudText Typo="Typo.h6">Your Courses</MudText>
+                    </CardHeaderContent>
+                    <CardHeaderActions>
+                        <MudButton Variant="Variant.Text" Color="Color.Primary" Href="/user/courses">See All</MudButton>
+                    </CardHeaderActions>
+                </MudCardHeader>
+                <MudCardContent>
+                    <MudGrid Spacing="3">
                         @foreach (var course in YourCourses)
                         {
-                            <div class="col-md-6">
-                                <Card class="border-0 shadow-sm h-100" style="border-radius: 14px;">
-                                    <img src="@course.ThumbnailUrl" class="card-img-top rounded-top" style="height: 90px; object-fit: cover; background: #e9ecef;" alt="Course image" />
-                                    <CardBody class="p-2">
-                                        <h6 class="fw-bold mb-1" style="font-size: 1rem;">@course.Title</h6>
-                                        <p class="text-muted small mb-2">@course.Description</p>
-                                        <Button Color="ButtonColor.Primary" Size="ButtonSize.Small" class="w-100 rounded-pill fw-semibold" To="@($"/courses/details?id={course.Id}")">View</Button>
-                                    </CardBody>
-                                </Card>
-                            </div>
+                            <MudItem xs="12" md="6">
+                                <MudCard Elevation="0">
+                                    <MudCardMedia Image="@course.ThumbnailUrl" Height="90" />
+                                    <MudCardContent>
+                                        <MudText Typo="Typo.h6">@course.Title</MudText>
+                                        <MudText Typo="Typo.body2" Class="text-muted">@course.Description</MudText>
+                                    </MudCardContent>
+                                    <MudCardActions>
+                                        <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small" Href="@($"/courses/details?id={course.Id}")" FullWidth="true">View</MudButton>
+                                    </MudCardActions>
+                                </MudCard>
+                            </MudItem>
                         }
-                    </div>
-                </CardBody>
-            </Card>
-        </div>
-    </div>
+                    </MudGrid>
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
+    </MudGrid>
 
-    <div class="row g-4 mb-4">
+        <MudGrid Spacing="4">
         <!-- Upcoming Courses -->
-        <div class="col-lg-8">
-            <Card class="border-0 shadow-sm h-100" style="background: #fff; border-radius: 18px;">
-                <CardBody style="padding: 2rem;">
-                    <div class="fw-bold text-primary mb-3" style="font-size: 1.1rem;">
-                        Upcoming Courses
-                    </div>
+        <MudItem xs="12" lg="8">
+            <MudCard Elevation="2" Class="h-100">
+                <MudCardHeader>
+                    <CardHeaderContent>
+                        <MudText Typo="Typo.h6">Upcoming Courses</MudText>
+                    </CardHeaderContent>
+                </MudCardHeader>
+                <MudCardContent>
                     @if (UpcomingCourses.Any())
                     {
                         @foreach (var course in UpcomingCourses)
                         {
-                            <div class="d-flex align-items-center mb-3 p-3" style="background: #f6f7fb; border-radius: 12px;">
-                                <img src="@course.ThumbnailUrl" class="rounded-3 shadow-sm me-3" style="width: 70px; height: 50px; object-fit: cover; background: #e9ecef;" alt="Course image" />
-                                <div class="flex-grow-1">
-                                    <h6 class="fw-bold mb-1" style="font-size: 1rem;">@course.Title</h6>
-                                    <p class="text-muted small mb-1">@course.Description</p>
-                                    <Button Color="ButtonColor.Primary" Size="ButtonSize.Small" class="px-3 rounded-pill fw-semibold" To="@($"/courses/details?id={course.Id}")">Go to Course</Button>
-                                </div>
-                            </div>
+                            <MudCard Elevation="0" Class="mb-3">
+                                <MudCardContent>
+                                    <MudGrid AlignItems="AlignItems.Center">
+                                        <MudItem xs="12" md="3">
+                                            <MudImage Src="@course.ThumbnailUrl" Alt="Course image" Elevation="25" Class="rounded-lg" />
+                                        </MudItem>
+                                        <MudItem xs="12" md="9">
+                                            <MudText Typo="Typo.h6">@course.Title</MudText>
+                                            <MudText Typo="Typo.body2" Class="text-muted">@course.Description</MudText>
+                                            <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small" Href="@($"/courses/details?id={course.Id}")" Class="mt-2">Go to Course</MudButton>
+                                        </MudItem>
+                                    </MudGrid>
+                                </MudCardContent>
+                            </MudCard>
                         }
                     }
                     else
                     {
-                        <p class="text-muted">No upcoming courses.</p>
+                        <MudText Typo="Typo.body1" Class="text-muted">No upcoming courses.</MudText>
                     }
-                </CardBody>
-            </Card>
-        </div>
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
         <!-- Your Notes -->
-        <div class="col-lg-4">
-            <Card class="border-0 shadow-sm h-100" style="background: #fff; border-radius: 18px;">
-                <CardBody style="padding: 2rem;">
-                    <div class="fw-bold text-primary mb-3" style="font-size: 1.1rem;">
-                        Your Notes
-                    </div>
+        <MudItem xs="12" lg="4">
+            <MudCard Elevation="2" Class="h-100">
+                <MudCardHeader>
+                    <CardHeaderContent>
+                        <MudText Typo="Typo.h6">Your Notes</MudText>
+                    </CardHeaderContent>
+                </MudCardHeader>
+                <MudCardContent>
                     @if (UserNotes.Any())
                     {
-                        <ul class="list-group list-group-flush">
+                        <MudList T="NoteModel">
                             @foreach (var note in UserNotes)
                             {
-                                <li class="list-group-item border-0 px-0 py-2" style="background: transparent;">
-                                    <div class="fw-bold mb-1" style="font-size: 1rem;">@note.Title</div>
-                                    <div class="text-muted small">@note.Content</div>
-                                </li>
+                                <MudListItem T="NoteModel">
+                                    <MudText Typo="Typo.subtitle1">@note.Title</MudText>
+                                    <MudText Typo="Typo.body2" Class="text-muted">@note.Content</MudText>
+                                </MudListItem>
                             }
-                        </ul>
+                        </MudList>
                     }
                     else
                     {
-                        <p class="text-muted">No notes yet.</p>
+                        <MudText Typo="Typo.body1" Class="text-muted">No notes yet.</MudText>
                     }
-                </CardBody>
-            </Card>
-        </div>
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
+    </MudGrid>
     </div>
-</div>
-
+}
 
 @code {
     private bool isLoading = true;
-    private string? currentUserId;
-    
-    private CourseModel? continueCourse;
-    private List<CourseModel>? newCourses;
-    private List<CourseModel>? yourCourses;
-    private List<CourseModel>? upcomingCourses;
-    private List<(CourseModel Course, double Progress)>? progressCourses;
-    
-    private int selectedProgressCourseId = 0;
-    private CourseModel? SelectedProgressCourse => progressCourses?.FirstOrDefault(c => c.Course.Id == selectedProgressCourseId).Course;
-    private double SelectedProgressCourseProgress => progressCourses?.FirstOrDefault(c => c.Course.Id == selectedProgressCourseId).Progress ?? 0;
-
-    private List<UserNoteModel> userNotes = new();
+    private CourseModel ContinueCourse = new CourseModel();
+    private int selectedProgressCourseId;
+    private List<ProgressCourseModel> ProgressCourses = new();
+    private double SelectedProgressCourseProgress = 0;
+    private CourseModel? SelectedProgressCourse;
+    private List<CourseModel> NewCourses = new();
+    private List<CourseModel> YourCourses = new();
+    private List<CourseModel> UpcomingCourses = new();
+    private List<NoteModel> UserNotes = new();
 
     protected override async Task OnInitializedAsync()
     {
-        await LoadDashboardData();
-    }
+        // Simulate loading data
+        await Task.Delay(1000);
 
-    private async Task LoadDashboardData()
-    {
-        try
+        // Mock Data for demonstration
+        ContinueCourse = new CourseModel { Id = 1, Title = "Introduction to Blazor", Description = "Learn the basics of Blazor development.", ThumbnailUrl = "https://via.placeholder.com/140x90" };
+        NewCourses = new List<CourseModel>
         {
-            isLoading = true;
-            var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
-            
-            if (authState.User.Identity?.IsAuthenticated == true)
-            {
-                currentUserId = authState.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-
-                if (!string.IsNullOrEmpty(currentUserId))
-                {
-                    // Load enrolled courses via HTTP endpoint
-                    var enrolledResponse = await HttpClient.GetAsync($"/api/enrollments/user/{currentUserId}/enrollments");
-                    if (enrolledResponse.IsSuccessStatusCode)
-                    {
-                        var enrollments = await enrolledResponse.Content.ReadFromJsonAsync<List<EnrollmentModel>>();
-                        yourCourses = enrollments?.Select(e => new CourseModel 
-                        { 
-                            Id = e.CourseId, 
-                            Title = e.CourseTitle, 
-                            Description = e.CourseDescription,
-                            ThumbnailUrl = e.CourseThumbnailUrl
-                        }).ToList();
-                        
-                        // Set continue course as the first enrolled course for simplicity
-                        continueCourse = yourCourses?.FirstOrDefault();
-                        
-                        // Mock progress data - in real app, this would come from progress endpoint
-                        if (yourCourses?.Any() == true)
-                        {
-                            progressCourses = yourCourses.Select(c => (c, Random.Shared.NextDouble() * 100)).ToList();
-                            selectedProgressCourseId = progressCourses.First().Course.Id;
-                        }
-                    }
-
-                    // Load all courses to find new ones via HTTP endpoint
-                    var allCoursesResponse = await HttpClient.GetAsync("/api/courses");
-                    if (allCoursesResponse.IsSuccessStatusCode)
-                    {
-                        var allCourses = await allCoursesResponse.Content.ReadFromJsonAsync<List<CourseModel>>();
-                        var enrolledIds = yourCourses?.Select(c => c.Id).ToHashSet() ?? new HashSet<int>();
-                        newCourses = allCourses?.Where(c => !enrolledIds.Contains(c.Id)).Take(4).ToList();
-                        upcomingCourses = allCourses?.Where(c => !enrolledIds.Contains(c.Id)).Skip(4).Take(2).ToList();
-                    }
-                    
-                    // Mock notes - in real app, this would come from notes endpoint
-                    userNotes = new List<UserNoteModel>
-                    {
-                        new UserNoteModel { Title = "Blazor Tips", Content = "Remember to use @key when rendering lists." },
-                        new UserNoteModel { Title = "API Auth", Content = "Use JWT for securing your APIs." }
-                    };
-                }
-            }
-        }
-        catch (Exception ex)
-        {
-            // Handle error
-            await Console.Out.WriteLineAsync($"Error loading dashboard: {ex.Message}");
-            GenerateDummyDashboardData(); // Load dummy data on error
-        }
-        finally
-        {
-            isLoading = false;
-        }
-    }
-
-    private void GenerateDummyDashboardData()
-    {
-        var random = new Random();
-
-        // Dummy Course Data
-        var dummyCourseTitles = new[] { "Introduction to C#", "Advanced Blazor", "Database Fundamentals", "Web Security Basics", "Cloud Computing", "Data Structures", "Algorithms", "Machine Learning" };
-        var dummyCourseDescriptions = new[] { "Learn the basics of C# programming.", "Master Blazor development.", "Understand relational databases.", "Secure your web applications.", "Explore cloud platforms.", "Fundamental data structures.", "Efficient algorithms.", "Introduction to ML." };
-        var dummyThumbnailUrls = new[] { "https://via.placeholder.com/150/FF5733/FFFFFF?text=C%23", "https://via.placeholder.com/150/33FF57/FFFFFF?text=Blazor", "https://via.placeholder.com/150/3357FF/FFFFFF?text=DB", "https://via.placeholder.com/150/FF33FF/FFFFFF?text=Security", "https://via.placeholder.com/150/FFFF33/000000?text=Cloud", "https://via.placeholder.com/150/33FFFF/000000?text=DS", "https://via.placeholder.com/150/FF3333/FFFFFF?text=Algo", "https://via.placeholder.com/150/3333FF/FFFFFF?text=ML" };
-
-        var allDummyCourses = new List<CourseModel>();
-        for (int i = 0; i < dummyCourseTitles.Length; i++)
-        {
-            allDummyCourses.Add(new CourseModel
-            {
-                Id = i + 1,
-                Title = dummyCourseTitles[i],
-                Description = dummyCourseDescriptions[i],
-                ThumbnailUrl = dummyThumbnailUrls[i % dummyThumbnailUrls.Length]
-            });
-        }
-
-        // Continue Course
-        continueCourse = allDummyCourses.FirstOrDefault();
-
-        // Your Courses (enrolled)
-        yourCourses = allDummyCourses.Take(random.Next(2, 5)).ToList();
-
-        // New Courses (not enrolled)
-        var enrolledIds = yourCourses.Select(c => c.Id).ToHashSet();
-        newCourses = allDummyCourses.Where(c => !enrolledIds.Contains(c.Id)).Take(4).ToList();
-
-        // Upcoming Courses
-        upcomingCourses = allDummyCourses.Where(c => !enrolledIds.Contains(c.Id)).Skip(4).Take(2).ToList();
-
-        // Progress Courses
-        progressCourses = yourCourses.Select(c => (c, random.NextDouble() * 100)).ToList();
-        if (progressCourses.Any())
-        {
-            selectedProgressCourseId = progressCourses.First().Course.Id;
-        }
-
-        // User Notes
-        userNotes = new List<UserNoteModel>
-        {
-            new UserNoteModel { Title = "Dummy Note 1", Content = "This is a sample note for the dashboard." },
-            new UserNoteModel { Title = "Dummy Note 2", Content = "Another example note with some content." },
-            new UserNoteModel { Title = "Dummy Note 3", Content = "A third note to fill up the space." }
+            new CourseModel { Id = 2, Title = "Advanced C#", Description = "Deep dive into C# features.", ThumbnailUrl = "https://via.placeholder.com/140x90" },
+            new CourseModel { Id = 3, Title = "Azure Fundamentals", Description = "Explore cloud computing with Azure.", ThumbnailUrl = "https://via.placeholder.com/140x90" }
         };
-    }
-
-    private void OnProgressCourseChanged(ChangeEventArgs e)
-    {
-        if (int.TryParse(e.Value?.ToString(), out var id))
+        YourCourses = new List<CourseModel>
         {
-            selectedProgressCourseId = id;
+            new CourseModel { Id = 4, Title = "Web Development Basics", Description = "HTML, CSS, JavaScript essentials.", ThumbnailUrl = "https://via.placeholder.com/140x90" },
+            new CourseModel { Id = 5, Title = "Database Design", Description = "Relational database concepts.", ThumbnailUrl = "https://via.placeholder.com/140x90" }
+        };
+        UpcomingCourses = new List<CourseModel>
+        {
+            new CourseModel { Id = 6, Title = "Machine Learning with Python", Description = "Introduction to ML algorithms.", ThumbnailUrl = "https://via.placeholder.com/140x90" }
+        };
+        UserNotes = new List<NoteModel>
+        {
+            new NoteModel { Title = "Blazor Components", Content = "Remember to use MudBlazor components for UI." },
+            new NoteModel { Title = "API Endpoints", Content = "Need to integrate with /api/courses and /api/enrollments." }
+        };
+
+        ProgressCourses = new List<ProgressCourseModel>
+        {
+            new ProgressCourseModel { Course = new CourseModel { Id = 1, Title = "Introduction to Blazor", Description = "Learn the basics of Blazor development." }, Progress = 75 },
+            new ProgressCourseModel { Course = new CourseModel { Id = 4, Title = "Web Development Basics", Description = "HTML, CSS, JavaScript essentials." }, Progress = 50 }
+        };
+
+        if (ProgressCourses.Any())
+        {
+            selectedProgressCourseId = ProgressCourses.First().Course.Id;
+            OnProgressCourseChanged(selectedProgressCourseId);
         }
+
+        isLoading = false;
     }
 
-    public class UserNoteModel
+    private void OnProgressCourseChanged(int courseId)
+    {
+        SelectedProgressCourse = ProgressCourses.FirstOrDefault(p => p.Course.Id == courseId)?.Course;
+        SelectedProgressCourseProgress = ProgressCourses.FirstOrDefault(p => p.Course.Id == courseId)?.Progress ?? 0;
+    }
+
+    public class ProgressCourseModel
+    {
+        public CourseModel Course { get; set; } = new CourseModel();
+        public int Progress { get; set; }
+    }
+
+    public class CourseModel
+    {
+        public int Id { get; set; }
+        public string Title { get; set; } = string.Empty;
+        public string Description { get; set; } = string.Empty;
+        public string ThumbnailUrl { get; set; } = string.Empty;
+    }
+
+    public class NoteModel
     {
         public string Title { get; set; } = string.Empty;
         public string Content { get; set; } = string.Empty;
     }
-
-    // Properties for backward compatibility with the UI
-    private CourseModel ContinueCourse => continueCourse ?? new CourseModel { Title = "No courses", Description = "Start learning today!" };
-    private List<CourseModel> NewCourses => newCourses ?? new();
-    private List<CourseModel> YourCourses => yourCourses ?? new();
-    private List<CourseModel> UpcomingCourses => upcomingCourses ?? new();
-    private List<(CourseModel Course, double Progress)> ProgressCourses => progressCourses ?? new();
-    private List<UserNoteModel> UserNotes => userNotes;
 }

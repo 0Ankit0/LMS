@@ -1,167 +1,172 @@
-@using BlazorBootstrap;
+@using MudBlazor;
+@using MudBlazor.Utilities;
 @page "/user/lms/certificates"
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @inject HttpClient HttpClient
 @inject ToastService ToastService
 
-<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-    <h1 class="h2">
-        <Icon Name="IconName.Award" Class="me-2" />My Certificates
-    </h1>
-    <div class="btn-toolbar mb-2 mb-md-0">
-        <Button Color="ButtonColor.Primary" Size="ButtonSize.Small" @onclick="RefreshCertificates">
-            <Icon Name="IconName.ArrowClockwise" /> Refresh
-        </Button>
-    </div>
-</div>
+<MudToolBar Class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <MudText Typo="Typo.h5" Class="h2">
+        <MudIcon Icon="@Icons.Material.Filled.WorkspacePremium" Class="me-2" />My Certificates
+    </MudText>
+    
+    <MudButton Variant="Variant.Outlined" Color="Color.Primary" OnClick="RefreshCertificates">
+        <MudIcon Icon="@Icons.Material.Filled.Refresh" Class="me-2" /> Refresh
+    </MudButton>
+</MudToolBar>
 
 @if (isLoading)
 {
-    <div class="d-flex justify-content-center py-5">
-        <Spinner />
+    <div class="row mb-4">
+        @for (int i = 0; i < 4; i++)
+        {
+            <div class="col-md-3">
+                <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="120px" />
+            </div>
+        }
+    </div>
+    <div class="row">
+        @for (int i = 0; i < 3; i++)
+        {
+            <div class="col-md-4 mb-4">
+                <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="300px" />
+            </div>
+        }
     </div>
 }
-else if (certificates?.Any() == true)
+else
 {
-    <!-- Statistics Cards -->
     <div class="row mb-4">
         <div class="col-md-3">
-            <Card>
-                <CardBody>
+            <MudCard Elevation="2">
+                <MudCardContent>
                     <div class="d-flex">
                         <div class="flex-shrink-0">
-                            <Icon Name="IconName.Award" Class="text-primary" Size="IconSize.x3" />
+                            <MudIcon Icon="@Icons.Material.Filled.WorkspacePremium" Class="text-primary" Size="Size.Large" />
                         </div>
                         <div class="flex-grow-1 ms-3">
-                            <h5 class="card-title">@certificates.Count()</h5>
-                            <p class="card-text">Total Certificates</p>
+                            <MudText Typo="Typo.h5">@certificates.Count()</MudText>
+                            <MudText Typo="Typo.body2">Total Certificates</MudText>
                         </div>
                     </div>
-                </CardBody>
-            </Card>
+                </MudCardContent>
+            </MudCard>
         </div>
         <div class="col-md-3">
-            <Card>
-                <CardBody>
+            <MudCard Elevation="2">
+                <MudCardContent>
                     <div class="d-flex">
                         <div class="flex-shrink-0">
-                            <Icon Name="IconName.CalendarCheck" Class="text-success" Size="IconSize.x3" />
+                            <MudIcon Icon="@Icons.Material.Filled.EventAvailable" Class="text-success" Size="Size.Large" />
                         </div>
                         <div class="flex-grow-1 ms-3">
-                            <h5 class="card-title">@certificates.Count(c => c.IssuedAt >= DateTime.Now.AddDays(-30))</h5>
-                            <p class="card-text">This Month</p>
+                            <MudText Typo="Typo.h5">@certificates.Count(c => c.IssuedAt >= DateTime.Now.AddDays(-30))</MudText>
+                            <MudText Typo="Typo.body2">This Month</MudText>
                         </div>
                     </div>
-                </CardBody>
-            </Card>
+                </MudCardContent>
+            </MudCard>
         </div>
         <div class="col-md-3">
-            <Card>
-                <CardBody>
+            <MudCard Elevation="2">
+                <MudCardContent>
                     <div class="d-flex">
                         <div class="flex-shrink-0">
-                            <Icon Name="IconName.CheckCircle" Class="text-info" Size="IconSize.x3" />
+                            <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Class="text-info" Size="Size.Large" />
                         </div>
                         <div class="flex-grow-1 ms-3">
-                            <h5 class="card-title">@certificates.Count(c => c.IsValid)</h5>
-                            <p class="card-text">Valid</p>
+                            <MudText Typo="Typo.h5">@certificates.Count(c => c.IsValid)</MudText>
+                            <MudText Typo="Typo.body2">Valid</MudText>
                         </div>
                     </div>
-                </CardBody>
-            </Card>
+                </MudCardContent>
+            </MudCard>
         </div>
         <div class="col-md-3">
-            <Card>
-                <CardBody>
+            <MudCard Elevation="2">
+                <MudCardContent>
                     <div class="d-flex">
                         <div class="flex-shrink-0">
-                            <Icon Name="IconName.Clock" Class="text-warning" Size="IconSize.x3" />
+                            <MudIcon Icon="@Icons.Material.Filled.AccessTime" Class="text-warning" Size="Size.Large" />
                         </div>
                         <div class="flex-grow-1 ms-3">
-                            <h5 class="card-title">@certificates.Count(c => c.ExpiresAt.HasValue && c.ExpiresAt.Value <=
-                                                            DateTime.Now.AddDays(30))</h5>
-                        <p class="card-text">Expiring Soon</p>
+                            <MudText Typo="Typo.h5">@certificates.Count(c => c.ExpiresAt.HasValue && c.ExpiresAt.Value <=
+                                                            DateTime.Now.AddDays(30))</MudText>
+                        <MudText Typo="Typo.body2">Expiring Soon</MudText>
                     </div>
                 </div>
-            </CardBody>
-        </Card>
+            </MudCardContent>
+        </MudCard>
     </div>
 </div>
 
-    <!-- Certificates Grid -->
     <div class="row">
     @foreach (var certificate in certificates)
         {
             <div class="col-lg-6 col-xl-4 mb-4">
-                <Card>
-                    <CardHeader>
+                <MudCard Elevation="2">
+                    <MudCardHeader>
                         <div class="d-flex justify-content-between align-items-center">
-                            <div>
-                                <Icon Name="IconName.Award" Class="me-2" />
-                                <h6 class="mb-0 d-inline">Certificate</h6>
-                            </div>
-                            <Badge Color="BadgeColor.Success">
-                                <Icon Name="IconName.Check" /> Valid
-                            </Badge>
+                            <MudText Typo="Typo.h6">
+                                <MudIcon Icon="@Icons.Material.Filled.WorkspacePremium" Class="me-2" />
+                                Certificate
+                            </MudText>
+                            <MudChip T="string" Color="Color.Success" Size="Size.Small">
+                                <MudIcon Icon="@Icons.Material.Filled.Check" Size="Size.Small" Class="me-1" /> Valid
+                            </MudChip>
                         </div>
-                    </CardHeader>
+                    </MudCardHeader>
 
-                    <CardBody>
-                        <h5 class="card-title text-primary">@certificate.CourseTitle</h5>
+                    <MudCardContent>
+                        <MudText Typo="Typo.h5" Class="text-primary">@certificate.CourseTitle</MudText>
 
                         <div class="mb-3">
-                            <p class="card-text">
+                            <MudText Typo="Typo.body2">
                                 <strong>Certificate #:</strong> @certificate.CertificateNumber
-                            </p>
-                            <p class="card-text">
+                            </MudText>
+                            <MudText Typo="Typo.body2">
                                 <strong>Issued:</strong> @certificate.IssuedAt.ToString("MMMM dd, yyyy")
-                            </p>
+                            </MudText>
                             @if (certificate.ExpiresAt.HasValue)
                             {
-                                <p class="card-text">
+                                <MudText Typo="Typo.body2">
                                     <strong>Expires:</strong> @certificate.ExpiresAt.Value.ToString("MMMM dd, yyyy")
-                                </p>
+                                </MudText>
                             }
                             else
                             {
-                                <p class="card-text">
+                                <MudText Typo="Typo.body2">
                                     <strong>Validity:</strong> <span class="text-success">Lifetime</span>
-                                </p>
+                                </MudText>
                             }
                         </div>
 
                         <!-- Certificate Grade/Score -->
                         <div class="mb-3">
                             <div class="d-flex justify-content-between mb-1">
-                                <span>Final Grade: @certificate.FinalGrade.ToString("F1")%</span>
-                                <Badge Color="@GetGradeBadgeColor(certificate.FinalGrade)">
+                                <MudText Typo="Typo.body2">Final Grade: @certificate.FinalGrade.ToString("F1")%</MudText>
+                                <MudChip T="string" Color="@GetGradeBadgeColor(certificate.FinalGrade)">
                                     @GetGradeLabel(certificate.FinalGrade)
-                                </Badge>
+                                </MudChip>
                             </div>
-                            <Progress Value="(int)certificate.FinalGrade"
-                                Color="@GetGradeProgressColor(certificate.FinalGrade)" />
+                            <MudProgressLinear Value="@(certificate.FinalGrade)" Color="@GetGradeProgressColor(certificate.FinalGrade)" Class="my-2" />
                         </div>
-                    </CardBody>
+                    </MudCardContent>
 
-                    <CardFooter>
-                        <div class="d-grid gap-2">
-                            <div class="btn-group">
-                                <Button Color="ButtonColor.Primary" Size="ButtonSize.Small"
-                                    @onclick="() => ViewCertificate(certificate)">
-                                    <Icon Name="IconName.Eye" /> View
-                                </Button>
-                                <Button Color="ButtonColor.Success" Size="ButtonSize.Small"
-                                    @onclick="() => DownloadCertificate(certificate)">
-                                    <Icon Name="IconName.Download" /> Download
-                                </Button>
-                                <Button Color="ButtonColor.Info" Size="ButtonSize.Small"
-                                    @onclick="() => ShareCertificate(certificate)">
-                                    <Icon Name="IconName.Share" /> Share
-                                </Button>
-                            </div>
-                        </div>
-                    </CardFooter>
-                </Card>
+                    <MudCardActions Class="d-grid gap-2">
+                        <MudButtonGroup Color="Color.Primary" Variant="Variant.Outlined" FullWidth="true">
+                            <MudButton OnClick="() => ViewCertificate(certificate)">
+                                <MudIcon Icon="@Icons.Material.Filled.Visibility" Class="me-2" /> View
+                            </MudButton>
+                            <MudButton OnClick="() => DownloadCertificate(certificate)">
+                                <MudIcon Icon="@Icons.Material.Filled.Download" Class="me-2" /> Download
+                            </MudButton>
+                            <MudButton OnClick="() => ShareCertificate(certificate)">
+                                <MudIcon Icon="@Icons.Material.Filled.Share" Class="me-2" /> Share
+                            </MudButton>
+                        </MudButtonGroup>
+                    </MudCardActions>
+                </MudCard>
             </div>
         }
     </div>
@@ -169,16 +174,16 @@ else if (certificates?.Any() == true)
 else
 {
     <div class="text-center py-5">
-        <Card>
-            <CardBody>
-                <Icon Name="IconName.Award" Size="IconSize.x3" Class="text-muted mb-3" />
-                <h4 class="text-muted">No Certificates Earned</h4>
-                <p class="text-muted">Complete courses to earn certificates and showcase your achievements.</p>
-                <Button Color="ButtonColor.Primary" To="/user/lms/coursecatalog">
-                    <Icon Name="IconName.Book" /> Browse Courses
-                </Button>
-            </CardBody>
-        </Card>
+        <MudCard Elevation="2">
+            <MudCardContent>
+                <MudIcon Icon="@Icons.Material.Filled.WorkspacePremium" Size="Size.Large" Class="text-muted mb-3" />
+                <MudText Typo="Typo.h5" Class="text-muted">No Certificates Earned</MudText>
+                <MudText Typo="Typo.body1" Class="text-muted">Complete courses to earn certificates and showcase your achievements.</MudText>
+                <MudButton Href="/user/lms/coursecatalog" Variant="Variant.Filled" Color="Color.Primary">
+                    <MudIcon Icon="@Icons.Material.Filled.Book" Class="me-2" /> Browse Courses
+                </MudButton>
+            </MudCardContent>
+        </MudCard>
     </div>
 }
 
@@ -258,34 +263,34 @@ IsValid = true
 
     private void ViewCertificate(CertificateModel certificate)
     {
-        ToastService.Notify(new ToastMessage(ToastType.Info, $"Viewing certificate: {certificate.CertificateNumber}"));
+        ToastService.ShowInfo($"Viewing certificate: {certificate.CertificateNumber}");
     }
 
     private void DownloadCertificate(CertificateModel certificate)
     {
-        ToastService.Notify(new ToastMessage(ToastType.Info, $"Downloading certificate: {certificate.CertificateNumber}"));
+        ToastService.ShowInfo($"Downloading certificate: {certificate.CertificateNumber}");
     }
 
     private void ShareCertificate(CertificateModel certificate)
     {
         var shareUrl = $"Certificate: {certificate.CourseTitle} - {certificate.CertificateNumber}";
-        ToastService.Notify(new ToastMessage(ToastType.Success, $"Share link copied: {shareUrl}"));
+        ToastService.ShowSuccess($"Share link copied: {shareUrl}");
     }
 
-    private BadgeColor GetGradeBadgeColor(double grade) => grade switch
+    private MudBlazor.Color GetGradeBadgeColor(double grade) => grade switch
     {
-        >= 90 => BadgeColor.Success,
-        >= 80 => BadgeColor.Info,
-        >= 70 => BadgeColor.Warning,
-        _ => BadgeColor.Secondary
+        >= 90 => MudBlazor.Color.Success,
+        >= 80 => MudBlazor.Color.Info,
+        >= 70 => MudBlazor.Color.Warning,
+        _ => MudBlazor.Color.Secondary
     };
 
-    private ProgressColor GetGradeProgressColor(double grade) => grade switch
+    private MudBlazor.Color GetGradeProgressColor(double grade) => grade switch
     {
-        >= 90 => ProgressColor.Success,
-        >= 80 => ProgressColor.Info,
-        >= 70 => ProgressColor.Warning,
-        _ => ProgressColor.Secondary
+        >= 90 => MudBlazor.Color.Success,
+        >= 80 => MudBlazor.Color.Info,
+        >= 70 => MudBlazor.Color.Warning,
+        _ => MudBlazor.Color.Secondary
     };
 
     private string GetGradeLabel(double grade) => grade switch

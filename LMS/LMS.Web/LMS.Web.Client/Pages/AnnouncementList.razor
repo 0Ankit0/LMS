@@ -1,96 +1,71 @@
-@using BlazorBootstrap;
+@using MudBlazor;
+@using MudBlazor.Utilities;
 @page "/user/lms/announcement-list"
+@rendermode @(new InteractiveAutoRenderMode(false))
 @inject HttpClient HttpClient
+@inject ToastService ToastService
 
 <PageTitle>Announcements - LMS</PageTitle>
 
 <div class="announcements-layout">
     <!-- Announcements Sidebar as Tabs -->
     <div class="announcements-sidebar">
-        <Tabs NavStyle="NavStyle.VerticalUnderline">
-            <Tab Title="All Announcements" Active="@(selectedFilter == "all")">
-                <Content>
-                    <div class="ms-3">
-                        <Button Color="ButtonColor.Link" Class="@GetFilterClass("all")"
-                            @onclick='() => SelectFilter("all")'>
-                            <Icon Name="IconName.Megaphone" class="me-2" />
-                            All Announcements
-                        </Button>
-                    </div>
-                </Content>
-            </Tab>
-            <Tab Title="High Priority" Active="@(selectedFilter == "high")">
-                <Content>
-                    <div class="ms-3">
-                        <Button Color="ButtonColor.Link" Class="@GetFilterClass("high")"
-                            @onclick='() => SelectFilter("high")'>
-                            <Icon Name="IconName.ExclamationTriangle" class="me-2" />
-                            High Priority
-                        </Button>
-                    </div>
-                </Content>
-            </Tab>
-            <Tab Title="Medium Priority" Active="@(selectedFilter == "medium")">
-                <Content>
-                    <div class="ms-3">
-                        <Button Color="ButtonColor.Link" Class="@GetFilterClass("medium")"
-                            @onclick='() => SelectFilter("medium")'>
-                            <Icon Name="IconName.InfoCircle" class="me-2" />
-                            Medium Priority
-                        </Button>
-                    </div>
-                </Content>
-            </Tab>
-            <Tab Title="Low Priority" Active="@(selectedFilter == "low")">
-                <Content>
-                    <div class="ms-3">
-                        <Button Color="ButtonColor.Link" Class="@GetFilterClass("low")"
-                            @onclick='() => SelectFilter("low")'>
-                            <Icon Name="IconName.Bell" class="me-2" />
-                            Low Priority
-                        </Button>
-                    </div>
-                </Content>
-            </Tab>
-            <Tab Title="Recent" Active="@(selectedFilter == "recent")">
-                <Content>
-                    <div class="ms-3">
-                        <Button Color="ButtonColor.Link" Class="@GetFilterClass("recent")"
-                            @onclick='() => SelectFilter("recent")'>
-                            <Icon Name="IconName.ClockHistory" class="me-2" />
-                            Recent
-                        </Button>
-                    </div>
-                </Content>
-            </Tab>
-            <Tab Title="Date Range">
-                <Content>
-                    <div class="filters-section ms-3">
-                        <h6 class="filter-title">Date Range</h6>
-                        <div class="filter-group">
-                            <div class="filter-options">
-                                <Button Color="ButtonColor.Link" Class="@GetDateFilterClass("today")"
-                                    @onclick='() => SelectDateFilter("today")'>
-                                    <span>Today</span>
-                                </Button>
-                                <Button Color="ButtonColor.Link" Class="@GetDateFilterClass("week")"
-                                    @onclick='() => SelectDateFilter("week")'>
-                                    <span>This Week</span>
-                                </Button>
-                                <Button Color="ButtonColor.Link" Class="@GetDateFilterClass("month")"
-                                    @onclick='() => SelectDateFilter("month")'>
-                                    <span>This Month</span>
-                                </Button>
-                                <Button Color="ButtonColor.Link" Class="@GetDateFilterClass("all")"
-                                    @onclick='() => SelectDateFilter("all")'>
-                                    <span>All Time</span>
-                                </Button>
-                            </div>
-                        </div>
-                    </div>
-                </Content>
-            </Tab>
-        </Tabs>
+        <MudTabs @bind-ActivePanelIndex="@selectedFilterIndex" Elevation="2" Rounded="true" Class="mt-4" Orientation="Orientation.Vertical">
+            <MudTabPanel Text="All Announcements">
+                <MudButton Variant="Variant.Text" Color="Color.Primary" Class="@GetFilterClass("all")"
+                           OnClick='@(() => SelectFilter(0))'>
+                    <MudIcon Icon="@Icons.Material.Filled.Campaign" Class="me-2" />
+                    All Announcements
+                </MudButton>
+            </MudTabPanel>
+            <MudTabPanel Text="High Priority">
+                <MudButton Variant="Variant.Text" Color="Color.Primary" Class="@GetFilterClass("high")"
+                           OnClick='@(() => SelectFilter(1))'>
+                    <MudIcon Icon="@Icons.Material.Filled.Warning" Class="me-2" />
+                    High Priority
+                </MudButton>
+            </MudTabPanel>
+            <MudTabPanel Text="Medium Priority">
+                <MudButton Variant="Variant.Text" Color="Color.Primary" Class="@GetFilterClass("medium")"
+                           OnClick='@(() => SelectFilter(2))'>
+                    <MudIcon Icon="@Icons.Material.Filled.Info" Class="me-2" />
+                    Medium Priority
+                </MudButton>
+            </MudTabPanel>
+            <MudTabPanel Text="Low Priority">
+                <MudButton Variant="Variant.Text" Color="Color.Primary" Class="@GetFilterClass("low")"
+                           OnClick='@(() => SelectFilter(3))'>
+                    <MudIcon Icon="@Icons.Material.Filled.Notifications" Class="me-2" />
+                    Low Priority
+                </MudButton>
+            </MudTabPanel>
+            <MudTabPanel Text="Recent">
+                <MudButton Variant="Variant.Text" Color="Color.Primary" Class="@GetFilterClass("recent")"
+                           OnClick='@(() => SelectFilter(4))'>
+                    <MudIcon Icon="@Icons.Material.Filled.History" Class="me-2" />
+                    Recent
+                </MudButton>
+            </MudTabPanel>
+            <MudTabPanel Text="Date Range">
+                <div class="filters-section ms-3">
+                    <MudText Typo="Typo.subtitle1" Class="filter-title">Date Range</MudText>
+                    <MudButtonGroup Color="Color.Primary" Variant="Variant.Outlined">
+                        <MudButton OnClick='@(() => SelectDateFilter(0))' Variant="@(selectedDateFilterIndex == 0 ? Variant.Filled : Variant.Outlined)">
+                            Today
+                        </MudButton>
+                        <MudButton OnClick='@(() => SelectDateFilter(1))' Variant="@(selectedDateFilterIndex == 1 ? Variant.Filled : Variant.Outlined)">
+                            This Week
+                        </MudButton>
+                        <MudButton OnClick='@(() => SelectDateFilter(2))' Variant="@(selectedDateFilterIndex == 2 ? Variant.Filled : Variant.Outlined)">
+                            This Month
+                        </MudButton>
+                        <MudButton OnClick='@(() => SelectDateFilter(3))' Variant="@(selectedDateFilterIndex == 3 ? Variant.Filled : Variant.Outlined)">
+                            All Time
+                        </MudButton>
+                    </MudButtonGroup>
+                </div>
+            </MudTabPanel>
+        </MudTabs>
     </div>
 
     <!-- Main Announcements Area -->
@@ -103,12 +78,12 @@
             </div>
             <div class="header-actions">
                 <div class="search-container">
-                    <TextInput @bind-Value="searchQuery" Placeholder="Search announcements..." />
+                    <MudTextField @bind-Value="searchQuery" Placeholder="Search announcements..." Variant="Variant.Outlined" Clearable="true" />
                 </div>
-                <Button Color="ButtonColor.Primary" @onclick="RefreshAnnouncements">
-                    <Icon Name="IconName.ArrowClockwise" />
-                    <span>Refresh</span>
-                </Button>
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="RefreshAnnouncements">
+                    <MudIcon Icon="@Icons.Material.Filled.Refresh" Class="me-2" />
+                    Refresh
+                </MudButton>
             </div>
         </div>
 
@@ -118,7 +93,7 @@
             {
                 <div class="loading-container">
                     <div class="spinner">
-                        <Spinner Color="SpinnerColor.Primary" />
+                        <MudProgressCircular Indeterminate="true" Color="Color.Primary" />
                     </div>
                     <p class="loading-text">Loading announcements...</p>
                 </div>
@@ -128,74 +103,76 @@
                 <div class="announcements-list">
                     @foreach (var announcement in filteredAnnouncements)
                     {
-                        <Card Class="@GetAnnouncementCardClass(announcement.Priority)">
-                            <div class="announcement-priority">
-                                <Icon Name="@GetPriorityIconEnum(announcement.Priority)" />
-                            </div>
-                            <CardBody Class="announcement-content">
+                        <MudCard Class="@GetAnnouncementCardClass(announcement.Priority)">
+                            <MudCardContent Class="announcement-content">
+                                <div class="announcement-priority">
+                                    <MudIcon Icon="@GetPriorityIconEnum(announcement.Priority)" />
+                                </div>
                                 <div class="announcement-header">
-                                    <h5 class="announcement-title">@announcement.Title</h5>
+                                    <MudText Typo="Typo.h5" Class="announcement-title">@announcement.Title</MudText>
                                     <div class="announcement-meta">
                                         <span class="announcement-author">
-                                            <Icon Name="IconName.PersonCircle" />
+                                            <MudIcon Icon="@Icons.Material.Filled.Person" />
                                             @announcement.AuthorName
                                         </span>
                                         <span class="announcement-date">
-                                            <Icon Name="IconName.Calendar" />
+                                            <MudIcon Icon="@Icons.Material.Filled.CalendarToday" />
                                             @FormatDate(announcement.PublishedAt)
                                         </span>
-                                        <Badge Color="@GetPriorityBadgeColor(announcement.Priority)">
+                                        <MudChip T="string" Color="@GetPriorityBadgeColor(announcement.Priority)">
                                             @announcement.Priority
-                                        </Badge>
+                                        </MudChip>
                                     </div>
                                 </div>
-                                <p class="announcement-excerpt">@GetExcerpt(announcement.Content)</p>
-                            </CardBody>
-                            <div class="announcement-actions">
-                                <Button Color="ButtonColor.Primary" Size="ButtonSize.Small"
-                                    @onclick="() => ShowAnnouncement(announcement)">
-                                    <Icon Name="IconName.Eye" />
+                                <MudText Typo="Typo.body2" Class="announcement-excerpt">@GetExcerpt(announcement.Content)</MudText>
+                            </MudCardContent>
+                            <MudCardActions>
+                                <MudButton Variant="Variant.Text" Color="Color.Primary" Size="Size.Small"
+                                           OnClick="() => ShowAnnouncement(announcement)">
+                                    <MudIcon Icon="@Icons.Material.Filled.Visibility" Class="me-2" />
                                     View
-                                </Button>
-                            </div>
-                        </Card>
+                                </MudButton>
+                            </MudCardActions>
+                        </MudCard>
                     }
                 </div>
             }
             else
             {
-                <Card Class="empty-state text-center py-5">
-                    <CardBody>
-                        <Icon Name="IconName.Megaphone" Size="IconSize.x4" Class="text-muted mb-3" />
-                        <h5>No announcements found</h5>
-                        <p>There are no announcements matching your current filters.</p>
-                        <Button Color="ButtonColor.Primary" @onclick="ClearFilters">Clear Filters</Button>
-                    </CardBody>
-                </Card>
+                <MudCard Elevation="2" Class="empty-state text-center py-5">
+                    <MudCardContent>
+                        <MudIcon Icon="@Icons.Material.Filled.Campaign" Size="Size.Large" Class="text-muted mb-3" />
+                        <MudText Typo="Typo.h5">No announcements found</MudText>
+                        <MudText Typo="Typo.body1">There are no announcements matching your current filters.</MudText>
+                        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="ClearFilters">Clear Filters</MudButton>
+                    </MudCardContent>
+                </MudCard>
             }
         </div>
     </div>
 </div>
 
-<!-- Announcement Detail Modal using new format -->
-<Modal @ref="announcementDetailModal" Title="Announcement Details" UseStaticBackdrop="true" CloseOnEscape="false">
-    <BodyTemplate>
+<MudDialog @bind-IsVisible="@isModalVisible" Options="@dialogOptions">
+    <TitleContent>
+        <MudText Typo="Typo.h6">Announcement Details</MudText>
+    </TitleContent>
+    <DialogContent>
         @if (selectedAnnouncement is not null)
         {
             <div class="announcement-detail-meta mb-3">
                 <div class="meta-item">
-                    <Icon Name="IconName.PersonCircle" TextColor="TextColor.Primary" />
+                    <MudIcon Icon="@Icons.Material.Filled.Person" Color="Color.Primary" />
                     <span>@selectedAnnouncement.AuthorName</span>
                 </div>
                 <div class="meta-item">
-                    <Icon Name="IconName.CalendarEvent" TextColor="TextColor.Primary" />
+                    <MudIcon Icon="@Icons.Material.Filled.CalendarToday" Color="Color.Primary" />
                     <span>@selectedAnnouncement.PublishedAt.ToString("MMM dd, yyyy HH:mm")</span>
                 </div>
                 <div class="meta-item">
-                    <Badge Color="@GetPriorityBadgeColor(selectedAnnouncement.Priority)">
-                        <Icon Name="@GetPriorityIconEnum(selectedAnnouncement.Priority)" />
+                    <MudChip T="string" Color="@GetPriorityBadgeColor(selectedAnnouncement.Priority)">
+                        <MudIcon Icon="@GetPriorityIconEnum(selectedAnnouncement.Priority)" Class="me-1" />
                         @selectedAnnouncement.Priority Priority
-                    </Badge>
+                    </MudChip>
                 </div>
             </div>
             <div class="announcement-detail-content">
@@ -206,19 +183,14 @@
         {
             <div>No announcement selected.</div>
         }
-    </BodyTemplate>
-    <FooterTemplate>
-        <Button Color="ButtonColor.Secondary" @onclick="OnHideModalClick">Close</Button>
-        <Button Color="ButtonColor.Primary">Understood</Button>
-    </FooterTemplate>
-</Modal>
+    </DialogContent>
+</MudDialog>
 
-<Button Color="ButtonColor.Primary" @onclick="OnShowModalClick">Launch static backdrop modal</Button>
+<MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="OnShowModalClick">Launch static backdrop modal</MudButton>
 
 @code {
-    // Properties for filtering and search
-    private string selectedFilter = "all";
-    private string dateFilter = "all";
+    private int selectedFilterIndex = 0;
+    private int selectedDateFilterIndex = 3; // Default to All Time
     private string searchQuery = "";
     private bool isLoading = true;
 
@@ -228,7 +200,9 @@
     private AnnouncementModel? selectedAnnouncement;
 
     // Modal reference
-    private Modal? announcementDetailModal;
+    private MudDialog? announcementDetailModal;
+    private bool isModalVisible = false;
+    private DialogOptions dialogOptions = new() { CloseButton = true, MaxWidth = MaxWidth.Medium, FullWidth = true };
 
     protected override async Task OnInitializedAsync()
     {
@@ -248,7 +222,7 @@
         catch (Exception ex)
         {
             // Log error and use mock data
-            Console.WriteLine($"Error loading announcements: {ex.Message}");
+            ToastService.ShowError($"Error loading announcements: {ex.Message}");
             ApplyFilters();
         }
         finally
@@ -256,15 +230,15 @@
             isLoading = false;
         }
     }
-    private void SelectFilter(string filter)
+    private void SelectFilter(int index)
     {
-        selectedFilter = filter;
+        selectedFilterIndex = index;
         ApplyFilters();
     }
 
-    private void SelectDateFilter(string filter)
+    private void SelectDateFilter(int index)
     {
-        dateFilter = filter;
+        selectedDateFilterIndex = index;
         ApplyFilters();
     }
 
@@ -273,9 +247,19 @@
         filteredAnnouncements = announcements.Where(a => a.IsActive).ToList();
 
         // Apply priority filter
-        if (selectedFilter != "all")
+        string filterString = selectedFilterIndex switch
         {
-            if (selectedFilter == "recent")
+            0 => "all",
+            1 => "high",
+            2 => "medium",
+            3 => "low",
+            4 => "recent",
+            _ => "all"
+        };
+
+        if (filterString != "all")
+        {
+            if (filterString == "recent")
             {
                 filteredAnnouncements = filteredAnnouncements
                 .Where(a => a.PublishedAt >= DateTime.Now.AddDays(-7))
@@ -284,19 +268,19 @@
             else
             {
                 filteredAnnouncements = filteredAnnouncements
-                .Where(a => a.Priority.Equals(selectedFilter, StringComparison.OrdinalIgnoreCase))
+                .Where(a => a.Priority.Equals(filterString, StringComparison.OrdinalIgnoreCase))
                 .ToList();
             }
         }
 
         // Apply date filter
-        if (dateFilter != "all")
+        if (selectedDateFilterIndex != 3) // 3 is All Time
         {
-            var cutoffDate = dateFilter switch
+            var cutoffDate = selectedDateFilterIndex switch
             {
-                "today" => DateTime.Today,
-                "week" => DateTime.Now.AddDays(-7),
-                "month" => DateTime.Now.AddDays(-30),
+                0 => DateTime.Today,
+                1 => DateTime.Now.AddDays(-7),
+                2 => DateTime.Now.AddDays(-30),
                 _ => DateTime.MinValue
             };
 
@@ -329,18 +313,12 @@
     private async void ShowAnnouncement(AnnouncementModel announcement)
     {
         selectedAnnouncement = announcement;
-        if (announcementDetailModal != null)
-        {
-            await announcementDetailModal.ShowAsync();
-        }
+        isModalVisible = true;
     }
 
-    private async void CloseModal()
+    private void CloseModal()
     {
-        if (announcementDetailModal != null)
-        {
-            await announcementDetailModal.HideAsync();
-        }
+        isModalVisible = false;
         selectedAnnouncement = null;
     }
 
@@ -351,38 +329,46 @@
 
     private void ClearFilters()
     {
-        selectedFilter = "all";
-        dateFilter = "all";
+        selectedFilterIndex = 0;
+        selectedDateFilterIndex = 3;
         searchQuery = "";
         ApplyFilters();
     }
 
-    private string GetPriorityClass(string priority)
+    private string GetFilterClass(string filterName)
     {
-        return priority.ToLower();
-    }
-
-    // Returns the correct BlazorBootstrap.IconName enum for the given priority
-    private IconName GetPriorityIconEnum(string? priority)
-    {
-        return (priority ?? "").ToLower() switch
+        return filterName switch
         {
-            "high" => IconName.ExclamationTriangle,
-            "medium" => IconName.InfoCircle,
-            "low" => IconName.Bell,
-            _ => IconName.InfoCircle
+            "all" => selectedFilterIndex == 0 ? "mud-button-filled" : "mud-button-outlined",
+            "high" => selectedFilterIndex == 1 ? "mud-button-filled" : "mud-button-outlined",
+            "medium" => selectedFilterIndex == 2 ? "mud-button-filled" : "mud-button-outlined",
+            "low" => selectedFilterIndex == 3 ? "mud-button-filled" : "mud-button-outlined",
+            "recent" => selectedFilterIndex == 4 ? "mud-button-filled" : "mud-button-outlined",
+            _ => "mud-button-outlined"
         };
     }
 
-    // Returns the correct BlazorBootstrap.BadgeColor enum for the given priority
-    private BadgeColor GetPriorityBadgeColor(string? priority)
+    // Returns the correct MudBlazor.Icons.Material.Filled icon for the given priority
+    private string GetPriorityIconEnum(string? priority)
     {
         return (priority ?? "").ToLower() switch
         {
-            "high" => BadgeColor.Danger,
-            "medium" => BadgeColor.Warning,
-            "low" => BadgeColor.Info,
-            _ => BadgeColor.Secondary
+            "high" => Icons.Material.Filled.Warning,
+            "medium" => Icons.Material.Filled.Info,
+            "low" => Icons.Material.Filled.Notifications,
+            _ => Icons.Material.Filled.Info
+        };
+    }
+
+    // Returns the correct MudBlazor.Color enum for the given priority
+    private MudBlazor.Color GetPriorityBadgeColor(string? priority)
+    {
+        return (priority ?? "").ToLower() switch
+        {
+            "high" => MudBlazor.Color.Error,
+            "medium" => MudBlazor.Color.Warning,
+            "low" => MudBlazor.Color.Info,
+            _ => MudBlazor.Color.Secondary
         };
     }
 
@@ -421,20 +407,27 @@
     }
 
     // Helper methods for CSS classes
-    private string GetFilterClass(string filter) => selectedFilter == filter ? "nav-item active" : "nav-item";
-    private string GetDateFilterClass(string filter) => dateFilter == filter ? "filter-option active" : "filter-option";
     private string GetAnnouncementCardClass(string priority) => $"announcement-card {GetPriorityClass(priority)}";
+
+    private string GetPriorityClass(string priority)
+    {
+        return (priority ?? "").ToLower() switch
+        {
+            "high" => "priority-high",
+            "medium" => "priority-medium",
+            "low" => "priority-low",
+            _ => "priority-normal"
+        };
+    }
 
     private async Task OnShowModalClick()
     {
-        if (announcementDetailModal != null)
-            await announcementDetailModal.ShowAsync();
+        isModalVisible = true;
     }
 
     private async Task OnHideModalClick()
     {
-        if (announcementDetailModal != null)
-            await announcementDetailModal.HideAsync();
+        isModalVisible = false;
         selectedAnnouncement = null;
     }
 }

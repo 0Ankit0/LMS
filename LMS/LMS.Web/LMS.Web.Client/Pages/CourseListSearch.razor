@@ -1,27 +1,19 @@
 @inject HttpClient HttpClient
 @inject NavigationManager NavigationManager
+@rendermode @(new InteractiveAutoRenderMode(false))
 
 <div class="card h-100 d-flex flex-column border-0">
     <div class="card-header bg-info p-0 border-0 rounded-top">
-        <div class="input-group input-group-lg">
-            <input type="text"
-                   class="form-control border-0 rounded-0 bg-light"
-                   style="border-radius: .5rem 0 0 0; min-height: 56px;"
-                   placeholder="Search courses..."
-                   @bind="searchTerm"
-                   @oninput="OnSearchChanged" />
-            <span class="input-group-text bg-info text-white border-0 rounded-0" style="border-radius: 0 .5rem 0 0;">
-                <i class="bi bi-search"></i>
-            </span>
-        </div>
+        <MudTextField @bind-Value="searchTerm" Placeholder="Search courses..."
+                      Variant="Variant.Filled" Clearable="true"
+                      Adornment="Adornment.End" AdornmentIcon="@Icons.Material.Filled.Search"
+                      OnClearButtonClick="OnClearSearchButtonClick" />
     </div>
     <div class="card-body border-0 p-0 flex-grow-1 overflow-auto">
         @if (isLoading)
         {
             <div class="d-flex justify-content-center align-items-center h-100 py-5">
-                <div class="spinner-border text-info" role="status">
-                    <span class="visually-hidden">Loading...</span>
-                </div>
+                <MudProgressCircular Indeterminate="true" Color="Color.Info" />
             </div>
         }
         else if (filteredCourses?.Any() == true)
@@ -30,42 +22,40 @@
                 @foreach (var course in filteredCourses)
                 {
                     <div class="col-12 ">
-                        <div class="card border-0 shadow mb-1" style="cursor:pointer;"
-                             @onclick="@(() => NavigationManager.NavigateTo($"/user/lms/course/{course.Id}"))">
-                            <div class="card-body px-3 d-flex flex-column justify-content-between">
+                        <MudCard Elevation="2" Class="mb-1" Style="cursor:pointer;"
+                                 OnClick="@(() => NavigationManager.NavigateTo($"/user/lms/course/{course.Id}"))">
+                            <MudCardContent Class="px-3 d-flex flex-column justify-content-between">
                                 <div>
-                                    <h6 class="card-title mb-1 text-primary" style="font-size: 1.05rem;">@course.Title</h6>
-                                    <div class="mb-1 text-muted"><i class="bi bi-person-circle me-1"></i>@course.InstructorName</div>
-                                    <div class="mb-1 text-truncate" style="max-width: 100%;">
-                                        <small>
-                                            @if (!string.IsNullOrWhiteSpace(course.Description))
-                                            {
-                                                @((course.Description.Length > 100) ? course.Description.Substring(0, 100) + "..." : course.Description)
-                                            }
-                                        </small>
-                                    </div>
+                                    <MudText Typo="Typo.h6" Class="mb-1 text-primary" Style="font-size: 1.05rem;">@course.Title</MudText>
+                                    <MudText Typo="Typo.body2" Class="mb-1 text-muted"><MudIcon Icon="@Icons.Material.Filled.Person" Size="Size.Small" Class="me-1" />@course.InstructorName</MudText>
+                                    <MudText Typo="Typo.body2" Class="mb-1 text-truncate" Style="max-width: 100%;">
+                                        @if (!string.IsNullOrWhiteSpace(course.Description))
+                                        {
+                                            @((course.Description.Length > 100) ? course.Description.Substring(0, 100) + "..." : course.Description)
+                                        }
+                                    </MudText>
                                 </div>
                                 <div class="mt-1 d-flex align-items-center">
-                                    <span class="badge bg-secondary me-2">@course.Level</span>
+                                    <MudChip T="string" Color="Color.Secondary" Class="me-2">@course.Level</MudChip>
                                     @if (course.StartDate != default)
                                     {
-                                        <span class="badge bg-light text-dark border">@course.StartDate.ToString("MMM dd, yyyy")</span>
+                                        <MudChip T="string" Color="Color.Dark" Variant="Variant.Outlined">@course.StartDate.ToString("MMM dd, yyyy")</MudChip>
                                     }
                                 </div>
-                            </div>
-                        </div>
+                            </MudCardContent>
+                        </MudCard>
                     </div>
                 }
             </div>
         }
         else
         {
-            <div class="card m-3 shadow-sm d-flex align-items-center justify-content-center border-0 bg-white" style="min-height: 140px;">
-                <div class="card-body text-center text-muted">
-                    <i class="bi bi-emoji-frown fs-2 mb-2"></i>
-                    <div>No courses found.</div>
-                </div>
-            </div>
+            <MudCard Elevation="2" Class="m-3 shadow-sm d-flex align-items-center justify-content-center border-0 mud-background-paper" Style="min-height: 140px;">
+                <MudCardContent Class="text-center mud-text-secondary">
+                    <MudIcon Icon="@Icons.Material.Filled.SentimentDissatisfied" Size="Size.Large" Class="mb-2" />
+                    <MudText Typo="Typo.h6">No courses found.</MudText>
+                </MudCardContent>
+            </MudCard>
         }
     </div>
 </div>
@@ -92,6 +82,18 @@
         FilterCourses();
         isLoading = false;
         StateHasChanged();
+    }
+
+    private void ClearSearchAndFilter()
+    {
+        searchTerm = string.Empty;
+        FilterCourses();
+    }
+
+    private void OnClearSearchButtonClick()
+    {
+        searchTerm = string.Empty;
+        FilterCourses();
     }
 
     private void OnSearchChanged(ChangeEventArgs e)

@@ -1,102 +1,98 @@
-@using BlazorBootstrap;
+@using MudBlazor;
 @page "/user/lms/announcements"
 @inject HttpClient HttpClient
 
 <PageTitle>Announcements - LMS</PageTitle>
 
-<div class="simple-announcements-layout">
-    <div class="announcements-container">
-        <!-- Announcements Content -->
-        <div class="announcements-content">
-            @if (isLoading)
-            {
-                <div class="loading-container">
-                    <Spinner />
-                    <p class="loading-text">Loading announcements...</p>
-                </div>
-            }
-            else if (announcements?.Any() == true)
-            {
-                <div class="announcements-list">
-                    @foreach (var announcement in announcements)
-                    {
-                        <div class="announcement-item" @onclick="() => ShowAnnouncement(announcement)">
-                            <div class="announcement-priority">
-                                <i class="@GetPriorityIcon(announcement.Priority) @GetPriorityClass(announcement.Priority)"></i>
-                            </div>
-                            <div class="announcement-content">
-                                <div class="announcement-header">
-                                    <h5 class="announcement-title">@announcement.Title</h5>
-                                    <div class="announcement-meta">
-                                        <span class="announcement-author">
-                                            <i class="bi bi-person-circle"></i>
-                                            @announcement.AuthorName
-                                        </span>
-                                        <span class="announcement-date">
-                                            <i class="bi bi-calendar"></i>
-                                            @FormatDate(announcement.PublishedAt)
-                                        </span>
-                                    </div>
-                                </div>
-                                <p class="announcement-excerpt">@GetExcerpt(announcement.Content)</p>
-                            </div>
-                            <div class="announcement-actions">
-                                <Button Color="ButtonColor.Primary" Outline="true" Size="ButtonSize.Small" class="view-btn"
-                                    @onclick="() => ShowAnnouncement(announcement)">
-                                    <Icon Name="IconName.Eye" />
-                                </Button>
-                            </div>
-                        </div>
-                    }
-                    <div class="d-flex justify-content-end mt-2">
-                        <a href="/user/lms/announcement-list"
-                            class="btn btn-link btn-sm text-primary text-decoration-underline p-0"
-                            style="font-size: 0.95em;">View All</a>
-                    </div>
-                </div>
-            }
-            else
-            {
-                <div class="empty-state">
-                    <i class="bi bi-megaphone"></i>
-                    <h5>No announcements available</h5>
-                    <p>There are no announcements at this time.</p>
-                </div>
-            }
-        </div>
-    </div>
-</div>
+<MudGrid Spacing="3">
+    @if (isLoading)
+    {
+        @for (int i = 0; i < 3; i++)
+        {
+            <MudItem xs="12">
+                <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="120px" />
+            </MudItem>
+        }
+    }
+    else if (announcements?.Any() == true)
+    {
+        @foreach (var announcement in announcements)
+        {
+            <MudItem xs="12">
+                <MudCard Elevation="2" OnClick="() => ShowAnnouncement(announcement)">
+                    <MudCardHeader>
+                        <CardHeaderContent>
+                            <MudText Typo="Typo.h5">@announcement.Title</MudText>
+                        </CardHeaderContent>
+                        <CardHeaderActions>
+                            <MudChip T="string" Icon="@GetPriorityIcon(announcement.Priority)" Color="@GetPriorityBadgeColor(announcement.Priority)">@announcement.Priority Priority</MudChip>
+                        </CardHeaderActions>
+                    </MudCardHeader>
+                    <MudCardContent>
+                        <MudText Typo="Typo.body2">@GetExcerpt(announcement.Content)</MudText>
+                    </MudCardContent>
+                    <MudCardActions>
+                        <MudText Typo="Typo.caption" Class="text-muted mx-2">
+                            <MudIcon Icon="@Icons.Material.Filled.Person" Class="me-1" />
+                            @announcement.AuthorName
+                        </MudText>
+                        <MudText Typo="Typo.caption" Class="text-muted">
+                            <MudIcon Icon="@Icons.Material.Filled.CalendarToday" Class="me-1" />
+                            @FormatDate(announcement.PublishedAt)
+                        </MudText>
+                        <MudSpacer />
+                        <MudButton Variant="Variant.Outlined" Color="Color.Primary" OnClick="() => ShowAnnouncement(announcement)" StartIcon="@Icons.Material.Filled.Visibility">View</MudButton>
+                    </MudCardActions>
+                </MudCard>
+            </MudItem>
+        }
+        <MudItem xs="12" Class="d-flex justify-content-end">
+            <MudLink Href="/user/lms/announcement-list" Color="Color.Primary">View All</MudLink>
+        </MudItem>
+    }
+    else
+    {
+        <MudItem xs="12">
+            <MudAlert Severity="Severity.Info" Icon="@Icons.Material.Filled.Campaign">
+                <MudText Typo="Typo.h5">No announcements available</MudText>
+                <MudText>There are no announcements at this time.</MudText>
+            </MudAlert>
+        </MudItem>
+    }
+</MudGrid>
 
-<!-- Announcement Detail Modal -->
-<Modal @ref="announcementModal" Title="@selectedAnnouncement?.Title">
-    <BodyTemplate>
+<MudDialog @bind-IsVisible="@isModalVisible" Options="@dialogOptions">
+    <TitleContent>
+        <MudText Typo="Typo.h6">@selectedAnnouncement?.Title</MudText>
+    </TitleContent>
+    <DialogContent>
         @if (selectedAnnouncement != null)
         {
             <div class="announcement-detail-meta mb-3">
                 <div class="meta-item">
-                    <i class="bi bi-person-circle text-primary"></i>
+                    <MudIcon Icon="@Icons.Material.Filled.Person" Color="Color.Primary" />
                     <span>@selectedAnnouncement.AuthorName</span>
                 </div>
                 <div class="meta-item">
-                    <i class="bi bi-calendar-event text-primary"></i>
+                    <MudIcon Icon="@Icons.Material.Filled.CalendarToday" Color="Color.Primary" />
                     <span>@selectedAnnouncement.PublishedAt.ToString("MMM dd, yyyy HH:mm")</span>
                 </div>
                 <div class="meta-item">
-                    <span class="priority-badge @GetPriorityClass(selectedAnnouncement.Priority)">
-                        <i class="@GetPriorityIcon(selectedAnnouncement.Priority)"></i>
-                        @selectedAnnouncement.Priority Priority
-                    </span>
+                    <MudChip T="string" Color="@GetPriorityBadgeColor(selectedAnnouncement.Priority)">
+                                        <MudIcon Icon="@GetPriorityIcon(selectedAnnouncement.Priority)" Class="me-1" />
+                                        @selectedAnnouncement.Priority Priority
+                                    </MudChip>
                 </div>
             </div>
             <div class="announcement-detail-content">
-                @selectedAnnouncement.Content
+                @((MarkupString)selectedAnnouncement.Content)
             </div>
         }
-    </BodyTemplate>
-    <FooterTemplate>
-        <Button Color="ButtonColor.Secondary" @onclick="CloseModal">Close</Button>
-    </FooterTemplate>
-</Modal>
+    </DialogContent>
+    <DialogActions>
+        <MudButton Color="Color.Secondary" OnClick="CloseModal">Close</MudButton>
+    </DialogActions>
+</MudDialog>
 
 @code {
     // Properties
@@ -136,39 +132,46 @@
         }
     }
 
-    private Modal announcementModal = default!;
+    private MudDialog? announcementModal;
+    private bool isModalVisible = false;
+    private DialogOptions dialogOptions = new() { CloseButton = true, MaxWidth = MaxWidth.Medium, FullWidth = true };
 
     private async Task ShowAnnouncement(AnnouncementModel announcement)
     {
         selectedAnnouncement = announcement;
-        await announcementModal.ShowAsync();
+        isModalVisible = true;
     }
 
-    private async Task CloseModal()
+    private void CloseModal()
     {
-        await announcementModal.HideAsync();
+        isModalVisible = false;
         selectedAnnouncement = null;
     }
 
     private string GetPriorityClass(string priority)
     {
-        return priority.ToLower() switch
-        {
-            "high" => "priority-high",
-            "medium" => "priority-medium",
-            "low" => "priority-low",
-            _ => "priority-medium"
-        };
+        return priority.ToLower();
     }
 
     private string GetPriorityIcon(string priority)
     {
         return priority.ToLower() switch
         {
-            "high" => "bi-exclamation-triangle",
-            "medium" => "bi-info-circle",
-            "low" => "bi-bell",
-            _ => "bi-info-circle"
+            "high" => Icons.Material.Filled.Warning,
+            "medium" => Icons.Material.Filled.Info,
+            "low" => Icons.Material.Filled.Notifications,
+            _ => Icons.Material.Filled.Info
+        };
+    }
+
+    private MudBlazor.Color GetPriorityBadgeColor(string? priority)
+    {
+        return (priority ?? "").ToLower() switch
+        {
+            "high" => MudBlazor.Color.Error,
+            "medium" => MudBlazor.Color.Warning,
+            "low" => MudBlazor.Color.Info,
+            _ => MudBlazor.Color.Secondary
         };
     }
 

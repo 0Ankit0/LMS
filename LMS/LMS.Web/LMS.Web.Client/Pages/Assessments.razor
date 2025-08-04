@@ -1,45 +1,52 @@
 @page "/user/lms/assessments"
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @inject HttpClient HttpClient
-@inject ToastService ToastService
+@inject ISnackbar Snackbar
 @using System.Security.Claims;
 
-<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-    <h1 class="h2"><i class="fas fa-clipboard-check text-success me-2"></i>Assessments & Quizzes</h1>
-    <div class="btn-toolbar mb-2 mb-md-0">
-        <div class="btn-group me-2" role="group">
-            <button type="button" class="btn @(selectedFilter == "all" ? "btn-primary" : "btn-outline-primary") btn-sm"
-                @onclick='() => FilterAssessments("all")'>
-                All
-            </button>
-            <button type="button"
-                class="btn @(selectedFilter == "available" ? "btn-primary" : "btn-outline-primary") btn-sm"
-                @onclick='() => FilterAssessments("available")'>
-                Available
-            </button>
-            <button type="button"
-                class="btn @(selectedFilter == "completed" ? "btn-primary" : "btn-outline-primary") btn-sm"
-                @onclick='() => FilterAssessments("completed")'>
-                Completed
-            </button>
-            <button type="button"
-                class="btn @(selectedFilter == "pending" ? "btn-primary" : "btn-outline-primary") btn-sm"
-                @onclick='() => FilterAssessments("pending")'>
-                Pending
-            </button>
-        </div>
-        <button class="btn btn-outline-primary btn-sm" @onclick="RefreshAssessments">
-            <i class="fas fa-sync-alt"></i> Refresh
-        </button>
-    </div>
-</div>
+<MudToolBar Class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <MudText Typo="Typo.h5" Class="h2"><MudIcon Icon="@Icons.Material.Filled.AssignmentTurnedIn" Class="text-success me-2" />Assessments & Quizzes</MudText>
+    
+    <MudButtonGroup Color="Color.Primary" Variant="Variant.Outlined">
+        <MudButton OnClick='@(() => FilterAssessments("all"))' Variant="@(selectedFilter == "all" ? Variant.Filled : Variant.Outlined)">All</MudButton>
+        <MudButton OnClick='@(() => FilterAssessments("available"))' Variant="@(selectedFilter == "available" ? Variant.Filled : Variant.Outlined)">Available</MudButton>
+        <MudButton OnClick='@(() => FilterAssessments("completed"))' Variant="@(selectedFilter == "completed" ? Variant.Filled : Variant.Outlined)">Completed</MudButton>
+        <MudButton OnClick='@(() => FilterAssessments("pending"))' Variant="@(selectedFilter == "pending" ? Variant.Filled : Variant.Outlined)">Pending</MudButton>
+    </MudButtonGroup>
+    <MudButton OnClick="RefreshAssessments" Variant="Variant.Outlined" Color="Color.Primary" Class="ms-2">
+        <MudIcon Icon="@Icons.Material.Filled.Refresh" Class="me-2" /> Refresh
+    </MudButton>
+</MudToolBar>
 
 @if (isLoading)
 {
-    <div class="d-flex justify-content-center py-5">
-        <div class="spinner-border text-primary" role="status">
-            <span class="visually-hidden">Loading assessments...</span>
+    <!-- Skeleton Loader -->
+    <div class="row mb-4">
+        @for (int i = 0; i < 4; i++)
+        {
+            <div class="col-md-3">
+                <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="120px" />
+            </div>
+        }
+    </div>
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="56px" />
         </div>
+        <div class="col-md-3">
+            <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="56px" />
+        </div>
+        <div class="col-md-3">
+            <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="56px" />
+        </div>
+    </div>
+    <div class="row">
+        @for (int i = 0; i < 6; i++)
+        {
+            <div class="col-lg-6 col-xl-4 mb-4">
+                <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="350px" />
+            </div>
+        }
     </div>
 }
 else
@@ -47,72 +54,64 @@ else
     <!-- Assessment Statistics -->
     <div class="row mb-4">
         <div class="col-md-3">
-            <div class="card bg-primary text-white text-center">
-                <div class="card-body">
-                    <i class="fas fa-list-alt fa-2x mb-2"></i>
-                    <h4>@totalAssessments</h4>
-                    <small>Total Assessments</small>
-                </div>
-            </div>
+            <MudCard Elevation="2">
+                <MudCardContent Class="text-center mud-bg-primary mud-text-white">
+                    <MudIcon Icon="@Icons.Material.Filled.Assignment" Size="Size.Large" Class="mb-2" />
+                    <MudText Typo="Typo.h4">@totalAssessments</MudText>
+                    <MudText Typo="Typo.body2">Total Assessments</MudText>
+                </MudCardContent>
+            </MudCard>
         </div>
         <div class="col-md-3">
-            <div class="card bg-success text-white text-center">
-                <div class="card-body">
-                    <i class="fas fa-check-circle fa-2x mb-2"></i>
-                    <h4>@completedAssessments</h4>
-                    <small>Completed</small>
-                </div>
-            </div>
+            <MudCard Elevation="2">
+                <MudCardContent Class="text-center mud-bg-success mud-text-white">
+                    <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Size="Size.Large" Class="mb-2" />
+                    <MudText Typo="Typo.h4">@completedAssessments</MudText>
+                    <MudText Typo="Typo.body2">Completed</MudText>
+                </MudCardContent>
+            </MudCard>
         </div>
         <div class="col-md-3">
-            <div class="card bg-warning text-white text-center">
-                <div class="card-body">
-                    <i class="fas fa-clock fa-2x mb-2"></i>
-                    <h4>@pendingAssessments</h4>
-                    <small>Pending</small>
-                </div>
-            </div>
+            <MudCard Elevation="2">
+                <MudCardContent Class="text-center mud-bg-warning mud-text-white">
+                    <MudIcon Icon="@Icons.Material.Filled.PendingActions" Size="Size.Large" Class="mb-2" />
+                    <MudText Typo="Typo.h4">@pendingAssessments</MudText>
+                    <MudText Typo="Typo.body2">Pending</MudText>
+                </MudCardContent>
+            </MudCard>
         </div>
         <div class="col-md-3">
-            <div class="card bg-info text-white text-center">
-                <div class="card-body">
-                    <i class="fas fa-percentage fa-2x mb-2"></i>
-                    <h4>@averageScore.ToString("F1")%</h4>
-                    <small>Average Score</small>
-                </div>
-            </div>
+            <MudCard Elevation="2">
+                <MudCardContent Class="text-center mud-bg-info mud-text-white">
+                    <MudIcon Icon="@Icons.Material.Filled.Score" Size="Size.Large" Class="mb-2" />
+                    <MudText Typo="Typo.h4">@averageScore.ToString("F1")%</MudText>
+                    <MudText Typo="Typo.body2">Average Score</MudText>
+                </MudCardContent>
+            </MudCard>
         </div>
     </div>
 
     <!-- Search and Filter -->
     <div class="row mb-4">
         <div class="col-md-6">
-            <div class="input-group">
-                <span class="input-group-text"><i class="fas fa-search"></i></span>
-                <input type="text" class="form-control" placeholder="Search assessments..." @bind="searchTerm"
-                    @oninput="OnSearchTermChanged" />
-            </div>
+            <MudTextField @bind-Value="searchTerm" Placeholder="Search assessments..." Variant="Variant.Outlined" Clearable="true" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" OnClearButtonClick="ClearFilters" />
         </div>
         <div class="col-md-3">
-            <select class="form-select" @onchange="FilterByCourse">
-                <option value="">All Courses</option>
-                @if (availableCourses?.Any() == true)
-                {
-                    @foreach (var course in availableCourses)
-                    {
-                        <option value="@course.Id">@course.Title</option>
-                    }
-                }
-            </select>
+            <MudAutocomplete T="CourseModel" Label="All Courses" Variant="Variant.Outlined"
+                                     @bind-Value="selectedCourseModel"
+                                     SearchFunc="@SearchCourses"
+                                     ToStringFunc="@(c => c == null ? null : c.Title)"
+                                     Clearable="true"
+                                     Placeholder="All Courses" />
         </div>
         <div class="col-md-3">
-            <select class="form-select" @onchange="SortAssessments">
-                <option value="newest">Newest First</option>
-                <option value="oldest">Oldest First</option>
-                <option value="course">By Course</option>
-                <option value="difficulty">By Difficulty</option>
-                <option value="score">By Score</option>
-            </select>
+            <MudSelect T="string" Label="Sort By" Variant="Variant.Outlined" @bind-Value="sortBy" TextChanged="SortAssessments">
+                <MudSelectItem T="string" Value="@("newest")">Newest First</MudSelectItem>
+                <MudSelectItem T="string" Value="@("oldest")">Oldest First</MudSelectItem>
+                <MudSelectItem T="string" Value="@("course")">By Course</MudSelectItem>
+                <MudSelectItem T="string" Value="@("difficulty")">By Difficulty</MudSelectItem>
+                <MudSelectItem T="string" Value="@("score")">By Score</MudSelectItem>
+            </MudSelect>
         </div>
     </div>
 
@@ -127,136 +126,133 @@ else
                 var canRetake = !isCompleted || assessment.AllowRetakes;
 
                 <div class="col-lg-6 col-xl-4 mb-4">
-                    <div class="card h-100 shadow-sm @(isCompleted ? "border-success" : "")">
-                        <div class="card-header d-flex justify-content-between align-items-center">
-                            <div class="d-flex align-items-center">
-                                <i class="fas @GetAssessmentIcon(assessment.Type) me-2"></i>
-                                <span class="fw-bold">@assessment.Type</span>
-                            </div>
-
+                    <MudCard Elevation="2" Class="@GetCardClass(isCompleted)">
+                        <MudCardHeader>
+                            <MudText Typo="Typo.h6">
+                                <MudIcon Icon="@GetAssessmentIcon(assessment.Type)" Class="me-2" />
+                                @assessment.Type
+                            </MudText>
+                            <MudSpacer />
                             @if (isCompleted)
                             {
-                                <span class="badge bg-success">
-                                    <i class="fas fa-check"></i> Completed
-                                </span>
+                                <MudChip T="string" Color="Color.Success" Size="Size.Small">
+                                    <MudIcon Icon="@Icons.Material.Filled.Check" Size="Size.Small" Class="me-1" /> Completed
+                                </MudChip>
                             }
                             else if (IsAssessmentAvailable(assessment))
                             {
-                                <span class="badge bg-primary">
-                                    <i class="fas fa-play"></i> Available
-                                </span>
+                                <MudChip T="string" Color="Color.Primary" Size="Size.Small">
+                                    <MudIcon Icon="@Icons.Material.Filled.PlayArrow" Size="Size.Small" Class="me-1" /> Available
+                                </MudChip>
                             }
                             else
                             {
-                                <span class="badge bg-secondary">
-                                    <i class="fas fa-lock"></i> Locked
-                                </span>
+                                <MudChip T="string" Color="Color.Secondary" Size="Size.Small">
+                                    <MudIcon Icon="@Icons.Material.Filled.Lock" Size="Size.Small" Class="me-1" /> Locked
+                                </MudChip>
                             }
-                        </div>
+                        </MudCardHeader>
 
-                        <div class="card-body">
-                            <h5 class="card-title">@assessment.Title</h5>
-                            <p class="card-text text-muted">@assessment.Description</p>
+                        <MudCardContent>
+                            <MudText Typo="Typo.h5" Class="card-title">@assessment.Title</MudText>
+                            <MudText Typo="Typo.body2" Class="card-text text-muted">@assessment.Description</MudText>
 
                             <div class="mb-3">
-                                <div class="row text-center">
-                                    <div class="col-4">
-                                        <div class="border rounded p-2">
-                                            <small class="text-muted d-block">Questions</small>
-                                            <strong>@assessment.Questions.Count()</strong>
-                                        </div>
-                                    </div>
-                                    <div class="col-4">
-                                        <div class="border rounded p-2">
-                                            <small class="text-muted d-block">Duration</small>
-                                            <strong>@assessment.TimeLimit min</strong>
-                                        </div>
-                                    </div>
-                                    <div class="col-4">
-                                        <div class="border rounded p-2">
-                                            <small class="text-muted d-block">Pass %</small>
-                                            <strong>@assessment.PassingScore%</strong>
-                                        </div>
-                                    </div>
-                                </div>
+                                <MudGrid Spacing="1">
+                                    <MudItem xs="4">
+                                        <MudPaper Class="pa-2 text-center">
+                                            <MudText Typo="Typo.caption" Class="text-muted">Questions</MudText>
+                                            <MudText Typo="Typo.subtitle1">@assessment.Questions.Count()</MudText>
+                                        </MudPaper>
+                                    </MudItem>
+                                    <MudItem xs="4">
+                                        <MudPaper Class="pa-2 text-center">
+                                            <MudText Typo="Typo.caption" Class="text-muted">Duration</MudText>
+                                            <MudText Typo="Typo.subtitle1">@assessment.TimeLimit min</MudText>
+                                        </MudPaper>
+                                    </MudItem>
+                                    <MudItem xs="4">
+                                        <MudPaper Class="pa-2 text-center">
+                                            <MudText Typo="Typo.caption" Class="text-muted">Pass %</MudText>
+                                            <MudText Typo="Typo.subtitle1">@assessment.PassingScore%</MudText>
+                                        </MudPaper>
+                                    </MudItem>
+                                </MudGrid>
                             </div>
 
                             @if (isCompleted && userAttempt != null)
                             {
                                 <div class="mb-3">
                                     <div class="d-flex justify-content-between mb-1">
-                                        <span>Your Score</span>
-                                        <span class="fw-bold @GetScoreClass(userAttempt.Score)">
+                                        <MudText Typo="Typo.body2">Your Score</MudText>
+                                        <MudText Typo="Typo.body2" Class="@("fw-bold " + GetScoreClass(userAttempt.Score))">
                                             @userAttempt.Score.ToString("F1")%
-                                        </span>
+                                        </MudText>
                                     </div>
-                                    <div class="progress mb-2" style="height: 8px;">
-                                        <div class="progress-bar @GetScoreProgressClass(userAttempt.Score)"
-                                            style="width: @userAttempt.Score%"></div>
-                                    </div>
-                                    <small class="text-muted">
+                                    <MudProgressLinear Value="@(userAttempt.Score)" Color="@GetScoreProgressColor(userAttempt.Score)" Class="mb-2" Style="height: 8px;" />
+                                    <MudText Typo="Typo.caption" Class="text-muted">
                                         Completed: @userAttempt.CompletedAt?.ToString("MMM dd, yyyy 'at' HH:mm")
-                                    </small>
+                                    </MudText>
                                 </div>
                             }
 
                             <div class="mb-2">
-                                <small class="text-muted">
-                                    <i class="fas fa-book"></i> @assessment.Course?.Title
-                                </small>
+                                <MudText Typo="Typo.caption" Class="text-muted">
+                                    <MudIcon Icon="@Icons.Material.Filled.Book" Size="Size.Small" Class="me-1" /> @assessment.Course?.Title
+                                </MudText>
                             </div>
 
                             @if (assessment.Module != null)
                             {
                                 <div class="mb-2">
-                                    <small class="text-muted">
-                                        <i class="fas fa-folder"></i> @assessment.Module.Title
-                                    </small>
+                                    <MudText Typo="Typo.caption" Class="text-muted">
+                                        <MudIcon Icon="@Icons.Material.Filled.Folder" Size="Size.Small" Class="me-1" /> @assessment.Module.Title
+                                    </MudText>
                                 </div>
                             }
-                        </div>
+                        </MudCardContent>
 
-                        <div class="card-footer bg-transparent">
+                        <MudCardActions Class="bg-transparent">
                             @if (IsAdmin)
                             {
-                                <a href="/admin/assessments/manage/@assessment.Id" class="btn btn-info w-100 mb-2">
-                                    <i class="fas fa-cog"></i> Manage Assessment
-                                </a>
+                                <MudButton Href="@($"/admin/assessments/manage/{assessment.Id}")" Variant="Variant.Filled" Color="Color.Info" FullWidth="true" Class="mb-2">
+                                    <MudIcon Icon="@Icons.Material.Filled.Settings" Class="me-2" /> Manage Assessment
+                                </MudButton>
                             }
                             @if (IsAssessmentAvailable(assessment))
                             {
                                 @if (!isCompleted)
                                 {
-                                    <button class="btn btn-primary w-100" @onclick="() => StartAssessment(assessment)">
-                                        <i class="fas fa-play"></i> Start Assessment
-                                    </button>
+                                    <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true" OnClick="() => StartAssessment(assessment)">
+                                        <MudIcon Icon="@Icons.Material.Filled.PlayArrow" Class="me-2" /> Start Assessment
+                                    </MudButton>
                                 }
                                 else if (canRetake)
                                 {
-                                    <div class="btn-group w-100">
-                                        <button class="btn btn-outline-primary" @onclick="() => ViewResults(assessment)">
-                                            <i class="fas fa-chart-bar"></i> View Results
-                                        </button>
-                                        <button class="btn btn-primary" @onclick="() => RetakeAssessment(assessment)">
-                                            <i class="fas fa-redo"></i> Retake
-                                        </button>
-                                    </div>
+                                    <MudButtonGroup Color="Color.Primary" Variant="Variant.Outlined" FullWidth="true">
+                                        <MudButton OnClick="() => ViewResults(assessment)">
+                                            <MudIcon Icon="@Icons.Material.Filled.BarChart" Class="me-2" /> View Results
+                                        </MudButton>
+                                        <MudButton OnClick="() => RetakeAssessment(assessment)" Variant="Variant.Filled">
+                                            <MudIcon Icon="@Icons.Material.Filled.Redo" Class="me-2" /> Retake
+                                        </MudButton>
+                                    </MudButtonGroup>
                                 }
                                 else
                                 {
-                                    <button class="btn btn-outline-primary w-100" @onclick="() => ViewResults(assessment)">
-                                        <i class="fas fa-chart-bar"></i> View Results
-                                    </button>
+                                    <MudButton Variant="Variant.Outlined" Color="Color.Primary" FullWidth="true" OnClick="() => ViewResults(assessment)">
+                                        <MudIcon Icon="@Icons.Material.Filled.BarChart" Class="me-2" /> View Results
+                                    </MudButton>
                                 }
                             }
                             else
                             {
-                                <button class="btn btn-secondary w-100" disabled>
-                                    <i class="fas fa-lock"></i> Prerequisites Required
-                                </button>
+                                <MudButton Variant="Variant.Filled" Color="Color.Secondary" FullWidth="true" Disabled="true">
+                                    <MudIcon Icon="@Icons.Material.Filled.Lock" Class="me-2" /> Prerequisites Required
+                                </MudButton>
                             }
-                        </div>
-                    </div>
+                        </MudCardActions>
+                    </MudCard>
                 </div>
             }
         </div>
@@ -264,28 +260,28 @@ else
     else
     {
         <div class="text-center py-5">
-            <div class="card">
-                <div class="card-body">
+            <MudCard Elevation="2">
+                <MudCardContent>
                     @if (string.IsNullOrEmpty(searchTerm) && selectedFilter == "all")
                     {
-                        <i class="fas fa-clipboard-check fa-3x text-muted mb-3"></i>
-                        <h4 class="text-muted">No Assessments Available</h4>
-                        <p class="text-muted">Enroll in courses to access assessments and quizzes.</p>
-                        <a href="/user/lms/coursecatalog" class="btn btn-primary">
-                            <i class="fas fa-book"></i> Browse Courses
-                        </a>
+                        <MudIcon Icon="@Icons.Material.Filled.AssignmentTurnedIn" Size="Size.Large" Class="text-muted mb-3" />
+                        <MudText Typo="Typo.h5" Class="text-muted">No Assessments Available</MudText>
+                        <MudText Typo="Typo.body1" Class="text-muted">Enroll in courses to access assessments and quizzes.</MudText>
+                        <MudButton Href="/user/lms/coursecatalog" Variant="Variant.Filled" Color="Color.Primary">
+                            <MudIcon Icon="@Icons.Material.Filled.Book" Class="me-2" /> Browse Courses
+                        </MudButton>
                     }
                     else
                     {
-                        <i class="fas fa-search fa-3x text-muted mb-3"></i>
-                        <h4 class="text-muted">No Assessments Found</h4>
-                        <p class="text-muted">Try adjusting your search criteria or filters.</p>
-                        <button class="btn btn-outline-primary" @onclick="ClearFilters">
-                            <i class="fas fa-times"></i> Clear Filters
-                        </button>
+                        <MudIcon Icon="@Icons.Material.Filled.SearchOff" Size="Size.Large" Class="text-muted mb-3" />
+                        <MudText Typo="Typo.h5" Class="text-muted">No Assessments Found</MudText>
+                        <MudText Typo="Typo.body1" Class="text-muted">Try adjusting your search criteria or filters.</MudText>
+                        <MudButton Variant="Variant.Outlined" Color="Color.Primary" OnClick="ClearFilters">
+                            <MudIcon Icon="@Icons.Material.Filled.Clear" Class="me-2" /> Clear Filters
+                        </MudButton>
                     }
-                </div>
-            </div>
+                </MudCardContent>
+            </MudCard>
         </div>
     }
 }
@@ -299,6 +295,7 @@ else
     private string searchTerm = string.Empty;
     private string selectedFilter = "all";
     private string selectedCourse = string.Empty;
+    private CourseModel? selectedCourseModel;
     private string sortBy = "newest";
 
     // Statistics
@@ -311,6 +308,13 @@ else
     protected override async Task OnInitializedAsync()
     {
         await LoadAssessments();
+    }
+
+    private async Task<IEnumerable<CourseModel>> SearchCourses(string value, CancellationToken token)
+    {
+        if (string.IsNullOrEmpty(value))
+            return availableCourses;
+        return availableCourses.Where(x => x.Title.Contains(value, StringComparison.InvariantCultureIgnoreCase));
     }
 
     private async Task LoadAssessments()
@@ -448,9 +452,9 @@ else
         };
 
         // Apply course filter
-        if (!string.IsNullOrEmpty(selectedCourse) && int.TryParse(selectedCourse, out var courseId))
+        if (selectedCourseModel != null)
         {
-            filtered = filtered.Where(a => a.CourseId == courseId);
+            filtered = filtered.Where(a => a.CourseId == selectedCourseModel.Id);
         }
 
         // Apply sorting
@@ -487,44 +491,46 @@ else
 
     private async Task StartAssessment(AssessmentModel assessment)
     {
-        ToastService.Notify(new ToastMessage(ToastType.Info, $"Starting assessment: {assessment.Title}"));
+        Snackbar.Add($"Starting assessment: {assessment.Title}", Severity.Info);
         // In real implementation, navigate to assessment page
     }
 
     private async Task RetakeAssessment(AssessmentModel assessment)
     {
-        ToastService.Notify(new ToastMessage(ToastType.Info, $"Retaking Assessment {assessment.Title}"));
+        Snackbar.Add($"Retaking Assessment {assessment.Title}", Severity.Info);
         // In real implementation, navigate to assessment page
     }
 
     private async Task ViewResults(AssessmentModel assessment)
     {
-         ToastService.Notify(new ToastMessage(ToastType.Info, $"Viewing Results {assessment.Title}"));
+         Snackbar.Add($"Viewing Results {assessment.Title}", Severity.Info);
     }
 
     private string GetAssessmentIcon(string type) => type.ToLower() switch
     {
-        "quiz" => "fa-question-circle",
-        "exam" => "fa-graduation-cap",
-        "assignment" => "fa-file-alt",
-        "project" => "fa-code",
-        _ => "fa-clipboard-check"
+        "quiz" => Icons.Material.Filled.Quiz,
+        "exam" => Icons.Material.Filled.Assignment,
+        "assignment" => Icons.Material.Filled.Description,
+        "project" => Icons.Material.Filled.Code,
+        _ => Icons.Material.Filled.AssignmentTurnedIn
     };
 
     private string GetScoreClass(double score) => score switch
     {
-        >= 90 => "text-success",
-        >= 80 => "text-info",
-        >= 70 => "text-warning",
-        _ => "text-danger"
+        >= 90 => "mud-text-success",
+        >= 80 => "mud-text-info",
+        >= 70 => "mud-text-warning",
+        _ => "mud-text-error"
     };
 
-    private string GetScoreProgressClass(double score) => score switch
+    private string GetCardClass(bool isCompleted) => isCompleted ? "h-100 mud-border-success" : "h-100";
+
+    private MudBlazor.Color GetScoreProgressColor(double score) => score switch
     {
-        >= 90 => "bg-success",
-        >= 80 => "bg-info",
-        >= 70 => "bg-warning",
-        _ => "bg-danger"
+        >= 90 => MudBlazor.Color.Success,
+        >= 80 => MudBlazor.Color.Info,
+        >= 70 => MudBlazor.Color.Warning,
+        _ => MudBlazor.Color.Error
     };
 
     // Helper model for user attempts

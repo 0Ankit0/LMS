@@ -1,53 +1,60 @@
-@using BlazorBootstrap;
+@using MudBlazor;
+@using MudBlazor.Utilities;
+@using MudBlazor.Components;
 @page "/user/lms/messages"
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @inject HttpClient HttpClient
 @inject ToastService ToastService
+@inject ISnackbar Snackbar
+@using LMS.Web.Client.Services
 
 <PageTitle>Messages - LMS</PageTitle>
 
 <div class="container-fluid">
-    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-        <h1 class="h2"><Icon Name="IconName.Envelope" Class="me-2" />Messages</h1>
-        <div class="btn-toolbar mb-2 mb-md-0">
-            <Button Color="ButtonColor.Primary" @onclick="ShowComposeModal">
-                <Icon Name="IconName.Plus" Class="me-1" />Compose
-            </Button>
-        </div>
-    </div>
+    <MudToolBar
+        Class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+        <MudText Typo="Typo.h5" Class="h2">
+            <MudIcon Icon="@Icons.Material.Filled.Mail" Class="me-2" />Messages
+        </MudText>
+        <!-- Remove MudToolBarSpacer, not a valid MudBlazor component -->
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="ShowComposeModal">
+            <MudIcon Icon="@Icons.Material.Filled.Add" Class="me-1" />Compose
+        </MudButton>
+    </MudToolBar>
 
     <div class="row">
         <!-- Message List -->
         <div class="col-md-4 border-end">
             <div class="mb-3">
-                <div class="btn-group w-100" role="group">
-                    <Button Color="ButtonColor.Primary" Outline="@(currentFolder != "inbox")"
-                            @onclick='() => SwitchFolder("inbox")'>
-                        <Icon Name="IconName.Inbox" Class="me-1" />Inbox (@unreadCount)
-                    </Button>
+                <MudButtonGroup Color="Color.Primary" Variant="Variant.Outlined" FullWidth="true">
+                    <MudButton OnClick='() => SwitchFolder("inbox")'
+                        Variant="@(currentFolder == "inbox" ? Variant.Filled : Variant.Outlined)">
+                        <MudIcon Icon="@Icons.Material.Filled.Inbox" Class="me-1" />Inbox (@unreadCount)
+                    </MudButton>
 
-                    <Button Color="ButtonColor.Primary" Outline="@(currentFolder != "sent")"
-                            @onclick='() => SwitchFolder("sent")'>
-                        <Icon Name="IconName.Send" Class="me-1" />Sent
-                    </Button>
-                </div>
+                    <MudButton OnClick='() => SwitchFolder("sent")'
+                        Variant="@(currentFolder == "sent" ? Variant.Filled : Variant.Outlined)">
+                        <MudIcon Icon="@Icons.Material.Filled.Send" Class="me-1" />Sent
+                    </MudButton>
+                </MudButtonGroup>
             </div>
 
             @if (isLoadingMessages)
             {
                 <div class="text-center py-3">
-                    <Spinner />
+                    <MudProgressCircular Indeterminate="true" Color="Color.Primary" />
                 </div>
             }
             else if (filteredMessages?.Any() == true)
             {
-                <div class="list-group">
+                <MudList T="MessageModel" Clickable="true">
                     @foreach (var message in filteredMessages)
                     {
-                        <a href="#" class="list-group-item list-group-item-action @(selectedMessage?.Id == message.Id ? "active" : "") @(!message.IsRead && currentFolder == "inbox" ? "border-primary" : "")"
-                           @onclick="() => SelectMessage(message)" @onclick:preventDefault="true">
+                        <MudListItem T="MessageModel" OnClick="() => SelectMessage(message)"
+                            Class="@(selectedMessage?.Id == message.Id ? "mud-selected" : ( !message.IsRead && currentFolder == "inbox" ? "mud-primary-text" : ""))">
                             <div class="d-flex w-100 justify-content-between">
-                                <h6 class="mb-1 @(!message.IsRead && currentFolder == "inbox" ? "fw-bold" : "")">
+                                <MudText Typo="Typo.subtitle1"
+                                    Class="@(selectedMessage?.Id == message.Id || (!message.IsRead && currentFolder == "inbox") ? "fw-bold" : "")">
                                     @if (currentFolder == "inbox")
                                     {
                                         @message.FromUserName
@@ -56,13 +63,16 @@
                                     {
                                         @message.ToUserName
                                     }
-                                </h6>
-                                <small class="@(!message.IsRead && currentFolder == "inbox" ? "fw-bold" : "")">
+                                </MudText>
+                                <MudText Typo="Typo.caption"
+                                    Class="@(selectedMessage?.Id == message.Id || (!message.IsRead && currentFolder == "inbox") ? "fw-bold" : "")">
                                     @message.SentAt.ToString("MMM dd")
-                                </small>
+                                </MudText>
                             </div>
-                            <p class="mb-1 @(!message.IsRead && currentFolder == "inbox" ? "fw-bold" : "")">@message.Subject</p>
-                            <small class="text-muted">
+                            <MudText Typo="Typo.body2"
+                                Class="@(selectedMessage?.Id == message.Id || (!message.IsRead && currentFolder == "inbox") ? "fw-bold" : "")">
+                                @message.Subject</MudText>
+                            <MudText Typo="Typo.caption" Class="text-muted">
                                 @if (message.Content.Length > 60)
                                 {
                                     @(message.Content.Substring(0, 60) + "...")
@@ -71,24 +81,24 @@
                                 {
                                     @message.Content
                                 }
-                            </small>
+                            </MudText>
                             @if (!message.IsRead && currentFolder == "inbox")
                             {
-                                <Badge Color="BadgeColor.Primary" class="rounded-pill ms-2">New</Badge>
+                                <MudChip T="string" Color="Color.Primary" Size="Size.Small" Class="ms-2">New</MudChip>
                             }
-                            @if (GetMessagePriorityIconName(message.Priority) is IconName iconName)
+                            @if (GetMessagePriorityIconName(message.Priority) is string iconName)
                             {
-                                <Icon Name="@iconName" class="ms-2" />
+                                <MudIcon Icon="@iconName" Class="ms-2" />
                             }
-                        </a>
+                        </MudListItem>
                     }
-                </div>
+                </MudList>
             }
             else
             {
                 <div class="text-center py-5">
-                    <Icon Name="IconName.Inbox" Size="IconSize.x3" Class="text-muted mb-3" />
-                    <p class="text-muted">No messages in @currentFolder</p>
+                    <MudIcon Icon="@Icons.Material.Filled.Inbox" Size="Size.Large" Class="text-muted mb-3" />
+                    <MudText Typo="Typo.h5" Class="text-muted">No messages in @currentFolder</MudText>
                 </div>
             }
         </div>
@@ -97,72 +107,70 @@
         <div class="col-md-8">
             @if (selectedMessage != null)
             {
-                <Card>
-                    <CardHeader>
-                        <div class="d-flex justify-content-between align-items-center">
-                            <div>
-                                <h5 class="mb-0">@selectedMessage.Subject</h5>
-                                <small class="text-muted">
-                                    From: @selectedMessage.FromUserName •
-                                    @selectedMessage.SentAt.ToString("MMMM dd, yyyy 'at' h:mm tt")
-                                </small>
-                            </div>
-                            <div class="btn-group">
-                                <Button Color="ButtonColor.Primary" Outline="true" Size="ButtonSize.Small" @onclick="ReplyToMessage">
-                                    <Icon Name="IconName.Reply" Class="me-1" />Reply
-                                </Button>
-                                <Button Color="ButtonColor.Danger" Outline="true" Size="ButtonSize.Small" @onclick="DeleteMessage">
-                                    <Icon Name="IconName.Trash" Class="me-1" />Delete
-                                </Button>
-                            </div>
+                <MudChat Style="height: 100%;" Class="d-flex flex-column">
+                    <MudChatBubble Text="@((MarkupString)selectedMessage.Content.Replace("\n", "<br>"))"
+                        Time="@selectedMessage.SentAt.ToString("MMM dd, yyyy 'at' h:mm tt")"
+                        Origin="@(selectedMessage.FromUserId == currentUserId ? MudBlazor.Origin.TopRight : MudBlazor.Origin.TopLeft)"
+                        Color="@(selectedMessage.FromUserId == currentUserId ? Color.Primary : Color.Secondary)">
+                        @* ChildContent for main message *@
+                        <div class="d-flex align-items-center mb-2">
+                            <MudAvatar Color="Color.Dark" Variant="Variant.Outlined" Class="me-2">
+                                <MudText Typo="Typo.h6">@selectedMessage.FromUserName?.FirstOrDefault()</MudText>
+                            </MudAvatar>
+                            <MudText Typo="Typo.subtitle1">@(selectedMessage.FromUserName ?? "Unknown")</MudText>
                         </div>
-                    </CardHeader>
-                    <CardBody>
-                        <div class="message-content">
-                            @((MarkupString)selectedMessage.Content.Replace("\n", "<br>"))
-                        </div>
-
                         @if (selectedMessage.Attachments?.Any() == true)
                         {
                             <div class="mt-3">
-                                <h6>Attachments:</h6>
+                                <MudText Typo="Typo.subtitle1">Attachments:</MudText>
                                 @foreach (var attachment in selectedMessage.Attachments)
                                 {
                                     <div class="d-flex align-items-center mb-2">
-                                        <Icon Name="IconName.Paperclip" Class="me-2" />
-                                        <a href="#" class="text-decoration-none">@attachment.FileName</a>
-                                        <small class="text-muted ms-2">(@FormatFileSize(attachment.FileSize))</small>
+                                        <MudIcon Icon="@Icons.Material.Filled.AttachFile" Class="me-2" />
+                                        <MudLink Href="#" Class="text-decoration-none">@attachment.FileName</MudLink>
+                                        <MudText Typo="Typo.caption" Class="text-muted ms-2">
+                                            (@FormatFileSize(attachment.FileSize))
+                                        </MudText>
                                     </div>
                                 }
                             </div>
                         }
-                    </CardBody>
-                </Card>
+                        <MudCardActions Class="pa-0">
+                            <MudButton Variant="Variant.Text" Color="Color.Inherit" Size="Size.Small"
+                                OnClick="ReplyToMessage">
+                                <MudIcon Icon="@Icons.Material.Filled.Reply" Class="me-1" />Reply
+                            </MudButton>
+                            <MudButton Variant="Variant.Text" Color="Color.Inherit" Size="Size.Small"
+                                OnClick="DeleteMessage">
+                                <MudIcon Icon="@Icons.Material.Filled.Delete" Class="me-1" />Delete
+                            </MudButton>
+                        </MudCardActions>
+                    </MudChatBubble>
 
-                <!-- Replies -->
-                @if (selectedMessage.Replies?.Any() == true)
-                {
-                    <div class="mt-3">
-                        <h6>Replies:</h6>
+                    @if (selectedMessage.Replies?.Any() == true)
+                    {
                         @foreach (var reply in selectedMessage.Replies)
                         {
-                            <Card class="mb-2">
-                                <CardBody class="py-2">
-                                    <div class="d-flex justify-content-between align-items-center mb-2">
-                                        <small class="fw-bold">@reply.FromUserName</small>
-                                        <small class="text-muted">@reply.SentAt.ToString("MMM dd, yyyy 'at' h:mm tt")</small>
-                                    </div>
-                                    <div>@((MarkupString)reply.Content.Replace("\n", "<br>"))</div>
-                                </CardBody>
-                            </Card>
+                            <MudChatBubble Text="@((MarkupString)reply.Content.Replace("\n", "<br>"))"
+                                Time="@reply.SentAt.ToString("MMM dd, yyyy 'at' h:mm tt")"
+                                Origin="@(reply.FromUserId == currentUserId ? MudBlazor.Origin.TopRight : MudBlazor.Origin.TopLeft)"
+                                Color="@(reply.FromUserId == currentUserId ? Color.Primary : Color.Secondary)">
+                                @* ChildContent for reply *@
+                                <div class="d-flex align-items-center mb-2">
+                                    <MudAvatar Color="Color.Dark" Variant="Variant.Outlined" Class="me-2">
+                                        <MudText Typo="Typo.h6">@reply.FromUserName?.FirstOrDefault()</MudText>
+                                    </MudAvatar>
+                                    <MudText Typo="Typo.subtitle1">@(reply.FromUserName ?? "Unknown")</MudText>
+                                </div>
+                            </MudChatBubble>
                         }
-                    </div>
-                }
+                    }
+                </MudChat>
             }
             else
             {
                 <div class="text-center py-5">
-                    <Icon Name="IconName.EnvelopeOpen" Size="IconSize.x4" Class="text-muted mb-3" />
+                    <MudIcon Icon="@Icons.Material.Filled.MailOutline" Size="Size.Large" Class="text-muted mb-3" />
                     <h4 class="text-muted">Select a message</h4>
                     <p class="text-muted">Choose a message from the list to read its content</p>
                 </div>
@@ -174,66 +182,64 @@
 
 
 <!-- Compose Message Modal -->
-<Modal @ref="composeModal" Title="@(replyToMessage != null ? "Reply to: " + replyToMessage.Subject : "Compose Message")">
-    <BodyTemplate>
-        <EditForm Model="@newMessage" OnValidSubmit="@SendMessage">
-            <DataAnnotationsValidator />
-            <ValidationSummary class="alert alert-danger" />
+<MudDialog @bind-IsVisible="@isComposeModalVisible" Options="@dialogOptions">
+    <TitleContent>
+        <MudText Typo="Typo.h6">@(replyToMessage != null ? "Reply to: " + replyToMessage.Subject : "Compose Message")
+        </MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudForm Model="@newMessage" OnValidSubmit="SendMessage">
+            <MudAlert Severity="Severity.Error" Class="mb-3" Visible="@(!string.IsNullOrEmpty(statusMessage))">
+                <MudText>@statusMessage</MudText>
+            </MudAlert>
 
             @if (replyToMessage == null)
             {
-                <div class="mb-3">
-                    <label for="toUser" class="form-label">To</label>
-                    <InputText id="toUser" class="form-control" @bind-value="toUserSearch" placeholder="Search for a user..." />
-                    @if (searchedUsers?.Any() == true)
-                    {
-                        <div class="dropdown-menu show">
-                            @foreach (var user in searchedUsers.Take(5))
-                            {
-                                <a class="dropdown-item" href="#" @onclick="() => SelectRecipient(user)" @onclick:preventDefault="true">
-                                    @user.UserName (@user.Email)
-                                </a>
-                            }
-                        </div>
-                    }
-                </div>
+                <MudTextField T="string" Label="To" Variant="Variant.Text" @bind-Value="toUserSearch"
+                    Placeholder="Search for a user..." />
+                @if (searchedUsers?.Any() == true)
+                {
+                    <MudList T="UserModel" Clickable="true">
+                        @foreach (var user in searchedUsers.Take(5))
+                        {
+                            <MudListItem T="UserModel" OnClick="() => SelectRecipient(user)">
+                                @user.UserName (@user.Email)
+                            </MudListItem>
+                        }
+                    </MudList>
+                }
             }
 
-            <div class="mb-3">
-                <label for="subject" class="form-label">Subject</label>
-                <InputText id="subject" class="form-control" @bind-value="newMessage.Subject" />
-                <ValidationMessage For="@(() => newMessage.Subject)" />
-            </div>
+            <MudTextField T="string" Label="Subject" Variant="Variant.Text" @bind-Value="newMessage.Subject"
+                Required="true" RequiredError="Subject is required!" />
 
-            <div class="mb-3">
-                <label for="priority" class="form-label">Priority</label>
-                <select id="priority" class="form-select" @bind="newMessage.Priority">
-                    <option value="1">Low</option>
-                    <option value="2">Normal</option>
-                    <option value="3">High</option>
-                    <option value="4">Urgent</option>
-                </select>
-            </div>
+            <MudAutocomplete T="int" Label="Priority" Variant="Variant.Text" @bind-Value="newMessage.Priority"
+                SearchFunc="@SearchPriorityOptions"
+                ToStringFunc="@(p => priorityOptions.FirstOrDefault(x => x.Value == p)?.DisplayName ?? string.Empty)"
+                Clearable="false" Placeholder="Select priority">
+                <ItemTemplate Context="priorityContext">
+                    <MudText>@(priorityOptions.FirstOrDefault(o => o.Value == priorityContext)?.DisplayName)</MudText>
+                </ItemTemplate>
+            </MudAutocomplete>
 
-            <div class="mb-3">
-                <label for="content" class="form-label">Message</label>
-                <InputTextArea id="content" class="form-control" rows="6" @bind-value="newMessage.Content" />
-                <ValidationMessage For="@(() => newMessage.Content)" />
-            </div>
+            <MudTextField T="string" Label="Message" Variant="Variant.Text" Lines="6" @bind-Value="newMessage.Content"
+                Required="true" RequiredError="Message content is required!" />
 
-        </EditForm>
-    </BodyTemplate>
-    <FooterTemplate>
-        <Button Color="ButtonColor.Secondary" @onclick="HideComposeModal">Cancel</Button>
-        <Button Color="ButtonColor.Primary" IsLoading="isSending" @onclick="SendMessage">
-            Send Message
-        </Button>
-    </FooterTemplate>
-</Modal>
+            <!-- Removed invalid DialogActions tag -->
+            <MudDialogActions>
+                <MudButton Color="Color.Secondary" OnClick="HideComposeModal">Cancel</MudButton>
+                <MudButton Color="Color.Primary" ButtonType="ButtonType.Submit" Disabled="@isSending">
+                    Send Message
+                </MudButton>
+            </MudDialogActions>
+        </MudForm>
+    </DialogContent>
+</MudDialog>
 
 @code {
     private bool isLoadingMessages = true;
     private bool isSending = false;
+    private string statusMessage = "";
     private string currentFolder = "inbox";
     private string? currentUserId;
     private string toUserSearch = "";
@@ -248,7 +254,29 @@
     private CreateMessageRequest newMessage = new();
     private int unreadCount = 0;
 
-    private Modal? composeModal;
+    private bool isComposeModalVisible = false;
+    private DialogOptions dialogOptions = new() { CloseButton = true, MaxWidth = MaxWidth.Medium, FullWidth = true };
+
+    private List<PriorityOption> priorityOptions = new(){
+new PriorityOption { Value = 1, DisplayName = "Low" },
+new PriorityOption { Value = 2, DisplayName = "Normal" },
+new PriorityOption { Value = 3, DisplayName = "High" },
+new PriorityOption { Value = 4, DisplayName = "Urgent" }
+};
+
+    private Task<IEnumerable<int>> SearchPriorityOptions(string value, CancellationToken token)
+    {
+        if (string.IsNullOrEmpty(value))
+            return Task.FromResult(priorityOptions.Select(x => x.Value));
+        return Task.FromResult(priorityOptions.Where(x => x.DisplayName.Contains(value,
+        StringComparison.InvariantCultureIgnoreCase)).Select(x => x.Value));
+    }
+
+    public class PriorityOption
+    {
+        public int Value { get; set; }
+        public string DisplayName { get; set; } = string.Empty;
+    }
 
     protected override async Task OnInitializedAsync()
     {
@@ -288,7 +316,7 @@
         }
         catch (Exception ex)
         {
-            ToastService.Notify(new ToastMessage(ToastType.Danger, $"Error loading messages: {ex.Message}"));
+            Snackbar.Add($"Error loading messages: {ex.Message}", Severity.Error);
         }
         finally
         {
@@ -331,22 +359,21 @@
             }
             catch (Exception ex)
             {
-                ToastService.Notify(new ToastMessage(ToastType.Danger, $"Error marking message as read: {ex.Message}"));
+                Snackbar.Add($"Error marking message as read: {ex.Message}", Severity.Error);
             }
         }
     }
 
-    private async void ShowComposeModal()
+    private void ShowComposeModal()
     {
         replyToMessage = null;
         newMessage = new CreateMessageRequest();
         toUserSearch = "";
         searchedUsers = null;
-        if (composeModal != null)
-            await composeModal.ShowAsync();
+        isComposeModalVisible = true;
     }
 
-    private async void ReplyToMessage()
+    private void ReplyToMessage()
     {
         if (selectedMessage == null) return;
 
@@ -360,14 +387,12 @@
         };
         toUserSearch = "";
         searchedUsers = null;
-        if (composeModal != null)
-            await composeModal.ShowAsync();
+        isComposeModalVisible = true;
     }
 
-    private async void HideComposeModal()
+    private void HideComposeModal()
     {
-        if (composeModal != null)
-            await composeModal.HideAsync();
+        isComposeModalVisible = false;
         replyToMessage = null;
         newMessage = new CreateMessageRequest();
         toUserSearch = "";
@@ -385,18 +410,21 @@
 
             if (response.IsSuccessStatusCode)
             {
-                ToastService.Notify(new ToastMessage(ToastType.Success, "Message sent successfully!"));
+                Snackbar.Add("Message sent successfully!", Severity.Success);
                 HideComposeModal();
                 await LoadMessages();
             }
             else
             {
-                ToastService.Notify(new ToastMessage(ToastType.Danger, "Failed to send message"));
+                var error = await response.Content.ReadAsStringAsync();
+                statusMessage = $"Failed to send message: {error}";
+                Snackbar.Add(statusMessage, Severity.Error);
             }
         }
         catch (Exception ex)
         {
-            ToastService.Notify(new ToastMessage(ToastType.Danger, $"Error sending message: {ex.Message}"));
+            statusMessage = $"Error sending message: {ex.Message}";
+            Snackbar.Add(statusMessage, Severity.Error);
         }
         finally
         {
@@ -413,18 +441,18 @@
             var response = await HttpClient.DeleteAsync($"/api/messages/{selectedMessage.Id}?userId={currentUserId}");
             if (response.IsSuccessStatusCode)
             {
-                ToastService.Notify(new ToastMessage(ToastType.Success, "Message deleted successfully!"));
+                Snackbar.Add("Message deleted successfully!", Severity.Success);
                 selectedMessage = null;
                 await LoadMessages();
             }
             else
             {
-                ToastService.Notify(new ToastMessage(ToastType.Danger, "Failed to delete message"));
+                Snackbar.Add("Failed to delete message", Severity.Error);
             }
         }
         catch (Exception ex)
         {
-            ToastService.Notify(new ToastMessage(ToastType.Danger, $"Error deleting message: {ex.Message}"));
+            Snackbar.Add($"Error deleting message: {ex.Message}", Severity.Error);
         }
     }
 
@@ -435,14 +463,14 @@
         searchedUsers = null;
     }
 
-    // Returns a BlazorBootstrap IconName? for the given priority string
-    private IconName? GetMessagePriorityIconName(string priority)
+    // Returns a MudBlazor icon string for the given priority
+    private string GetMessagePriorityIconName(string priority)
     {
         return priority switch
         {
-            "High" => IconName.ExclamationLg,
-            "Urgent" => IconName.ExclamationTriangle,
-            _ => null
+            "High" => Icons.Material.Filled.PriorityHigh,
+            "Urgent" => Icons.Material.Filled.CrisisAlert,
+            _ => Icons.Material.Filled.MailOutline
         };
     }
 

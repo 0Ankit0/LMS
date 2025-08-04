@@ -1,179 +1,141 @@
-@using BlazorBootstrap;
+@using MudBlazor;
 @using System.Security.Claims;
 @page "/user/lms/my-courses"
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @inject HttpClient HttpClient
 @inject ToastService ToastService
+@inject ISnackbar Snackbar
+@using LMS.Web.Client.Services
 
 <PageTitle>My Courses - LMS</PageTitle>
 
 <div class="container-fluid">
-    <div
-        class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-        <h1 class="h2">
-            <Icon Name="IconName.Book" Class="me-2" />My Courses
-        </h1>
-        <div class="btn-toolbar mb-2 mb-md-0">
-            <div class="btn-group me-2" role="group">
-                <Button Color="ButtonColor.Primary" Outline="@(currentFilter != "all")"
-                    @onclick='() => FilterCourses("all")'>All</Button>
-                <Button Color="ButtonColor.Primary" Outline="@(currentFilter != "active")"
-                    @onclick='() => FilterCourses("active")'>Active</Button>
-                <Button Color="ButtonColor.Primary" Outline="@(currentFilter != "completed")"
-                    @onclick='() => FilterCourses("completed")'>Completed</Button>
-            </div>
-        </div>
-    </div>
+    <MudToolBar Class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+        <MudText Typo="Typo.h5" Class="h2">
+            <MudIcon Icon="@Icons.Material.Filled.Book" Class="me-2" />My Courses
+        </MudText>
+        <MudToolBarSpacer />
+        <MudButtonGroup Color="Color.Primary" Variant="Variant.Outlined">
+            <MudButton OnClick='() => FilterCourses("all")' Variant="@(currentFilter == "all" ? Variant.Filled : Variant.Outlined)">All</MudButton>
+            <MudButton OnClick='() => FilterCourses("active")' Variant="@(currentFilter == "active" ? Variant.Filled : Variant.Outlined)">Active</MudButton>
+            <MudButton OnClick='() => FilterCourses("completed")' Variant="@(currentFilter == "completed" ? Variant.Filled : Variant.Outlined)">Completed</MudButton>
+        </MudButtonGroup>
+    </MudToolBar>
 
     @if (isLoading)
     {
-        <div class="d-flex justify-content-center py-5">
-            <Spinner />
-        </div>
+        <MudGrid Spacing="3">
+    @if (isLoading)
+    {
+        @for (int i = 0; i < 6; i++)
+        {
+            <MudItem xs="12" md="6" lg="4">
+                <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="350px" />
+            </MudItem>
+        }
     }
     else if (filteredEnrollments?.Any() == true)
     {
-        <div class="row">
-            @foreach (var enrollment in filteredEnrollments)
-            {
-                <div class="col-lg-4 col-md-6 mb-4">
-                    <Card Class="h-100 shadow-sm">
-                        @if (!string.IsNullOrEmpty(enrollment.CourseThumbnailUrl))
+        @foreach (var enrollment in filteredEnrollments)
+        {
+            <MudItem xs="12" md="6" lg="4">
+                <MudCard Elevation="2" Class="h-100">
+                    <MudCardMedia Image="@enrollment.CourseThumbnailUrl" Style="height: 200px; object-fit: cover;" Alt="@enrollment.CourseTitle" />
+                    <MudCardContent>
+                        <MudText Typo="Typo.h5">@enrollment.CourseTitle</MudText>
+                        <MudText Typo="Typo.body2">@enrollment.CourseDescription</MudText>
+                        <MudProgressLinear Value="@enrollment.ProgressPercentage" Color="Color.Success" Class="my-3" />
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <MudText Typo="Typo.caption">Progress</MudText>
+                            <MudText Typo="Typo.caption">@($"{enrollment.ProgressPercentage:F0}%")</MudText>
+                        </div>
+                        <div>
+                            @if (enrollment.CompletedAt.HasValue)
+                            {
+                                <MudChip T="string" Icon="@Icons.Material.Filled.Check" Color="Color.Success" Size="Size.Small">Completed</MudChip>
+                            }
+                            else if (enrollment.LastAccessedAt.HasValue && enrollment.LastAccessedAt > DateTime.Now.AddDays(-7))
+                            {
+                                <MudChip T="string" Icon="@Icons.Material.Filled.PlayArrow" Color="Color.Primary" Size="Size.Small">Active</MudChip>
+                            }
+                            else
+                            {
+                                <MudChip T="string" Icon="@Icons.Material.Filled.Pause" Color="Color.Warning" Size="Size.Small">Paused</MudChip>
+                            }
+                        </div>
+                        <div class="mt-3">
+                            <MudText Typo="Typo.caption" Class="d-block">
+                                <MudIcon Icon="@Icons.Material.Filled.CalendarToday" Size="Size.Small" Class="me-1" />
+                                Enrolled: @enrollment.EnrolledAt.ToString("MMM dd, yyyy")
+                            </MudText>
+                            @if (enrollment.LastAccessedAt.HasValue)
+                            {
+                                <MudText Typo="Typo.caption" Class="d-block">
+                                    <MudIcon Icon="@Icons.Material.Filled.AccessTime" Size="Size.Small" Class="me-1" />
+                                    Last accessed: @enrollment.LastAccessedAt.Value.ToString("MMM dd, yyyy")
+                                </MudText>
+                            }
+                        </div>
+                    </MudCardContent>
+                    <MudCardActions>
+                        @if (IsAdmin)
                         {
-                            <img src="@enrollment.CourseThumbnailUrl" class="card-img-top" style="height: 200px; object-fit: cover;"
-                                alt="@enrollment.CourseTitle">
+                            <MudButton Color="Color.Info" Size="Size.Small" Href="@($"/admin/courses/manage/{enrollment.CourseId}")" StartIcon="@Icons.Material.Filled.Settings">Manage</MudButton>
+                        }
+                        @if (enrollment.CompletedAt.HasValue)
+                        {
+                            <MudButton Color="Color.Primary" Variant="Variant.Outlined" Size="Size.Small" Href="@($"/course/{enrollment.CourseId}")" StartIcon="@Icons.Material.Filled.Visibility">Review</MudButton>
+                            <MudButton Color="Color.Success" Size="Size.Small" OnClick="() => DownloadCertificate(enrollment.CourseId)" StartIcon="@Icons.Material.Filled.Download">Certificate</MudButton>
                         }
                         else
                         {
-                            <div class="card-img-top bg-light d-flex align-items-center justify-content-center"
-                                style="height: 200px;">
-                                <Icon Name="IconName.Book" Size="IconSize.x3" Class="text-muted" />
-                            </div>
+                            <MudButton Color="Color.Primary" Size="Size.Small" Href="@($"/course/{enrollment.CourseId}")" StartIcon="@Icons.Material.Filled.PlayArrow">Continue</MudButton>
+                            <MudButton Color="Color.Error" Variant="Variant.Outlined" Size="Size.Small" OnClick="() => ShowUnenrollModal(enrollment)" StartIcon="@Icons.Material.Filled.Close">Unenroll</MudButton>
                         }
-
-                        <CardBody Class="d-flex flex-column">
-                            <CardTitle>@enrollment.CourseTitle</CardTitle>
-                            <CardText>@enrollment.CourseDescription</CardText>
-
-                            <!-- Progress Bar -->
-                            <div class="mb-3">
-                                <div class="d-flex justify-content-between align-items-center mb-1">
-                                    <small class="text-muted">Progress</small>
-                                    <small class="text-muted">@($"{enrollment.ProgressPercentage:F0}%")</small>
-                                </div>
-                                <Progress Value="(int)enrollment.ProgressPercentage" Color="ProgressColor.Success" />
-                            </div>
-
-                            <!-- Status Badge -->
-                            <div class="mb-3">
-                                @if (enrollment.CompletedAt.HasValue)
-                                {
-                                    <Badge Color="BadgeColor.Success">
-                                        <Icon Name="IconName.Check" Class="me-1" />Completed
-                                    </Badge>
-                                }
-                                else if (enrollment.LastAccessedAt.HasValue && enrollment.LastAccessedAt >
-                                DateTime.Now.AddDays(-7))
-                                {
-                                    <Badge Color="BadgeColor.Primary">
-                                        <Icon Name="IconName.Play" Class="me-1" />Active
-                                    </Badge>
-                                }
-                                else
-                                {
-                                    <Badge Color="BadgeColor.Warning">
-                                        <Icon Name="IconName.Pause" Class="me-1" />Paused
-                                    </Badge>
-                                }
-                            </div>
-
-                            <!-- Course Info -->
-                            <div class="mb-3">
-                                <small class="text-muted d-block">
-                                    <Icon Name="IconName.Calendar" Class="me-1" />
-                                    Enrolled: @enrollment.EnrolledAt.ToString("MMM dd, yyyy")
-                                </small>
-                                @if (enrollment.LastAccessedAt.HasValue)
-                                {
-                                    <small class="text-muted d-block">
-                                        <Icon Name="IconName.Clock" Class="me-1" />
-                                        Last accessed: @enrollment.LastAccessedAt.Value.ToString("MMM dd, yyyy")
-                                    </small>
-                                }
-                            </div>
-
-                            <!-- Action Buttons -->
-                            <div class="mt-auto">
-                                @if (IsAdmin)
-                                {
-                                    <Button Color="ButtonColor.Info" Size="ButtonSize.Small"
-                                        To="@($"/admin/courses/manage/{enrollment.CourseId}")" Class="me-2">
-                                        <Icon Name="IconName.Gear" Class="me-1" />Manage
-                                    </Button>
-                                }
-                                @if (enrollment.CompletedAt.HasValue)
-                                {
-                                    <Button Color="ButtonColor.Primary" Outline="true" Size="ButtonSize.Small"
-                                        To="@($"/course/{enrollment.CourseId}")" Class="me-2">
-                                        <Icon Name="IconName.Eye" Class="me-1" />Review
-                                    </Button>
-                                    <Button Color="ButtonColor.Success" Size="ButtonSize.Small"
-                                        @onclick="() => DownloadCertificate(enrollment.CourseId)">
-                                        <Icon Name="IconName.Download" Class="me-1" />Certificate
-                                    </Button>
-                                }
-                                else
-                                {
-                                    <Button Color="ButtonColor.Primary" Size="ButtonSize.Small"
-                                        To="@($"/course/{enrollment.CourseId}")" Class="me-2">
-                                        <Icon Name="IconName.Play" Class="me-1" />Continue
-                                    </Button>
-                                    <Button Color="ButtonColor.Danger" Outline="true" Size="ButtonSize.Small"
-                                        @onclick="() => ShowUnenrollModal(enrollment)">
-                                        <Icon Name="IconName.X" Class="me-1" />Unenroll
-                                    </Button>
-                                }
-                            </div>
-                        </CardBody>
-                    </Card>
-                </div>
-            }
-        </div>
+                    </MudCardActions>
+                </MudCard>
+            </MudItem>
+        }
     }
     else
     {
-        <div class="text-center py-5">
-            <Icon Name="IconName.Book" Size="IconSize.x4" Class="text-muted mb-3" />
-            <h4 class="text-muted">No courses found</h4>
-            <p class="text-muted">@GetEmptyStateMessage()</p>
-            <Button Color="ButtonColor.Primary" To="/courses">
-                <Icon Name="IconName.Search" Class="me-1" />Browse Courses
-            </Button>
-        </div>
+        <MudItem xs="12">
+            <div classs="text-center py-5">
+                <MudIcon Icon="@Icons.Material.Filled.Book" Size="Size.Large" Class="text-muted mb-3" />
+                <MudText Typo="Typo.h5" Class="text-muted">No courses found</MudText>
+                <MudText Typo="Typo.body1" Class="text-muted">@GetEmptyStateMessage()</MudText>
+                <MudButton Color="Color.Primary" Href="/courses" StartIcon="@Icons.Material.Filled.Search">Browse Courses</MudButton>
+            </div>
+        </MudItem>
+    }
+</MudGrid>
     }
 </div>
 
 
 
 <!-- Unenroll Confirmation Modal -->
-<Modal @ref="unenrollModal" Title="Confirm Unenrollment">
-    <BodyTemplate>
+<MudDialog @bind-IsVisible="@isUnenrollModalVisible" Options="@dialogOptions">
+    <TitleContent>
+        <MudText Typo="Typo.h6">Confirm Unenrollment</MudText>
+    </TitleContent>
+    <DialogContent>
         @if (selectedEnrollment != null)
         {
-            <p>Are you sure you want to unenroll from <strong>@selectedEnrollment.CourseTitle</strong>?</p>
-            <Alert Color="AlertColor.Warning">
-                <Icon Name="IconName.ExclamationTriangle" Class="me-2" />
+            <MudText>Are you sure you want to unenroll from <strong>@selectedEnrollment.CourseTitle</strong>?</MudText>
+            <MudAlert Severity="Severity.Warning" Class="mt-3">
+                <MudIcon Icon="@Icons.Material.Filled.Warning" Class="me-2" />
                 Your progress will be lost and cannot be recovered.
-            </Alert>
+            </MudAlert>
         }
-    </BodyTemplate>
-    <FooterTemplate>
-        <Button Color="ButtonColor.Secondary" @onclick="HideUnenrollModal">Cancel</Button>
-        <Button Color="ButtonColor.Danger" @onclick="ConfirmUnenroll">
+    </DialogContent>
+    <DialogActions>
+        <MudButton Color="Color.Secondary" OnClick="HideUnenrollModal">Cancel</MudButton>
+        <MudButton Color="Color.Error" OnClick="ConfirmUnenroll">
             Unenroll
-        </Button>
-    </FooterTemplate>
-</Modal>
+        </MudButton>
+    </DialogActions>
+</MudDialog>
 
 @code {
     private bool isLoading = true;
@@ -183,7 +145,8 @@
     private List<EnrollmentModel>? enrollments;
     private List<EnrollmentModel>? filteredEnrollments;
     private EnrollmentModel? selectedEnrollment;
-    private Modal unenrollModal = default!;
+    private bool isUnenrollModalVisible = false;
+    private DialogOptions dialogOptions = new() { CloseButton = true, MaxWidth = MaxWidth.Small, FullWidth = true };
     private bool IsAdmin = false; // Placeholder for admin role check
 
     protected override async Task OnInitializedAsync()
@@ -215,7 +178,7 @@
         }
         catch (Exception ex)
         {
-            ToastService.Notify(new ToastMessage(ToastType.Danger, $"Error loading courses: {ex.Message}"));
+            Snackbar.Add($"Error loading courses: {ex.Message}", Severity.Error);
         }
         finally
         {
@@ -246,15 +209,15 @@
         };
     }
 
-    private async Task ShowUnenrollModal(EnrollmentModel enrollment)
+    private void ShowUnenrollModal(EnrollmentModel enrollment)
     {
         selectedEnrollment = enrollment;
-        await unenrollModal.ShowAsync();
+        isUnenrollModalVisible = true;
     }
 
-    private async Task HideUnenrollModal()
+    private void HideUnenrollModal()
     {
-        await unenrollModal.HideAsync();
+        isUnenrollModalVisible = false;
         selectedEnrollment = null;
     }
 
@@ -269,24 +232,24 @@
 
             if (response.IsSuccessStatusCode)
             {
-                ToastService.Notify(new ToastMessage(ToastType.Success, "Successfully unenrolled from course"));
+                Snackbar.Add("Successfully unenrolled from course", Severity.Success);
                 await LoadUserCourses();
-                await HideUnenrollModal();
+                HideUnenrollModal();
             }
             else
             {
-                ToastService.Notify(new ToastMessage(ToastType.Danger, "Failed to unenroll from course"));
+                Snackbar.Add("Failed to unenroll from course", Severity.Error);
             }
         }
         catch (Exception ex)
         {
-            ToastService.Notify(new ToastMessage(ToastType.Danger, $"Error: {ex.Message}"));
+            ToastService.ShowError($"Error: {ex.Message}");
         }
     }
 
     private void DownloadCertificate(int courseId)
     {
-        ToastService.Notify(new ToastMessage(ToastType.Info, "Certificate download functionality will be implemented soon"));
+        ToastService.ShowInfo("Certificate download functionality will be implemented soon");
     }
 
     // Enrollment Model
