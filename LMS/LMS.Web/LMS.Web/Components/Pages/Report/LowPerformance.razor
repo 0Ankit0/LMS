@@ -1,6 +1,8 @@
 @using LMS.Web.Repositories.DTOs
 @using Microsoft.AspNetCore.Components.Authorization
 @using Microsoft.AspNetCore.Identity
+@using MudBlazor
+@using LMS.Web.Components.Account.Shared
 @inject IReportRepository ReportRepository
 @inject IJSRuntime JSRuntime
 @inject AuthenticationStateProvider AuthenticationStateProvider
@@ -14,136 +16,130 @@
         <p class="text-muted mb-0">Identify students who need additional support and intervention</p>
     </div>
     <div class="export-buttons">
-        <button class="btn btn-outline-report" @onclick="ExportToPdf">
-            <i class="fas fa-file-pdf"></i> Export PDF
-        </button>
-        <button class="btn btn-outline-report" @onclick="ExportToExcel">
-            <i class="fas fa-file-excel"></i> Export Excel
-        </button>
+        <MudButton Variant="Variant.Outlined" Color="Color.Primary" OnClick="ExportToPdf">
+            <MudIcon Icon="@Icons.Material.Filled.PictureAsPdf" Class="me-2" /> Export PDF
+        </MudButton>
+        <MudButton Variant="Variant.Outlined" Color="Color.Primary" OnClick="ExportToExcel">
+            <MudIcon Icon="@Icons.Material.Filled.Description" Class="me-2" /> Export Excel
+        </MudButton>
     </div>
 </div>
 
 <!-- Filters -->
-<div class="report-filters">
-    <div class="row">
-        <div class="col-md-3">
-            <div class="form-group">
-                <label class="form-label">Performance Threshold (%)</label>
-                <input type="number" class="form-control" @bind="threshold" @bind:after="LoadData"
-                       min="0" max="100" step="5" placeholder="50" />
-                <small class="form-text text-muted">Students below this threshold will be included</small>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="form-group">
-                <label class="form-label">Start Date</label>
-                <input type="date" class="form-control" @bind="startDate" @bind:after="LoadData" />
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="form-group">
-                <label class="form-label">End Date</label>
-                <input type="date" class="form-control" @bind="endDate" @bind:after="LoadData" />
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="form-group">
-                <label class="form-label">Course</label>
-                <select class="form-select" @bind="selectedCourseId" @bind:after="LoadData">
-                    <option value="">All Courses</option>
-                    @if (courses?.Any() == true)
-                    {
-                        @foreach (var course in courses)
-                        {
-                            <option value="@course.Id">@course.Title</option>
-                        }
-                    }
-                </select>
-            </div>
-        </div>
-    </div>
-</div>
+<MudGrid Class="report-filters">
+    <MudItem xs="12" md="3">
+        <MudNumericField Label="Performance Threshold (%)" @bind-Value="threshold" Variant="Variant.Text" Min="0" Max="100" Step="5" Placeholder="50" OnBlur="LoadData" />
+        <MudText Typo="Typo.caption" Class="text-muted">Students below this threshold will be included</MudText>
+    </MudItem>
+    <MudItem xs="12" md="3">
+        <MudDatePicker Label="Start Date" @bind-Date="startDate" DateFormat="yyyy-MM-dd" OnChange="LoadData" />
+    </MudItem>
+    <MudItem xs="12" md="3">
+        <MudDatePicker Label="End Date" @bind-Date="endDate" DateFormat="yyyy-MM-dd" OnChange="LoadData" />
+    </MudItem>
+    <MudItem xs="12" md="3">
+        <MudSelect T="int?" Label="Course" @bind-Value="selectedCourseId" OnChange="LoadData">
+            <MudSelectItem Value="@((int?)null)">All Courses</MudSelectItem>
+            @if (courses?.Any() == true)
+            {
+                @foreach (var course in courses)
+                {
+                    <MudSelectItem Value="@course.Id">@course.Title</MudSelectItem>
+                }
+            }
+        </MudSelect>
+    </MudItem>
+</MudGrid>
 
 @if (loading)
 {
-    <div class="report-loading">
-        <div class="spinner-border" role="status">
-            <span class="visually-hidden">Loading...</span>
-        </div>
-        <p class="mt-2">Loading low performance students data...</p>
+    <div class="report-loading d-flex flex-column align-items-center justify-content-center py-5">
+        <MudProgressCircular Indeterminate="true" Color="Color.Primary" Size="Size.Large" />
+        <MudText Class="mt-2">Loading low performance students data...</MudText>
     </div>
 }
 else if (reports?.Any() == true)
 {
     <!-- Alert Summary -->
-    <div class="alert alert-warning mb-4">
-        <div class="d-flex align-items-center">
-            <i class="fas fa-exclamation-triangle fa-2x me-3"></i>
-            <div>
-                <h5 class="mb-1">⚠️ Attention Required</h5>
-                <p class="mb-0">
-                    <strong>@reports.Count()</strong> students are performing below the @threshold% threshold and may need additional support.
-                </p>
-            </div>
+    <MudAlert Severity="Severity.Warning" Class="mb-4">
+        <MudIcon Icon="@Icons.Material.Filled.Warning" Class="me-3" Size="Size.Large" />
+        <div>
+            <MudText Typo="Typo.h6">⚠️ Attention Required</MudText>
+            <MudText>
+                <strong>@reports.Count()</strong> students are performing below the @threshold% threshold and may need additional support.
+            </MudText>
         </div>
-    </div>
+    </MudAlert>
 
     <!-- Summary Statistics -->
-    <div class="stats-grid mb-4">
-        <div class="stat-card stat-card-danger">
-            <div class="stat-value">@reports.Count()</div>
-            <div class="stat-label">At-Risk Students</div>
-        </div>
-        <div class="stat-card stat-card-warning">
-            <div class="stat-value">@($"{reports.Average(r => r.AverageAssessmentScore):F1}%")</div>
-            <div class="stat-label">Avg Performance</div>
-        </div>
-        <div class="stat-card stat-card-info">
-            <div class="stat-value">@($"{reports.Average(r => r.ProgressPercentage):F1}%")</div>
-            <div class="stat-label">Avg Progress</div>
-        </div>
-        <div class="stat-card stat-card-secondary">
-            <div class="stat-value">@reports.Count(r => r.Status == "Active")</div>
-            <div class="stat-label">Still Active</div>
-        </div>
-    </div>
+    <MudGrid Class="stats-grid mb-4">
+        <MudItem xs="12" sm="6" md="3">
+            <MudCard Elevation="2">
+                <MudCardContent>
+                    <MudText Typo="Typo.h4">@reports.Count()</MudText>
+                    <MudText Typo="Typo.subtitle2">At-Risk Students</MudText>
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
+        <MudItem xs="12" sm="6" md="3">
+            <MudCard Elevation="2">
+                <MudCardContent>
+                    <MudText Typo="Typo.h4">@($"{reports.Average(r => r.AverageAssessmentScore):F1}%")</MudText>
+                    <MudText Typo="Typo.subtitle2">Avg Performance</MudText>
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
+        <MudItem xs="12" sm="6" md="3">
+            <MudCard Elevation="2">
+                <MudCardContent>
+                    <MudText Typo="Typo.h4">@($"{reports.Average(r => r.ProgressPercentage):F1}%")</MudText>
+                    <MudText Typo="Typo.subtitle2">Avg Progress</MudText>
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
+        <MudItem xs="12" sm="6" md="3">
+            <MudCard Elevation="2">
+                <MudCardContent>
+                    <MudText Typo="Typo.h4">@reports.Count(r => r.Status == "Active")</MudText>
+                    <MudText Typo="Typo.subtitle2">Still Active</MudText>
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
+    </MudGrid>
 
     <!-- Risk Level Distribution -->
-    <div class="row mb-4">
-        <div class="col-md-6">
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="mb-0">Performance Distribution</h5>
-                </div>
-                <div class="card-body">
+    <MudGrid Class="mb-4">
+        <MudItem xs="12" md="6">
+            <MudCard Elevation="2">
+                <MudCardHeader>
+                    <MudText Typo="Typo.h6">Performance Distribution</MudText>
+                </MudCardHeader>
+                <MudCardContent>
                     <canvas id="performanceChart" width="400" height="300"></canvas>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-6">
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="mb-0">Risk Categories</h5>
-                </div>
-                <div class="card-body">
-                    <div class="risk-categories">
-                        <div class="risk-category">
-                            <div class="risk-indicator bg-danger"></div>
-                            <span>Critical (&lt;30%): @reports.Count(r => r.AverageAssessmentScore < 30)</span>
-                        </div>
-                        <div class="risk-category">
-                            <div class="risk-indicator bg-warning"></div>
-                            <span>High Risk (30-40%): @reports.Count(r => r.AverageAssessmentScore >= 30 && r.AverageAssessmentScore < 40)</span>
-                        </div>
-                        <div class="risk-category">
-                            <div class="risk-indicator bg-info"></div>
-                            <span>Moderate Risk (40-@(threshold)%): @reports.Count(r => r.AverageAssessmentScore >= 40 && r.AverageAssessmentScore < threshold)</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
+        <MudItem xs="12" md="6">
+            <MudCard Elevation="2">
+                <MudCardHeader>
+                    <MudText Typo="Typo.h6">Risk Categories</MudText>
+                </MudCardHeader>
+                <MudCardContent>
+                    <MudList T="string">
+                        <MudListItem T="string">
+                            <MudChip T="string" Color="Color.Error" Class="me-2" />Critical (&lt;30%): @reports.Count(r => r.AverageAssessmentScore < 30)
+                        </MudListItem>
+                        <MudListItem T="string">
+                            <MudChip T="string" Color="Color.Warning" Class="me-2" />High Risk (30-40%): @reports.Count(r => r.AverageAssessmentScore >= 30 && r.AverageAssessmentScore < 40)
+                        </MudListItem>
+                        <MudListItem T="string">
+                            <MudChip T="string" Color="Color.Info" Class="me-2" />Moderate Risk (40-@threshold%): @reports.Count(r => r.AverageAssessmentScore >= 40 && r.AverageAssessmentScore < threshold)
+                        </MudListItem>
+                    </MudList>
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
+    </MudGrid>
 
     <!-- Data Table -->
     <div class="report-table">
@@ -165,113 +161,114 @@ else if (reports?.Any() == true)
             <tbody>
                 @foreach (var report in reports.OrderBy(r => r.AverageAssessmentScore))
                 {
-                    <tr class="@GetRowClass(report.AverageAssessmentScore)">
-                        <td>
+                    <MudTr>
+                        <MudTd DataLabel="Student">
                             <div class="d-flex align-items-center">
-                                <div class="student-avatar me-2">
-                                    @report.StudentName.Substring(0, 1).ToUpper()
-                                </div>
-                                <strong>@report.StudentName</strong>
+                                <MudAvatar Color="Color.Primary" Variant="Variant.Filled" Class="me-2">
+                                    <MudText Typo="Typo.h6">@report.StudentName.Substring(0, 1).ToUpper()</MudText>
+                                </MudAvatar>
+                                <MudText Typo="Typo.body2"><strong>@report.StudentName</strong></MudText>
                             </div>
-                        </td>
-                        <td>@report.Email</td>
-                        <td>@report.CourseName</td>
-                        <td>
-                            <div class="progress-container">
-                                <div class="progress">
-                                    <div class="progress-bar @GetProgressBarClass(report.ProgressPercentage)"
-                                         style="width: @(report.ProgressPercentage)%"></div>
-                                </div>
-                                <span class="progress-text">@($"{report.ProgressPercentage:F1}%")</span>
-                            </div>
-                        </td>
-                        <td>
-                            <span class="badge @GetScoreBadgeClass(report.AverageAssessmentScore)">
+                        </MudTd>
+                        <MudTd DataLabel="Email">@report.Email</MudTd>
+                        <MudTd DataLabel="Course">@report.CourseName</MudTd>
+                        <MudTd DataLabel="Progress">
+                            <MudProgressLinear Value="@(report.ProgressPercentage)" Color="@GetProgressBarColor(report.ProgressPercentage)" Class="my-2" Style="height: 6px;" />
+                            <MudText Typo="Typo.caption">@($"{report.ProgressPercentage:F1}%")</MudText>
+                        </MudTd>
+                        <MudTd DataLabel="Avg Score">
+                            <MudChip T="string" Color="@GetScoreBadgeColor(report.AverageAssessmentScore)">
                                 @($"{report.AverageAssessmentScore:F1}%")
-                            </span>
-                        </td>
-                        <td>
-                            <span class="badge @GetRiskBadgeClass(report.AverageAssessmentScore)">
+                            </MudChip>
+                        </MudTd>
+                        <MudTd DataLabel="Risk Level">
+                            <MudChip T="string" Color="@GetRiskBadgeColor(report.AverageAssessmentScore)">
                                 @GetRiskLevel(report.AverageAssessmentScore)
-                            </span>
-                        </td>
-                        <td>@report.TimeSpent.ToString(@"hh\:mm")</td>
-                        <td>
-                            <span class="badge @GetStatusBadgeClass(report.Status)">
+                            </MudChip>
+                        </MudTd>
+                        <MudTd DataLabel="Time Spent">@report.TimeSpent.ToString(@"hh\:mm")</MudTd>
+                        <MudTd DataLabel="Status">
+                            <MudChip T="string" Color="@GetStatusBadgeColor(report.Status)">
                                 @report.Status
-                            </span>
-                        </td>
-                        <td>@(report.EnrolledAt.ToString("MMM dd, yyyy"))</td>
-                        <td>
-                            <div class="btn-group btn-group-sm">
-                                <button class="btn btn-outline-primary btn-sm" title="Contact Student">
-                                    <i class="fas fa-envelope"></i>
-                                </button>
-                                <button class="btn btn-outline-info btn-sm" title="View Details">
-                                    <i class="fas fa-eye"></i>
-                                </button>
-                                <button class="btn btn-outline-warning btn-sm" title="Add Note">
-                                    <i class="fas fa-sticky-note"></i>
-                                </button>
-                            </div>
-                        </td>
-                    </tr>
+                            </MudChip>
+                        </MudTd>
+                        <MudTd DataLabel="Last Activity">@(report.EnrolledAt.ToString("MMM dd, yyyy"))</MudTd>
+                        <MudTd DataLabel="Actions">
+                            <MudButtonGroup>
+                                <MudButton Variant="Variant.Outlined" Color="Color.Primary" Size="Size.Small" Title="Contact Student">
+                                    <MudIcon Icon="@Icons.Material.Filled.Email" />
+                                </MudButton>
+                                <MudButton Variant="Variant.Outlined" Color="Color.Info" Size="Size.Small" Title="View Details">
+                                    <MudIcon Icon="@Icons.Material.Filled.Visibility" />
+                                </MudButton>
+                                <MudButton Variant="Variant.Outlined" Color="Color.Warning" Size="Size.Small" Title="Add Note">
+                                    <MudIcon Icon="@Icons.Material.Filled.NoteAdd" />
+                                </MudButton>
+                            </MudButtonGroup>
+                        </MudTd>
+                    </MudTr>
                 }
             </tbody>
         </table>
     </div>
 
     <!-- Intervention Recommendations -->
-    <div class="card mt-4">
-        <div class="card-header">
-            <h5 class="mb-0">💡 Recommended Interventions</h5>
-        </div>
-        <div class="card-body">
-            <div class="row">
-                <div class="col-md-4">
-                    <div class="intervention-card">
-                        <h6>📧 Immediate Actions</h6>
-                        <ul class="list-unstyled">
-                            <li>• Send personalized check-in emails</li>
-                            <li>• Schedule one-on-one meetings</li>
-                            <li>• Provide additional resources</li>
-                        </ul>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="intervention-card">
-                        <h6>🎯 Academic Support</h6>
-                        <ul class="list-unstyled">
-                            <li>• Assign peer mentors</li>
-                            <li>• Offer tutoring sessions</li>
-                            <li>• Create study groups</li>
-                        </ul>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="intervention-card">
-                        <h6>📚 Learning Resources</h6>
-                        <ul class="list-unstyled">
-                            <li>• Provide supplementary materials</li>
-                            <li>• Suggest alternative learning paths</li>
-                            <li>• Offer extension deadlines</li>
-                        </ul>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
+    <MudCard Elevation="2" Class="mt-4">
+        <MudCardHeader>
+            <MudText Typo="Typo.h6">💡 Recommended Interventions</MudText>
+        </MudCardHeader>
+        <MudCardContent>
+            <MudGrid>
+                <MudItem xs="12" md="4">
+                    <MudCard Outlined="true">
+                        <MudCardContent>
+                            <MudText Typo="Typo.subtitle1">📧 Immediate Actions</MudText>
+                            <MudList T="string">
+                                <MudListItem T="string">• Send personalized check-in emails</MudListItem>
+                                <MudListItem T="string">• Schedule one-on-one meetings</MudListItem>
+                                <MudListItem T="string">• Provide additional resources</MudListItem>
+                            </MudList>
+                        </MudCardContent>
+                    </MudCard>
+                </MudItem>
+                <MudItem xs="12" md="4">
+                    <MudCard Outlined="true">
+                        <MudCardContent>
+                            <MudText Typo="Typo.subtitle1">🎯 Academic Support</MudText>
+                            <MudList T="string">
+                                <MudListItem T="string">• Assign peer mentors</MudListItem>
+                                <MudListItem T="string">• Offer tutoring sessions</MudListItem>
+                                <MudListItem T="string">• Create study groups</MudListItem>
+                            </MudList>
+                        </MudCardContent>
+                    </MudCard>
+                </MudItem>
+                <MudItem xs="12" md="4">
+                    <MudCard Outlined="true">
+                        <MudCardContent>
+                            <MudText Typo="Typo.subtitle1">📚 Learning Resources</MudText>
+                            <MudList T="string">
+                                <MudListItem T="string">• Provide supplementary materials</MudListItem>
+                                <MudListItem T="string">• Suggest alternative learning paths</MudListItem>
+                                <MudListItem T="string">• Offer extension deadlines</MudListItem>
+                            </MudList>
+                        </MudCardContent>
+                    </MudCard>
+                </MudItem>
+            </MudGrid>
+        </MudCardContent>
+    </MudCard>
 }
 else
 {
-    <div class="report-no-data">
-        <div class="text-center">
-            <i class="fas fa-check-circle fa-3x text-success mb-3"></i>
-            <h5>Great News!</h5>
-            <p class="text-muted">No students are performing below the @threshold% threshold.</p>
-            <p class="text-muted">All students are meeting performance expectations.</p>
-        </div>
-    </div>
+    <MudCard Elevation="2" Class="report-no-data">
+        <MudCardContent Class="text-center py-5">
+            <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Size="Size.Large" Class="text-success mb-3" />
+            <MudText Typo="Typo.h5">Great News!</MudText>
+            <MudText Typo="Typo.body1" Class="text-muted">No students are performing below the @threshold% threshold.</MudText>
+            <MudText Typo="Typo.body1" Class="text-muted">All students are meeting performance expectations.</MudText>
+        </MudCardContent>
+    </MudCard>
 }
 
 @code {
@@ -381,33 +378,38 @@ else
         }
     }
 
-    private string GetRowClass(double score)
+    private MudBlazor.Color GetProgressBarColor(double progress)
     {
-        if (score < 30) return "table-danger";
-        if (score < 40) return "table-warning";
-        return "";
+        if (progress >= 60) return MudBlazor.Color.Success;
+        if (progress >= 40) return MudBlazor.Color.Warning;
+        return MudBlazor.Color.Error;
     }
 
-    private string GetProgressBarClass(double progress)
+    private MudBlazor.Color GetScoreBadgeColor(double score)
     {
-        if (progress >= 60) return "bg-success";
-        if (progress >= 40) return "bg-warning";
-        return "bg-danger";
+        if (score < 30) return MudBlazor.Color.Error;
+        if (score < 40) return MudBlazor.Color.Warning;
+        if (score < 60) return MudBlazor.Color.Info;
+        return MudBlazor.Color.Success;
     }
 
-    private string GetScoreBadgeClass(double score)
+    private MudBlazor.Color GetRiskBadgeColor(double score)
     {
-        if (score < 30) return "bg-danger";
-        if (score < 40) return "bg-warning";
-        if (score < 60) return "bg-info";
-        return "bg-success";
+        if (score < 30) return MudBlazor.Color.Error;
+        if (score < 40) return MudBlazor.Color.Warning;
+        return MudBlazor.Color.Info;
     }
 
-    private string GetRiskBadgeClass(double score)
+    private MudBlazor.Color GetStatusBadgeColor(string status)
     {
-        if (score < 30) return "bg-danger";
-        if (score < 40) return "bg-warning";
-        return "bg-info";
+        switch (status.ToLower())
+        {
+            case "completed": return MudBlazor.Color.Success;
+            case "active": return MudBlazor.Color.Primary;
+            case "dropped": return MudBlazor.Color.Error;
+            case "paused": return MudBlazor.Color.Warning;
+            default: return MudBlazor.Color.Secondary;
+        }
     }
 
     private string GetRiskLevel(double score)
@@ -415,18 +417,6 @@ else
         if (score < 30) return "Critical";
         if (score < 40) return "High Risk";
         return "Moderate Risk";
-    }
-
-    private string GetStatusBadgeClass(string status)
-    {
-        switch (status.ToLower())
-        {
-            case "completed": return "bg-success";
-            case "active": return "bg-primary";
-            case "dropped": return "bg-danger";
-            case "paused": return "bg-warning";
-            default: return "bg-secondary";
-        }
     }
 
     private async Task ExportToPdf()

@@ -4,7 +4,6 @@ using Microsoft.AspNetCore.Identity.UI.Services;
 
 namespace LMS.Web.Components.Account
 {
-    // Remove the "else if (EmailSender is IdentityNoOpEmailSender)" block from RegisterConfirmation.razor after updating with a real implementation.
     internal sealed class IdentityNoOpEmailSender : IEmailSender<User>
     {
         private readonly IEmailSender emailSender = new NoOpEmailSender();

@@ -9,107 +9,129 @@
 
 <PageTitle>Courses - Admin</PageTitle>
 
-<Card>
-    <CardHeader>
-        <div class="d-flex justify-content-between align-items-center">
-            <h5 class="mb-0">Courses</h5>
-            <a href="/admin/courses/create" class="btn btn-primary">
-                <i class="bi bi-plus-circle"></i>
-                Add New Course
-            </a>
-        </div>
-    </CardHeader>
-    <CardBody>
-        <DataTableComponent TItem="CourseModel" DataProvider="CoursesDataProvider" AllowPaging="true"
-                            AllowSorting="true" AllowFiltering="true" PageSize="10">
-            <Columns>
-                <GridColumn TItem="CourseModel" HeaderText="Title" PropertyName="Title"
-                            SortKeySelector="item => item.Title" Filterable="true">
-                    @context.Title
-                </GridColumn>
-                <GridColumn TItem="CourseModel" HeaderText="Description" PropertyName="Description" Filterable="true">
-                    @context.Description
-                </GridColumn>
-                <GridColumn TItem="CourseModel" HeaderText="Level" PropertyName="Level"
-                            SortKeySelector="item => item.Level">
-                    @context.Level
-                </GridColumn>
-                <GridColumn TItem="CourseModel" HeaderText="Status" PropertyName="Status"
-                            SortKeySelector="item => item.Status">
-                    @context.Status
-                </GridColumn>
-                <GridColumn TItem="CourseModel" HeaderText="Max Enrollments" PropertyName="MaxEnrollments"
-                            SortKeySelector="item => item.MaxEnrollments" HeaderTextAlignment="Alignment.End"
-                            TextAlignment="Alignment.End">
-                    @context.MaxEnrollments
-                </GridColumn>
-                <GridColumn TItem="CourseModel" HeaderText="Start Date" PropertyName="StartDate"
-                            SortKeySelector="item => item.StartDate">
-                    @context.StartDate.ToString("yyyy-MM-dd")
-                </GridColumn>
-                <GridColumn TItem="CourseModel" HeaderText="End Date" PropertyName="EndDate"
-                            SortKeySelector="item => item.EndDate">
-                    @(context.EndDate?.ToString("yyyy-MM-dd") ?? "N/A")
-                </GridColumn>
-                <GridColumn TItem="CourseModel" HeaderText="Instructor" PropertyName="InstructorName" Filterable="true">
-                    @context.InstructorName
-                </GridColumn>
-                <GridColumn TItem="CourseModel" HeaderText="Actions" Sortable="false" Filterable="false">
-                    <div class="btn-group" role="group">
-                        <a href="/admin/courses/edit?id=@context.Id" class="btn btn-primary btn-sm">
-                            <i class="bi bi-pencil"></i> Edit
-                        </a>
-                        <a href="/admin/courses/manage?id=@context.Id" class="btn btn-success btn-sm">
-                            <i class="bi bi-wrench"></i> Manage
-                        </a>
-                        <a href="/admin/courses/details?id=@context.Id" class="btn btn-info btn-sm">
-                            <i class="bi bi-eye"></i> Details
-                        </a>
-                        <button class="btn btn-danger btn-sm" @onclick="() => ConfirmDelete(context)">
-                            <i class="bi bi-trash"></i> Delete
-                        </button>
-                    </div>
-                </GridColumn>
-            </Columns>
-        </DataTableComponent>
-    </CardBody>
-</Card>
+<MudCard Elevation="2">
+    <MudCardHeader>
+        <MudText Typo="Typo.h6">Courses</MudText>
+        <MudSpacer />
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" Href="/admin/courses/create">
+            <MudIcon Icon="@Icons.Material.Filled.Add" Class="me-2" />
+            Add New Course
+        </MudButton>
+    </MudCardHeader>
+    <MudCardContent>
+        @if (_loading)
+        {
+            <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="300px" />
+        }
+        else
+        {
+            <MudTable T="CourseModel" ServerData="@ServerData" Hover="true" Breakpoint="Breakpoint.Sm" Loading="@_loading">
+                <HeaderContent>
+                    <MudTh><MudTableSortLabel T="CourseModel" SortBy="new Func<CourseModel, object>(x => x.Title)">Title</MudTableSortLabel></MudTh>
+                    <MudTh><MudTableSortLabel T="CourseModel" SortBy="new Func<CourseModel, object>(x => x.Description)">Description</MudTableSortLabel></MudTh>
+                    <MudTh><MudTableSortLabel T="CourseModel" SortBy="new Func<CourseModel, object>(x => x.Level)">Level</MudTableSortLabel></MudTh>
+                    <MudTh><MudTableSortLabel T="CourseModel" SortBy="new Func<CourseModel, object>(x => x.Status)">Status</MudTableSortLabel></MudTh>
+                    <MudTh><MudTableSortLabel T="CourseModel" SortBy="new Func<CourseModel, object>(x => x.MaxEnrollments)">Max Enrollments</MudTableSortLabel></MudTh>
+                    <MudTh><MudTableSortLabel T="CourseModel" SortBy="new Func<CourseModel, object>(x => x.StartDate)">Start Date</MudTableSortLabel></MudTh>
+                    <MudTh><MudTableSortLabel T="CourseModel" SortBy="new Func<CourseModel, object>(x => x.EndDate)">End Date</MudTableSortLabel></MudTh>
+                    <MudTh><MudTableSortLabel T="CourseModel" SortBy="new Func<CourseModel, object>(x => x.InstructorName)">Instructor</MudTableSortLabel></MudTh>
+                    <MudTh>Actions</MudTh>
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd DataLabel="Title">@context.Title</MudTd>
+                    <MudTd DataLabel="Description">@context.Description</MudTd>
+                    <MudTd DataLabel="Level">@context.Level</MudTd>
+                    <MudTd DataLabel="Status">@context.Status</MudTd>
+                    <MudTd DataLabel="Max Enrollments">@context.MaxEnrollments</MudTd>
+                    <MudTd DataLabel="Start Date">@context.StartDate.ToString("yyyy-MM-dd")</MudTd>
+                    <MudTd DataLabel="End Date">@(context.EndDate?.ToString("yyyy-MM-dd") ?? "N/A")</MudTd>
+                    <MudTd DataLabel="Instructor">@context.InstructorName</MudTd>
+                    <MudTd DataLabel="Actions">
+                        <MudButtonGroup>
+                            <MudButton Variant="Variant.Outlined" Color="Color.Primary" Href="@($"/admin/courses/edit?id={context.Id}")">
+                                <MudIcon Icon="@Icons.Material.Filled.Edit" Class="me-1" /> Edit
+                            </MudButton>
+                            <MudButton Variant="Variant.Outlined" Color="Color.Success" Href="@($"/admin/courses/manage?id={context.Id}")">
+                                <MudIcon Icon="@Icons.Material.Filled.Settings" Class="me-1" /> Manage
+                            </MudButton>
+                            <MudButton Variant="Variant.Outlined" Color="Color.Info" Href="@($"/admin/courses/details?id={context.Id}")">
+                                <MudIcon Icon="@Icons.Material.Filled.Info" Class="me-1" /> Details
+                            </MudButton>
+                            <MudButton Variant="Variant.Outlined" Color="Color.Error" OnClick="() => ConfirmDelete(context)">
+                                <MudIcon Icon="@Icons.Material.Filled.Delete" Class="me-1" /> Delete
+                            </MudButton>
+                        </MudButtonGroup>
+                    </MudTd>
+                </RowTemplate>
+                <PagerContent>
+                    <MudTablePager PageSizeOptions="@(new int[]{10, 25, 50})" />
+                </PagerContent>
+            </MudTable>
+        }
+    </MudCardContent>
+</MudCard>
 
 <!-- Delete Confirmation Modal -->
-<ModalComponent @ref="deleteModal" Title="Confirm Delete"
-                Message="@($"Are you sure you want to delete the course '{courseToDelete?.Title}'? This action cannot be undone.")"
-                ConfirmButtonText="Delete" ConfirmButtonColor="ButtonColor.Danger" OnConfirm="DeleteCourse" />
+<MudDialog @bind-IsVisible="@showDeleteConfirm" Options="@dialogOptions">
+    <TitleContent>
+        <MudText Typo="Typo.h6" Class="text-danger">
+            <MudIcon Icon="@Icons.Material.Filled.Warning" /> Confirm Delete
+        </MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudText>Are you sure you want to delete the course <strong>@courseToDelete?.Title</strong>? This action cannot be undone.</MudText>
+    </DialogContent>
+    <DialogActions>
+        <MudButton Color="Color.Error" OnClick="DeleteCourse">
+            <MudIcon Icon="@Icons.Material.Filled.Delete" Class="me-1" /> Delete
+        </MudButton>
+        <MudButton Color="Color.Secondary" OnClick="CancelDelete">Cancel</MudButton>
+    </DialogActions>
+</MudDialog>
 
 @code {
-    private ModalComponent deleteModal = default!;
+    private bool showDeleteConfirm = false;
     private CourseModel? courseToDelete;
+    private bool _loading = false;
+    private DialogOptions dialogOptions = new() { CloseButton = true, MaxWidth = MaxWidth.Small, FullWidth = true };
 
-    private async Task<GridDataProviderResult<CourseModel>> CoursesDataProvider(GridDataProviderRequest<CourseModel> request)
+    private async Task<TableData<CourseModel>> ServerData(TableState state, CancellationToken cancellationToken)
     {
+        _loading = true;
+        StateHasChanged();
+
         try
         {
-            var result = await CourseRepository.GetCoursesPaginatedAsync(new PaginationRequest
+            var paginationRequest = new PaginationRequest
             {
-                PageNumber = request.PageNumber,
-                PageSize = request.PageSize
-            });
+                PageNumber = state.Page,
+                PageSize = state.PageSize,
+                // Sorting logic commented out
+                // SortColumn = state.SortLabel,
+                // SortDirection = state.SortDirection == MudBlazor.SortDirection.Ascending ? "asc" : "desc"
+            };
+
+            var result = await CourseRepository.GetCoursesPaginatedAsync(paginationRequest);
 
             var data = (result.Items == null || !result.Items.Any()) ? AddDummyCourses() : result.Items;
             var totalCount = (result.Items == null || !result.Items.Any()) ? data.Count() : result.TotalCount;
 
-            return new GridDataProviderResult<CourseModel>
+            _loading = false;
+            return new TableData<CourseModel>
             {
-                Data = data,
-                TotalCount = totalCount
+                Items = data,
+                TotalItems = totalCount
             };
         }
         catch (Exception ex)
         {
             ToastService.ShowError("Error", $"Error loading courses: {ex.Message}");
-            return new GridDataProviderResult<CourseModel>
+            var dummy = AddDummyCourses();
+            _loading = false;
+            return new TableData<CourseModel>
             {
-                Data = Enumerable.Empty<CourseModel>(),
-                TotalCount = 0
+                Items = dummy,
+                TotalItems = dummy.Count()
             };
         }
     }
@@ -157,10 +179,16 @@
         };
     }
 
-    private async Task ConfirmDelete(CourseModel course)
+    private void ConfirmDelete(CourseModel course)
     {
         courseToDelete = course;
-        await deleteModal.ShowAsync();
+        showDeleteConfirm = true;
+    }
+
+    private void CancelDelete()
+    {
+        showDeleteConfirm = false;
+        courseToDelete = null;
     }
 
     private async Task DeleteCourse()
@@ -171,23 +199,15 @@
             {
                 await CourseRepository.DeleteCourseAsync(courseToDelete.Id);
                 ToastService.ShowSuccess("Success", $"Course '{courseToDelete.Title}' deleted successfully.");
-                await RefreshGridDataAsync();
+                showDeleteConfirm = false;
+                courseToDelete = null;
+                // Refresh the table after deletion
+                await ServerData(new TableState { Page = 0, PageSize = 10 }, CancellationToken.None);
             }
             catch (Exception ex)
             {
                 ToastService.ShowError("Error", $"Error deleting course: {ex.Message}");
             }
-            finally
-            {
-                courseToDelete = null;
-            }
         }
     }
-
-    private async Task RefreshGridDataAsync()
-    {
-        await InvokeAsync(StateHasChanged);
-    }
-
-    
 }

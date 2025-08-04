@@ -1,9 +1,10 @@
-﻿@page "/Account/RegisterConfirmation"
+@page "/Account/RegisterConfirmation"
 
 @using System.Text
 @using Microsoft.AspNetCore.Identity
 @using Microsoft.AspNetCore.WebUtilities
 @using LMS.Data.Entities
+@using LMS.Web.Components.Shared
 
 @inject UserManager<User> UserManager
 @inject IEmailSender<User> EmailSender
@@ -19,8 +20,11 @@
 @if (emailConfirmationLink is not null)
 {
     <p>
-        This app does not currently have a real email sender registered, see <a href="https://aka.ms/aspaccountconf">these docs</a> for how to configure a real email sender.
-        Normally this would be emailed: <a href="@emailConfirmationLink">Click here to confirm your account</a>
+        This app does not currently have a real email sender registered, see <a
+            class="mud-link mud-primary-text mud-link-underline-hover" href="https://aka.ms/aspaccountconf">these docs</a>
+        for how to configure a real email sender.
+        Normally this would be emailed: <a class="mud-link mud-primary-text mud-link-underline-hover"
+            href="@emailConfirmationLink">Click here to confirm your account</a>
     </p>
 }
 else
@@ -61,8 +65,8 @@ else
             var code = await UserManager.GenerateEmailConfirmationTokenAsync(user);
             code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));
             emailConfirmationLink = NavigationManager.GetUriWithQueryParameters(
-                NavigationManager.ToAbsoluteUri("Account/ConfirmEmail").AbsoluteUri,
-                new Dictionary<string, object?> { ["userId"] = userId, ["code"] = code, ["returnUrl"] = ReturnUrl });
+            NavigationManager.ToAbsoluteUri("Account/ConfirmEmail").AbsoluteUri,
+            new Dictionary<string, object?> { ["userId"] = userId, ["code"] = code, ["returnUrl"] = ReturnUrl });
         }
     }
 }

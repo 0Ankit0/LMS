@@ -1,140 +1,104 @@
-@page "/admin/enrollments/create"
-
-@using LMS.Repositories
-@using LMS.Web.Components.Shared
-@using LMS.Web.Services
-
-@inject IEnrollmentRepository EnrollmentRepository
-@inject IDropdownRepository DropdownRepository
-@inject NavigationManager NavigationManager
-@inject LMS.Web.Services.ToastService ToastService
 @rendermode @(new InteractiveServerRenderMode())
+@using MudBlazor
+@using LMS.Repositories
+@inject IDropdownRepository DropdownRepository
+@inject IEnrollmentRepository EnrollmentRepository
+@inject ISnackbar Snackbar
+@inject NavigationManager NavigationManager
 
 <PageTitle>Create Enrollment - Admin</PageTitle>
 
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h1 class="mb-0">Create New Enrollment</h1>
-    <Button Color="ButtonColor.Secondary" Href="/admin/enrollments">
-        <Icon Name="IconName.ArrowLeft" />
-        Back to Enrollments
-    </Button>
-</div>
-
-<Card>
-    <div class="card-header">
-        <h5 class="card-title mb-0">Enrollment Information</h5>
+@if (isLoading)
+{
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <MudSkeleton SkeletonType="SkeletonType.Text" Width="200px" Height="40px" />
+        <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="180px" Height="40px" />
     </div>
-    <CardBody>
-        <EditForm Model="Enrollment" OnValidSubmit="AddEnrollment">
-            <AntiforgeryToken />
-            <DataAnnotationsValidator />
-            <ValidationSummary class="alert alert-danger" role="alert" />
 
-            <div class="mb-3">
-                <label for="userid" class="form-label">User <span class="text-danger">*</span></label>
-                <SearchableSelectComponent TItem="DropdownOption<string>" TValue="string"
-                                           OnLoad="async () => (await DropdownRepository.GetUsersAsync(null, 20)).Cast<DropdownOption<string>>()"
-                                           ValueSelector="@(item => item.Value)"
-                                           DisplaySelector="@(item => item.Text)"
-                                           @bind-SelectedValue="Enrollment.UserId"
-                                           Placeholder="Select a user..."
-                                           EmptyText="No users found" />
-                <ValidationMessage For="() => Enrollment.UserId" class="text-danger" />
-            </div>
+    <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="400px" />
+}
+else
+{
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="mb-0">Create New Enrollment</h1>
+        <MudButton Variant="Variant.Text" Color="Color.Secondary" Href="/admin/enrollments">
+            <MudIcon Icon="@Icons.Material.Filled.ArrowBack" Class="me-2" />
+            Back to Enrollments
+        </MudButton>
+    </div>
 
-            <div class="mb-3">
-                <label for="courseid" class="form-label">Course <span class="text-danger">*</span></label>
-                <SearchableSelectComponent TItem="DropdownOption<int>" TValue="int"
-                                           OnLoad="async () => (await DropdownRepository.GetCoursesAsync(null, 20)).Cast<DropdownOption<int>>()"
-                                           ValueSelector="@(item => item.Value)"
-                                           DisplaySelector="@(item => item.Text)"
-                                           @bind-SelectedValue="Enrollment.CourseId"
-                                           Placeholder="Select a course..."
-                                           EmptyText="No courses found" />
-                <ValidationMessage For="() => Enrollment.CourseId" class="text-danger" />
-            </div>
+    <MudCard Elevation="2">
+        <MudCardHeader>
+            <MudText Typo="Typo.h6">Enrollment Information</MudText>
+        </MudCardHeader>
+        <MudCardContent>
+            <MudForm Model="Enrollment" OnValidSubmit="AddEnrollment" @ref="form">
+                <MudAlert Severity="Severity.Error" Class="mb-3" Visible="@(!form.IsValid)">
+                    <MudText>Please correct the errors below.</MudText>
+                </MudAlert>
 
-            <div class="d-flex gap-2">
-                <Button Color="ButtonColor.Primary" Type="ButtonType.Submit" Loading="@isSubmitting">
-                    <Icon Name="IconName.CheckCircle" />
-                    Create Enrollment
-                </Button>
-                <Button Color="ButtonColor.Secondary" Href="/admin/enrollments">Cancel</Button>
-            </div>
-        </EditForm>
-    </CardBody>
-</Card>
+                <MudSelect @bind-Value="Enrollment.UserId" Label="User" Variant="Variant.Text" Required="true" RequiredError="User is required!" Placeholder="Select a user...">
+                    @foreach (var user in Users)
+                    {
+                        <MudSelectItem Value="@user.Value">@user.Text</MudSelectItem>
+                    }
+                </MudSelect>
+
+                <MudSelect @bind-Value="Enrollment.CourseId" Label="Course" Variant="Variant.Text" Required="true" RequiredError="Course is required!" Placeholder="Select a course...">
+                    @foreach (var course in Courses)
+                    {
+                        <MudSelectItem Value="@course.Value">@course.Text</MudSelectItem>
+                    }
+                </MudSelect>
+
+                <div class="d-flex gap-2">
+                    <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Disabled="@isSubmitting">
+                        <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Class="me-2" />
+                        Create Enrollment
+                    </MudButton>
+                    <MudButton Variant="Variant.Filled" Color="Color.Secondary" Href="/admin/enrollments">Cancel</MudButton>
+                </div>
+            </MudForm>
+        </MudCardContent>
+    </MudCard>
+}
 
 @code {
-    [SupplyParameterFromForm]
+    private MudForm form;
     private CreateEnrollmentRequest Enrollment { get; set; } = new();
     private bool isSubmitting = false;
+    private bool isLoading = true;
+    private List<DropdownOption<string>> Users = new();
+    private List<DropdownOption<int>> Courses = new();
 
-    private async Task<AutoCompleteDataProviderResult<DropdownOption<string>>> SearchUsersDataProvider(AutoCompleteDataProviderRequest<DropdownOption<string>> request)
+    protected override async Task OnInitializedAsync()
     {
-        try
-        {
-            var users = await DropdownRepository.GetUsersAsync(search: request.Filter.Value, take: 20);
-            return new AutoCompleteDataProviderResult<DropdownOption<string>>
-            {
-                Data = users,
-                TotalCount = users.Count
-            };
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error loading users: {ex.Message}");
-            return new AutoCompleteDataProviderResult<DropdownOption<string>>
-            {
-                Data = new List<DropdownOption<string>>(),
-                TotalCount = 0
-            };
-        }
-    }
-
-    private async Task<AutoCompleteDataProviderResult<DropdownOption<int>>> SearchCoursesDataProvider(AutoCompleteDataProviderRequest<DropdownOption<int>> request)
-    {
-        try
-        {
-            var courses = await DropdownRepository.GetCoursesAsync(search: request.Filter.Value, take: 20);
-            return new AutoCompleteDataProviderResult<DropdownOption<int>>
-            {
-                Data = courses,
-                TotalCount = courses.Count
-            };
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error loading courses: {ex.Message}");
-            return new AutoCompleteDataProviderResult<DropdownOption<int>>
-            {
-                Data = new List<DropdownOption<int>>(),
-                TotalCount = 0
-            };
-        }
+        Users = await DropdownRepository.GetUsersAsync();
+        Courses = await DropdownRepository.GetCoursesAsync();
+        await Task.Delay(500); // Simulate data loading
+        isLoading = false;
     }
 
     private async Task AddEnrollment()
     {
         if (isSubmitting) return;
-        
         isSubmitting = true;
         try
         {
             var result = await EnrollmentRepository.CreateEnrollmentAsync(Enrollment.UserId, Enrollment);
             if (result != null)
             {
-                ToastService.ShowSuccess("Success", "Enrollment created successfully!");
+                Snackbar.Add("Enrollment created successfully!", Severity.Success);
                 NavigationManager.NavigateTo("/admin/enrollments");
             }
             else
             {
-                ToastService.ShowError("Error", "Failed to create enrollment. Please try again.");
+                Snackbar.Add("Failed to create enrollment. Please try again.", Severity.Error);
             }
         }
         catch (Exception ex)
         {
-            ToastService.ShowError("Error", $"Error creating enrollment: {ex.Message}");
+            Snackbar.Add($"Error creating enrollment: {ex.Message}", Severity.Error);
         }
         finally
         {

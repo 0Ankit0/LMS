@@ -10,73 +10,55 @@
         <p class="text-muted mb-0">Evaluate instructor effectiveness and teaching metrics</p>
     </div>
     <div class="export-buttons">
-        <button class="btn btn-outline-report" @onclick="ExportToPdf">
-            <i class="fas fa-file-pdf"></i> Export PDF
-        </button>
-        <button class="btn btn-outline-report" @onclick="ExportToExcel">
-            <i class="fas fa-file-excel"></i> Export Excel
-        </button>
+        <MudButton Variant="Variant.Outlined" Color="Color.Primary" OnClick="ExportToPdf">
+            <MudIcon Icon="@Icons.Material.Filled.PictureAsPdf" Class="me-2" /> Export PDF
+        </MudButton>
+        <MudButton Variant="Variant.Outlined" Color="Color.Primary" OnClick="ExportToExcel">
+            <MudIcon Icon="@Icons.Material.Filled.Description" Class="me-2" /> Export Excel
+        </MudButton>
     </div>
 </div>
 
 <!-- Filters -->
-<div class="report-filters">
-    <div class="row">
-        <div class="col-md-3">
-            <div class="form-group">
-                <label class="form-label">Report Type</label>
-                <select class="form-select" @bind="reportType" @bind:after="OnReportTypeChanged">
-                    <option value="single">Single Teacher</option>
-                    <option value="all">All Teachers</option>
-                </select>
-            </div>
-        </div>
-        @if (reportType == "single")
-        {
-            <div class="col-md-3">
-                <div class="form-group">
-                    <label class="form-label">Teacher ID</label>
-                    <input type="text" class="form-control" @bind="teacherId" placeholder="Enter Teacher ID" />
-                </div>
-            </div>
-        }
-        <div class="col-md-2">
-            <div class="form-group">
-                <label class="form-label">Start Date</label>
-                <input type="date" class="form-control" @bind="startDate" />
-            </div>
-        </div>
-        <div class="col-md-2">
-            <div class="form-group">
-                <label class="form-label">End Date</label>
-                <input type="date" class="form-control" @bind="endDate" />
-            </div>
-        </div>
-        <div class="col-md-2">
-            <div class="form-group">
-                <label class="form-label">&nbsp;</label>
-                <button class="btn btn-report d-block w-100" @onclick="LoadData">
-                    🎓 Generate Report
-                </button>
-            </div>
-        </div>
-    </div>
-</div>
+<MudGrid Class="report-filters">
+    <MudItem xs="12" md="3">
+        <MudSelect T="string" Label="Report Type" @bind-Value="reportType" OnChange="OnReportTypeChanged">
+            <MudSelectItem Value="@("single")">Single Teacher</MudSelectItem>
+            <MudSelectItem Value="@("all")">All Teachers</MudSelectItem>
+        </MudSelect>
+    </MudItem>
+    @if (reportType == "single")
+    {
+        <MudItem xs="12" md="3">
+            <MudTextField Label="Teacher ID" @bind-Value="teacherId" Variant="Variant.Text" Placeholder="Enter Teacher ID" />
+        </MudItem>
+    }
+    <MudItem xs="12" md="2">
+        <MudDatePicker Label="Start Date" @bind-Date="startDate" DateFormat="yyyy-MM-dd" />
+    </MudItem>
+    <MudItem xs="12" md="2">
+        <MudDatePicker Label="End Date" @bind-Date="endDate" DateFormat="yyyy-MM-dd" />
+    </MudItem>
+    <MudItem xs="12" md="2">
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="LoadData" FullWidth="true">
+            <MudIcon Icon="@Icons.Material.Filled.School" Class="me-2" />
+            Generate Report
+        </MudButton>
+    </MudItem>
+</MudGrid>
 
 @if (!string.IsNullOrEmpty(errorMessage))
 {
-    <div class="alert alert-warning" role="alert">
-        <i class="fas fa-exclamation-triangle"></i> @errorMessage
-    </div>
+    <MudAlert Severity="Severity.Warning" Class="my-3">
+        <MudIcon Icon="@Icons.Material.Filled.Warning" Class="me-2" /> @errorMessage
+    </MudAlert>
 }
 
 @if (loading)
 {
-    <div class="report-loading">
-        <div class="spinner-border" role="status">
-            <span class="visually-hidden">Loading...</span>
-        </div>
-        <p class="mt-2">Loading teacher performance data...</p>
+    <div class="report-loading d-flex flex-column align-items-center justify-content-center py-5">
+        <MudProgressCircular Indeterminate="true" Color="Color.Primary" Size="Size.Large" />
+        <MudText Class="mt-2">Loading teacher performance data...</MudText>
     </div>
 }
 else if (singleReport != null || multipleReports?.Any() == true)
@@ -84,233 +66,227 @@ else if (singleReport != null || multipleReports?.Any() == true)
     @if (reportType == "single" && singleReport != null)
     {
         <!-- Single Teacher Detailed Report -->
-        <div class="row mb-4">
+        <MudGrid Class="mb-4">
             <!-- Teacher Information -->
-            <div class="col-md-6">
-                <div class="report-card h-100">
-                    <div class="report-card-header">
-                        <h5 class="mb-0">👨‍🏫 Teacher Profile</h5>
-                    </div>
-                    <div class="report-card-body">
-                        <table class="table table-sm">
-                            <tr><td><strong>Name:</strong></td><td>@singleReport.TeacherName</td></tr>
-                            <tr><td><strong>Teacher ID:</strong></td><td>@singleReport.TeacherId</td></tr>
-                            <tr><td><strong>Email:</strong></td><td>@singleReport.Email</td></tr>
-                            <tr><td><strong>Courses Teaching:</strong></td><td>@singleReport.TotalCoursesTeaching</td></tr>
-                            <tr><td><strong>Total Students:</strong></td><td>@singleReport.TotalStudentsTeaching</td></tr>
-                            <tr><td><strong>Last Login:</strong></td><td>@singleReport.LastLoginDate.ToString("MMM dd, yyyy HH:mm")</td></tr>
-                        </table>
-                    </div>
-                </div>
-            </div>
+            <MudItem xs="12" md="6">
+                <MudCard Elevation="2" Class="h-100">
+                    <MudCardHeader>
+                        <MudText Typo="Typo.h6">👨‍🏫 Teacher Profile</MudText>
+                    </MudCardHeader>
+                    <MudCardContent>
+                        <MudList T="string">
+                            <MudListItem T="string"><strong>Name:</strong> @singleReport.TeacherName</MudListItem>
+                            <MudListItem T="string"><strong>Teacher ID:</strong> @singleReport.TeacherId</MudListItem>
+                            <MudListItem T="string"><strong>Email:</strong> @singleReport.Email</MudListItem>
+                            <MudListItem T="string"><strong>Courses Teaching:</strong> @singleReport.TotalCoursesTeaching</MudListItem>
+                            <MudListItem T="string"><strong>Total Students:</strong> @singleReport.TotalStudentsTeaching</MudListItem>
+                            <MudListItem T="string"><strong>Last Login:</strong> @singleReport.LastLoginDate.ToString("MMM dd, yyyy HH:mm")</MudListItem>
+                        </MudList>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
 
             <!-- Performance Metrics -->
-            <div class="col-md-6">
-                <div class="report-card h-100">
-                    <div class="report-card-header">
-                        <h5 class="mb-0">📊 Performance Metrics</h5>
-                    </div>
-                    <div class="report-card-body">
-                        <table class="table table-sm">
-                            <tr><td><strong>Avg Class Grade:</strong></td><td><span class="badge @GetGradeBadgeClass(singleReport.AverageClassGrade)">@($"{singleReport.AverageClassGrade:F2}")</span></td></tr>
-                            <tr><td><strong>Satisfaction Rating:</strong></td><td><span class="badge bg-warning">@($"{singleReport.StudentSatisfactionRating:F1}/5.0")</span></td></tr>
-                            <tr><td><strong>Course Completion:</strong></td><td>@($"{singleReport.CourseCompletionRate:F1}%")</td></tr>
-                            <tr><td><strong>Forum Participation:</strong></td><td>@singleReport.ForumParticipation posts</td></tr>
-                            <tr><td><strong>Messages Replied:</strong></td><td>@singleReport.MessagesReplied</td></tr>
-                            <tr><td><strong>Performance Status:</strong></td><td><span class="status-badge @GetStatusClass(singleReport.PerformanceStatus)">@singleReport.PerformanceStatus</span></td></tr>
-                        </table>
-                    </div>
-                </div>
-            </div>
-        </div>
+            <MudItem xs="12" md="6">
+                <MudCard Elevation="2" Class="h-100">
+                    <MudCardHeader>
+                        <MudText Typo="Typo.h6">📊 Performance Metrics</MudText>
+                    </MudCardHeader>
+                    <MudCardContent>
+                        <MudList T="string">
+                            <MudListItem T="string"><strong>Avg Class Grade:</strong> <MudChip T="double" Color="@GetGradeBadgeColor(singleReport.AverageClassGrade)">@($"{singleReport.AverageClassGrade:F2}")</MudChip></MudListItem>
+                            <MudListItem T="string"><strong>Satisfaction Rating:</strong> <MudChip T="double" Color="Color.Warning">@($"{singleReport.StudentSatisfactionRating:F1}/5.0")</MudChip></MudListItem>
+                            <MudListItem T="string"><strong>Course Completion:</strong> @($"{singleReport.CourseCompletionRate:F1}%")</MudListItem>
+                            <MudListItem T="string"><strong>Forum Participation:</strong> @singleReport.ForumParticipation posts</MudListItem>
+                            <MudListItem T="string"><strong>Messages Replied:</strong> @singleReport.MessagesReplied replies</MudListItem>
+                            <MudListItem T="string"><strong>Performance Status:</strong> <MudChip T="string" Color="@GetStatusColor(singleReport.PerformanceStatus)">@singleReport.PerformanceStatus</MudChip></MudListItem>
+                        </MudList>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+        </MudGrid>
 
         <!-- Detailed Performance Analysis -->
-        <div class="row mb-4">
-            <div class="col-md-4">
-                <div class="report-card h-100">
-                    <div class="report-card-header">
-                        <h6 class="mb-0">📝 Grading Performance</h6>
-                    </div>
-                    <div class="report-card-body">
-                        <div class="mb-3">
-                            <div class="d-flex justify-content-between">
-                                <span>Total Assignments:</span>
-                                <strong>@singleReport.TotalAssignments</strong>
-                            </div>
-                        </div>
-                        <div class="mb-3">
-                            <div class="d-flex justify-content-between">
-                                <span>Graded:</span>
-                                <strong>@singleReport.GradedAssignments</strong>
-                            </div>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Grading Progress</label>
-                            <div class="progress mb-1">
-                                <div class="progress-bar progress-bar-custom" 
-                                     style="width: @(GetGradingProgress())%"></div>
-                            </div>
-                            <small class="text-muted">@($"{GetGradingProgress():F1}% completed")</small>
-                        </div>
-                        <div class="mb-3">
-                            <div class="d-flex justify-content-between">
-                                <span>Avg Grading Time:</span>
-                                <strong>@($"{singleReport.AverageGradingTime:F1} days")</strong>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+        <MudGrid Class="mb-4">
+            <MudItem xs="12" md="4">
+                <MudCard Elevation="2" Class="h-100">
+                    <MudCardHeader>
+                        <MudText Typo="Typo.h6">📝 Grading Performance</MudText>
+                    </MudCardHeader>
+                    <MudCardContent>
+                        <MudList T="string">
+                            <MudListItem T="string">
+                                <MudText>Total Assignments:</MudText>
+                                <MudText><strong>@singleReport.TotalAssignments</strong></MudText>
+                            </MudListItem>
+                            <MudListItem T="string">
+                                <MudText>Graded:</MudText>
+                                <MudText><strong>@singleReport.GradedAssignments</strong></MudText>
+                            </MudListItem>
+                            <MudListItem T="string">
+                                <MudText Typo="Typo.subtitle1">Grading Progress</MudText>
+                                <MudProgressLinear Value="@(GetGradingProgress())" Color="Color.Primary" Class="mb-1" />
+                                <MudText Typo="Typo.caption" Class="text-muted">@($"{GetGradingProgress():F1}% completed")</MudText>
+                            </MudListItem>
+                            <MudListItem T="string">
+                                <MudText>Avg Grading Time:</MudText>
+                                <MudText><strong>@($"{singleReport.AverageGradingTime:F1} days")</strong></MudText>
+                            </MudListItem>
+                        </MudList>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
 
-            <div class="col-md-4">
-                <div class="report-card h-100">
-                    <div class="report-card-header">
-                        <h6 class="mb-0">⏱️ Time Management</h6>
-                    </div>
-                    <div class="report-card-body">
-                        <div class="mb-3">
-                            <div class="d-flex justify-content-between">
-                                <span>Total Time Spent:</span>
-                                <strong>@($"{singleReport.TotalTimeSpent.TotalHours:F0}h")</strong>
-                            </div>
-                        </div>
-                        <div class="mb-3">
-                            <div class="d-flex justify-content-between">
-                                <span>Avg per Student:</span>
-                                <strong>@($"{(singleReport.TotalTimeSpent.TotalHours / Math.Max(1, singleReport.TotalStudentsTeaching)):F1}h")</strong>
-                            </div>
-                        </div>
-                        <div class="mb-3">
-                            <div class="d-flex justify-content-between">
-                                <span>Courses Completed:</span>
-                                <strong>@singleReport.CoursesCompleted</strong>
-                            </div>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Efficiency Rating</label>
-                            <div class="progress mb-1">
-                                <div class="progress-bar bg-info" 
-                                     style="width: @(Math.Min(100, singleReport.CourseCompletionRate))%"></div>
-                            </div>
-                            <small class="text-muted">@($"{singleReport.CourseCompletionRate:F1}% completion rate")</small>
-                        </div>
-                    </div>
-                </div>
-            </div>
+            <MudItem xs="12" md="4">
+                <MudCard Elevation="2" Class="h-100">
+                    <MudCardHeader>
+                        <MudText Typo="Typo.h6">⏱️ Time Management</MudText>
+                    </MudCardHeader>
+                    <MudCardContent>
+                        <MudList T="string">
+                            <MudListItem T="string">
+                                <MudText>Total Time Spent:</MudText>
+                                <MudText><strong>@($"{singleReport.TotalTimeSpent.TotalHours:F0}h")</strong></MudText>
+                            </MudListItem>
+                            <MudListItem T="string">
+                                <MudText>Avg per Student:</MudText>
+                                <MudText><strong>@($"{(singleReport.TotalTimeSpent.TotalHours / Math.Max(1, singleReport.TotalStudentsTeaching)):F1}h")</strong></MudText>
+                            </MudListItem>
+                            <MudListItem T="string">
+                                <MudText>Courses Completed:</MudText>
+                                <MudText><strong>@singleReport.CoursesCompleted</strong></MudText>
+                            </MudListItem>
+                            <MudListItem T="string">
+                                <MudText Typo="Typo.subtitle1">Efficiency Rating</MudText>
+                                <MudProgressLinear Value="@(Math.Min(100, singleReport.CourseCompletionRate))" Color="Color.Info" Class="mb-1" />
+                                <MudText Typo="Typo.caption" Class="text-muted">@($"{singleReport.CourseCompletionRate:F1}% completion rate")</MudText>
+                            </MudListItem>
+                        </MudList>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
 
-            <div class="col-md-4">
-                <div class="report-card h-100">
-                    <div class="report-card-header">
-                        <h6 class="mb-0">🎯 Student Outcomes</h6>
-                    </div>
-                    <div class="report-card-body">
-                        <div class="mb-3">
-                            <label class="form-label">Student Satisfaction</label>
-                            <div class="progress mb-1">
-                                <div class="progress-bar bg-warning" 
-                                     style="width: @((singleReport.StudentSatisfactionRating / 5.0) * 100)%"></div>
-                            </div>
-                            <small class="text-muted">@($"{singleReport.StudentSatisfactionRating:F1} out of 5.0")</small>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Class Performance</label>
-                            <div class="progress mb-1">
-                                <div class="progress-bar @GetGradeBadgeClass(singleReport.AverageClassGrade)" 
-                                     style="width: @(singleReport.AverageClassGrade)%"></div>
-                            </div>
-                            <small class="text-muted">@($"{singleReport.AverageClassGrade:F1}% average grade")</small>
-                        </div>
-                        <div class="mb-3">
-                            <div class="d-flex justify-content-between">
-                                <span>Forum Engagement:</span>
-                                <strong>@singleReport.ForumParticipation posts</strong>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
+            <MudItem xs="12" md="4">
+                <MudCard Elevation="2" Class="h-100">
+                    <MudCardHeader>
+                        <MudText Typo="Typo.h6">🎯 Student Outcomes</MudText>
+                    </MudCardHeader>
+                    <MudCardContent>
+                        <MudList T="string">
+                            <MudListItem T="string">
+                                <MudText Typo="Typo.subtitle1">Student Satisfaction</MudText>
+                                <MudProgressLinear Value="@(((singleReport.StudentSatisfactionRating / 5.0) * 100))" Color="Color.Warning" Class="mb-1" />
+                                <MudText Typo="Typo.caption" Class="text-muted">@($"{singleReport.StudentSatisfactionRating:F1} out of 5.0")</MudText>
+                            </MudListItem>
+                            <MudListItem T="string">
+                                <MudText Typo="Typo.subtitle1">Class Performance</MudText>
+                                <MudProgressLinear Value="@(singleReport.AverageClassGrade)" Color="@GetGradeBadgeColor(singleReport.AverageClassGrade)" Class="mb-1" />
+                                <MudText Typo="Typo.caption" Class="text-muted">@($"{singleReport.AverageClassGrade:F1}% average grade")</MudText>
+                            </MudListItem>
+                            <MudListItem T="string">
+                                <MudText>Forum Engagement:</MudText>
+                                <MudText><strong>@singleReport.ForumParticipation posts</strong></MudText>
+                            </MudListItem>
+                        </MudList>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+        </MudGrid>
     }
     else if (reportType == "all" && multipleReports?.Any() == true)
     {
         <!-- Multiple Teachers Summary -->
-        <div class="stats-grid mb-4">
-            <div class="stat-card">
-                <div class="stat-value">@multipleReports.Count()</div>
-                <div class="stat-label">Total Teachers</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-value">@multipleReports.Sum(r => r.TotalStudentsTeaching)</div>
-                <div class="stat-label">Total Students</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-value">@($"{multipleReports.Average(r => r.AverageClassGrade):F1}")</div>
-                <div class="stat-label">Avg Class Grade</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-value">@($"{multipleReports.Average(r => r.StudentSatisfactionRating):F1}")</div>
-                <div class="stat-label">Avg Satisfaction</div>
-            </div>
-        </div>
+        <MudGrid Class="stats-grid mb-4">
+            <MudItem xs="12" sm="6" md="3">
+                <MudCard Elevation="2">
+                    <MudCardContent>
+                        <MudText Typo="Typo.h4">@multipleReports.Count()</MudText>
+                        <MudText Typo="Typo.subtitle2">Total Teachers</MudText>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+            <MudItem xs="12" sm="6" md="3">
+                <MudCard Elevation="2">
+                    <MudCardContent>
+                        <MudText Typo="Typo.h4">@multipleReports.Sum(r => r.TotalStudentsTeaching)</MudText>
+                        <MudText Typo="Typo.subtitle2">Total Students</MudText>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+            <MudItem xs="12" sm="6" md="3">
+                <MudCard Elevation="2">
+                    <MudCardContent>
+                        <MudText Typo="Typo.h4">@($"{multipleReports.Average(r => r.AverageClassGrade):F1}")</MudText>
+                        <MudText Typo="Typo.subtitle2">Avg Class Grade</MudText>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+            <MudItem xs="12" sm="6" md="3">
+                <MudCard Elevation="2">
+                    <MudCardContent>
+                        <MudText Typo="Typo.h4">@($"{multipleReports.Average(r => r.StudentSatisfactionRating):F1}")</MudText>
+                        <MudText Typo="Typo.subtitle2">Avg Satisfaction</MudText>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+        </MudGrid>
 
         <!-- Teachers Table -->
-        <div class="report-table">
-            <table class="table table-hover">
-                <thead>
-                    <tr>
-                        <th>Teacher</th>
-                        <th>Courses/Students</th>
-                        <th>Performance</th>
-                        <th>Grading</th>
-                        <th>Engagement</th>
-                        <th>Status</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach (var teacher in multipleReports.OrderByDescending(r => r.StudentSatisfactionRating))
-                    {
-                        <tr>
-                            <td>
-                                <strong>@teacher.TeacherName</strong>
-                                <br />
-                                <small class="text-muted">@teacher.Email</small>
-                            </td>
-                            <td>
-                                <div class="d-flex flex-column">
-                                    <span class="badge bg-primary mb-1">@teacher.TotalCoursesTeaching courses</span>
-                                    <span class="badge bg-info">@teacher.TotalStudentsTeaching students</span>
-                                </div>
-                            </td>
-                            <td>
-                                <div><strong>Grade:</strong> <span class="badge @GetGradeBadgeClass(teacher.AverageClassGrade)">@($"{teacher.AverageClassGrade:F1}")</span></div>
-                                <div><strong>Satisfaction:</strong> @($"{teacher.StudentSatisfactionRating:F1}/5.0")</div>
-                            </td>
-                            <td>
-                                <div>@teacher.GradedAssignments/@teacher.TotalAssignments</div>
-                                <small class="text-muted">@($"{teacher.AverageGradingTime:F1} days avg")</small>
-                            </td>
-                            <td>
-                                <div>@teacher.ForumParticipation posts</div>
-                                <div>@teacher.MessagesReplied replies</div>
-                            </td>
-                            <td>
-                                <span class="status-badge @GetStatusClass(teacher.PerformanceStatus)">
-                                    @teacher.PerformanceStatus
-                                </span>
-                            </td>
-                        </tr>
-                    }
-                </tbody>
-            </table>
-        </div>
+        <MudTable T="TeacherPerformanceReportDto" Items="@multipleReports" Hover="true" Breakpoint="Breakpoint.Sm" Class="report-table">
+            <HeaderContent>
+                <MudTh>Teacher</MudTh>
+                <MudTh>Courses/Students</MudTh>
+                <MudTh>Performance</MudTh>
+                <MudTh>Grading</MudTh>
+                <MudTh>Engagement</MudTh>
+                <MudTh>Status</MudTh>
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd DataLabel="Teacher">
+                    <MudText Typo="Typo.body2"><strong>@context.TeacherName</strong></MudText>
+                    <MudText Typo="Typo.caption" Class="text-muted">@context.Email</MudText>
+                </MudTd>
+                <MudTd DataLabel="Courses/Students">
+                    <MudList T="string">
+                        <MudListItem T="string">
+                            <MudChip T="string" Color="Color.Primary">@context.TotalCoursesTeaching courses</MudChip>
+                        </MudListItem>
+                        <MudListItem T="string">
+                            <MudChip T="string" Color="Color.Info">@context.TotalStudentsTeaching students</MudChip>
+                        </MudListItem>
+                    </MudList>
+                </MudTd>
+                <MudTd DataLabel="Performance">
+                    <MudText><strong>Grade:</strong> <MudChip T="string" Color="@GetGradeBadgeColor(context.AverageClassGrade)">@($"{context.AverageClassGrade:F1}")</MudChip></MudText>
+                    <MudText><strong>Satisfaction:</strong> @($"{context.StudentSatisfactionRating:F1}/5.0")</MudText>
+                </MudTd>
+                <MudTd DataLabel="Grading">
+                    <MudText>@context.GradedAssignments/@context.TotalAssignments</MudText>
+                    <MudText Typo="Typo.caption" Class="text-muted">@($"{context.AverageGradingTime:F1} days avg")</MudText>
+                </MudTd>
+                <MudTd DataLabel="Engagement">
+                    <MudText>@context.ForumParticipation posts</MudText>
+                    <MudText>@context.MessagesReplied replies</MudText>
+                </MudTd>
+                <MudTd DataLabel="Status">
+                    <MudChip T="string" Color="@GetStatusColor(context.PerformanceStatus)">
+                        @context.PerformanceStatus
+                    </MudChip>
+                </MudTd>
+            </RowTemplate>
+            <PagerContent>
+                <MudTablePager PageSizeOptions="@(new int[]{10, 20, 50})" />
+            </PagerContent>
+        </MudTable>
     }
 }
 else if (!loading)
 {
-    <div class="report-card">
-        <div class="report-card-body text-center py-5">
-            <h5 class="text-muted">Ready to Generate Report</h5>
-            <p class="text-muted">
+    <MudCard Elevation="2" Class="report-no-data">
+        <MudCardContent Class="text-center py-5">
+            <MudIcon Icon="@Icons.Material.Filled.Info" Size="Size.Large" Class="text-muted mb-3" />
+            <MudText Typo="Typo.h5">Ready to Generate Report</MudText>
+            <MudText Typo="Typo.body1" Class="text-muted">
                 @if (reportType == "single")
                 {
                     <span>Please enter a Teacher ID to generate the performance report.</span>
@@ -319,9 +295,9 @@ else if (!loading)
                 {
                     <span>Click "Generate Report" to view performance for all teachers.</span>
                 }
-            </p>
-        </div>
-    </div>
+            </MudText>
+        </MudCardContent>
+    </MudCard>
 }
 
 @code {
@@ -456,27 +432,27 @@ else if (!loading)
         return dummyData;
     }
 
-    private string GetGradeBadgeClass(double grade)
+    private MudBlazor.Color GetGradeBadgeColor(double grade)
     {
         return grade switch
         {
-            >= 90 => "bg-success",
-            >= 80 => "bg-info", 
-            >= 70 => "bg-warning",
-            >= 60 => "bg-secondary",
-            _ => "bg-danger"
+            >= 90 => MudBlazor.Color.Success,
+            >= 80 => MudBlazor.Color.Info,
+            >= 70 => MudBlazor.Color.Warning,
+            >= 60 => MudBlazor.Color.Secondary,
+            _ => MudBlazor.Color.Error
         };
     }
 
-    private string GetStatusClass(string status)
+    private MudBlazor.Color GetStatusColor(string status)
     {
         return status?.ToLower() switch
         {
-            "excellent" => "status-active",
-            "good" => "status-completed",
-            "satisfactory" => "status-pending",
-            "needs improvement" => "status-inactive",
-            _ => "status-inactive"
+            "excellent" => MudBlazor.Color.Success,
+            "good" => MudBlazor.Color.Primary,
+            "satisfactory" => MudBlazor.Color.Warning,
+            "needs improvement" => MudBlazor.Color.Error,
+            _ => MudBlazor.Color.Secondary
         };
     }
 

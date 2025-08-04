@@ -444,7 +444,7 @@ namespace LMS.Infrastructure.Data
                 .HasDatabaseName("IX_Announcement_IsActive");
 
             // Seed default data
-            SeedData(builder);
+            LMS.Data.DataSeeder.Seed(builder);
         }
 
         private void SeedData(ModelBuilder builder)

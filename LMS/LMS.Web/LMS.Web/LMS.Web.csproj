@@ -9,7 +9,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Blazor.Bootstrap" Version="3.4.0" />
+    
+    <PackageReference Include="MudBlazor" Version="8.10.0" />
     <ProjectReference Include="..\..\LMS.Data\LMS.Data.csproj" />
     <ProjectReference Include="..\..\LMS.ServiceDefaults\LMS.ServiceDefaults.csproj" />
     <ProjectReference Include="..\LMS.Web.Client\LMS.Web.Client.csproj" />

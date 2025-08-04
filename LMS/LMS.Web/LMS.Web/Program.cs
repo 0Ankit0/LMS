@@ -8,14 +8,14 @@ using Microsoft.EntityFrameworkCore;
 using LMS.Infrastructure.Data;
 using LMS.Web.Infrastructure;
 using LMS.Web.Services;
-using BlazorBootstrap;
+using MudBlazor.Services;
+
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.AddServiceDefaults();
 
-// Add Blazor Bootstrap
-builder.Services.AddBlazorBootstrap();
+
 
 // Add services to the container.
 builder.Services.AddRazorComponents()
@@ -51,7 +51,7 @@ builder.Services.AddIdentityCore<User>(options => options.SignIn.RequireConfirme
 builder.Services.AddSingleton<IEmailSender<User>, IdentityNoOpEmailSender>();
 
 // Add custom toast service
-builder.Services.AddScoped<LMS.Web.Services.ToastService>();
+builder.Services.AddScoped<ToastService>();
 
 // Configure HttpClient with proper base address for server-side components
 builder.Services.AddScoped(sp =>
@@ -67,6 +67,7 @@ builder.Services.AddScoped(sp =>
 // Add IHttpContextAccessor for the above service
 builder.Services.AddHttpContextAccessor();
 
+builder.Services.AddMudServices();
 builder.Services.AddEndpoints(typeof(Program).Assembly);
 var app = builder.Build();
 

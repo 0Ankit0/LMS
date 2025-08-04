@@ -1,5 +1,5 @@
-using LMS.Data.Entities;
 using Microsoft.AspNetCore.Identity;
+using LMS.Data.Entities;
 
 namespace LMS.Web.Components.Account
 {

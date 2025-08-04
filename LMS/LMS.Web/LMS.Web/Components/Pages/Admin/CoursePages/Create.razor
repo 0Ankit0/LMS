@@ -1,159 +1,130 @@
-﻿@page "/admin/courses/create"
-
+﻿@rendermode @(new InteractiveServerRenderMode())
 @using LMS.Repositories
-@using LMS.Web.Components.Shared
-@using LMS.Web.Services
-
-@inject ICourseRepository CourseRepository
 @inject IDropdownRepository DropdownRepository
+@inject ICourseRepository CourseRepository
 @inject NavigationManager NavigationManager
-@inject LMS.Web.Services.ToastService ToastService
-@rendermode @(new InteractiveServerRenderMode())
+@inject ISnackbar Snackbar
 
 <PageTitle>Create Course - Admin</PageTitle>
 
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h1 class="mb-0">Create New Course</h1>
-    <Button Color="ButtonColor.Secondary" Href="/admin/courses">
-        <Icon Name="IconName.ArrowLeft" />
-        Back to Courses
-    </Button>
-</div>
+@if (isLoading)
+{
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <MudSkeleton SkeletonType="SkeletonType.Text" Width="200px" Height="40px" />
+        <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="180px" Height="40px" />
+    </div>
 
-<Card>
-    <CardHeader>
-        <h5 class="card-title mb-0">Course Information</h5>
-    </CardHeader>
-    <CardBody>
-        <EditForm Model="Course" OnValidSubmit="AddCourse">
-            <AntiforgeryToken />
-            <DataAnnotationsValidator />
-            <ValidationSummary class="alert alert-danger" role="alert" />
+    <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="800px" />
+}
+else
+{
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="mb-0">Create New Course</h1>
+        <MudButton Variant="Variant.Text" Color="Color.Secondary" Href="/admin/courses">
+            <MudIcon Icon="@Icons.Material.Filled.ArrowBack" Class="me-2" />
+            Back to Courses
+        </MudButton>
+    </div>
 
-            <div class="row">
-                <div class="col-md-8 mb-3">
-                    <label for="title" class="form-label">Title <span class="text-danger">*</span></label>
-                    <InputText id="title" @bind-Value="Course.Title" class="form-control" aria-required="true"
-                        placeholder="Enter course title" />
-                    <ValidationMessage For="() => Course.Title" class="text-danger" />
-                </div>
-                <div class="col-md-4 mb-3">
-                    <label for="level" class="form-label">Level</label>
-                    <InputSelect id="level" @bind-Value="Course.Level" class="form-select">
-                        @foreach (int level in Enum.GetValues(typeof(CourseLevel)))
-                        {
-                            <option value="@level">@Enum.GetName(typeof(CourseLevel), @level)</option>
-                        }
-                    </InputSelect>
-                    <ValidationMessage For="() => Course.Level" class="text-danger" />
-                </div>
-            </div>
+    <MudCard Elevation="2">
+        <MudCardHeader>
+            <MudText Typo="Typo.h6">Course Information</MudText>
+        </MudCardHeader>
+        <MudCardContent>
+            <MudForm Model="Course" OnValidSubmit="AddCourse" @ref="form">
+                <MudAlert Severity="Severity.Error" Class="mb-3" Visible="@(!form.IsValid)">
+                    <MudText>Please correct the errors below.</MudText>
+                </MudAlert>
 
-            <div class="mb-3">
-                <label for="description" class="form-label">Description <span
-                        class="text-danger">*</span></label>
-                <InputTextArea id="description" @bind-Value="Course.Description" class="form-control" rows="4"
-                    aria-required="true" placeholder="Enter course description" />
-                <ValidationMessage For="() => Course.Description" class="text-danger" />
-            </div>
+                <MudGrid>
+                    <MudItem xs="12" md="8">
+                        <MudTextField @bind-Value="Course.Title" Label="Title" Variant="Variant.Text" Required="true" RequiredError="Title is required!" />
+                    </MudItem>
+                    <MudItem xs="12" md="4">
+                        <MudSelect @bind-Value="Course.Level" Label="Level" Variant="Variant.Text">
+                            @foreach (int level in Enum.GetValues(typeof(CourseLevel)))
+                            {
+                                <MudSelectItem Value="@level">@Enum.GetName(typeof(CourseLevel), @level)</MudSelectItem>
+                            }
+                        </MudSelect>
+                    </MudItem>
+                </MudGrid>
 
-            <div class="row">
-                <div class="col-md-6 mb-3">
-                    <label for="thumbnailurl" class="form-label">Thumbnail URL</label>
-                    <InputText id="thumbnailurl" @bind-Value="Course.ThumbnailUrl" class="form-control"
-                        placeholder="https://example.com/image.jpg" />
-                    <ValidationMessage For="() => Course.ThumbnailUrl" class="text-danger" />
-                </div>
-                <div class="col-md-6 mb-3">
-                    <label for="instructorid" class="form-label">Instructor <span
-                            class="text-danger">*</span></label>
-                    <SearchableSelectComponent TItem="DropdownOption<string>"
-                                               TValue="string"
-                                               OnLoad="LoadInstructorsAsync"
-                                               ValueSelector="@(item => item.Value)"
-                                               DisplaySelector="@(item => item.Text)"
-                                               @bind-SelectedValue="Course.InstructorId"
-                                               Placeholder="Search and select instructor..."
-                                               EmptyText="No instructors found" />
-                    <ValidationMessage For="() => Course.InstructorId" class="text-danger" />
-                </div>
-            </div>
+                <MudTextField @bind-Value="Course.Description" Label="Description" Variant="Variant.Text" Lines="4" Required="true" RequiredError="Description is required!" Placeholder="Enter course description" />
 
-            <div class="row">
-                <div class="col-md-4 mb-3">
-                    <label for="status" class="form-label">Status</label>
-                    <InputSelect id="status" @bind-Value="Course.Status" class="form-select">
-                        @foreach (int status in Enum.GetValues(typeof(CourseStatus)))
-                        {
-                            <option value="@status">@Enum.GetName(typeof(CourseStatus), @status)</option>
-                        }
-                    </InputSelect>
-                    <ValidationMessage For="() => Course.Status" class="text-danger" />
-                </div>
-                <div class="col-md-4 mb-3">
-                    <label for="maxenrollments" class="form-label">Max Enrollments</label>
-                    <InputNumber id="maxenrollments" @bind-Value="Course.MaxEnrollments" class="form-control"
-                        placeholder="100" />
-                    <ValidationMessage For="() => Course.MaxEnrollments" class="text-danger" />
-                </div>
-                <div class="col-md-4 mb-3">
-                    <label for="estimatedduration" class="form-label">Duration (hours)</label>
-                    <InputNumber id="estimatedduration" @bind-Value="EstimatedDurationHours"
-                        class="form-control" placeholder="40" />
-                    <ValidationMessage For="() => EstimatedDurationHours" class="text-danger" />
-                </div>
-            </div>
+                <MudGrid>
+                    <MudItem xs="12" md="6">
+                        <MudTextField @bind-Value="Course.ThumbnailUrl" Label="Thumbnail URL" Variant="Variant.Text" Placeholder="https://example.com/image.jpg" />
+                    </MudItem>
+                    <MudItem xs="12" md="6">
+                        <MudSelect @bind-Value="Course.InstructorId" Label="Instructor" Variant="Variant.Text" Required="true" RequiredError="Instructor is required!" Placeholder="Search and select instructor...">
+                            @foreach (var instructor in instructors)
+                            {
+                                <MudSelectItem Value="@instructor.Value">@instructor.Text</MudSelectItem>
+                            }
+                        </MudSelect>
+                    </MudItem>
+                </MudGrid>
 
-            <div class="row">
-                <div class="col-md-6 mb-3">
-                    <label for="startdate" class="form-label">Start Date</label>
-                    <InputDate id="startdate" @bind-Value="Course.StartDate" class="form-control" />
-                    <ValidationMessage For="() => Course.StartDate" class="text-danger" />
+                <MudGrid>
+                    <MudItem xs="12" md="4">
+                        <MudSelect @bind-Value="Course.Status" Label="Status" Variant="Variant.Text">
+                            @foreach (int status in Enum.GetValues(typeof(CourseStatus)))
+                            {
+                                <MudSelectItem Value="@status">@Enum.GetName(typeof(CourseStatus), @status)</MudSelectItem>
+                            }
+                        </MudSelect>
+                    </MudItem>
+                    <MudItem xs="12" md="4">
+                        <MudNumericField @bind-Value="Course.MaxEnrollments" Label="Max Enrollments" Variant="Variant.Text" Placeholder="100" />
+                    </MudItem>
+                    <MudItem xs="12" md="4">
+                        <MudNumericField @bind-Value="EstimatedDurationHours" Label="Duration (hours)" Variant="Variant.Text" Placeholder="40" />
+                    </MudItem>
+                </MudGrid>
+
+                <MudGrid>
+                    <MudItem xs="12" md="6">
+                        <MudDatePicker Date="@Course.StartDate" Label="Start Date" Variant="Variant.Text" />
+                    </MudItem>
+                    <MudItem xs="12" md="6">
+                        <MudDatePicker Date="@Course.EndDate" Label="End Date" Variant="Variant.Text" />
+                    </MudItem>
+                </MudGrid>
+
+                <MudTextField @bind-Value="Course.Prerequisites" Label="Prerequisites" Variant="Variant.Text" Lines="3" Placeholder="List any prerequisites..." />
+
+                <MudTextField @bind-Value="Course.LearningObjectives" Label="Learning Objectives" Variant="Variant.Text" Lines="3" Placeholder="What will students learn..." />
+
+                <MudCheckBox T="bool" @bind-Checked="Course.IsActive" Label="Is Active" Color="Color.Primary" />
+
+                <div class="d-flex gap-2">
+                    <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Disabled="@isSubmitting">
+                        <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Class="me-2" />
+                        Create Course
+                    </MudButton>
+                    <MudButton Variant="Variant.Filled" Color="Color.Secondary" Href="/admin/courses">Cancel</MudButton>
                 </div>
-                <div class="col-md-6 mb-3">
-                    <label for="enddate" class="form-label">End Date</label>
-                    <InputDate id="enddate" @bind-Value="Course.EndDate" class="form-control" />
-                    <ValidationMessage For="() => Course.EndDate" class="text-danger" />
-                </div>
-            </div>
-
-            <div class="mb-3">
-                <label for="prerequisites" class="form-label">Prerequisites</label>
-                <InputTextArea id="prerequisites" @bind-Value="Course.Prerequisites" class="form-control"
-                    rows="3" placeholder="List any prerequisites..." />
-                <ValidationMessage For="() => Course.Prerequisites" class="text-danger" />
-            </div>
-
-            <div class="mb-3">
-                <label for="learningobjectives" class="form-label">Learning Objectives</label>
-                <InputTextArea id="learningobjectives" @bind-Value="Course.LearningObjectives"
-                    class="form-control" rows="3" placeholder="What will students learn..." />
-                <ValidationMessage For="() => Course.LearningObjectives" class="text-danger" />
-            </div>
-
-            <div class="mb-3">
-                <div class="form-check">
-                    <InputCheckbox id="isactive" @bind-Value="Course.IsActive" class="form-check-input" />
-                    <label for="isactive" class="form-check-label">Is Active</label>
-                    <ValidationMessage For="() => Course.IsActive" class="text-danger" />
-                </div>
-            </div>
-
-            <div class="d-flex gap-2">
-                <Button Color="ButtonColor.Primary" Type="ButtonType.Submit" Loading="@isSubmitting">
-                    <Icon Name="IconName.CheckCircle" />
-                    Create Course
-                </Button>
-                <Button Color="ButtonColor.Secondary" Href="/admin/courses">Cancel</Button>
-            </div>
-        </EditForm>
-    </CardBody>
-</Card>
+            </MudForm>
+        </MudCardContent>
+    </MudCard>
+}
 
 @code {
     [SupplyParameterFromForm]
     private CreateCourseRequest Course { get; set; } = new();
     private bool isSubmitting = false;
+    private bool isLoading = true;
+    private MudForm form;
+    private List<DropdownOption<string>> instructors = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Simulate data loading
+        await Task.Delay(500);
+        instructors = (await LoadInstructorsAsync()).ToList();
+        isLoading = false;
+    }
 
     // Helper property for binding EstimatedDuration as hours
     private int EstimatedDurationHours
@@ -166,8 +137,8 @@
     {
         try
         {
-            var instructors = await DropdownRepository.GetInstructorsAsync(search: null, take: 100);
-            return instructors;
+            var result = await DropdownRepository.GetInstructorsAsync(search: null, take: 100);
+            return result;
         }
         catch (Exception ex)
         {
@@ -179,24 +150,23 @@
     private async Task AddCourse()
     {
         if (isSubmitting) return;
-        
         isSubmitting = true;
         try
         {
             var result = await CourseRepository.CreateCourseAsync(Course);
             if (result != null)
             {
-                ToastService.ShowSuccess("Success", "Course created successfully!");
+                Snackbar.Add("Course created successfully!", Severity.Success);
                 NavigationManager.NavigateTo("/admin/courses");
             }
             else
             {
-                ToastService.ShowError("Error", "Failed to create course. Please try again.");
+                Snackbar.Add("Failed to create course. Please try again.", Severity.Error);
             }
         }
         catch (Exception ex)
         {
-            ToastService.ShowError("Error", $"Error creating course: {ex.Message}");
+            Snackbar.Add($"Error creating course: {ex.Message}", Severity.Error);
         }
         finally
         {

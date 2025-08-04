@@ -1,6 +1,8 @@
 @page "/reports/forum-activity"
 
 @using LMS.Web.Repositories.DTOs
+@using MudBlazor
+@using LMS.Web.Components.Account.Shared
 @inject IReportRepository ReportRepository
 @inject IJSRuntime JSRuntime
 @inject IdentityUserAccessor UserAccessor
@@ -12,82 +14,61 @@
         <p class="text-muted mb-0">Track forum engagement and discussion participation</p>
     </div>
     <div class="export-buttons">
-        <button class="btn btn-outline-report" @onclick="ExportToPdf">
-            <i class="fas fa-file-pdf"></i> Export PDF
-        </button>
-        <button class="btn btn-outline-report" @onclick="ExportToExcel">
-            <i class="fas fa-file-excel"></i> Export Excel
-        </button>
+        <MudButton Variant="Variant.Outlined" Color="Color.Primary" OnClick="ExportToPdf">
+            <MudIcon Icon="@Icons.Material.Filled.PictureAsPdf" Class="me-2" /> Export PDF
+        </MudButton>
+        <MudButton Variant="Variant.Outlined" Color="Color.Primary" OnClick="ExportToExcel">
+            <MudIcon Icon="@Icons.Material.Filled.Description" Class="me-2" /> Export Excel
+        </MudButton>
     </div>
 </div>
 
 <!-- Filters -->
-<div class="report-filters">
-    <div class="row">
-        <div class="col-md-3">
-            <div class="form-group">
-                <label class="form-label">Report Type</label>
-                <select class="form-select" @bind="reportType" @bind:after="OnReportTypeChanged">
-                    <option value="single">Single Forum</option>
-                    <option value="all">All Forums</option>
-                </select>
-            </div>
-        </div>
-        @if (reportType == "single")
-        {
-            <div class="col-md-3">
-                <div class="form-group">
-                    <label class="form-label">Forum ID</label>
-                    <input type="number" class="form-control" @bind="forumId" placeholder="Enter Forum ID" />
-                </div>
-            </div>
-        }
-        <div class="col-md-2">
-            <div class="form-group">
-                <label class="form-label">Start Date</label>
-                <input type="date" class="form-control" @bind="startDate" />
-            </div>
-        </div>
-        <div class="col-md-2">
-            <div class="form-group">
-                <label class="form-label">End Date</label>
-                <input type="date" class="form-control" @bind="endDate" />
-            </div>
-        </div>
-        @if (reportType == "all")
-        {
-            <div class="col-md-2">
-                <div class="form-group">
-                    <label class="form-label">Course ID</label>
-                    <input type="number" class="form-control" @bind="courseId" placeholder="Optional" />
-                </div>
-            </div>
-        }
-        <div class="col-md-2">
-            <div class="form-group">
-                <label class="form-label">&nbsp;</label>
-                <button class="btn btn-report d-block w-100" @onclick="LoadData">
-                    💬 Generate Report
-                </button>
-            </div>
-        </div>
-    </div>
-</div>
+<MudGrid Class="report-filters">
+    <MudItem xs="12" md="3">
+        <MudSelect T="string" Label="Report Type" @bind-Value="reportType" OnChange="OnReportTypeChanged">
+            <MudSelectItem Value="@("single")">Single Forum</MudSelectItem>
+            <MudSelectItem Value="@("all")">All Forums</MudSelectItem>
+        </MudSelect>
+    </MudItem>
+    @if (reportType == "single")
+    {
+        <MudItem xs="12" md="3">
+            <MudNumericField Label="Forum ID" @bind-Value="forumId" Variant="Variant.Text" Placeholder="Enter Forum ID" />
+        </MudItem>
+    }
+    <MudItem xs="12" md="2">
+        <MudDatePicker Label="Start Date" @bind-Date="startDate" DateFormat="yyyy-MM-dd" />
+    </MudItem>
+    <MudItem xs="12" md="2">
+        <MudDatePicker Label="End Date" @bind-Date="endDate" DateFormat="yyyy-MM-dd" />
+    </MudItem>
+    @if (reportType == "all")
+    {
+        <MudItem xs="12" md="2">
+            <MudNumericField Label="Course ID" @bind-Value="courseId" Variant="Variant.Text" Placeholder="Optional" />
+        </MudItem>
+    }
+    <MudItem xs="12" md="2">
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="LoadData" FullWidth="true">
+            <MudIcon Icon="@Icons.Material.Filled.Chat" Class="me-2" />
+            Generate Report
+        </MudButton>
+    </MudItem>
+</MudGrid>
 
 @if (!string.IsNullOrEmpty(errorMessage))
 {
-    <div class="alert alert-warning" role="alert">
-        <i class="fas fa-exclamation-triangle"></i> @errorMessage
-    </div>
+    <MudAlert Severity="Severity.Warning" Class="my-3">
+        <MudIcon Icon="@Icons.Material.Filled.Warning" Class="me-2" /> @errorMessage
+    </MudAlert>
 }
 
 @if (loading)
 {
-    <div class="report-loading">
-        <div class="spinner-border" role="status">
-            <span class="visually-hidden">Loading...</span>
-        </div>
-        <p class="mt-2">Loading forum activity data...</p>
+    <div class="report-loading d-flex flex-column align-items-center justify-content-center py-5">
+        <MudProgressCircular Indeterminate="true" Color="Color.Primary" Size="Size.Large" />
+        <MudText Class="mt-2">Loading forum activity data...</MudText>
     </div>
 }
 else if (singleReport != null || multipleReports?.Any() == true)
@@ -95,202 +76,163 @@ else if (singleReport != null || multipleReports?.Any() == true)
     @if (reportType == "single" && singleReport != null)
     {
         <!-- Single Forum Report -->
-        <div class="row mb-4">
+        <MudGrid Class="mb-4">
             <!-- Forum Information -->
-            <div class="col-md-6">
-                <div class="report-card h-100">
-                    <div class="report-card-header">
-                        <h5 class="mb-0">💬 Forum Information</h5>
-                    </div>
-                    <div class="report-card-body">
-                        <table class="table table-sm">
-                            <tr>
-                                <td><strong>Forum:</strong></td>
-                                <td>@singleReport.ForumTitle</td>
-                            </tr>
-                            <tr>
-                                <td><strong>Forum ID:</strong></td>
-                                <td>@singleReport.ForumId</td>
-                            </tr>
-                            <tr>
-                                <td><strong>Course:</strong></td>
-                                <td>@singleReport.CourseName</td>
-                            </tr>
-                            <tr>
-                                <td><strong>Total Topics:</strong></td>
-                                <td>@singleReport.TotalTopics</td>
-                            </tr>
-                            <tr>
-                                <td><strong>Total Posts:</strong></td>
-                                <td>@singleReport.TotalPosts</td>
-                            </tr>
-                            <tr>
-                                <td><strong>Active Users:</strong></td>
-                                <td>@singleReport.ActiveUsers</td>
-                            </tr>
-                        </table>
-                    </div>
-                </div>
-            </div>
+            <MudItem xs="12" md="6">
+                <MudCard Elevation="2" Class="h-100">
+                    <MudCardHeader>
+                        <MudText Typo="Typo.h6">💬 Forum Information</MudText>
+                    </MudCardHeader>
+                    <MudCardContent>
+                        <MudList T="string">
+                            <MudListItem T="string"><strong>Forum:</strong> @singleReport.ForumTitle</MudListItem>
+                            <MudListItem T="string"><strong>Forum ID:</strong> @singleReport.ForumId</MudListItem>
+                            <MudListItem T="string"><strong>Course:</strong> @singleReport.CourseName</MudListItem>
+                            <MudListItem T="string"><strong>Total Topics:</strong> @singleReport.TotalTopics</MudListItem>
+                            <MudListItem T="string"><strong>Total Posts:</strong> @singleReport.TotalPosts</MudListItem>
+                            <MudListItem T="string"><strong>Active Users:</strong> @singleReport.ActiveUsers</MudListItem>
+                        </MudList>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
 
             <!-- Activity Statistics -->
-            <div class="col-md-6">
-                <div class="report-card h-100">
-                    <div class="report-card-header">
-                        <h5 class="mb-0">📈 Activity Statistics</h5>
-                    </div>
-                    <div class="report-card-body">
-                        <table class="table table-sm">
-                            <tr>
-                                <td><strong>Avg Posts/User:</strong></td>
-                                <td>@($"{singleReport.AveragePostsPerUser:F1}")</td>
-                            </tr>
-                            <tr>
-                                <td><strong>Avg Replies/Topic:</strong></td>
-                                <td>@($"{singleReport.AverageRepliesPerTopic:F1}")</td>
-                            </tr>
-                            <tr>
-                                <td><strong>Most Active User:</strong></td>
-                                <td>@singleReport.MostActiveUser (@singleReport.MostActiveUserPosts posts)</td>
-                            </tr>
-                            <tr>
-                                <td><strong>Most Popular Topic:</strong></td>
-                                <td>@singleReport.MostPopularTopic (@singleReport.MostPopularTopicReplies replies)</td>
-                            </tr>
-                            <tr>
-                                <td><strong>Total Views:</strong></td>
-                                <td>@singleReport.TotalViews</td>
-                            </tr>
-                            <tr>
-                                <td><strong>Last Activity:</strong></td>
-                                <td>@singleReport.LastActivityDate.ToString("MMM dd, yyyy")</td>
-                            </tr>
-                        </table>
-                    </div>
-                </div>
-            </div>
-        </div>
+            <MudItem xs="12" md="6">
+                <MudCard Elevation="2" Class="h-100">
+                    <MudCardHeader>
+                        <MudText Typo="Typo.h6">📈 Activity Statistics</MudText>
+                    </MudCardHeader>
+                    <MudCardContent>
+                        <MudList T="string">
+                            <MudListItem T="string"><strong>Avg Posts/User:</strong> @($"{singleReport.AveragePostsPerUser:F1}")</MudListItem>
+                            <MudListItem T="string"><strong>Avg Replies/Topic:</strong> @($"{singleReport.AverageRepliesPerTopic:F1}")</MudListItem>
+                            <MudListItem T="string"><strong>Most Active User:</strong> @singleReport.MostActiveUser (@singleReport.MostActiveUserPosts posts)</MudListItem>
+                            <MudListItem T="string"><strong>Most Popular Topic:</strong> @singleReport.MostPopularTopic (@singleReport.MostPopularTopicReplies replies)</MudListItem>
+                            <MudListItem T="string"><strong>Total Views:</strong> @singleReport.TotalViews</MudListItem>
+                            <MudListItem T="string"><strong>Last Activity:</strong> @singleReport.LastActivityDate.ToString("MMM dd, yyyy")</MudListItem>
+                        </MudList>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+        </MudGrid>
 
         <!-- Activity Timeline -->
-        <div class="report-card mb-4">
-            <div class="report-card-header">
-                <h5 class="mb-0">📅 Activity Timeline</h5>
-            </div>
-            <div class="report-card-body">
-                <div class="row">
-                    <div class="col-md-4">
-                        <h6>Posts by Day of Week</h6>
-                        <div class="progress-group">
+        <MudCard Elevation="2" Class="mb-4">
+            <MudCardHeader>
+                <MudText Typo="Typo.h6">📅 Activity Timeline</MudText>
+            </MudCardHeader>
+            <MudCardContent>
+                <MudGrid>
+                    <MudItem xs="12" md="4">
+                        <MudText Typo="Typo.subtitle1">Posts by Day of Week</MudText>
+                        <MudList T="string">
                             @for (int i = 0; i < 7; i++)
                             {
                                 var dayName = ((DayOfWeek)i).ToString().Substring(0, 3);
                                 var dayPosts = GetRandomDayActivity(); // Mock data for demonstration
-                                                                       <div class="d-flex justify-content-between align-items-center mb-2">
-                                                                           <span>@dayName</span>
-                                                                           <div class="progress flex-grow-1 mx-2" style="height: 6px;">
-                                                                               <div class="progress-bar progress-bar-custom" style="width: @(dayPosts)%"></div>
-                                                                           </div>
-                                                                           <small class="text-muted">@($"{dayPosts:F0}%")</small>
-                                                                       </div>
+                                <MudListItem T="string">
+                                    <MudText>@dayName</MudText>
+                                    <MudProgressLinear Value="@(dayPosts)" Color="Color.Primary" Class="mx-2" Style="height: 6px;" />
+                                    <MudText Typo="Typo.caption">@($"{dayPosts:F0}%")</MudText>
+                                </MudListItem>
                             }
-                        </div>
-                    </div>
-                    <div class="col-md-4">
-                        <h6>Posts by Hour</h6>
-                        <div class="progress-group">
+                        </MudList>
+                    </MudItem>
+                    <MudItem xs="12" md="4">
+                        <MudText Typo="Typo.subtitle1">Posts by Hour</MudText>
+                        <MudList T="string">
                             @for (int hour = 8; hour <= 20; hour += 2)
                             {
                                 var hourActivity = GetRandomHourActivity(); // Mock data for demonstration
-                                                                            <div class="d-flex justify-content-between align-items-center mb-2">
-                                                                                <span>@($"{hour}:00")</span>
-                                                                                <div class="progress flex-grow-1 mx-2" style="height: 6px;">
-                                                                                    <div class="progress-bar progress-bar-custom" style="width: @(hourActivity)%"></div>
-                                                                                </div>
-                                                                                <small class="text-muted">@($"{hourActivity:F0}%")</small>
-                                                                            </div>
+                                <MudListItem T="string">
+                                    <MudText>@($"{hour}:00")</MudText>
+                                    <MudProgressLinear Value="@(hourActivity)" Color="Color.Primary" Class="mx-2" Style="height: 6px;" />
+                                    <MudText Typo="Typo.caption">@($"{hourActivity:F0}%")</MudText>
+                                </MudListItem>
                             }
-                        </div>
-                    </div>
-                    <div class="col-md-4">
-                        <h6>Engagement Metrics</h6>
+                        </MudList>
+                    </MudItem>
+                    <MudItem xs="12" md="4">
+                        <MudText Typo="Typo.subtitle1">Engagement Metrics</MudText>
                         <!-- Posts vs Replies Ratio removed: not available in DTO -->
                         <!-- User Participation removed: EngagementRate not available in DTO -->
-                    </div>
-                </div>
-            </div>
-        </div>
+                    </MudItem>
+                </MudGrid>
+            </MudCardContent>
+        </MudCard>
     }
     else if (reportType == "all" && multipleReports?.Any() == true)
     {
         <!-- Multiple Forums Summary -->
-        <div class="stats-grid mb-4">
-            <div class="stat-card">
-                <div class="stat-value">@multipleReports.Count()</div>
-                <div class="stat-label">Total Forums</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-value">@multipleReports.Sum(r => r.TotalPosts)</div>
-                <div class="stat-label">Total Posts</div>
-            </div>
+        <MudGrid Class="stats-grid mb-4">
+            <MudItem xs="12" sm="6" md="4">
+                <MudCard Elevation="2">
+                    <MudCardContent>
+                        <MudText Typo="Typo.h4">@multipleReports.Count()</MudText>
+                        <MudText Typo="Typo.subtitle2">Total Forums</MudText>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+            <MudItem xs="12" sm="6" md="4">
+                <MudCard Elevation="2">
+                    <MudCardContent>
+                        <MudText Typo="Typo.h4">@multipleReports.Sum(r => r.TotalPosts)</MudText>
+                        <MudText Typo="Typo.subtitle2">Total Posts</MudText>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
             <!-- Total Replies and Total Participants removed: not available in DTO -->
-        </div>
+        </MudGrid>
 
         <!-- Forums Table -->
-        <div class="report-table">
-            <table class="table table-hover">
-                <thead>
-                    <tr>
-                        <th>Forum</th>
-                        <th>Course</th>
-                        <th>Posts</th>
-                        <th>Replies</th>
-                        <th>Participants</th>
-                        <th>Activity</th>
-                        <th>Engagement</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach (var report in multipleReports.OrderByDescending(r => r.TotalPosts))
-                    {
-                        <tr>
-                            <td>
-                                <strong>@report.ForumTitle</strong>
-                                <br />
-                                <small class="text-muted">ID: @report.ForumId</small>
-                            </td>
-                            <td>@report.CourseName</td>
-                            <td>
-                                <span class="badge bg-primary">@report.TotalPosts</span>
-                            </td>
-                            <td>
-                                <span class="badge bg-info">@report.ActiveUsers</span>
-                            </td>
-                            <td>
-                                <span class="badge bg-secondary">@report.TotalTopics</span>
-                            </td>
-                            <td>
-                                <div><strong>@($"{report.AveragePostsPerUser:F1}")</strong> posts/user</div>
-                                <div><strong>@($"{report.AverageRepliesPerTopic:F1}")</strong> replies/topic</div>
-                                <small class="text-muted">Most active: @report.MostActiveUser (@report.MostActiveUserPosts
-                                    posts)</small>
-                            </td>
-                            <td>
-                                <span class="badge bg-success">@report.TotalViews views</span>
-                                <div><small class="text-muted">Last: @report.LastActivityDate.ToString("MMM dd, yyyy")</small></div>
-                            </td>
-                        </tr>
-                    }
-                </tbody>
-            </table>
-        </div>
+        <MudTable T="ForumActivityReportDto" Items="@multipleReports" Hover="true" Breakpoint="Breakpoint.Sm" Class="report-table">
+            <HeaderContent>
+                <MudTh>Forum</MudTh>
+                <MudTh>Course</MudTh>
+                <MudTh>Posts</MudTh>
+                <MudTh>Replies</MudTh>
+                <MudTh>Participants</MudTh>
+                <MudTh>Activity</MudTh>
+                <MudTh>Engagement</MudTh>
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd DataLabel="Forum">
+                    <MudText Typo="Typo.body2"><strong>@context.ForumTitle</strong></MudText>
+                    <MudText Typo="Typo.caption" Class="text-muted">ID: @context.ForumId</MudText>
+                </MudTd>
+                <MudTd DataLabel="Course">@context.CourseName</MudTd>
+                <MudTd DataLabel="Posts">
+                    <MudChip T="int" Color="Color.Primary">@context.TotalPosts</MudChip>
+                </MudTd>
+                <MudTd DataLabel="Replies">
+                    <MudChip T="int" Color="Color.Info">@context.ActiveUsers</MudChip>
+                </MudTd>
+                <MudTd DataLabel="Participants">
+                    <MudChip T="int" Color="Color.Secondary">@context.TotalTopics</MudChip>
+                </MudTd>
+                <MudTd DataLabel="Activity">
+                    <MudText><strong>@($"{context.AveragePostsPerUser:F1}")</strong> posts/user</MudText>
+                    <MudText><strong>@($"{context.AverageRepliesPerTopic:F1}")</strong> replies/topic</MudText>
+                    <MudText Typo="Typo.caption" Class="text-muted">Most active: @context.MostActiveUser (@context.MostActiveUserPosts posts)</MudText>
+                </MudTd>
+                <MudTd DataLabel="Engagement">
+                    <MudChip T="int" Color="Color.Success">@context.TotalViews views</MudChip>
+                    <MudText Typo="Typo.caption" Class="text-muted">Last: @context.LastActivityDate.ToString("MMM dd, yyyy")</MudText>
+                </MudTd>
+            </RowTemplate>
+            <PagerContent>
+                <MudTablePager PageSizeOptions="@(new int[]{10, 20, 50})" />
+            </PagerContent>
+        </MudTable>
     }
 }
 else if (!loading)
 {
-    <div class="report-card">
-        <div class="report-card-body text-center py-5">
-            <h5 class="text-muted">Ready to Generate Report</h5>
-            <p class="text-muted">
+    <MudCard Elevation="2" Class="report-no-data">
+        <MudCardContent Class="text-center py-5">
+            <MudIcon Icon="@Icons.Material.Filled.Info" Size="Size.Large" Class="text-muted mb-3" />
+            <MudText Typo="Typo.h5">Ready to Generate Report</MudText>
+            <MudText Typo="Typo.body1" Class="text-muted">
                 @if (reportType == "single")
                 {
                     <span>Please enter a Forum ID to generate the forum activity report.</span>
@@ -299,9 +241,9 @@ else if (!loading)
                 {
                     <span>Click "Generate Report" to view activity for all forums.</span>
                 }
-            </p>
-        </div>
-    </div>
+            </MudText>
+        </MudCardContent>
+    </MudCard>
 }
 
 @code {

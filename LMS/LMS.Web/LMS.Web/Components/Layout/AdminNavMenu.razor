@@ -2,62 +2,20 @@
 @inject HttpClient Http
 @inject NavigationManager NavigationManager
 
-<div class="top-row ps-3 navbar navbar-dark">
-    <div class="container-fluid d-flex align-items-center justify-content-end">
-        <button class="navbar-collapse-toggle" @onclick="ToggleNavbar"
-                title="@(isNavbarCollapsed ? "Expand sidebar" : "Collapse sidebar")">
-            <span class="bi @(isNavbarCollapsed ? "bi-chevron-right" : "bi-chevron-left")"></span>
-        </button>
-        <button class="navbar-toggler" @onclick="ToggleMobileMenu" title="Toggle navigation menu"
-                aria-label="Toggle navigation menu">
-            <span class="bar"></span>
-            <span class="bar"></span>
-            <span class="bar"></span>
-        </button>
-    </div>
-</div>
+<MudAppBar Elevation="0">
+    <MudIconButton Icon="@(isNavbarCollapsed ? Icons.Material.Filled.ChevronRight : Icons.Material.Filled.ChevronLeft)" Color="Color.Inherit" Edge="Edge.Start" OnClick="ToggleNavbar" Title="@(isNavbarCollapsed ? "Expand sidebar" : "Collapse sidebar")" />
+    <MudSpacer />
+    <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.End" OnClick="ToggleMobileMenu" Title="Toggle navigation menu" />
+</MudAppBar>
 
-<div class="nav-scrollable @(GetNavScrollableClasses())" style="@(isMobileMenuOpen ? "display: block;" : "")">
-    <nav class="nav">
-        <div class="nav-item" data-tooltip="Dashboard">
-            <NavLink class="nav-link" href="/admin" Match="NavLinkMatch.All" title="Dashboard">
-                <span class="bi bi-speedometer2" aria-hidden="true"></span>
-                <span class="nav-text" style="line-height: 1.2; font-size: 0.97rem;">Dashboard</span>
-            </NavLink>
-        </div>
-        <div class="nav-item" data-tooltip="Analytics">
-            <NavLink class="nav-link" href="/admin/analytics" title="Analytics">
-                <span class="bi bi-graph-up" aria-hidden="true"></span>
-                <span class="nav-text" style="line-height: 1.2; font-size: 0.97rem;">Analytics</span>
-            </NavLink>
-        </div>
-        <div class="nav-item" data-tooltip="Assessments">
-            <NavLink class="nav-link" href="/admin/assessments" title="Assessments">
-                <span class="bi bi-clipboard-check" aria-hidden="true"></span>
-                <span class="nav-text" style="line-height: 1.2; font-size: 0.97rem;">Assessments</span>
-            </NavLink>
-        </div>
-        <div class="nav-item" data-tooltip="Categories">
-            <NavLink class="nav-link" href="/admin/categories" title="Categories">
-                <span class="bi bi-tags" aria-hidden="true"></span>
-                <span class="nav-text" style="line-height: 1.2; font-size: 0.97rem;">Categories</span>
-            </NavLink>
-        </div>
-        <div class="nav-item" data-tooltip="Courses">
-            <NavLink class="nav-link" href="/admin/courses" title="Courses">
-                <span class="bi bi-book" aria-hidden="true"></span>
-                <span class="nav-text" style="line-height: 1.2; font-size: 0.97rem;">Courses</span>
-            </NavLink>
-        </div>
-        <!-- Logout nav item -->
-        <div class="nav-item" data-tooltip="Logout">
-            <button class="nav-link btn btn-link" @onclick="Logout" title="Logout">
-                <span class="bi bi-box-arrow-right" aria-hidden="true"></span>
-                <span class="nav-text" style="line-height: 1.2; font-size: 0.97rem;">Logout</span>
-            </button>
-        </div>
-    </nav>
-</div>
+<MudNavMenu Class="@($"nav-scrollable {GetNavScrollableClasses()}")" Style="@(isMobileMenuOpen ? "display: block;" : "")">
+    <MudNavLink Href="/admin" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Dashboard" Style="line-height: 1.2; font-size: 0.97rem;">Dashboard</MudNavLink>
+    <MudNavLink Href="/admin/analytics" Icon="@Icons.Material.Filled.Analytics" Style="line-height: 1.2; font-size: 0.97rem;">Analytics</MudNavLink>
+    <MudNavLink Href="/admin/assessments" Icon="@Icons.Material.Filled.AssignmentTurnedIn" Style="line-height: 1.2; font-size: 0.97rem;">Assessments</MudNavLink>
+    <MudNavLink Href="/admin/categories" Icon="@Icons.Material.Filled.Category" Style="line-height: 1.2; font-size: 0.97rem;">Categories</MudNavLink>
+    <MudNavLink Href="/admin/courses" Icon="@Icons.Material.Filled.Book" Style="line-height: 1.2; font-size: 0.97rem;">Courses</MudNavLink>
+    <MudNavLink OnClick="Logout" Icon="@Icons.Material.Filled.Logout" Style="line-height: 1.2; font-size: 0.97rem;">Logout</MudNavLink>
+</MudNavMenu>
 
 @code {
     private bool isNavbarCollapsed = false;

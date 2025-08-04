@@ -1,120 +1,115 @@
-﻿@page "/admin/categories/create"
-
-@using LMS.Repositories
-@using LMS.Web.Components.Shared
-@using LMS.Web.Services
-
+﻿@using LMS.Repositories
+@rendermode @(new InteractiveServerRenderMode())
 @inject ICategoryRepository CategoryRepository
 @inject IDropdownRepository DropdownRepository
 @inject NavigationManager NavigationManager
-@inject LMS.Web.Services.ToastService ToastService
-@rendermode @(new InteractiveServerRenderMode())
+@inject ISnackbar Snackbar
 
 <PageTitle>Create Category - Admin</PageTitle>
 
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h1 class="mb-0">Create New Category</h1>
-    <Button Color="ButtonColor.Secondary" Href="/admin/categories">
-        <Icon Name="IconName.ArrowLeft" />
-        Back to Categories
-    </Button>
-</div>
+@if (isLoading)
+{
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <MudSkeleton SkeletonType="SkeletonType.Text" Width="200px" Height="40px" />
+        <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="180px" Height="40px" />
+    </div>
 
-<Card>
-    <CardHeader>
-        <h5 class="card-title mb-0">Category Information</h5>
-    </CardHeader>
-    <CardBody>
-        <EditForm Model="Category" OnValidSubmit="AddCategory">
-            <AntiforgeryToken />
-            <DataAnnotationsValidator />
-            <ValidationSummary class="alert alert-danger" role="alert" />
+    <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="500px" />
+}
+else
+{
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="mb-0">Create New Category</h1>
+        <MudButton Variant="Variant.Text" Color="Color.Secondary" Href="/admin/categories">
+            <MudIcon Icon="@Icons.Material.Filled.ArrowBack" Class="me-2" />
+            Back to Categories
+        </MudButton>
+    </div>
 
-            <div class="row">
-                <div class="col-md-6 mb-3">
-                    <label for="name" class="form-label">Name <span class="text-danger">*</span></label>
-                    <InputText id="name" @bind-Value="Category.Name" class="form-control" aria-required="true"
-                               placeholder="Enter category name" />
-                    <ValidationMessage For="() => Category.Name" class="text-danger" />
+    <MudCard Elevation="2">
+        <MudCardHeader>
+            <MudText Typo="Typo.h6">Category Information</MudText>
+        </MudCardHeader>
+        <MudCardContent>
+            <MudForm Model="Category" OnValidSubmit="AddCategory" @ref="form">
+                <MudAlert Severity="Severity.Error" Class="mb-3" Visible="@(!form.IsValid)">
+                    <MudText>Please correct the errors below.</MudText>
+                </MudAlert>
+
+                <MudGrid>
+                    <MudItem xs="12" md="6">
+                        <MudTextField @bind-Value="Category.Name" Label="Name" Variant="Variant.Text" Required="true" RequiredError="Name is required!" />
+                    </MudItem>
+                    <MudItem xs="12" md="6">
+                        <MudTextField @bind-Value="Category.Color" Label="Color" Variant="Variant.Text" InputType="InputType.Color" />
+                    </MudItem>
+                </MudGrid>
+
+                <MudTextField @bind-Value="Category.Description" Label="Description" Variant="Variant.Text" Lines="3" Placeholder="Enter category description" />
+
+                <MudGrid>
+                    <MudItem xs="12" md="6">
+                        <MudTextField @bind-Value="Category.IconUrl" Label="Icon URL" Variant="Variant.Text" Placeholder="https://example.com/icon.png" />
+                    </MudItem>
+                    <MudItem xs="12" md="6">
+                        <MudSelect @bind-Value="Category.ParentCategoryId" Label="Parent Category" Variant="Variant.Text" Placeholder="Select parent category (optional)...">
+                            @foreach (var category in parentCategories)
+                            {
+                                <MudSelectItem Value="@category.Value">@category.Text</MudSelectItem>
+                            }
+                        </MudSelect>
+                    </MudItem>
+                </MudGrid>
+
+                <MudCheckBox T="bool" @bind-Checked="Category.IsActive" Label="Is Active" Color="Color.Primary" />
+
+                <div class="d-flex gap-2">
+                    <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Disabled="@isSubmitting">
+                        <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Class="me-2" />
+                        Create Category
+                    </MudButton>
+                    <MudButton Variant="Variant.Filled" Color="Color.Secondary" Href="/admin/categories">Cancel</MudButton>
                 </div>
-                <div class="col-md-6 mb-3">
-                    <label for="color" class="form-label">Color</label>
-                    <InputText id="color" @bind-Value="Category.Color" class="form-control" type="color" />
-                    <ValidationMessage For="() => Category.Color" class="text-danger" />
-                </div>
-            </div>
-
-            <div class="mb-3">
-                <label for="description" class="form-label">Description</label>
-                <InputTextArea id="description" @bind-Value="Category.Description" class="form-control" rows="3"
-                               placeholder="Enter category description" />
-                <ValidationMessage For="() => Category.Description" class="text-danger" />
-            </div>
-
-            <div class="row">
-                <div class="col-md-6 mb-3">
-                    <label for="iconurl" class="form-label">Icon URL</label>
-                    <InputText id="iconurl" @bind-Value="Category.IconUrl" class="form-control"
-                               placeholder="https://example.com/icon.png" />
-                    <ValidationMessage For="() => Category.IconUrl" class="text-danger" />
-                </div>
-                <div class="col-md-6 mb-3">
-                    <label for="parentcategoryid" class="form-label">Parent Category</label>
-                    <SearchableSelectComponent TItem="DropdownOption<int>" TValue="int?"
-                                               OnLoad="async () => (await DropdownRepository.GetCategoriesAsync(null, 20)).Cast<DropdownOption<int>>()"
-                                               ValueSelector="@(item => item.Value)"
-                                               DisplaySelector="@(item => item.Text)"
-                                               @bind-SelectedValue="Category.ParentCategoryId"
-                                               Placeholder="Select parent category (optional)..."
-                                               EmptyText="No categories found" />
-                    <ValidationMessage For="() => Category.ParentCategoryId" class="text-danger" />
-                </div>
-            </div>
-
-            <div class="mb-3">
-                <div class="form-check">
-                    <InputCheckbox id="isactive" @bind-Value="Category.IsActive" class="form-check-input" />
-                    <label for="isactive" class="form-check-label">Is Active</label>
-                    <ValidationMessage For="() => Category.IsActive" class="text-danger" />
-                </div>
-            </div>
-
-            <div class="d-flex gap-2">
-                <Button Color="ButtonColor.Primary" Type="ButtonType.Submit" Loading="@isSubmitting">
-                    <Icon Name="IconName.CheckCircle" />
-                    Create Category
-                </Button>
-                <Button Color="ButtonColor.Secondary" Href="/admin/categories">Cancel</Button>
-            </div>
-        </EditForm>
-    </CardBody>
-</Card>
+            </MudForm>
+        </MudCardContent>
+    </MudCard>
+}
 
 @code {
     private CreateCategoryRequest Category { get; set; } = new();
     private bool isSubmitting = false;
+    private bool isLoading = true;
+    private MudForm form;
+    private List<DropdownOption<int>> parentCategories = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Simulate data loading
+        await Task.Delay(500);
+        parentCategories = (await DropdownRepository.GetCategoriesAsync()).ToList();
+        isLoading = false;
+    }
 
     private async Task AddCategory()
     {
         if (isSubmitting) return;
-        
         isSubmitting = true;
         try
         {
             var result = await CategoryRepository.CreateCategoryAsync(Category);
             if (result != null)
             {
-                ToastService.ShowSuccess("Success", "Category created successfully!");
+                Snackbar.Add("Category created successfully!", Severity.Success);
                 NavigationManager.NavigateTo("/admin/categories");
             }
             else
             {
-                ToastService.ShowError("Error", "Failed to create category. Please try again.");
+                Snackbar.Add("Failed to create category. Please try again.", Severity.Error);
             }
         }
         catch (Exception ex)
         {
-            ToastService.ShowError("Error", $"Error creating category: {ex.Message}");
+            Snackbar.Add($"Error creating category: {ex.Message}", Severity.Error);
         }
         finally
         {

@@ -14,177 +14,151 @@
         <p class="text-muted mb-0">Track individual and overall student progress across courses</p>
     </div>
     <div class="export-buttons">
-        <button class="btn btn-outline-report" @onclick="ExportToPdf">
-            <i class="fas fa-file-pdf"></i> Export PDF
-        </button>
-        <button class="btn btn-outline-report" @onclick="ExportToExcel">
-            <i class="fas fa-file-excel"></i> Export Excel
-        </button>
+        <MudButton Variant="Variant.Outlined" Color="Color.Primary" OnClick="ExportToPdf">
+            <MudIcon Icon="@Icons.Material.Filled.PictureAsPdf" Class="me-2" /> Export PDF
+        </MudButton>
+        <MudButton Variant="Variant.Outlined" Color="Color.Primary" OnClick="ExportToExcel">
+            <MudIcon Icon="@Icons.Material.Filled.Description" Class="me-2" /> Export Excel
+        </MudButton>
     </div>
 </div>
 
 <!-- Filters -->
-<div class="report-filters">
-    <div class="row">
-        <div class="col-md-3">
-            <div class="form-group">
-                <label class="form-label">Start Date</label>
-                <input type="date" class="form-control" @bind="startDate" @bind:after="LoadData" />
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="form-group">
-                <label class="form-label">End Date</label>
-                <input type="date" class="form-control" @bind="endDate" @bind:after="LoadData" />
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="form-group">
-                <label class="form-label">Student</label>
-                <select class="form-select" @bind="selectedStudentId" @bind:after="LoadData">
-                    <option value="">All Students</option>
-                    @if (students?.Any() == true)
-                    {
-                        @foreach (var student in students)
-                        {
-                            <option value="@student.Id">@student.FullName</option>
-                        }
-                    }
-                </select>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="form-group">
-                <label class="form-label">Course</label>
-                <select class="form-select" @bind="selectedCourseId" @bind:after="LoadData">
-                    <option value="">All Courses</option>
-                    @if (courses?.Any() == true)
-                    {
-                        @foreach (var course in courses)
-                        {
-                            <option value="@course.Id">@course.Title</option>
-                        }
-                    }
-                </select>
-            </div>
-        </div>
-    </div>
-</div>
+<MudGrid Class="report-filters">
+    <MudItem xs="12" md="3">
+        <MudDatePicker Label="Start Date" @bind-Date="startDate" DateFormat="yyyy-MM-dd" OnChange="LoadData" />
+    </MudItem>
+    <MudItem xs="12" md="3">
+        <MudDatePicker Label="End Date" @bind-Date="endDate" DateFormat="yyyy-MM-dd" OnChange="LoadData" />
+    </MudItem>
+    <MudItem xs="12" md="3">
+        <MudSelect T="string" Label="Student" @bind-Value="selectedStudentId" OnChange="LoadData">
+            <MudSelectItem Value="@string.Empty">All Students</MudSelectItem>
+            @if (students?.Any() == true)
+            {
+                @foreach (var student in students)
+                {
+                    <MudSelectItem Value="@student.Id">@student.FullName</MudSelectItem>
+                }
+            }
+        </MudSelect>
+    </MudItem>
+    <MudItem xs="12" md="3">
+        <MudSelect T="int?" Label="Course" @bind-Value="selectedCourseId" OnChange="LoadData">
+            <MudSelectItem Value="@((int?)null)">All Courses</MudSelectItem>
+            @if (courses?.Any() == true)
+            {
+                @foreach (var course in courses)
+                {
+                    <MudSelectItem Value="@course.Id">@course.Title</MudSelectItem>
+                }
+            }
+        </MudSelect>
+    </MudItem>
+</MudGrid>
 
 @if (loading)
 {
-    <div class="report-loading">
-        <div class="spinner-border" role="status">
-            <span class="visually-hidden">Loading...</span>
-        </div>
-        <p class="mt-2">Loading student progress data...</p>
+    <div class="report-loading d-flex flex-column align-items-center justify-content-center py-5">
+        <MudProgressCircular Indeterminate="true" Color="Color.Primary" Size="Size.Large" />
+        <MudText Class="mt-2">Loading student progress data...</MudText>
     </div>
 }
 else if (reports?.Any() == true)
 {
     <!-- Summary Statistics -->
-    <div class="stats-grid mb-4">
-        <div class="stat-card">
-            <div class="stat-value">@reports.Count()</div>
-            <div class="stat-label">Total Records</div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-value">@($"{reports.Average(r => r.ProgressPercentage):F1}%")</div>
-            <div class="stat-label">Avg Progress</div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-value">@reports.Count(r => r.Status == "Completed")</div>
-            <div class="stat-label">Completed</div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-value">@($"{reports.Average(r => r.AverageAssessmentScore):F1}%")</div>
-            <div class="stat-label">Avg Score</div>
-        </div>
-    </div>
+    <MudGrid Class="stats-grid mb-4">
+        <MudItem xs="12" sm="6" md="3">
+            <MudCard Elevation="2">
+                <MudCardContent>
+                    <MudText Typo="Typo.h4">@reports.Count()</MudText>
+                    <MudText Typo="Typo.subtitle2">Total Records</MudText>
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
+        <MudItem xs="12" sm="6" md="3">
+            <MudCard Elevation="2">
+                <MudCardContent>
+                    <MudText Typo="Typo.h4">@($"{reports.Average(r => r.ProgressPercentage):F1}%")</MudText>
+                    <MudText Typo="Typo.subtitle2">Avg Progress</MudText>
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
+        <MudItem xs="12" sm="6" md="3">
+            <MudCard Elevation="2">
+                <MudCardContent>
+                    <MudText Typo="Typo.h4">@reports.Count(r => r.Status == "Completed")</MudText>
+                    <MudText Typo="Typo.subtitle2">Completed</MudText>
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
+        <MudItem xs="12" sm="6" md="3">
+            <MudCard Elevation="2">
+                <MudCardContent>
+                    <MudText Typo="Typo.h4">@($"{reports.Average(r => r.AverageAssessmentScore):F1}%")</MudText>
+                    <MudText Typo="Typo.subtitle2">Avg Score</MudText>
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
+    </MudGrid>
 
     <!-- Data Table -->
-    <div class="report-table">
-        <table class="table table-hover">
-            <thead>
-                <tr>
-                    <th>Student</th>
-                    <th>Email</th>
-                    <th>Course</th>
-                    <th>Progress</th>
-                    <th>Time Spent</th>
-                    <th>Avg Score</th>
-                    <th>Status</th>
-                    <th>Enrolled Date</th>
-                    <th>Certificate</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach (var report in reports)
+    <MudTable T="StudentProgressReportDto" Items="@reports" Hover="true" Breakpoint="Breakpoint.Sm" Class="report-table">
+        <HeaderContent>
+            <MudTh>Student</MudTh>
+            <MudTh>Email</MudTh>
+            <MudTh>Course</MudTh>
+            <MudTh>Progress</MudTh>
+            <MudTh>Time Spent</MudTh>
+            <MudTh>Avg Score</MudTh>
+            <MudTh>Status</MudTh>
+            <MudTh>Enrolled Date</MudTh>
+            <MudTh>Certificate</MudTh>
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd DataLabel="Student">@context.StudentName</MudTd>
+            <MudTd DataLabel="Email">@context.Email</MudTd>
+            <MudTd DataLabel="Course">@context.CourseName</MudTd>
+            <MudTd DataLabel="Progress">
+                <MudProgressLinear Value="@(context.ProgressPercentage)" Color="@GetProgressBarColor(context.ProgressPercentage)" Class="my-2" />
+                <MudText Typo="Typo.caption">@($"{context.ProgressPercentage:F1}%")</MudText>
+            </MudTd>
+            <MudTd DataLabel="Time Spent">@context.TimeSpent.ToString(@"hh\:mm")</MudTd>
+            <MudTd DataLabel="Avg Score">@($"{context.AverageAssessmentScore:F1}%")</MudTd>
+            <MudTd DataLabel="Status">
+                <MudChip T="string" Color="@GetStatusBadgeColor(context.Status)">
+                    @context.Status
+                </MudChip>
+            </MudTd>
+            <MudTd DataLabel="Enrolled Date">@context.EnrolledAt.ToString("MMM dd, yyyy")</MudTd>
+            <MudTd DataLabel="Certificate">
+                @if (context.IsCertificateIssued)
                 {
-                    <tr>
-                        <td>@report.StudentName</td>
-                        <td>@report.Email</td>
-                        <td>@report.CourseName</td>
-                        <td>
-                            <div class="progress-container">
-                                <div class="progress">
-                                    <div class="progress-bar @GetProgressBarClass(report.ProgressPercentage)" 
-                                         style="width: @(report.ProgressPercentage)%"></div>
-                                </div>
-                                <span class="progress-text">@($"{report.ProgressPercentage:F1}%")</span>
-                            </div>
-                        </td>
-                        <td>@report.TimeSpent.ToString(@"hh\:mm")</td>
-                        <td>@($"{report.AverageAssessmentScore:F1}%")</td>
-                        <td>
-                            <span class="badge @GetStatusBadgeClass(report.Status)">
-                                @report.Status
-                            </span>
-                        </td>
-                        <td>@report.EnrolledAt.ToString("MMM dd, yyyy")</td>
-                        <td>
-                            @if (report.IsCertificateIssued)
-                            {
-                                <span class="badge bg-success">✓ Issued</span>
-                            }
-                            else
-                            {
-                                <span class="badge bg-secondary">Not Issued</span>
-                            }
-                        </td>
-                    </tr>
+                    <MudChip T="bool" Color="Color.Success">✓ Issued</MudChip>
                 }
-            </tbody>
-        </table>
-    </div>
+                else
+                {
+                    <MudChip T="bool" Color="Color.Secondary">Not Issued</MudChip>
+                }
+            </MudTd>
+        </RowTemplate>
+        <PagerContent>
+            <MudTablePager PageSizeOptions="@(new int[]{10, 20, 50})" />
+        </PagerContent>
+    </MudTable>
 
     <!-- Pagination -->
-    <nav aria-label="Report pagination">
-        <ul class="pagination justify-content-center">
-            <li class="page-item @(currentPage == 1 ? "disabled" : "")">
-                <a class="page-link" @onclick="() => ChangePage(currentPage - 1)">Previous</a>
-            </li>
-            @for (int i = 1; i <= totalPages; i++)
-            {
-                <li class="page-item @(currentPage == i ? "active" : "")">
-                    <a class="page-link" @onclick="() => ChangePage(i)">@i</a>
-                </li>
-            }
-            <li class="page-item @(currentPage == totalPages ? "disabled" : "")">
-                <a class="page-link" @onclick="() => ChangePage(currentPage + 1)">Next</a>
-            </li>
-        </ul>
-    </nav>
+    <MudPagination Class="mt-4" Count="@totalPages" Selected="@currentPage" SelectedChanged="ChangePage" />
 }
 else
 {
-    <div class="report-no-data">
-        <div class="text-center">
-            <i class="fas fa-chart-line fa-3x text-muted mb-3"></i>
-            <h5>No Data Available</h5>
-            <p class="text-muted">No student progress data found for the selected criteria.</p>
-        </div>
-    </div>
+    <MudCard Elevation="2" Class="report-no-data">
+        <MudCardContent Class="text-center py-5">
+            <MudIcon Icon="@Icons.Material.Filled.Info" Size="Size.Large" Class="text-muted mb-3" />
+            <MudText Typo="Typo.h5">No Data Available</MudText>
+            <MudText Typo="Typo.body1" Class="text-muted">No student progress data found for the selected criteria.</MudText>
+        </MudCardContent>
+    </MudCard>
 }
 
 @code {
@@ -262,26 +236,26 @@ else
         }
     }
 
-    private string GetProgressBarClass(double progress)
+    private MudBlazor.Color GetProgressBarColor(double progress)
     {
         return progress switch
         {
-            >= 80 => "bg-success",
-            >= 60 => "bg-info",
-            >= 40 => "bg-warning",
-            _ => "bg-danger"
+            >= 80 => MudBlazor.Color.Success,
+            >= 60 => MudBlazor.Color.Info,
+            >= 40 => MudBlazor.Color.Warning,
+            _ => MudBlazor.Color.Error
         };
     }
 
-    private string GetStatusBadgeClass(string status)
+    private MudBlazor.Color GetStatusBadgeColor(string status)
     {
         return status.ToLower() switch
         {
-            "completed" => "bg-success",
-            "active" or "in progress" => "bg-primary",
-            "dropped" => "bg-danger",
-            "paused" => "bg-warning",
-            _ => "bg-secondary"
+            "completed" => MudBlazor.Color.Success,
+            "active" or "in progress" => MudBlazor.Color.Primary,
+            "dropped" => MudBlazor.Color.Error,
+            "paused" => MudBlazor.Color.Warning,
+            _ => MudBlazor.Color.Secondary
         };
     }
 

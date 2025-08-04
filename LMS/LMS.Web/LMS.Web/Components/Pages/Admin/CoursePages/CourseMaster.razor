@@ -1,19 +1,25 @@
-@page "/courses/master"
-@using LMS.Infrastructure.Data
-@using Microsoft.EntityFrameworkCore
-@using LMS.Data.Entities
-
-@inject ApplicationDbContext context
+@page "/admin/course-master"
+@using LMS.Repositories
+@using MudBlazor
 @inject NavigationManager NavigationManager
-@rendermode @(new InteractiveServerRenderMode())
+@inject ICourseRepository CourseRepository
 
-<PageTitle>Course Master</PageTitle>
-
-@if (course == null)
+@if (isLoading)
 {
-    <div class="d-flex justify-content-center align-items-center" style="min-height: 100vh;">
-        <div class="spinner-border text-primary" role="status">
-            <span class="visually-hidden">Loading...</span>
+    <div class="d-flex flex-column" style="min-height: 100vh;">
+        <!-- Skeleton for Top Navigation Bar -->
+        <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="64px" Class="w-100" />
+
+        <!-- Skeleton for Tab Navigation -->
+        <div class="d-flex justify-content-around p-4">
+            <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="100px" Height="40px" />
+            <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="100px" Height="40px" />
+            <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="100px" Height="40px" />
+        </div>
+
+        <!-- Skeleton for Tab Content -->
+        <div class="flex-grow-1 p-4">
+            <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="500px" />
         </div>
     </div>
 }
@@ -23,210 +29,165 @@ else
         <!-- Discord-like Sidebar (Only visible when Forum tab is active) -->
         @if (activeTab == "Forum")
         {
-            <!-- Sidebar navigation replaced with plain HTML to avoid RZ10012 errors -->
-            <nav class="sidebar bg-dark text-white p-3" style="width: 260px; min-height: 100vh;">
-                <div class="mb-4">
-                    <strong>Course Forums</strong>
-                    <ul class="list-group list-group-flush">
-                        <li class="list-group-item bg-dark text-white @(selectedForumChannel == "general" ? "active" : "")" style="cursor:pointer;" @onclick="@(() => SelectForumChannel("general"))">
-                            <i class="bi bi-hash me-2"></i> general
-                        </li>
-                        <li class="list-group-item bg-dark text-white @(selectedForumChannel == "announcements" ? "active" : "")" style="cursor:pointer;" @onclick="@(() => SelectForumChannel("announcements"))">
-                            <i class="bi bi-megaphone me-2"></i> announcements
-                        </li>
-                        <li class="list-group-item bg-dark text-white @(selectedForumChannel == "questions" ? "active" : "")" style="cursor:pointer;" @onclick="@(() => SelectForumChannel("questions"))">
-                            <i class="bi bi-question-circle me-2"></i> questions
-                        </li>
-                        <li class="list-group-item bg-dark text-white @(selectedForumChannel == "assignments" ? "active" : "")" style="cursor:pointer;" @onclick="@(() => SelectForumChannel("assignments"))">
-                            <i class="bi bi-clipboard me-2"></i> assignments
-                        </li>
-                    </ul>
-                </div>
-                <div>
-                    <strong>Study Groups</strong>
-                    <ul class="list-group list-group-flush">
-                        <li class="list-group-item bg-dark text-white">
-                            <i class="bi bi-people me-2"></i> Study Group 1
-                        </li>
-                        <li class="list-group-item bg-dark text-white">
-                            <i class="bi bi-people me-2"></i> Study Group 2
-                        </li>
-                    </ul>
-                </div>
-            </nav>
+            <MudNavMenu Class="sidebar bg-dark text-white p-3" Style="width: 260px; min-height: 100vh;">
+                <MudNavGroup Title="Course Forums" Expanded="true">
+                    <MudNavLink OnClick="@(() => SelectForumChannel("general"))" Icon="@Icons.Material.Filled.Tag" Active="@(selectedForumChannel == "general")">general</MudNavLink>
+                    <MudNavLink OnClick="@(() => SelectForumChannel("announcements"))" Icon="@Icons.Material.Filled.Campaign" Active="@(selectedForumChannel == "announcements")">announcements</MudNavLink>
+                    <MudNavLink OnClick="@(() => SelectForumChannel("questions"))" Icon="@Icons.Material.Filled.Help" Active="@(selectedForumChannel == "questions")">questions</MudNavLink>
+                    <MudNavLink OnClick="@(() => SelectForumChannel("assignments"))" Icon="@Icons.Material.Filled.Assignment" Active="@(selectedForumChannel == "assignments")">assignments</MudNavLink>
+                </MudNavGroup>
+                <MudNavGroup Title="Study Groups" Expanded="true">
+                    <MudNavLink Icon="@Icons.Material.Filled.People">Study Group 1</MudNavLink>
+                    <MudNavLink Icon="@Icons.Material.Filled.People">Study Group 2</MudNavLink>
+                </MudNavGroup>
+            </MudNavMenu>
         }
 
         <!-- Main Content Area -->
         <div class="flex-grow-1 d-flex flex-column">
             <!-- Top Navigation Bar -->
-            <div class="bg-white border-bottom px-4 py-3">
-                <div class="d-flex justify-content-between align-items-center">
-                    <div>
-                        <h4 class="fw-bold mb-1">@course.Title</h4>
-                        <p class="text-muted small mb-0">@course.Description</p>
-                    </div>
-                    <div class="d-flex align-items-center">
-                        <span class="badge bg-primary me-2">@course.Level</span>
-                        <span class="text-muted small">@course.EstimatedDuration</span>
-                    </div>
-                </div>
-            </div>
+            <MudAppBar Elevation="1">
+                <MudText Typo="Typo.h6" Class="fw-bold mb-1">@course.Title</MudText>
+                <MudText Typo="Typo.caption" Class="text-muted small mb-0">@course.Description</MudText>
+                <MudSpacer />
+                <MudChip T="string" Color="Color.Primary" Class="me-2">@course.Level</MudChip>
+                <MudText Typo="Typo.caption" Class="text-muted small">@course.EstimatedDuration</MudText>
+            </MudAppBar>
 
             <!-- Tab Navigation -->
-            <div class="bg-white border-bottom">
-                <nav class="nav nav-tabs border-0 px-4">
-                    <button class="nav-link @(activeTab == "Forum" ? "active" : "")" @onclick="@(() => SetActiveTab("Forum"))">
-                        <i class="bi bi-chat-dots me-2"></i> Forum
-                    </button>
-                    <button class="nav-link @(activeTab == "Resources" ? "active" : "")" @onclick="@(() => SetActiveTab("Resources"))">
-                        <i class="bi bi-folder me-2"></i> Resources
-                    </button>
-                    <button class="nav-link @(activeTab == "Assessment" ? "active" : "")" @onclick="@(() => SetActiveTab("Assessment"))">
-                        <i class="bi bi-clipboard-check me-2"></i> Assessment
-                    </button>
-                </nav>
-            </div>
+            <MudTabs Elevation="0" Rounded="true" PanelClass="mt-4">
+                <MudTabPanel Text="Forum" Icon="@Icons.Material.Filled.Forum" Active="@(activeTab == "Forum")" OnClick="@(() => SetActiveTab("Forum"))" />
+                <MudTabPanel Text="Resources" Icon="@Icons.Material.Filled.Folder" Active="@(activeTab == "Resources")" OnClick="@(() => SetActiveTab("Resources"))" />
+                <MudTabPanel Text="Assessment" Icon="@Icons.Material.Filled.Assignment" Active="@(activeTab == "Assessment")" OnClick="@(() => SetActiveTab("Assessment"))" />
+            </MudTabs>
 
             <!-- Tab Content -->
             <div class="flex-grow-1 p-4" style="background: #f8f9fa;">
                 @if (activeTab == "Forum")
                 {
-                    <div class="container-fluid">
-                        <div class="row">
-                            <div class="col-12">
-                                <div class="card border-0 shadow-sm">
-                                    <div class="card-header bg-white">
-                                        <div class="d-flex justify-content-between align-items-center">
-                                            <h5 class="mb-0">
-                                                <i class="bi bi-hash me-2"></i>@selectedForumChannel
-                                            </h5>
-                                            <button class="btn btn-primary btn-sm">
-                                                <i class="bi bi-plus me-1"></i> New Post
-                                            </button>
-                                        </div>
-                                    </div>
-                                    <div class="card-body">
-                                        @if (forumPosts.Any())
-                                        {
-                                            @foreach (var post in forumPosts)
-                                            {
-                                                <div class="border-bottom pb-3 mb-3">
-                                                    <div class="d-flex align-items-start">
-                                                        <img src="/favicon.png" class="rounded-circle me-3" style="width: 40px; height: 40px;" alt="User">
-                                                        <div class="flex-grow-1">
-                                                            <div class="d-flex align-items-center mb-1">
-                                                                <span class="fw-semibold me-2">@post.AuthorName</span>
-                                                                <span class="text-muted small">@post.CreatedAt.ToString("MMM dd, yyyy")</span>
-                                                            </div>
-                                                            <p class="mb-2">@post.Content</p>
-                                                            <div class="d-flex align-items-center">
-                                                                <button class="btn btn-sm btn-outline-primary me-2">
-                                                                    <i class="bi bi-heart me-1"></i> Like
-                                                                </button>
-                                                                <button class="btn btn-sm btn-outline-secondary">
-                                                                    <i class="bi bi-reply me-1"></i> Reply
-                                                                </button>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            }
-                                        }
-                                        else
-                                        {
-                                            <div class="text-center py-5">
-                                                <i class="bi bi-chat-dots text-muted" style="font-size: 3rem;"></i>
-                                                <p class="text-muted mt-3">No posts yet. Be the first to start a discussion!</p>
-                                            </div>
-                                        }
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                    <MudContainer MaxWidth="MaxWidth.False">
+                        <MudCard Elevation="2">
+                            <MudCardHeader>
+                                <MudText Typo="Typo.h6">
+                                    <MudIcon Icon="@Icons.Material.Filled.Tag" Class="me-2" />@selectedForumChannel
+                                </MudText>
+                                <MudSpacer />
+                                <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small">
+                                    <MudIcon Icon="@Icons.Material.Filled.Add" Class="me-1" /> New Post
+                                </MudButton>
+                            </MudCardHeader>
+                            <MudCardContent>
+                                @if (forumPosts.Any())
+                                {
+                                    @foreach (var post in forumPosts)
+                                    {
+                                        <MudPaper Elevation="0" Class="mb-3 py-3 px-2 mud-border-b">
+                                            <MudGrid Spacing="2">
+                                                <MudItem xs="12">
+                                                    <MudAvatar Color="Color.Primary" Variant="Variant.Filled" Size="Size.Medium">
+                                                        <MudText Typo="Typo.h6">@post.AuthorName.Substring(0, 1)</MudText>
+                                                    </MudAvatar>
+                                                </MudItem>
+                                                <MudItem xs="12">
+                                                    <MudText Typo="Typo.subtitle1" Class="fw-semibold">@post.AuthorName</MudText>
+                                                    <MudText Typo="Typo.caption" Class="text-muted">@post.CreatedAt.ToString("MMM dd, yyyy")</MudText>
+                                                    <MudText Class="mb-2">@post.Content</MudText>
+                                                    <MudButtonGroup>
+                                                        <MudButton Variant="Variant.Outlined" Color="Color.Primary" Size="Size.Small">
+                                                            <MudIcon Icon="@Icons.Material.Filled.FavoriteBorder" Class="me-1" /> Like
+                                                        </MudButton>
+                                                        <MudButton Variant="Variant.Outlined" Color="Color.Secondary" Size="Size.Small">
+                                                            <MudIcon Icon="@Icons.Material.Filled.Reply" Class="me-1" /> Reply
+                                                        </MudButton>
+                                                    </MudButtonGroup>
+                                                </MudItem>
+                                            </MudGrid>
+                                        </MudPaper>
+                                    }
+                                }
+                                else
+                                {
+                                    <MudText Align="MudBlazor.Align.Center" Class="py-5">
+                                        <MudIcon Icon="@Icons.Material.Filled.Chat" Size="Size.Large" Class="text-muted" />
+                                        <MudText Typo="Typo.subtitle1" Class="text-muted mt-3">No posts yet. Be the first to start a discussion!</MudText>
+                                    </MudText>
+                                }
+                            </MudCardContent>
+                        </MudCard>
+                    </MudContainer>
                 }
                 else if (activeTab == "Resources")
                 {
-                    <div class="container-fluid">
-                        <div class="row">
-                            <div class="col-12">
-                                <div class="card border-0 shadow-sm">
-                                    <div class="card-header bg-white">
-                                        <h5 class="mb-0">
-                                            <i class="bi bi-folder me-2"></i>Course Resources
-                                        </h5>
-                                    </div>
-                                    <div class="card-body">
-                                        <div class="row g-4">
-                                            @foreach (var resource in courseResources)
-                                            {
-                                                <div class="col-md-6 col-lg-4">
-                                                    <div class="card border h-100">
-                                                        <div class="card-body">
-                                                            <div class="d-flex align-items-center mb-3">
-                                                                <i class="bi bi-file-earmark-pdf text-danger me-2" style="font-size: 1.5rem;"></i>
-                                                                <div>
-                                                                    <h6 class="mb-0">@resource.Name</h6>
-                                                                    <small class="text-muted">@resource.Type</small>
-                                                                </div>
-                                                            </div>
-                                                            <p class="small text-muted mb-3">@resource.Description</p>
-                                                            <a href="@resource.ExternalUrl" class="btn btn-outline-primary btn-sm w-100" target="_blank">
-                                                                <i class="bi bi-download me-1"></i> Download
-                                                            </a>
+                    <MudContainer MaxWidth="MaxWidth.False">
+                        <MudCard Elevation="2">
+                            <MudCardHeader>
+                                <MudText Typo="Typo.h6">
+                                    <MudIcon Icon="@Icons.Material.Filled.Folder" Class="me-2" />Course Resources
+                                </MudText>
+                            </MudCardHeader>
+                            <MudCardContent>
+                                <MudGrid Spacing="4">
+                                    @foreach (var resource in courseResources)
+                                    {
+                                        <MudItem xs="12" md="6" lg="4">
+                                            <MudCard Outlined="true" Height="100%">
+                                                <MudCardContent>
+                                                    <div class="d-flex align-items-center mb-3">
+                                                        <MudIcon Icon="@Icons.Material.Filled.PictureAsPdf" Color="Color.Error" Size="Size.Large" Class="me-2" />
+                                                        <div>
+                                                            <MudText Typo="Typo.subtitle1">@resource.Name</MudText>
+                                                            <MudText Typo="Typo.caption" Class="text-muted">@resource.Type</MudText>
                                                         </div>
                                                     </div>
-                                                </div>
-                                            }
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                                                    <MudText Typo="Typo.body2" Class="text-muted mb-3">@resource.Description</MudText>
+                                                    <MudButton Href="@resource.ExternalUrl" Target="_blank" Variant="Variant.Outlined" Color="Color.Primary" FullWidth="true">
+                                                        <MudIcon Icon="@Icons.Material.Filled.Download" Class="me-1" /> Download
+                                                    </MudButton>
+                                                </MudCardContent>
+                                            </MudCard>
+                                        </MudItem>
+                                    }
+                                </MudGrid>
+                            </MudCardContent>
+                        </MudCard>
+                    </MudContainer>
                 }
                 else if (activeTab == "Assessment")
                 {
-                    <div class="container-fluid">
-                        <div class="row">
-                            <div class="col-12">
-                                <div class="card border-0 shadow-sm">
-                                    <div class="card-header bg-white">
-                                        <h5 class="mb-0">
-                                            <i class="bi bi-clipboard-check me-2"></i>Assessments
-                                        </h5>
-                                    </div>
-                                    <div class="card-body">
-                                        <div class="row g-4">
-                                            @foreach (var assessment in assessments)
-                                            {
-                                                <div class="col-md-6">
-                                                    <div class="card border h-100">
-                                                        <div class="card-body">
-                                                            <div class="d-flex justify-content-between align-items-start mb-3">
-                                                                <div>
-                                                                    <h6 class="mb-1">@assessment.Title</h6>
-                                                                    <span class="badge bg-info">@assessment.Type</span>
-                                                                </div>
-                                                                <span class="text-muted small">100 pts</span>
-                                                            </div>
-                                                            <p class="small text-muted mb-3">@assessment.Description</p>
-                                                            <div class="mb-3">
-                                                                <small class="text-muted">Due: @assessment.AvailableUntil?.ToString("MMM dd, yyyy")</small>
-                                                            </div>
-                                                            <button class="btn btn-primary btn-sm w-100">
-                                                                <i class="bi bi-play-circle me-1"></i> Start Assessment
-                                                            </button>
+                    <MudContainer MaxWidth="MaxWidth.False">
+                        <MudCard Elevation="2">
+                            <MudCardHeader>
+                                <MudText Typo="Typo.h6">
+                                    <MudIcon Icon="@Icons.Material.Filled.Assignment" Class="me-2" />Assessments
+                                </MudText>
+                            </MudCardHeader>
+                            <MudCardContent>
+                                <MudGrid Spacing="4">
+                                    @foreach (var assessment in assessments)
+                                    {
+                                        <MudItem xs="12" md="6">
+                                            <MudCard Outlined="true" Height="100%">
+                                                <MudCardContent>
+                                                    <div class="d-flex justify-content-between align-items-start mb-3">
+                                                        <div>
+                                                            <MudText Typo="Typo.subtitle1">@assessment.Title</MudText>
+                                                            <MudChip T="string" Color="Color.Info" Size="Size.Small">@assessment.Type</MudChip>
                                                         </div>
+                                                        <MudText Typo="Typo.caption" Class="text-muted">100 pts</MudText>
                                                     </div>
-                                                </div>
-                                            }
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                                                    <MudText Typo="Typo.body2" Class="text-muted mb-3">@assessment.Description</MudText>
+                                                    <MudText Typo="Typo.caption" Class="text-muted mb-3">Due: @assessment.AvailableUntil?.ToString("MMM dd, yyyy")</MudText>
+                                                    <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true">
+                                                        <MudIcon Icon="@Icons.Material.Filled.PlayCircle" Class="me-1" /> Start Assessment
+                                                    </MudButton>
+                                                </MudCardContent>
+                                            </MudCard>
+                                        </MudItem>
+                                    }
+                                </MudGrid>
+                            </MudCardContent>
+                        </MudCard>
+                    </MudContainer>
                 }
             </div>
         </div>
@@ -237,6 +198,7 @@ else
     private CourseModel? course;
     private string activeTab = "Forum";
     private string selectedForumChannel = "general";
+    private bool isLoading = true; // Add isLoading state
 
     // Data lists
     private List<ForumPostModel> forumPosts = new();
@@ -248,34 +210,19 @@ else
 
     protected override async Task OnInitializedAsync()
     {
-        var courseEntity = await context.Courses.FirstOrDefaultAsync(m => m.Id == Id);
+        // Simulate data loading
+        await Task.Delay(1000);
 
-        if (courseEntity is null)
+        var course = await CourseRepository.GetCourseByIdAsync(Id);
+
+        if (course is null)
         {
-            NavigationManager.NavigateTo("notfound");
+            InitializeMockData();
+            // NavigationManager.NavigateTo("notfound");
             return;
         }
 
-        // Map from Data.Course to Models.Course.CourseModel
-        course = new CourseModel
-        {
-            Id = courseEntity.Id,
-            Title = courseEntity.Title,
-            Description = courseEntity.Description,
-            ThumbnailUrl = courseEntity.ThumbnailUrl,
-            InstructorId = courseEntity.InstructorId,
-            Level = courseEntity.Level.ToString(),
-            Status = courseEntity.Status.ToString(),
-            MaxEnrollments = courseEntity.MaxEnrollments,
-            StartDate = courseEntity.StartDate,
-            EndDate = courseEntity.EndDate,
-            EstimatedDuration = courseEntity.EstimatedDuration,
-            Prerequisites = courseEntity.Prerequisites,
-            LearningObjectives = courseEntity.LearningObjectives
-        };
-
-        // Initialize mock data
-        InitializeMockData();
+        isLoading = false; // Set isLoading to false after data is loaded
     }
 
     private void SetActiveTab(string tab)
@@ -321,34 +268,6 @@ else
     }
 }
 
-<style>
-    .nav-tabs .nav-link {
-        border: none;
-        border-bottom: 2px solid transparent;
-        color: #6c757d;
-        padding: 1rem 1.5rem;
-    }
 
-        .nav-tabs .nav-link:hover {
-            border-bottom-color: #dee2e6;
-            color: #495057;
-        }
 
-        .nav-tabs .nav-link.active {
-            border-bottom-color: #0d6efd;
-            color: #0d6efd;
-            background: none;
-        }
 
-    .sidebar .list-group-item {
-        transition: all 0.2s;
-    }
-
-        .sidebar .list-group-item:hover {
-            background-color: #40444b !important;
-        }
-
-        .sidebar .list-group-item.active {
-            background-color: #5865f2 !important;
-        }
-</style>

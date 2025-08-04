@@ -1,142 +1,101 @@
-﻿@page "/admin/certificates/create"
+﻿@rendermode @(new InteractiveServerRenderMode())
 
 @using LMS.Repositories
 @using LMS.Data.DTOs
-@using LMS.Web.Components.Shared
-@using LMS.Web.Services
-
-@inject ICertificateRepository CertificateRepository
+@using MudBlazor
 @inject IDropdownRepository DropdownRepository
-@inject NavigationManager NavigationManager
+@inject ICertificateRepository CertificateRepository
 @inject LMS.Web.Services.ToastService ToastService
-@rendermode @(new InteractiveServerRenderMode())
+@inject NavigationManager NavigationManager
 
 <PageTitle>Create Certificate - Admin</PageTitle>
 
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h1 class="mb-0">Create New Certificate</h1>
-    <Button Color="ButtonColor.Secondary" Href="/admin/certificates">
-        <Icon Name="IconName.ArrowLeft" />
-        Back to Certificates
-    </Button>
-</div>
+@if (isLoading)
+{
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <MudSkeleton SkeletonType="SkeletonType.Text" Width="200px" Height="40px" />
+        <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="180px" Height="40px" />
+    </div>
 
-<div class="row">
-    <div class="col-lg-8">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="card-title mb-0">Certificate Information</h5>
-            </div>
-            <div class="card-body">
-                <EditForm Model="Certificate" OnValidSubmit="AddCertificate">
-                    <AntiforgeryToken />
-                    <DataAnnotationsValidator />
-                    <ValidationSummary class="alert alert-danger" role="alert" />
-
-                    <div class="mb-3">
-                        <label for="userid" class="form-label">User <span class="text-danger">*</span></label>
-                        <SearchableSelectComponent TItem="DropdownOption<string>" 
-                                                   TValue="string" 
-                                                   DataProvider="SearchUsersDataProvider"
-                                                   ValueSelector="@(item => item.Value)" 
-                                                   DisplaySelector="@(item => item.Text)"
-                                                   @bind-SelectedValue="Certificate.UserId"
-                                                   Placeholder="Select a user..." 
-                                                   EmptyText="No users found" />
-                        <ValidationMessage For="() => Certificate.UserId" class="text-danger" />
-                    </div>
-
-                    <div class="mb-3">
-                        <label for="courseid" class="form-label">Course <span class="text-danger">*</span></label>
-                        <SearchableSelectComponent TItem="DropdownOption<int>" 
-                                                   TValue="int" 
-                                                   DataProvider="SearchCoursesDataProvider"
-                                                   ValueSelector="@(item => item.Value)" 
-                                                   DisplaySelector="@(item => item.Text)"
-                                                   @bind-SelectedValue="Certificate.CourseId"
-                                                   Placeholder="Select a course..." 
-                                                   EmptyText="No courses found" />
-                        <ValidationMessage For="() => Certificate.CourseId" class="text-danger" />
-                    </div>
-
-                    <div class="mb-3">
-                        <label for="finalgrade" class="form-label">Final Grade</label>
-                        <InputNumber id="finalgrade" @bind-Value="Certificate.FinalGrade" class="form-control"
-                                     step="0.01" />
-                        <ValidationMessage For="() => Certificate.FinalGrade" class="text-danger" />
-                    </div>
-
-                    <div class="mb-3">
-                        <label for="expiresat" class="form-label">Expires At</label>
-                        <InputDate id="expiresat" @bind-Value="Certificate.ExpiresAt" class="form-control" />
-                        <ValidationMessage For="() => Certificate.ExpiresAt" class="text-danger" />
-                    </div>
-
-                    <div class="d-flex gap-2">
-                        <Button Color="ButtonColor.Primary" Type="ButtonType.Submit" Loading="@isSubmitting">
-                            <Icon Name="IconName.CheckCircle" />
-                            Create Certificate
-                        </Button>
-                        <Button Color="ButtonColor.Secondary" Href="/admin/certificates">Cancel</Button>
-                    </div>
-                </EditForm>
-            </div>
+    <div class="row">
+        <div class="col-lg-8">
+            <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="500px" />
         </div>
     </div>
-</div>
+}
+else
+{
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="mb-0">Create New Certificate</h1>
+        <MudButton Variant="Variant.Text" Color="Color.Secondary" Href="/admin/certificates">
+            <MudIcon Icon="@Icons.Material.Filled.ArrowBack" Class="me-2" />
+            Back to Certificates
+        </MudButton>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <MudCard Elevation="2">
+                <MudCardHeader>
+                    <MudText Typo="Typo.h6">Certificate Information</MudText>
+                </MudCardHeader>
+                <MudCardContent>
+                    <MudForm Model="Certificate" OnValidSubmit="AddCertificate">
+                        <MudAlert Severity="Severity.Error" Class="mb-3" Visible="@(!form.IsValid)">
+                            <MudText>Please correct the errors below.</MudText>
+                        </MudAlert>
+
+                        <MudSelect @bind-Value="Certificate.UserId" Label="User" Variant="Variant.Text" Required="true" RequiredError="User is required!" Placeholder="Select a user...">
+                            @foreach (var user in Users)
+                            {
+                                <MudSelectItem Value="@user.Value">@user.Text</MudSelectItem>
+                            }
+                        </MudSelect>
+
+                        <MudSelect @bind-Value="Certificate.CourseId" Label="Course" Variant="Variant.Text" Required="true" RequiredError="Course is required!" Placeholder="Select a course...">
+                            @foreach (var course in Courses)
+                            {
+                                <MudSelectItem Value="@course.Value">@course.Text</MudSelectItem>
+                            }
+                        </MudSelect>
+
+                        <MudNumericField @bind-Value="Certificate.FinalGrade" Label="Final Grade" Variant="Variant.Text" Step="0.01" />
+
+                        <MudDatePicker @bind-Date="Certificate.ExpiresAt" Label="Expires At" Variant="Variant.Text" />
+
+                        <div class="d-flex gap-2">
+                            <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Disabled="@isSubmitting">
+                                <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Class="me-2" />
+                                Create Certificate
+                            </MudButton>
+                            <MudButton Variant="Variant.Filled" Color="Color.Secondary" Href="/admin/certificates">Cancel</MudButton>
+                        </div>
+                    </MudForm>
+                </MudCardContent>
+            </MudCard>
+        </div>
+    </div>
+}
 
 @code {
     private CreateCertificateRequest Certificate { get; set; } = new();
     private bool isSubmitting = false;
+    private bool isLoading = true;
+    private MudForm form;
+    private List<DropdownOption<string>> Users = new();
+    private List<DropdownOption<int>> Courses = new();
 
-    private async Task<AutoCompleteDataProviderResult<DropdownOption<string>>> SearchUsersDataProvider(AutoCompleteDataProviderRequest<DropdownOption<string>> request)
+    protected override async Task OnInitializedAsync()
     {
-        try
-        {
-            var users = await DropdownRepository.GetUsersAsync(search: request.Filter.Value, take: 20);
-            return new AutoCompleteDataProviderResult<DropdownOption<string>>
-            {
-                Data = users,
-                TotalCount = users.Count
-            };
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error loading users: {ex.Message}");
-            return new AutoCompleteDataProviderResult<DropdownOption<string>>
-            {
-                Data = new List<DropdownOption<string>>(),
-                TotalCount = 0
-            };
-        }
-    }
-
-    private async Task<AutoCompleteDataProviderResult<DropdownOption<int>>> SearchCoursesDataProvider(AutoCompleteDataProviderRequest<DropdownOption<int>> request)
-    {
-        try
-        {
-            var courses = await DropdownRepository.GetCoursesAsync(search: request.Filter.Value, take: 20);
-            return new AutoCompleteDataProviderResult<DropdownOption<int>>
-            {
-                Data = courses,
-                TotalCount = courses.Count
-            };
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error loading courses: {ex.Message}");
-            return new AutoCompleteDataProviderResult<DropdownOption<int>>
-            {
-                Data = new List<DropdownOption<int>>(),
-                TotalCount = 0
-            };
-        }
+        Users = await DropdownRepository.GetUsersAsync();
+        Courses = await DropdownRepository.GetCoursesAsync();
+        await Task.Delay(500); // Simulate data loading
+        isLoading = false;
     }
 
     private async Task AddCertificate()
     {
         if (isSubmitting) return;
-        
         isSubmitting = true;
         try
         {

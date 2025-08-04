@@ -1,6 +1,5 @@
 @page "/test-error"
-@layout MainLayout
-@rendermode InteractiveServer
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
 
 <PageTitle>Test Error Boundary</PageTitle>
 
@@ -10,35 +9,33 @@
             <h2>Error Boundary Test Page</h2>
             <p class="text-muted">This page is for testing the custom error boundary functionality.</p>
 
-            <div class="card">
-                <div class="card-header">
-                    <h5>Error Testing Controls</h5>
-                </div>
-                <div class="card-body">
-                    <div class="d-grid gap-2 d-md-block">
-                        <button class="btn btn-danger" @onclick="ThrowNullReferenceException">
+            <MudCard Elevation="2">
+                <MudCardHeader>
+                    <MudText Typo="Typo.h6">Error Testing Controls</MudText>
+                </MudCardHeader>
+                <MudCardContent>
+                    <MudStack Spacing="2">
+                        <MudButton Variant="Variant.Filled" Color="Color.Error" OnClick="ThrowNullReferenceException">
                             Throw Null Reference Exception
-                        </button>
-                        <button class="btn btn-warning" @onclick="ThrowArgumentException">
+                        </MudButton>
+                        <MudButton Variant="Variant.Filled" Color="Color.Warning" OnClick="ThrowArgumentException">
                             Throw Argument Exception
-                        </button>
-                        <button class="btn btn-info" @onclick="ThrowInvalidOperationException">
+                        </MudButton>
+                        <MudButton Variant="Variant.Filled" Color="Color.Info" OnClick="ThrowInvalidOperationException">
                             Throw Invalid Operation Exception
-                        </button>
-                        <button class="btn btn-secondary" @onclick="ThrowCustomException">
+                        </MudButton>
+                        <MudButton Variant="Variant.Filled" Color="Color.Secondary" OnClick="ThrowCustomException">
                             Throw Custom Exception
-                        </button>
-                    </div>
+                        </MudButton>
+                    </MudStack>
 
-                    <div class="mt-3">
-                        <p class="small text-muted">
-                            Click any button above to trigger an exception and see how the error boundary handles it.
-                            The error boundary will display detailed error information including stack traces and inner
-                            exceptions.
-                        </p>
-                    </div>
-                </div>
-            </div>
+                    <MudText Typo="Typo.caption" Class="mt-3">
+                        Click any button above to trigger an exception and see how the error boundary handles it.
+                        The error boundary will display detailed error information including stack traces and inner
+                        exceptions.
+                    </MudText>
+                </MudCardContent>
+            </MudCard>
 
             <div class="mt-4">
                 <h5>How it works:</h5>
@@ -86,6 +83,3 @@
         }
     }
 }
-
-                           
-                    

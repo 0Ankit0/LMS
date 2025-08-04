@@ -1,54 +1,19 @@
 ﻿@using System.Collections.Generic
 @rendermode InteractiveAuto
 
-<div class="top-row ps-3 navbar navbar-dark">
-    <div class="container-fluid d-flex align-items-center justify-content-end">
-        <button class="navbar-collapse-toggle" @onclick="ToggleNavbar"
-            title="@(isNavbarCollapsed ? "Expand sidebar" : "Collapse sidebar")">
-            <span class="bi @(isNavbarCollapsed ? "bi-chevron-right" : "bi-chevron-left")"></span>
-        </button>
-        <button class="navbar-toggler" @onclick="ToggleMobileMenu" title="Toggle navigation menu">
-        </button>
-    </div>
-</div>
+<MudAppBar Elevation="0">
+    <MudIconButton Icon="@(isNavbarCollapsed ? Icons.Material.Filled.ChevronRight : Icons.Material.Filled.ChevronLeft)" Color="Color.Inherit" Edge="Edge.Start" OnClick="ToggleNavbar" Title="@(isNavbarCollapsed ? "Expand sidebar" : "Collapse sidebar")" />
+    <MudSpacer />
+    <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.End" OnClick="ToggleMobileMenu" Title="Toggle navigation menu" />
+</MudAppBar>
 
-<div class="nav-scrollable @(GetNavScrollableClasses())" style="@(isMobileMenuOpen ? "display: block;" : "")">
-    <nav class="nav">
-        <div class="nav-item" data-tooltip="Home">
-            <NavLink class="nav-link" href="/home" Match="NavLinkMatch.All" title="Home">
-                <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span>
-                <span class="nav-text">Home</span>
-            </NavLink>
-        </div>
-
-        <div class="nav-item" data-tooltip="Analytics Dashboard">
-            <NavLink class="nav-link" href="/user/lms/analytics" title="Analytics Dashboard">
-                <span class="bi bi-speedometer2" aria-hidden="true"></span>
-                <span class="nav-text">Analytics Dashboard</span>
-            </NavLink>
-        </div>
-
-        <div class="nav-item" data-tooltip="Course Catalog">
-            <NavLink class="nav-link" href="user/lms/courses/catalog" title="Course Catalog">
-                <span class="bi bi-book" aria-hidden="true"></span>
-                <span class="nav-text">Course Catalog</span>
-            </NavLink>
-        </div>
-
-        <div class="nav-item" data-tooltip="Account">
-            <NavLink class="nav-link" href="user/lms/announcement-list" title="Account">
-                <span class="bi bi-megaphone" aria-hidden="true"></span>
-                <span class="nav-text">Announcements</span>
-            </NavLink>
-        </div>
-        <div class="nav-item" data-tooltip="Account">
-            <NavLink class="nav-link" href="user/lms/forums" title="Account">
-                <span class="bi bi-megaphone" aria-hidden="true"></span>
-                <span class="nav-text">Forums</span>
-            </NavLink>
-        </div>
-    </nav>
-</div>
+<MudNavMenu Class="@($"nav-scrollable {GetNavScrollableClasses()}")" Style="@(isMobileMenuOpen ? "display: block;" : "")">
+    <MudNavLink Href="/home" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Home">Home</MudNavLink>
+    <MudNavLink Href="/user/lms/analytics" Icon="@Icons.Material.Filled.Analytics">Analytics Dashboard</MudNavLink>
+    <MudNavLink Href="user/lms/courses/catalog" Icon="@Icons.Material.Filled.Book">Course Catalog</MudNavLink>
+    <MudNavLink Href="user/lms/announcement-list" Icon="@Icons.Material.Filled.Campaign">Announcements</MudNavLink>
+    <MudNavLink Href="user/lms/forums" Icon="@Icons.Material.Filled.Forum">Forums</MudNavLink>
+</MudNavMenu>
 
 @code {
     private bool isNavbarCollapsed = true; // Start contracted by default

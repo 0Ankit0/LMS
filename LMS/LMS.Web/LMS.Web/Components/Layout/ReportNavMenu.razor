@@ -2,175 +2,62 @@
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @rendermode InteractiveAuto
 
-<div class="top-row ps-3 navbar navbar-dark">
-    <div class="container-fluid d-flex align-items-center justify-content-end">
-        <button class="navbar-collapse-toggle" @onclick="ToggleNavbar"
-            title="@(isNavbarCollapsed ? "Expand sidebar" : "Collapse sidebar")">
-            <span class="bi @(isNavbarCollapsed ? "bi-chevron-right" : "bi-chevron-left")"></span>
-        </button>
-        <button class="navbar-toggler" @onclick="ToggleMobileMenu" title="Toggle navigation menu"
-            aria-label="Toggle navigation menu">
-            <span class="bar"></span>
-            <span class="bar"></span>
-            <span class="bar"></span>
-        </button>
-    </div>
-</div>
+<MudAppBar Elevation="0">
+    <MudIconButton Icon="@(isNavbarCollapsed ? Icons.Material.Filled.ChevronRight : Icons.Material.Filled.ChevronLeft)" Color="Color.Inherit" Edge="Edge.Start" OnClick="ToggleNavbar" Title="@(isNavbarCollapsed ? "Expand sidebar" : "Collapse sidebar")" />
+    <MudSpacer />
+    <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.End" OnClick="ToggleMobileMenu" Title="Toggle navigation menu" />
+</MudAppBar>
 
-<div class="nav-scrollable @(GetNavScrollableClasses())" style="@(isMobileMenuOpen ? "display: block;" : "")">
-    <nav class="nav">
-        <!-- Dashboard -->
-        <div class="nav-item" data-tooltip="Reports Dashboard">
-            <NavLink class="nav-link" href="/reports" Match="NavLinkMatch.All" title="Reports Dashboard">
-                <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span>
-                <span class="nav-text">Dashboard</span>
-            </NavLink>
-        </div>
+<MudNavMenu Class="@($"nav-scrollable {GetNavScrollableClasses()}")" Style="@(isMobileMenuOpen ? "display: block;" : "")">
+    <!-- Dashboard -->
+    <MudNavLink Href="/reports" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Dashboard" Style="line-height: 1.2; font-size: 0.97rem;">Dashboard</MudNavLink>
 
-        <!-- Academic Reports Section -->
-        <div class="nav-section @(isNavbarCollapsed ? "collapsed" : "")">
-            <div class="nav-section-title">📚 Academic Reports</div>
-            <div class="nav-item" data-tooltip="Course Completion">
-                <NavLink class="nav-link" href="/reports/course-completion" title="Course Completion">
-                    <span class="bi bi-bar-chart-fill" aria-hidden="true"></span>
-                    <span class="nav-text">Course Completion</span>
-                </NavLink>
-            </div>
-            <div class="nav-item" data-tooltip="Assessment Performance">
-                <NavLink class="nav-link" href="/reports/assessment-performance" title="Assessment Performance">
-                    <span class="bi bi-clipboard-check" aria-hidden="true"></span>
-                    <span class="nav-text">Assessment Performance</span>
-                </NavLink>
-            </div>
-            <div class="nav-item" data-tooltip="Enrollment Summary">
-                <NavLink class="nav-link" href="/reports/enrollment-summary" title="Enrollment Summary">
-                    <span class="bi bi-people" aria-hidden="true"></span>
-                    <span class="nav-text">Enrollment Summary</span>
-                </NavLink>
-            </div>
-            <div class="nav-item" data-tooltip="Enrollment Trends">
-                <NavLink class="nav-link" href="/reports/enrollment-trends" title="Enrollment Trends">
-                    <span class="bi bi-graph-up" aria-hidden="true"></span>
-                    <span class="nav-text">Enrollment Trends</span>
-                </NavLink>
-            </div>
-        </div>
+    <!-- Academic Reports Section -->
+    <MudNavGroup Title="Academic Reports" Icon="@Icons.Material.Filled.School" Expanded="true">
+        <MudNavLink Href="/reports/course-completion" Icon="@Icons.Material.Filled.BarChart" Style="line-height: 1.2; font-size: 0.97rem;">Course Completion</MudNavLink>
+        <MudNavLink Href="/reports/assessment-performance" Icon="@Icons.Material.Filled.AssignmentTurnedIn" Style="line-height: 1.2; font-size: 0.97rem;">Assessment Performance</MudNavLink>
+        <MudNavLink Href="/reports/enrollment-summary" Icon="@Icons.Material.Filled.People" Style="line-height: 1.2; font-size: 0.97rem;">Enrollment Summary</MudNavLink>
+        <MudNavLink Href="/reports/enrollment-trends" Icon="@Icons.Material.Filled.TrendingUp" Style="line-height: 1.2; font-size: 0.97rem;">Enrollment Trends</MudNavLink>
+    </MudNavGroup>
 
-        <!-- Student Reports Section -->
-        <div class="nav-section @(isNavbarCollapsed ? "collapsed" : "")">
-            <div class="nav-section-title">👨‍🎓 Student Reports</div>
-            <div class="nav-item" data-tooltip="Student Information">
-                <NavLink class="nav-link" href="/reports/student-information" title="Student Information">
-                    <span class="bi bi-person-badge" aria-hidden="true"></span>
-                    <span class="nav-text">Student Information</span>
-                </NavLink>
-            </div>
-            <div class="nav-item" data-tooltip="Student Progress">
-                <NavLink class="nav-link" href="/reports/student-progress" title="Student Progress">
-                    <span class="bi bi-graph-up-arrow" aria-hidden="true"></span>
-                    <span class="nav-text">Student Progress</span>
-                </NavLink>
-            </div>
-            <div class="nav-item" data-tooltip="Low Performance">
-                <NavLink class="nav-link" href="/reports/low-performance" title="Low Performance">
-                    <span class="bi bi-exclamation-triangle" aria-hidden="true"></span>
-                    <span class="nav-text">Low Performance</span>
-                </NavLink>
-            </div>
-            <div class="nav-item" data-tooltip="Student Engagement">
-                <NavLink class="nav-link" href="/reports/student-engagement" title="Student Engagement">
-                    <span class="bi bi-activity" aria-hidden="true"></span>
-                    <span class="nav-text">Student Engagement</span>
-                </NavLink>
-            </div>
-        </div>
+    <!-- Student Reports Section -->
+    <MudNavGroup Title="Student Reports" Icon="@Icons.Material.Filled.Person" Expanded="true">
+        <MudNavLink Href="/reports/student-information" Icon="@Icons.Material.Filled.Badge" Style="line-height: 1.2; font-size: 0.97rem;">Student Information</MudNavLink>
+        <MudNavLink Href="/reports/student-progress" Icon="@Icons.Material.Filled.ShowChart" Style="line-height: 1.2; font-size: 0.97rem;">Student Progress</MudNavLink>
+        <MudNavLink Href="/reports/low-performance" Icon="@Icons.Material.Filled.Warning" Style="line-height: 1.2; font-size: 0.97rem;">Low Performance</MudNavLink>
+        <MudNavLink Href="/reports/student-engagement" Icon="@Icons.Material.Filled.LocalActivity" Style="line-height: 1.2; font-size: 0.97rem;">Student Engagement</MudNavLink>
+    </MudNavGroup>
 
-        <!-- Attendance Reports Section -->
-        <div class="nav-section @(isNavbarCollapsed ? "collapsed" : "")">
-            <div class="nav-section-title">📋 Attendance Reports</div>
-            <div class="nav-item" data-tooltip="Class Attendance">
-                <NavLink class="nav-link" href="/reports/attendance" title="Class Attendance">
-                    <span class="bi bi-calendar-check" aria-hidden="true"></span>
-                    <span class="nav-text">Class Attendance</span>
-                </NavLink>
-            </div>
-            <div class="nav-item" data-tooltip="Student Attendance">
-                <NavLink class="nav-link" href="/reports/student-attendance" title="Student Attendance">
-                    <span class="bi bi-person-check" aria-hidden="true"></span>
-                    <span class="nav-text">Student Attendance</span>
-                </NavLink>
-            </div>
-        </div>
+    <!-- Attendance Reports Section -->
+    <MudNavGroup Title="Attendance Reports" Icon="@Icons.Material.Filled.EventAvailable" Expanded="true">
+        <MudNavLink Href="/reports/attendance" Icon="@Icons.Material.Filled.EventNote" Style="line-height: 1.2; font-size: 0.97rem;">Class Attendance</MudNavLink>
+        <MudNavLink Href="/reports/student-attendance" Icon="@Icons.Material.Filled.PersonPin" Style="line-height: 1.2; font-size: 0.97rem;">Student Attendance</MudNavLink>
+    </MudNavGroup>
 
-        <!-- Forum Reports Section -->
-        <div class="nav-section @(isNavbarCollapsed ? "collapsed" : "")">
-            <div class="nav-section-title">💬 Forum Reports</div>
-            <div class="nav-item" data-tooltip="Forum Activity">
-                <NavLink class="nav-link" href="/reports/forum-activity" title="Forum Activity">
-                    <span class="bi bi-chat-dots" aria-hidden="true"></span>
-                    <span class="nav-text">Forum Activity</span>
-                </NavLink>
-            </div>
-        </div>
+    <!-- Forum Reports Section -->
+    <MudNavGroup Title="Forum Reports" Icon="@Icons.Material.Filled.Forum" Expanded="true">
+        <MudNavLink Href="/reports/forum-activity" Icon="@Icons.Material.Filled.Chat" Style="line-height: 1.2; font-size: 0.97rem;">Forum Activity</MudNavLink>
+    </MudNavGroup>
 
-        <!-- Analytics Section -->
-        <div class="nav-section @(isNavbarCollapsed ? "collapsed" : "")">
-            <div class="nav-section-title">📊 Analytics</div>
-            <div class="nav-item" data-tooltip="Popular Courses">
-                <NavLink class="nav-link" href="/reports/popular-courses" title="Popular Courses">
-                    <span class="bi bi-star" aria-hidden="true"></span>
-                    <span class="nav-text">Popular Courses</span>
-                </NavLink>
-            </div>
-            <div class="nav-item" data-tooltip="Difficult Assessments">
-                <NavLink class="nav-link" href="/reports/difficult-assessments" title="Difficult Assessments">
-                    <span class="bi bi-fire" aria-hidden="true"></span>
-                    <span class="nav-text">Difficult Assessments</span>
-                </NavLink>
-            </div>
-            <div class="nav-item" data-tooltip="Learning Analytics">
-                <NavLink class="nav-link" href="/reports/learning-analytics" title="Learning Analytics">
-                    <span class="bi bi-lightbulb" aria-hidden="true"></span>
-                    <span class="nav-text">Learning Analytics</span>
-                </NavLink>
-            </div>
-            <div class="nav-item" data-tooltip="Grade Distribution">
-                <NavLink class="nav-link" href="/reports/grade-distribution" title="Grade Distribution">
-                    <span class="bi bi-bar-chart" aria-hidden="true"></span>
-                    <span class="nav-text">Grade Distribution</span>
-                </NavLink>
-            </div>
-        </div>
+    <!-- Analytics Section -->
+    <MudNavGroup Title="Analytics" Icon="@Icons.Material.Filled.Analytics" Expanded="true">
+        <MudNavLink Href="/reports/popular-courses" Icon="@Icons.Material.Filled.Star" Style="line-height: 1.2; font-size: 0.97rem;">Popular Courses</MudNavLink>
+        <MudNavLink Href="/reports/difficult-assessments" Icon="@Icons.Material.Filled.LocalFireDepartment" Style="line-height: 1.2; font-size: 0.97rem;">Difficult Assessments</MudNavLink>
+        <MudNavLink Href="/reports/learning-analytics" Icon="@Icons.Material.Filled.Lightbulb" Style="line-height: 1.2; font-size: 0.97rem;">Learning Analytics</MudNavLink>
+        <MudNavLink Href="/reports/grade-distribution" Icon="@Icons.Material.Filled.BarChart" Style="line-height: 1.2; font-size: 0.97rem;">Grade Distribution</MudNavLink>
+    </MudNavGroup>
 
-        <!-- Teacher Reports Section -->
-        <div class="nav-section @(isNavbarCollapsed ? "collapsed" : "")">
-            <div class="nav-section-title">👨‍🏫 Teacher Reports</div>
-            <div class="nav-item" data-tooltip="Teacher Performance">
-                <NavLink class="nav-link" href="/reports/teacher-performance" title="Teacher Performance">
-                    <span class="bi bi-mortarboard" aria-hidden="true"></span>
-                    <span class="nav-text">Teacher Performance</span>
-                </NavLink>
-            </div>
-        </div>
+    <!-- Teacher Reports Section -->
+    <MudNavGroup Title="Teacher Reports" Icon="@Icons.Material.Filled.School" Expanded="true">
+        <MudNavLink Href="/reports/teacher-performance" Icon="@Icons.Material.Filled.AssignmentInd" Style="line-height: 1.2; font-size: 0.97rem;">Teacher Performance</MudNavLink>
+    </MudNavGroup>
 
-        <!-- Advanced Analytics Section -->
-        <div class="nav-section @(isNavbarCollapsed ? "collapsed" : "")">
-            <div class="nav-section-title">📈 Advanced Analytics</div>
-            <div class="nav-item" data-tooltip="Academic Trends">
-                <NavLink class="nav-link" href="/reports/academic-trends" title="Academic Trends">
-                    <span class="bi bi-trending-up" aria-hidden="true"></span>
-                    <span class="nav-text">Academic Trends</span>
-                </NavLink>
-            </div>
-            <div class="nav-item" data-tooltip="Risk Students">
-                <NavLink class="nav-link" href="/reports/risk-students" title="Risk Students">
-                    <span class="bi bi-shield-exclamation" aria-hidden="true"></span>
-                    <span class="nav-text">Risk Students</span>
-                </NavLink>
-            </div>
-        </div>
-    </nav>
-</div>
+    <!-- Advanced Analytics Section -->
+    <MudNavGroup Title="Advanced Analytics" Icon="@Icons.Material.Filled.TrendingUp" Expanded="true">
+        <MudNavLink Href="/reports/academic-trends" Icon="@Icons.Material.Filled.TrendingUp" Style="line-height: 1.2; font-size: 0.97rem;">Academic Trends</MudNavLink>
+        <MudNavLink Href="/reports/risk-students" Icon="@Icons.Material.Filled.Warning" Style="line-height: 1.2; font-size: 0.97rem;">Risk Students</MudNavLink>
+    </MudNavGroup>
+</MudNavMenu>
 
 @code {
     private bool isNavbarCollapsed = true; // Start contracted by default

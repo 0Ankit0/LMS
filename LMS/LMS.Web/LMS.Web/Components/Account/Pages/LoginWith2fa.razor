@@ -1,8 +1,9 @@
-﻿@page "/Account/LoginWith2fa"
+@page "/Account/LoginWith2fa"
 
 @using System.ComponentModel.DataAnnotations
 @using Microsoft.AspNetCore.Identity
 @using LMS.Data.Entities
+@using LMS.Web.Components.Shared
 
 @inject SignInManager<User> SignInManager
 @inject UserManager<User> UserManager
@@ -12,7 +13,7 @@
 <PageTitle>Two-factor authentication</PageTitle>
 
 <h1>Two-factor authentication</h1>
-<hr />
+<MudDivider />
 <StatusMessage Message="@message" />
 <p>Your login is protected with an authenticator app. Enter your authenticator code below.</p>
 <div class="row">
@@ -23,7 +24,8 @@
             <DataAnnotationsValidator />
             <ValidationSummary class="text-danger" role="alert" />
             <div class="form-floating mb-3">
-                <InputText @bind-Value="Input.TwoFactorCode" id="Input.TwoFactorCode" class="form-control" autocomplete="off" />
+                <InputText @bind-Value="Input.TwoFactorCode" id="Input.TwoFactorCode" class="form-control"
+                    autocomplete="off" />
                 <label for="Input.TwoFactorCode" class="form-label">Authenticator code</label>
                 <ValidationMessage For="() => Input.TwoFactorCode" class="text-danger" />
             </div>
@@ -41,7 +43,8 @@
 </div>
 <p>
     Don't have access to your authenticator device? You can
-    <a href="Account/LoginWithRecoveryCode?ReturnUrl=@ReturnUrl">log in with a recovery code</a>.
+    <a class="mud-link mud-primary-text mud-link-underline-hover"
+        href="Account/LoginWithRecoveryCode?ReturnUrl=@ReturnUrl">log in with a recovery code</a>.
 </p>
 
 @code {
@@ -61,13 +64,14 @@
     {
         // Ensure the user has gone through the username & password screen first
         user = await SignInManager.GetTwoFactorAuthenticationUserAsync() ??
-            throw new InvalidOperationException("Unable to load two-factor authentication user.");
+        throw new InvalidOperationException("Unable to load two-factor authentication user.");
     }
 
     private async Task OnValidSubmitAsync()
     {
         var authenticatorCode = Input.TwoFactorCode!.Replace(" ", string.Empty).Replace("-", string.Empty);
-        var result = await SignInManager.TwoFactorAuthenticatorSignInAsync(authenticatorCode, RememberMe, Input.RememberMachine);
+        var result = await SignInManager.TwoFactorAuthenticatorSignInAsync(authenticatorCode, RememberMe,
+        Input.RememberMachine);
         var userId = await UserManager.GetUserIdAsync(user);
 
         if (result.Succeeded)

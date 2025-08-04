@@ -1,4 +1,4 @@
-@using BlazorBootstrap
+
 @using LMS.Data.DTOs
 @using LMS.Data.Entities
 @using Microsoft.AspNetCore.Components.Authorization
@@ -18,30 +18,30 @@
         <p class="text-muted mb-0">Track enrollment statistics and trends over time</p>
     </div>
     <div class="export-buttons">
-        <Button Color="ButtonColor.Danger" Outline="true" @onclick="ExportToPdf">
-            <Icon Name="IconName.FilePdf" /> Export PDF
-        </Button>
-        <Button Color="ButtonColor.Success" Outline="true" @onclick="ExportToExcel">
-            <Icon Name="IconName.FileExcel" /> Export Excel
-        </Button>
+        <MudButton Variant="Variant.Outlined" Color="Color.Error" OnClick="ExportToPdf">
+            <MudIcon Icon="@Icons.Material.Filled.PictureAsPdf" Class="me-2" /> Export PDF
+        </MudButton>
+        <MudButton Variant="Variant.Outlined" Color="Color.Success" OnClick="ExportToExcel">
+            <MudIcon Icon="@Icons.Material.Filled.Description" Class="me-2" /> Export Excel
+        </MudButton>
     </div>
 </div>
 
 @if (loading)
 {
     <div class="text-center py-5">
-        <Spinner Color="SpinnerColor.Primary" Size="SpinnerSize.Medium" />
+        <MudProgressCircular Indeterminate="true" Color="Color.Primary" Size="Size.Medium" />
         <p class="mt-2">Loading enrollment data...</p>
     </div>
 }
 else
 {
-    <Card>
-        <CardBody>
-            <h5>Enrollment Summary</h5>
-            <p>This report will show enrollment statistics and trends.</p>
-        </CardBody>
-    </Card>
+    <MudCard Elevation="2">
+        <MudCardContent>
+            <MudText Typo="Typo.h5">Enrollment Summary</MudText>
+            <MudText>This report will show enrollment statistics and trends.</MudText>
+        </MudCardContent>
+    </MudCard>
 }
 
 @code {

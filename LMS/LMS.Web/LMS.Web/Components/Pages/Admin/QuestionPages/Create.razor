@@ -7,96 +7,68 @@
 @inject IAssessmentRepository AssessmentRepository
 @inject NavigationManager NavigationManager
 @inject LMS.Web.Services.ToastService ToastService
-@rendermode @(new InteractiveServerRenderMode())
 
 <PageTitle>Create Question - Admin</PageTitle>
 
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h1 class="mb-0">Create New Question</h1>
-    <Button Color="ButtonColor.Secondary" Href="/admin/questions">
-        <Icon Name="IconName.ArrowLeft" />
+    <MudButton Variant="Variant.Text" Color="Color.Secondary" Href="/admin/questions">
+        <MudIcon Icon="@Icons.Material.Filled.ArrowBack" Class="me-2" />
         Back to Questions
-    </Button>
+    </MudButton>
 </div>
 
 <div class="row">
     <div class="col-lg-8">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="card-title mb-0">Question Information</h5>
-            </div>
-            <div class="card-body">
-                <EditForm Model="Question" OnValidSubmit="AddQuestion">
-                    <AntiforgeryToken />
-                    <DataAnnotationsValidator />
-                    <ValidationSummary class="alert alert-danger" role="alert" />
+        <MudCard Elevation="2">
+            <MudCardHeader>
+                <MudText Typo="Typo.h6">Question Information</MudText>
+            </MudCardHeader>
+            <MudCardContent>
+                <MudForm Model="Question" OnValidSubmit="AddQuestion" @ref="form">
+                    <MudAlert Severity="Severity.Error" Class="my-3" Visible="@(!form.IsValid)">
+                        <MudText>Please correct the errors below.</MudText>
+                    </MudAlert>
 
-                    <div class="mb-3">
-                        <label for="text" class="form-label">Question Text <span class="text-danger">*</span></label>
-                        <InputTextArea id="text" @bind-Value="Question.Text" class="form-control" rows="3" aria-required="true" 
-                                       placeholder="Enter the question text" />
-                        <ValidationMessage For="() => Question.Text" class="text-danger" />
-                    </div>
+                    <MudTextField @bind-Value="Question.Text" Label="Question Text" Variant="Variant.Text" Lines="3" Required="true" RequiredError="Question Text is required!" Placeholder="Enter the question text" />
 
                     <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label for="assessmentid" class="form-label">Assessment ID <span class="text-danger">*</span></label>
-                            <InputNumber id="assessmentid" @bind-Value="Question.AssessmentId" class="form-control" 
-                                         placeholder="Enter assessment ID" />
-                            <ValidationMessage For="() => Question.AssessmentId" class="text-danger" />
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label for="type" class="form-label">Question Type</label>
-                            <InputSelect id="type" @bind-Value="Question.Type" class="form-select">
+                        <MudItem xs="12" md="6">
+                            <MudNumericField @bind-Value="Question.AssessmentId" Label="Assessment ID" Variant="Variant.Text" Required="true" RequiredError="Assessment ID is required!" Placeholder="Enter assessment ID" />
+                        </MudItem>
+                        <MudItem xs="12" md="6">
+                            <MudSelect @bind-Value="Question.Type" Label="Question Type" Variant="Variant.Text">
                                 @foreach (var enumValue in Enum.GetValues(typeof(QuestionType)))
                                 {
-                                    <option value="@enumValue">@enumValue.ToString()</option>
+                                    <MudSelectItem Value="@enumValue">@enumValue.ToString()</MudSelectItem>
                                 }
-                            </InputSelect>
-                            <ValidationMessage For="() => Question.Type" class="text-danger" />
-                        </div>
+                            </MudSelect>
+                        </MudItem>
                     </div>
 
                     <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label for="points" class="form-label">Points</label>
-                            <InputNumber id="points" @bind-Value="Question.Points" class="form-control" 
-                                         placeholder="1" />
-                            <ValidationMessage For="() => Question.Points" class="text-danger" />
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label for="orderindex" class="form-label">Order Index</label>
-                            <InputNumber id="orderindex" @bind-Value="Question.OrderIndex" class="form-control" 
-                                         placeholder="1" />
-                            <ValidationMessage For="() => Question.OrderIndex" class="text-danger" />
-                        </div>
+                        <MudItem xs="12" md="6">
+                            <MudNumericField @bind-Value="Question.Points" Label="Points" Variant="Variant.Text" Placeholder="1" />
+                        </MudItem>
+                        <MudItem xs="12" md="6">
+                            <MudNumericField @bind-Value="Question.OrderIndex" Label="Order Index" Variant="Variant.Text" Placeholder="1" />
+                        </MudItem>
                     </div>
 
-                    <div class="mb-3">
-                        <label for="explanation" class="form-label">Explanation</label>
-                        <InputTextArea id="explanation" @bind-Value="Question.Explanation" class="form-control" rows="3"
-                                       placeholder="Provide an explanation for the correct answer (optional)" />
-                        <ValidationMessage For="() => Question.Explanation" class="text-danger" />
-                    </div>
+                    <MudTextField @bind-Value="Question.Explanation" Label="Explanation" Variant="Variant.Text" Lines="3" Placeholder="Provide an explanation for the correct answer (optional)" />
 
-                    <div class="mb-3">
-                        <div class="form-check">
-                            <InputCheckbox id="isrequired" @bind-Value="Question.IsRequired" class="form-check-input" />
-                            <label for="isrequired" class="form-check-label">Is Required</label>
-                            <ValidationMessage For="() => Question.IsRequired" class="text-danger" />
-                        </div>
-                    </div>
+                    <MudCheckBox T="bool" @bind-Checked="Question.IsRequired" Label="Is Required" Color="Color.Primary" />
 
                     <div class="d-flex gap-2">
-                        <Button Color="ButtonColor.Primary" Type="ButtonType.Submit" Loading="@isSubmitting">
-                            <Icon Name="IconName.CheckCircle" />
-                            Create Question
-                        </Button>
-                        <Button Color="ButtonColor.Secondary" Href="/admin/questions">Cancel</Button>
+                        <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Disabled="@isSubmitting">
+                        <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Class="me-2" />
+                        Create Question
+                    </MudButton>
+                    <MudButton Variant="Variant.Filled" Color="Color.Secondary" Href="/admin/questions">Cancel</MudButton>
                     </div>
-                </EditForm>
-            </div>
-        </div>
+                </MudForm>
+            </MudCardContent>
+        </MudCard>
     </div>
 </div>
 
@@ -104,6 +76,7 @@
     [SupplyParameterFromForm]
     private CreateQuestionRequest Question { get; set; } = new();
     private bool isSubmitting = false;
+    private MudForm form;
 
     private async Task AddQuestion()
     {

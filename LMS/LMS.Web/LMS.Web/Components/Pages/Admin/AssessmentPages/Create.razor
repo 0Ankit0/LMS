@@ -1,253 +1,171 @@
-@page "/admin/assessments/create"
-
+@using Microsoft.AspNetCore.Components.Web
+@using global::LMS.Data.DTOs
 @using LMS.Repositories
-@using LMS.Web.Components.Shared
-@using LMS.Web.Services
-@using Microsoft.AspNetCore.Components.Forms
-
-@inject IAssessmentRepository AssessmentRepository
+@using MudBlazor
+@using MudBlazor.Utilities
 @inject IDropdownRepository DropdownRepository
+@inject IAssessmentRepository AssessmentRepository
+@inject ISnackbar Snackbar
 @inject NavigationManager NavigationManager
-@inject LMS.Web.Services.ToastService ToastService
 @rendermode @(new InteractiveServerRenderMode())
 
 <PageTitle>Create Assessment - Admin</PageTitle>
 
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h1 class="mb-0">Create New Assessment</h1>
-    <Button Color="ButtonColor.Secondary" Href="/admin/assessments">
-        <Icon Name="IconName.ArrowLeft" />
-        Back to Assessments
-    </Button>
-</div>
+@if (isLoading)
+{
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <MudSkeleton SkeletonType="SkeletonType.Text" Width="200px" Height="40px" />
+        <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="180px" Height="40px" />
+    </div>
 
-<Card>
-    <CardHeader>
-        <h5 class="card-title mb-0">Assessment Information</h5>
-    </CardHeader>
-    <CardBody>
-        <EditForm Model="Assessment" OnValidSubmit="AddAssessment">
-            <AntiforgeryToken />
-            <DataAnnotationsValidator />
-            <ValidationSummary class="alert alert-danger" role="alert" />
+    <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="700px" />
+}
+else
+{
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="mb-0">Create New Assessment</h1>
+        <MudButton Variant="Variant.Text" Color="Color.Secondary" Href="/admin/assessments">
+            <MudIcon Icon="@Icons.Material.Filled.ArrowBack" Class="me-2" />
+            Back to Assessments
+        </MudButton>
+    </div>
 
-            <div class="mb-3">
-                <label for="title" class="form-label">Title <span class="text-danger">*</span></label>
-                <InputText id="title" @bind-Value="Assessment.Title" class="form-control" aria-required="true"
-                           placeholder="Enter assessment title" />
-                <ValidationMessage For="() => Assessment.Title" class="text-danger" />
-            </div>
+    <MudCard Elevation="2">
+        <MudCardHeader>
+            <MudText Typo="Typo.h6">Assessment Information</MudText>
+        </MudCardHeader>
+        <MudCardContent>
+            <MudForm Model="Assessment" OnValidSubmit="AddAssessment" @ref="form">
+                <MudAlert Severity="Severity.Error" Class="mb-3" Visible="@(!form.IsValid)">
+                    <MudText>Please correct the errors below.</MudText>
+                </MudAlert>
 
-            <div class="mb-3">
-                <label for="description" class="form-label">Description</label>
-                <InputTextArea id="description" @bind-Value="Assessment.Description" class="form-control"
-                               rows="3" placeholder="Enter assessment description" />
-                <ValidationMessage For="() => Assessment.Description" class="text-danger" />
-            </div>
+                <MudTextField @bind-Value="Assessment.Title" Label="Title" Variant="Variant.Text" Required="true"
+                    RequiredError="Title is required!" />
 
-            <div class="mb-3">
-                <label for="courseid" class="form-label">Course <span class="text-danger">*</span></label>
-                <SearchableSelectComponent TItem="DropdownOption<int>"
-                                           TValue="int?"
-                                           DataProvider="SearchCoursesDataProvider"
-                                           ValueSelector="@(item => (int?)item.Value)"
-                                           DisplaySelector="@(item => item.Text)"
-                                           @bind-SelectedValue="Assessment.CourseId"
-                                           Placeholder="Select a course..."
-                                           EmptyText="No courses found" />
-                <ValidationMessage For="() => Assessment.CourseId" class="text-danger" />
-            </div>
+                <MudTextField @bind-Value="Assessment.Description" Label="Description" Variant="Variant.Text" Lines="3"
+                    Placeholder="Enter assessment description" />
 
-            <div class="row">
-                <div class="col-md-6 mb-3">
-                    <label for="moduleid" class="form-label">Module (Optional)</label>
-                    <SearchableSelectComponent TItem="DropdownOption<int>"
-                                               TValue="int?"
-                                               DataProvider="SearchModulesDataProvider"
-                                               ValueSelector="@(item => (int?)item.Value)"
-                                               DisplaySelector="@(item => item.Text)"
-                                               @bind-SelectedValue="Assessment.ModuleId"
-                                               Placeholder="Select a module (optional)..."
-                                               EmptyText="No modules found" />
-                    <ValidationMessage For="() => Assessment.ModuleId" class="text-danger" />
-                </div>
-                <div class="col-md-6 mb-3">
-                    <label for="lessonid" class="form-label">Lesson (Optional)</label>
-                    <SearchableSelectComponent TItem="DropdownOption<int>"
-                                               TValue="int?"
-                                               DataProvider="SearchLessonsDataProvider"
-                                               ValueSelector="@(item => (int?)item.Value)"
-                                               DisplaySelector="@(item => item.Text)"
-                                               @bind-SelectedValue="Assessment.LessonId"
-                                               Placeholder="Select a lesson (optional)..."
-                                               EmptyText="No lessons found" />
-                    <ValidationMessage For="() => Assessment.LessonId" class="text-danger" />
-                </div>
-            </div>
+                <MudSelect @bind-Value="Assessment.CourseId" Label="Course" Variant="Variant.Text" Required="true"
+                    RequiredError="Course is required!" Placeholder="Select a course...">
+                    @foreach (var course in courses)
+                    {
+                        <MudSelectItem Value="@course.Value">@course.Text</MudSelectItem>
+                    }
+                </MudSelect>
 
-            <div class="row">
-                <div class="col-md-6 mb-3">
-                    <label for="type" class="form-label">Assessment Type</label>
-                    <InputSelect id="type" @bind-Value="Assessment.Type" class="form-select">
-                        @foreach (var enumValue in
-                                                Enum.GetValues(typeof(AssessmentType)).Cast<AssessmentType>())
-                        {
-                            <option value="@((int)enumValue)">@enumValue.ToString()</option>
-                        }
-                    </InputSelect>
-                    <ValidationMessage For="() => Assessment.Type" class="text-danger" />
-                </div>
-                <div class="col-md-6 mb-3">
-                    <label for="maxattempts" class="form-label">Max Attempts</label>
-                    <InputNumber id="maxattempts" @bind-Value="Assessment.MaxAttempts" class="form-control" />
-                    <ValidationMessage For="() => Assessment.MaxAttempts" class="text-danger" />
-                </div>
-            </div>
+                <MudGrid>
+                    <MudItem xs="12" md="6">
+                        <MudSelect @bind-Value="Assessment.ModuleId" Label="Module (Optional)" Variant="Variant.Text"
+                            Placeholder="Select a module (optional)...">
+                            @foreach (var module in modules)
+                            {
+                                <MudSelectItem Value="@module.Value">@module.Text</MudSelectItem>
+                            }
+                        </MudSelect>
+                    </MudItem>
+                    <MudItem xs="12" md="6">
+                        <MudSelect @bind-Value="Assessment.LessonId" Label="Lesson (Optional)" Variant="Variant.Text"
+                            Placeholder="Select a lesson (optional)...">
+                            @foreach (var lesson in lessons)
+                            {
+                                <MudSelectItem Value="@lesson.Value">@lesson.Text</MudSelectItem>
+                            }
+                        </MudSelect>
+                    </MudItem>
+                </MudGrid>
 
-            <div class="row">
-                <div class="col-md-6 mb-3">
-                    <label for="timelimit" class="form-label">Time Limit (minutes)</label>
-                    <InputNumber id="timelimit" @bind-Value="TimeLimitMinutes" class="form-control" />
-                    <ValidationMessage For="() => TimeLimitMinutes" class="text-danger" />
-                </div>
-                <div class="col-md-6 mb-3">
-                    <label for="passingscore" class="form-label">Passing Score (%)</label>
-                    <InputNumber id="passingscore" @bind-Value="Assessment.PassingScore" class="form-control"
-                                 step="0.01" />
-                    <ValidationMessage For="() => Assessment.PassingScore" class="text-danger" />
-                </div>
-            </div>
+                <MudGrid>
+                    <MudItem xs="12" md="6">
+                        <MudSelect @bind-Value="Assessment.Type" Label="Assessment Type" Variant="Variant.Text">
+                            @foreach (var enumValue in Enum.GetValues(typeof(AssessmentType)).Cast<AssessmentType>())
+                            {
+                                <MudSelectItem Value="@enumValue">@enumValue.ToString()</MudSelectItem>
+                            }
+                        </MudSelect>
+                    </MudItem>
+                    <MudItem xs="12" md="6">
+                        <MudNumericField  @bind-Value="Assessment.MaxAttempts" Label="Max Attempts"
+                            Variant="Variant.Text" />
+                    </MudItem>
+                </MudGrid>
 
-            <div class="row">
-                <div class="col-md-6 mb-3">
-                    <div class="form-check">
-                        <InputCheckbox id="israndomized" @bind-Value="Assessment.IsRandomized"
-                                       class="form-check-input" />
-                        <label for="israndomized" class="form-check-label">Randomize Questions</label>
-                    </div>
-                </div>
-                <div class="col-md-6 mb-3">
-                    <div class="form-check">
-                        <InputCheckbox id="showcorrectanswers" @bind-Value="Assessment.ShowCorrectAnswers"
-                                       class="form-check-input" />
-                        <label for="showcorrectanswers" class="form-check-label">Show Correct Answers</label>
-                    </div>
-                </div>
-            </div>
+                <MudGrid>
+                    <MudItem xs="12" md="6">
+                        <MudNumericField  @bind-Value="TimeLimitMinutes" Label="Time Limit (minutes)"
+                            Variant="Variant.Text" />
+                    </MudItem>
+                    <MudItem xs="12" md="6">
+                        <MudNumericField  @bind-Value="Assessment.PassingScore" Label="Passing Score (%)"
+                            Variant="Variant.Text" Step="0.01" />
+                    </MudItem>
+                </MudGrid>
 
-            <div class="row">
-                <div class="col-md-6 mb-3">
-                    <div class="form-check">
-                        <InputCheckbox id="showscoreimmediately" @bind-Value="Assessment.ShowScoreImmediately"
-                                       class="form-check-input" />
-                        <label for="showscoreimmediately" class="form-check-label">
-                            Show Score
-                            Immediately
-                        </label>
-                    </div>
-                </div>
-            </div>
+                <MudGrid>
+                    <MudItem xs="12" md="6">
+                        <MudCheckBox T="bool" @bind-Checked="Assessment.IsRandomized" Label="Randomize Questions"
+                            Color="Color.Primary" />
+                    </MudItem>
+                    <MudItem xs="12" md="6">
+                        <MudCheckBox T="bool" @bind-Checked="Assessment.ShowCorrectAnswers" Label="Show Correct Answers"
+                            Color="Color.Primary" />
+                    </MudItem>
+                </MudGrid>
 
-            <div class="row">
-                <div class="col-md-6 mb-3">
-                    <label for="availablefrom" class="form-label">Available From</label>
-                    <InputDate id="availablefrom" @bind-Value="Assessment.AvailableFrom" class="form-control" />
-                    <ValidationMessage For="() => Assessment.AvailableFrom" class="text-danger" />
-                </div>
-                <div class="col-md-6 mb-3">
-                    <label for="availableuntil" class="form-label">Available Until</label>
-                    <InputDate id="availableuntil" @bind-Value="Assessment.AvailableUntil"
-                               class="form-control" />
-                    <ValidationMessage For="() => Assessment.AvailableUntil" class="text-danger" />
-                </div>
-            </div>
+                <MudGrid>
+                    <MudItem xs="12" md="6">
+                        <MudCheckBox T="bool" @bind-Checked="Assessment.ShowScoreImmediately" Label="Show Score Immediately"
+                            Color="Color.Primary" />
+                    </MudItem>
+                </MudGrid>
 
-            <div class="d-flex gap-2">
-                <Button Color="ButtonColor.Primary" Type="ButtonType.Submit" Loading="@isSubmitting">
-                    <Icon Name="IconName.CheckCircle" />
-                    Create Assessment
-                </Button>
-                <Button Color="ButtonColor.Secondary" Href="/admin/assessments">Cancel</Button>
-            </div>
-        </EditForm>
-    </CardBody>
-</Card>
+                <MudGrid>
+                    <MudItem xs="12" md="6">
+                        <MudDatePicker @bind-Date="Assessment.AvailableFrom" Label="Available From"
+                            Variant="Variant.Text" />
+                    </MudItem>
+                    <MudItem xs="12" md="6">
+                        <MudDatePicker @bind-Date="Assessment.AvailableUntil" Label="Available Until"
+                            Variant="Variant.Text" />
+                    </MudItem>
+                </MudGrid>
+
+                <div class="d-flex gap-2">
+                    <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary"
+                        Disabled="@isSubmitting">
+                        <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Class="me-2" />
+                        Create Assessment
+                    </MudButton>
+                    <MudButton Variant="Variant.Filled" Color="Color.Secondary" Href="/admin/assessments">Cancel</MudButton>
+                </div>
+            </MudForm>
+        </MudCardContent>
+    </MudCard>
+}
 
 @code {
     [SupplyParameterFromForm]
     private CreateAssessmentRequest Assessment { get; set; } = new();
     private bool isSubmitting = false;
+    private bool isLoading = true;
+    private MudForm form;
+    private List<DropdownOption<int>> courses = new();
+    private List<DropdownOption> modules = new();
+    private List<DropdownOption> lessons = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        courses = await DropdownRepository.GetCoursesAsync();
+        modules = await DropdownRepository.GetModulesAsync();
+        lessons = await DropdownRepository.GetLessonsAsync();
+        await Task.Delay(500); // Simulate data loading
+        isLoading = false;
+    }
 
     private int? TimeLimitMinutes
     {
         get => Assessment.TimeLimit.TotalMinutes > 0 ? (int)Assessment.TimeLimit.TotalMinutes : null;
         set => Assessment.TimeLimit = value.HasValue ? TimeSpan.FromMinutes(value.Value) : TimeSpan.Zero;
-    }
-
-    private async Task<AutoCompleteDataProviderResult<DropdownOption<int>>> SearchCoursesDataProvider(AutoCompleteDataProviderRequest<DropdownOption<int>> request)
-    {
-        try
-        {
-            var courses = await DropdownRepository.GetCoursesAsync(search: request.Filter.Value, take: 20);
-            return new AutoCompleteDataProviderResult<DropdownOption<int>>
-            {
-                Data = courses,
-                TotalCount = courses.Count
-            };
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error loading courses: {ex.Message}");
-            return new AutoCompleteDataProviderResult<DropdownOption<int>>
-            {
-                Data = new List<DropdownOption<int>>(),
-                TotalCount = 0
-            };
-        }
-    }
-
-    private async Task<AutoCompleteDataProviderResult<DropdownOption<int>>> SearchModulesDataProvider(AutoCompleteDataProviderRequest<DropdownOption<int>> request)
-    {
-        try
-        {
-            var modules = await DropdownRepository.GetModulesAsync(search: request.Filter.Value, take: 20);
-            return new AutoCompleteDataProviderResult<DropdownOption<int>>
-            {
-                Data = modules,
-                TotalCount = modules.Count
-            };
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error loading modules: {ex.Message}");
-            return new AutoCompleteDataProviderResult<DropdownOption<int>>
-            {
-                Data = new List<DropdownOption<int>>(),
-                TotalCount = 0
-            };
-        }
-    }
-
-    private async Task<AutoCompleteDataProviderResult<DropdownOption<int>>> SearchLessonsDataProvider(AutoCompleteDataProviderRequest<DropdownOption<int>> request)
-    {
-        try
-        {
-            var lessons = await DropdownRepository.GetLessonsAsync(search: request.Filter.Value, take: 20);
-            return new AutoCompleteDataProviderResult<DropdownOption<int>>
-            {
-                Data = lessons,
-                TotalCount = lessons.Count
-            };
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error loading lessons: {ex.Message}");
-            return new AutoCompleteDataProviderResult<DropdownOption<int>>
-            {
-                Data = new List<DropdownOption<int>>(),
-                TotalCount = 0
-            };
-        }
     }
 
     private async Task AddAssessment()
@@ -260,17 +178,17 @@
             var result = await AssessmentRepository.CreateAssessmentAsync(Assessment);
             if (result != null)
             {
-                ToastService.ShowSuccess("Success", "Assessment created successfully!");
+                Snackbar.Add("Assessment created successfully!", Severity.Success);
                 NavigationManager.NavigateTo("/admin/assessments");
             }
             else
             {
-                ToastService.ShowError("Error", "Failed to create assessment. Please try again.");
+                Snackbar.Add("Failed to create assessment. Please try again.", Severity.Error);
             }
         }
         catch (Exception ex)
         {
-            ToastService.ShowError("Error", $"Error creating assessment: {ex.Message}");
+            Snackbar.Add($"Error creating assessment: {ex.Message}", Severity.Error);
         }
         finally
         {

@@ -1,4 +1,6 @@
 @using LMS.Web.Repositories.DTOs
+@using LMS.Web.Components.Account.Shared
+@using MudBlazor
 @page "/reports/attendance"
 @inject IReportRepository ReportRepository
 @inject IJSRuntime JSRuntime
@@ -10,230 +12,212 @@
         <p class="text-muted mb-0">Track attendance patterns and student participation</p>
     </div>
     <div class="export-buttons">
-        <button class="btn btn-outline-report" @onclick="ExportToPdf">
-            <i class="fas fa-file-pdf"></i> Export PDF
-        </button>
-        <button class="btn btn-outline-report" @onclick="ExportToExcel">
-            <i class="fas fa-file-excel"></i> Export Excel
-        </button>
+        <MudButton Variant="Variant.Outlined" Color="Color.Primary" OnClick="ExportToPdf">
+            <MudIcon Icon="@Icons.Material.Filled.PictureAsPdf" Class="me-2" /> Export PDF
+        </MudButton>
+        <MudButton Variant="Variant.Outlined" Color="Color.Primary" OnClick="ExportToExcel">
+            <MudIcon Icon="@Icons.Material.Filled.Description" Class="me-2" /> Export Excel
+        </MudButton>
     </div>
 </div>
 
 <!-- Filters -->
-<div class="report-filters">
-    <div class="row">
-        <div class="col-md-2">
-            <div class="form-group">
-                <label class="form-label">Class ID</label>
-                <input type="number" class="form-control" @bind="classId" @bind:after="LoadData" placeholder="Enter Class ID" />
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="form-group">
-                <label class="form-label">Start Date</label>
-                <input type="date" class="form-control" @bind="startDate" @bind:after="LoadData" />
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="form-group">
-                <label class="form-label">End Date</label>
-                <input type="date" class="form-control" @bind="endDate" @bind:after="LoadData" />
-            </div>
-        </div>
-        <div class="col-md-2">
-            <div class="form-group">
-                <label class="form-label">Student ID</label>
-                <input type="text" class="form-control" @bind="studentId" @bind:after="LoadData" placeholder="Optional" />
-            </div>
-        </div>
-        <div class="col-md-2">
-            <div class="form-group">
-                <label class="form-label">&nbsp;</label>
-                <button class="btn btn-report d-block w-100" @onclick="LoadData">
-                    🔍 Load Report
-                </button>
-            </div>
-        </div>
-    </div>
-</div>
+<MudGrid Class="report-filters">
+    <MudItem xs="12" md="2">
+        <MudNumericField Label="Class ID" @bind-Value="classId" Variant="Variant.Text" Placeholder="Enter Class ID" Adornment="Adornment.End" AdornmentIcon="@Icons.Material.Filled.Class" OnBlur="LoadData" />
+    </MudItem>
+    <MudItem xs="12" md="3">
+        <MudDatePicker Label="Start Date" @bind-Date="startDate" DateFormat="yyyy-MM-dd" OnChange="LoadData" />
+    </MudItem>
+    <MudItem xs="12" md="3">
+        <MudDatePicker Label="End Date" @bind-Date="endDate" DateFormat="yyyy-MM-dd" OnChange="LoadData" />
+    </MudItem>
+    <MudItem xs="12" md="2">
+        <MudTextField Label="Student ID" @bind-Value="studentId" Variant="Variant.Text" Placeholder="Optional" Adornment="Adornment.End" AdornmentIcon="@Icons.Material.Filled.Person" OnBlur="LoadData" />
+    </MudItem>
+    <MudItem xs="12" md="2">
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="LoadData" FullWidth="true">
+            <MudIcon Icon="@Icons.Material.Filled.Search" Class="me-2" />
+            Load Report
+        </MudButton>
+    </MudItem>
+</MudGrid>
 
 @if (string.IsNullOrEmpty(classIdError) == false)
 {
-    <div class="alert alert-warning" role="alert">
-        <i class="fas fa-exclamation-triangle"></i> @classIdError
-    </div>
+    <MudAlert Severity="Severity.Warning" Class="my-3">
+        <MudIcon Icon="@Icons.Material.Filled.Warning" Class="me-2" /> @classIdError
+    </MudAlert>
 }
 
 @if (loading)
 {
-    <div class="report-loading">
-        <div class="spinner-border" role="status">
-            <span class="visually-hidden">Loading...</span>
-        </div>
-        <p class="mt-2">Loading attendance data...</p>
+    <div class="report-loading d-flex flex-column align-items-center justify-content-center py-5">
+        <MudProgressCircular Indeterminate="true" Color="Color.Primary" Size="Size.Large" />
+        <MudText Class="mt-2">Loading attendance data...</MudText>
     </div>
 }
 else if (reports?.Any() == true)
 {
     <!-- Summary Statistics -->
-    <div class="stats-grid mb-4">
-        <div class="stat-card">
-            <div class="stat-value">@reports.Count()</div>
-            <div class="stat-label">Total Records</div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-value">@reports.Count(r => r.AttendanceStatus == "Present")</div>
-            <div class="stat-label">Present</div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-value">@reports.Count(r => r.AttendanceStatus == "Absent")</div>
-            <div class="stat-label">Absent</div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-value">@reports.Count(r => r.AttendanceStatus == "Late")</div>
-            <div class="stat-label">Late</div>
-        </div>
-    </div>
+    <MudGrid Class="stats-grid mb-4">
+        <MudItem xs="12" sm="6" md="3">
+            <MudCard Elevation="2">
+                <MudCardContent>
+                    <MudText Typo="Typo.h4">@reports.Count()</MudText>
+                    <MudText Typo="Typo.subtitle2">Total Records</MudText>
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
+        <MudItem xs="12" sm="6" md="3">
+            <MudCard Elevation="2">
+                <MudCardContent>
+                    <MudText Typo="Typo.h4">@reports.Count(r => r.AttendanceStatus == "Present")</MudText>
+                    <MudText Typo="Typo.subtitle2">Present</MudText>
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
+        <MudItem xs="12" sm="6" md="3">
+            <MudCard Elevation="2">
+                <MudCardContent>
+                    <MudText Typo="Typo.h4">@reports.Count(r => r.AttendanceStatus == "Absent")</MudText>
+                    <MudText Typo="Typo.subtitle2">Absent</MudText>
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
+        <MudItem xs="12" sm="6" md="3">
+            <MudCard Elevation="2">
+                <MudCardContent>
+                    <MudText Typo="Typo.h4">@reports.Count(r => r.AttendanceStatus == "Late")</MudText>
+                    <MudText Typo="Typo.subtitle2">Late</MudText>
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
+    </MudGrid>
 
     <!-- Attendance Overview -->
-    <div class="report-card mb-4">
-        <div class="report-card-header">
-            <h5 class="mb-0">📊 Attendance Overview</h5>
-        </div>
-        <div class="report-card-body">
-            <div class="row">
-                <div class="col-md-6">
-                    <h6>Class Information</h6>
-                    <ul class="list-unstyled">
-                        <li><strong>Class:</strong> @reports.FirstOrDefault()?.ClassName</li>
-                        <li><strong>Class ID:</strong> @reports.FirstOrDefault()?.ClassId</li>
-                        <li><strong>Period:</strong> @startDate?.ToString("MMM dd, yyyy") - @endDate?.ToString("MMM dd, yyyy")</li>
-                    </ul>
-                </div>
-                <div class="col-md-6">
-                    <h6>Attendance Summary</h6>
+    <MudCard Elevation="2" Class="mb-4">
+        <MudCardHeader>
+            <MudText Typo="Typo.h6">📊 Attendance Overview</MudText>
+        </MudCardHeader>
+        <MudCardContent>
+            <MudGrid>
+                <MudItem xs="12" md="6">
+                    <MudText Typo="Typo.subtitle1">Class Information</MudText>
+                    <MudList T="string">
+                        <MudListItem T="string"><strong>Class:</strong> @reports.FirstOrDefault()?.ClassName</MudListItem>
+                        <MudListItem T="string"><strong>Class ID:</strong> @reports.FirstOrDefault()?.ClassId</MudListItem>
+                        <MudListItem T="string"><strong>Period:</strong> @startDate?.ToString("MMM dd, yyyy") - @endDate?.ToString("MMM dd, yyyy")</MudListItem>
+                    </MudList>
+                </MudItem>
+                <MudItem xs="12" md="6">
+                    <MudText Typo="Typo.subtitle1">Attendance Summary</MudText>
                     @{
                         var uniqueStudents = reports.Select(r => r.StudentId).Distinct().Count();
                         var avgAttendance = reports.GroupBy(r => r.StudentId)
                             .Average(g => g.Count(r => r.AttendanceStatus == "Present" || r.AttendanceStatus == "Late") / (double)g.Count() * 100);
                     }
-                    <ul class="list-unstyled">
-                        <li><strong>Unique Students:</strong> @uniqueStudents</li>
-                        <li><strong>Average Attendance:</strong> @($"{avgAttendance:F1}%")</li>
-                        <li><strong>Date Range:</strong> @((endDate - startDate)?.Days + 1) days</li>
-                    </ul>
-                </div>
-            </div>
-        </div>
-    </div>
+                    <MudList T="string">
+                        <MudListItem T="string"><strong>Unique Students:</strong> @uniqueStudents</MudListItem>
+                        <MudListItem T="string"><strong>Average Attendance:</strong> @($"{avgAttendance:F1}%")</MudListItem>
+                        <MudListItem T="string"><strong>Date Range:</strong> @((endDate - startDate)?.Days + 1) days</MudListItem>
+                    </MudList>
+                </MudItem>
+            </MudGrid>
+        </MudCardContent>
+    </MudCard>
 
     <!-- Data Table -->
-    <div class="report-table">
-        <table class="table table-hover">
-            <thead>
-                <tr>
-                    <th>Date</th>
-                    <th>Student</th>
-                    <th>Status</th>
-                    <th>Check In</th>
-                    <th>Check Out</th>
-                    <th>Duration</th>
-                    <th>Notes</th>
-                    <th>Attendance %</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach (var report in reports.OrderBy(r => r.Date).ThenBy(r => r.StudentName))
+    <MudTable T="AttendanceReportDto" Items="@reports" Hover="true" Breakpoint="Breakpoint.Sm" Class="report-table">
+        <HeaderContent>
+            <MudTh>Date</MudTh>
+            <MudTh>Student</MudTh>
+            <MudTh>Status</MudTh>
+            <MudTh>Check In</MudTh>
+            <MudTh>Check Out</MudTh>
+            <MudTh>Duration</MudTh>
+            <MudTh>Notes</MudTh>
+            <MudTh>Attendance %</MudTh>
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd DataLabel="Date">
+                <MudText Typo="Typo.body2"><strong>@context.Date.ToString("MMM dd, yyyy")</strong></MudText>
+                <MudText Typo="Typo.caption" Class="text-muted">@context.Date.DayOfWeek</MudText>
+            </MudTd>
+            <MudTd DataLabel="Student">
+                <MudText Typo="Typo.body2"><strong>@context.StudentName</strong></MudText>
+                <MudText Typo="Typo.caption" Class="text-muted">ID: @context.StudentId</MudText>
+            </MudTd>
+            <MudTd DataLabel="Status">
+                <MudChip T="string" Color="@GetStatusColor(context.AttendanceStatus)">@context.AttendanceStatus</MudChip>
+            </MudTd>
+            <MudTd DataLabel="Check In">
+                @if (context.CheckInTime.HasValue)
                 {
-                    <tr>
-                        <td>
-                            <strong>@report.Date.ToString("MMM dd, yyyy")</strong>
-                            <br />
-                            <small class="text-muted">@report.Date.DayOfWeek</small>
-                        </td>
-                        <td>
-                            <strong>@report.StudentName</strong>
-                            <br />
-                            <small class="text-muted">ID: @report.StudentId</small>
-                        </td>
-                        <td>
-                            <span class="status-badge @GetStatusClass(report.AttendanceStatus)">
-                                @report.AttendanceStatus
-                            </span>
-                        </td>
-                        <td>
-                            @if (report.CheckInTime.HasValue)
-                            {
-                                <span>@report.CheckInTime.Value.ToString(@"hh\:mm")</span>
-                            }
-                            else
-                            {
-                                <span class="text-muted">--</span>
-                            }
-                        </td>
-                        <td>
-                            @if (report.CheckOutTime.HasValue)
-                            {
-                                <span>@report.CheckOutTime.Value.ToString(@"hh\:mm")</span>
-                            }
-                            else
-                            {
-                                <span class="text-muted">--</span>
-                            }
-                        </td>
-                        <td>
-                            @if (report.Duration.HasValue)
-                            {
-                                <span>@($"{report.Duration.Value.TotalHours:F1}h")</span>
-                            }
-                            else
-                            {
-                                <span class="text-muted">--</span>
-                            }
-                        </td>
-                        <td>
-                            @if (!string.IsNullOrEmpty(report.Notes))
-                            {
-                                <span title="@report.Notes">@(report.Notes.Length > 30 ? report.Notes.Substring(0, 30) + "..." : report.Notes)</span>
-                            }
-                            else
-                            {
-                                <span class="text-muted">--</span>
-                            }
-                        </td>
-                        <td>
-                            <div class="d-flex align-items-center">
-                                <div class="progress flex-grow-1 me-2" style="height: 6px;">
-                                    <div class="progress-bar progress-bar-custom" 
-                                         style="width: @(report.AttendancePercentage)%"></div>
-                                </div>
-                                <small class="text-muted">@($"{report.AttendancePercentage:F1}%")</small>
-                            </div>
-                        </td>
-                    </tr>
+                    <MudText>@context.CheckInTime.Value.ToString(@"hh\:mm")</MudText>
                 }
-            </tbody>
-        </table>
-    </div>
+                else
+                {
+                    <MudText Class="text-muted">--</MudText>
+                }
+            </MudTd>
+            <MudTd DataLabel="Check Out">
+                @if (context.CheckOutTime.HasValue)
+                {
+                    <MudText>@context.CheckOutTime.Value.ToString(@"hh\:mm")</MudText>
+                }
+                else
+                {
+                    <MudText Class="text-muted">--</MudText>
+                }
+            </MudTd>
+            <MudTd DataLabel="Duration">
+                @if (context.Duration.HasValue)
+                {
+                    <MudText>@($"{context.Duration.Value.TotalHours:F1}h")</MudText>
+                }
+                else
+                {
+                    <MudText Class="text-muted">--</MudText>
+                }
+            </MudTd>
+            <MudTd DataLabel="Notes">
+                @if (!string.IsNullOrEmpty(context.Notes))
+                {
+                    <MudText Title="@context.Notes">@(context.Notes.Length > 30 ? context.Notes.Substring(0, 30) + "..." : context.Notes)</MudText>
+                }
+                else
+                {
+                    <MudText Class="text-muted">--</MudText>
+                }
+            </MudTd>
+            <MudTd DataLabel="Attendance %">
+                <MudProgressLinear Value="@context.AttendancePercentage" Color="Color.Primary" Class="my-2" Style="height: 6px;" />
+                <MudText Typo="Typo.caption" Class="text-muted">@($"{context.AttendancePercentage:F1}%")</MudText>
+            </MudTd>
+        </RowTemplate>
+    </MudTable>
 }
 else if (!loading && classId.HasValue)
 {
-    <div class="report-card">
-        <div class="report-card-body text-center py-5">
-            <h5 class="text-muted">No Attendance Data Found</h5>
-            <p class="text-muted">No attendance records found for the selected criteria.</p>
-            <p class="text-muted">Please verify the class ID and date range.</p>
-        </div>
-    </div>
+    <MudCard Elevation="2" Class="report-no-data">
+        <MudCardContent Class="text-center py-5">
+            <MudIcon Icon="@Icons.Material.Filled.Info" Size="Size.Large" Class="text-muted mb-3" />
+            <MudText Typo="Typo.h5">No Attendance Data Found</MudText>
+            <MudText Typo="Typo.body1" Class="text-muted">No attendance records found for the selected criteria.</MudText>
+            <MudText Typo="Typo.body1" Class="text-muted">Please verify the class ID and date range.</MudText>
+        </MudCardContent>
+    </MudCard>
 }
 else
 {
-    <div class="report-card">
-        <div class="report-card-body text-center py-5">
-            <h5 class="text-muted">Ready to Generate Report</h5>
-            <p class="text-muted">Please enter a Class ID and select date range to generate the attendance report.</p>
-        </div>
-    </div>
+    <MudCard Elevation="2" Class="report-no-data">
+        <MudCardContent Class="text-center py-5">
+            <MudIcon Icon="@Icons.Material.Filled.Description" Size="Size.Large" Class="text-muted mb-3" />
+            <MudText Typo="Typo.h5">Ready to Generate Report</MudText>
+            <MudText Typo="Typo.body1" Class="text-muted">Please enter a Class ID and select date range to generate the attendance report.</MudText>
+        </MudCardContent>
+    </MudCard>
 }
 
 @code {
@@ -344,15 +328,15 @@ else
         return dummyData;
     }
 
-    private string GetStatusClass(string status)
+    private MudBlazor.Color GetStatusColor(string status)
     {
         return status?.ToLower() switch
         {
-            "present" => "status-active",
-            "absent" => "status-inactive",
-            "late" => "status-pending",
-            "excused" => "status-completed",
-            _ => "status-inactive"
+            "present" => MudBlazor.Color.Success,
+            "absent" => MudBlazor.Color.Error,
+            "late" => MudBlazor.Color.Warning,
+            "excused" => MudBlazor.Color.Info,
+            _ => MudBlazor.Color.Secondary
         };
     }
 

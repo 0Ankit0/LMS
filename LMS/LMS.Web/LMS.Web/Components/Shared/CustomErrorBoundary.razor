@@ -9,73 +9,71 @@
 else
 {
     <div class="error-boundary-container">
-        <div class="alert alert-danger" role="alert">
-            <h4 class="alert-heading">
-                <i class="bi bi-exclamation-triangle-fill"></i>
-                An error has occurred
-            </h4>
-            <p class="mb-3">
-                We're sorry, but something went wrong. The error has been logged and our team has been notified.
-            </p>
+        <MudAlert Severity="Severity.Error" Class="my-3" NoIcon="true">
+        <MudText Typo="Typo.h6">
+            An error has occurred.
+        </MudText>
+        <MudText Class="mb-3">
+            We're sorry, but something went wrong. The error has been logged and our team has been notified.
+        </MudText>
 
             @if (ShowDetailedErrors)
             {
-                <div class="error-details mt-3">
-                    <h5>Error Details:</h5>
-                    <div class="card">
-                        <div class="card-body">
-                            <h6 class="card-title text-danger">@CurrentException.GetType().Name</h6>
-                            <p class="card-text">
-                                <strong>Message:</strong> @CurrentException.Message
-                            </p>
+                <MudCard Elevation="2" Class="error-details mt-3">
+                    <MudCardHeader>
+                        <MudText Typo="Typo.h6">Error Details:</MudText>
+                    </MudCardHeader>
+                    <MudCardContent>
+                        <MudText Typo="Typo.subtitle1" Class="text-danger">@CurrentException.GetType().Name</MudText>
+                        <MudText>
+                            <strong>Message:</strong> @CurrentException.Message
+                        </MudText>
 
-                            @if (!string.IsNullOrEmpty(CurrentException.StackTrace))
-                            {
-                                <div class="mt-3">
-                                    <h6>Stack Trace:</h6>
-                                    <pre class="bg-light p-2 rounded"
-                                        style="font-size: 0.8rem; max-height: 300px; overflow-y: auto;">@CurrentException.StackTrace</pre>
-                                </div>
-                            }
+                        @if (!string.IsNullOrEmpty(CurrentException.StackTrace))
+                        {
+                            <div class="mt-3">
+                                <MudText Typo="Typo.subtitle1">Stack Trace:</MudText>
+                                <pre class="mud-code-block">@CurrentException.StackTrace</pre>
+                            </div>
+                        }
 
-                            @if (CurrentException.InnerException != null)
-                            {
-                                <div class="mt-3">
-                                    <h6>Inner Exception:</h6>
-                                    <p><strong>Type:</strong> @CurrentException.InnerException.GetType().Name</p>
-                                    <p><strong>Message:</strong> @CurrentException.InnerException.Message</p>
-                                </div>
-                            }
-                        </div>
-                    </div>
-                </div>
+                        @if (CurrentException.InnerException != null)
+                        {
+                            <div class="mt-3">
+                                <MudText Typo="Typo.subtitle1">Inner Exception:</MudText>
+                                <MudText><strong>Type:</strong> @CurrentException.InnerException.GetType().Name</MudText>
+                                <MudText><strong>Message:</strong> @CurrentException.InnerException.Message</MudText>
+                            </div>
+                        }
+                    </MudCardContent>
+                </MudCard>
             }
 
             <div class="mt-3">
-                <button class="btn btn-primary me-2" @onclick="RecoverFromError">
-                    <i class="bi bi-arrow-clockwise"></i>
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="RecoverFromError">
+                    <MudIcon Icon="@Icons.Material.Filled.Refresh" Class="me-2" />
                     Try Again
-                </button>
-                <button class="btn btn-outline-secondary me-2" @onclick="GoHome">
-                    <i class="bi bi-house"></i>
+                </MudButton>
+                <MudButton Variant="Variant.Outlined" Color="Color.Secondary" OnClick="GoHome">
+                    <MudIcon Icon="@Icons.Material.Filled.Home" Class="me-2" />
                     Go to Home
-                </button>
-                <button class="btn btn-outline-info" @onclick="ReloadPage">
-                    <i class="bi bi-arrow-repeat"></i>
+                </MudButton>
+                <MudButton Variant="Variant.Outlined" Color="Color.Info" OnClick="ReloadPage">
+                    <MudIcon Icon="@Icons.Material.Filled.Refresh" Class="me-2" />
                     Reload Page
-                </button>
+                </MudButton>
             </div>
 
             @if (ShowDetailedErrors)
             {
                 <div class="mt-3">
-                    <button class="btn btn-outline-warning btn-sm" @onclick="CopyErrorDetails">
-                        <i class="bi bi-clipboard"></i>
+                    <MudButton Variant="Variant.Outlined" Color="Color.Warning" Size="Size.Small" OnClick="CopyErrorDetails">
+                        <MudIcon Icon="@Icons.Material.Filled.ContentCopy" Class="me-2" />
                         Copy Error Details
-                    </button>
+                    </MudButton>
                 </div>
             }
-        </div>
+        </MudAlert>
     </div>
 }
 

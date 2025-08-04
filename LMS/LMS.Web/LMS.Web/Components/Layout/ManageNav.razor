@@ -7,62 +7,30 @@
 @inject HttpClient Http
 @rendermode InteractiveAuto
 
-<nav class="d-flex align-items-center justify-content-between w-100 p-2">
-    <a class="navbar-brand fw-bold text-primary" href="/home" style="font-size:1.3rem; letter-spacing:1px;">LMS</a>
-    <ul class="nav mb-0">
-        @if (isAuthenticated)
-        {
-            <li class="nav-item">
-                <div class="dropdown">
-                    <button class="btn btn-secondary dropdown-toggle" type="button" id="accountDropdown"
-                        data-bs-toggle="dropdown" aria-expanded="false">
-                        Account
-                    </button>
-                    <ul class="dropdown-menu dropdown-menu-start" aria-labelledby="accountDropdown">
-                        <li>
-                            <button class="dropdown-item" type="button"
-                                @onclick="@(() => NavigationManager.NavigateTo("/Account/manage"))">
-                                Manage
-                            </button>
-                        </li>
-                        <li>
-                            <button class="dropdown-item" type="button"
-                                @onclick="@(() => NavigationManager.NavigateTo("/Account/changepassword"))">
-                                Change Password
-                            </button>
-                        </li>
-                        <li>
-                            <button class="dropdown-item" type="button"
-                                @onclick="@(() => NavigationManager.NavigateTo("/Account/externallogins"))">
-                                External Logins
-                            </button>
-                        </li>
-                        <li>
-                            <button class="dropdown-item" type="button"
-                                @onclick="@(() => NavigationManager.NavigateTo("/Account/personaldata"))">
-                                Personal Data
-                            </button>
-                        </li>
-                        <li>
-                            <hr class="dropdown-divider" />
-                        </li>
-                        <li>
-                            <button class="dropdown-item" type="button" @onclick="LogoutAsync">
-                                Logout
-                            </button>
-                        </li>
-                    </ul>
-                </div>
-            </li>
-        }
-        else
-        {
-            <li class="nav-item">
-                <a class="nav-link" href="/Account/Login">Login</a>
-            </li>
-        }
-    </ul>
-</nav>
+<MudAppBar Elevation="0">
+    <MudText Typo="Typo.h6" Class="mud-text-primary" Href="/home" Style="font-size:1.3rem; letter-spacing:1px;">LMS</MudText>
+    <MudSpacer />
+    @if (isAuthenticated)
+    {
+        <MudMenu AnchorOrigin="Origin.BottomRight" TransformOrigin="Origin.TopRight">
+            <ActivatorContent>
+                <MudButton Variant="Variant.Text" Color="Color.Inherit" EndIcon="@Icons.Material.Filled.ArrowDropDown">Account</MudButton>
+            </ActivatorContent>
+            <ChildContent>
+                <MudMenuItem OnClick="@(() => NavigationManager.NavigateTo("/Account/manage"))">Manage</MudMenuItem>
+                <MudMenuItem OnClick="@(() => NavigationManager.NavigateTo("/Account/changepassword"))">Change Password</MudMenuItem>
+                <MudMenuItem OnClick="@(() => NavigationManager.NavigateTo("/Account/externallogins"))">External Logins</MudMenuItem>
+                <MudMenuItem OnClick="@(() => NavigationManager.NavigateTo("/Account/personaldata"))">Personal Data</MudMenuItem>
+                <MudDivider />
+                <MudMenuItem OnClick="LogoutAsync">Logout</MudMenuItem>
+            </ChildContent>
+        </MudMenu>
+    }
+    else
+    {
+        <MudButton Href="/Account/Login" Variant="Variant.Text" Color="Color.Inherit">Login</MudButton>
+    }
+</MudAppBar>
 
 @code {
     private bool isAuthenticated;

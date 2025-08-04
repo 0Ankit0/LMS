@@ -2,22 +2,25 @@
 @attribute [Authorize(Roles = "Admin")]
 
 <CustomErrorBoundary ShowDetailedErrors="true">
-    <div class="admin-page">
-        <div class="admin-sidebar">
+    <MudLayout>
+        <MudDrawer ClipMode="DrawerClipMode.Always" Elevation="2" @bind-Open="@_drawerOpen">
             <AdminNavMenu />
-        </div>
-
-        <main class="admin-main">
-            <div class="admin-top-row">
-                <ManageNav></ManageNav>
-            </div>
-
-            <div class="admin-container">
+        </MudDrawer>
+        <MudAppBar Elevation="1">
+            <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="@((e) => _drawerOpen = !_drawerOpen)" />
+            <ManageNav />
+        </MudAppBar>
+        <MudMainContent>
+            <MudContainer MaxWidth="MaxWidth.False" Class="mt-4">
                 @Body
-            </div>
-        </main>
-    </div>
+            </MudContainer>
+        </MudMainContent>
+    </MudLayout>
 </CustomErrorBoundary>
 
 <!-- Custom Toast Container -->
-<ToastContainer />
+<MudSnackbarProvider />
+
+@code {
+    private bool _drawerOpen = true;
+}

@@ -1,117 +1,110 @@
-@page "/admin/courses/manage"
-@rendermode @(new InteractiveServerRenderMode())
 @using LMS.Repositories
-@using LMS.Web.Components.Shared
 @using LMS.Web.Services
 @inject ICourseRepository CourseRepository
 @inject IModuleRepository ModuleRepository
 @inject ILessonRepository LessonRepository
 @inject NavigationManager NavigationManager
-@inject LMS.Web.Services.ToastService ToastService
 
-<PageTitle>Manage Course - Admin</PageTitle>
-
-@if (course != null)
+@inject ToastService ToastService
+@if (isLoading)
 {
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1 class="mb-0">Manage Course: @course.Title</h1>
-        <Button Color="ButtonColor.Secondary" Href="/admin/courses">
-            <Icon Name="IconName.ArrowLeft" />
-            Back to Courses
-        </Button>
+        <MudSkeleton SkeletonType="SkeletonType.Text" Width="300px" Height="40px" />
+        <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="180px" Height="40px" />
     </div>
 
     <div class="row">
         <div class="col-md-4">
-            <Card>
-                <CardHeader>
-                    <h5 class="mb-0">Add New Module</h5>
-                </CardHeader>
-                <CardBody>
-                    <EditForm Model="newModule" OnValidSubmit="AddModule">
-                        <DataAnnotationsValidator />
-                        <ValidationSummary />
-
-                        <div class="mb-3">
-                            <label class="form-label">Title</label>
-                            <InputText @bind-Value="newModule.Title" class="form-control" />
-                        </div>
-
-                        <div class="mb-3">
-                            <label class="form-label">Description</label>
-                            <InputTextArea @bind-Value="newModule.Description" class="form-control" />
-                        </div>
-
-                        <Button Color="ButtonColor.Primary" Type="ButtonType.Submit">Add Module</Button>
-                    </EditForm>
-                </CardBody>
-            </Card>
+            <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="300px" />
         </div>
         <div class="col-md-8">
-            <Card>
-                <CardHeader>
-                    <h5 class="mb-0">Modules</h5>
-                </CardHeader>
-                <CardBody>
+            <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="300px" />
+        </div>
+    </div>
+}
+else if (course != null)
+{
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="mb-0">Manage Course: @course.Title</h1>
+        <MudButton Variant="Variant.Text" Color="Color.Secondary" Href="/admin/courses">
+            <MudIcon Icon="@Icons.Material.Filled.ArrowBack" Class="me-2" />
+            Back to Courses
+        </MudButton>
+    </div>
+
+    <div class="row">
+        <div class="col-md-4">
+            <MudCard Elevation="2">
+                <MudCardHeader>
+                    <MudText Typo="Typo.h6">Add New Module</MudText>
+                </MudCardHeader>
+                <MudCardContent>
+                    <MudForm Model="newModule" OnValidSubmit="AddModule" @ref="moduleForm">
+                        <MudAlert Severity="Severity.Error" Class="mb-3" Visible="@(!moduleForm.IsValid)">
+                            <MudText>Please correct the errors below.</MudText>
+                        </MudAlert>
+                        <MudTextField @bind-Value="newModule.Title" Label="Title" Variant="Variant.Text" />
+                        <MudTextField @bind-Value="newModule.Description" Label="Description" Variant="Variant.Text" Lines="3" />
+                        <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary">Add Module</MudButton>
+                    </MudForm>
+                </MudCardContent>
+            </MudCard>
+        </div>
+        <div class="col-md-8">
+            <MudCard Elevation="2">
+                <MudCardHeader>
+                    <MudText Typo="Typo.h6">Modules</MudText>
+                </MudCardHeader>
+                <MudCardContent>
                     @if (course.Modules.Any())
                     {
-                        <Accordion>
+                        <MudExpansionPanels>
                             @foreach (var module in course.Modules)
                             {
-                                <AccordionItem>
-                                    <Title>@module.Title</Title>
-                                    <Body>
-                                        <div class="d-flex justify-content-between align-items-center mb-2">
-                                            <h6 class="mb-0">Lessons</h6>
-                                            <Button Color="ButtonColor.Primary" Size="ButtonSize.Small" @onclick="() => ShowAddLessonModal(module.Id)">
-                                                <Icon Name="IconName.Plus" /> Add Lesson
-                                            </Button>
-                                        </div>
-                                        <ul class="list-group">
-                                            @foreach (var lesson in module.Lessons)
-                                            {
-                                                <li class="list-group-item">@lesson.Title</li>
-                                            }
-                                        </ul>
-                                    </Body>
-                                </AccordionItem>
+                                <MudExpansionPanel Text="@module.Title">
+                                    <MudText Typo="Typo.subtitle1" Class="mb-2">Lessons</MudText>
+                                    <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small" OnClick="() => ShowAddLessonModal(module.Id)">
+                                        <MudIcon Icon="@Icons.Material.Filled.Add" Class="me-1" /> Add Lesson
+                                    </MudButton>
+                                    <MudList T="LessonModel">
+                                        @foreach (var lesson in module.Lessons)
+                                        {
+                                            <MudListItem T="LessonModel" Value="@lesson">@lesson.Title</MudListItem>
+                                        }
+                                    </MudList>
+                                </MudExpansionPanel>
                             }
-                        </Accordion>
+                        </MudExpansionPanels>
                     }
                     else
                     {
-                        <p>No modules have been added to this course yet.</p>
+                        <MudText>No modules have been added to this course yet.</MudText>
                     }
-                </CardBody>
-            </Card>
+                </MudCardContent>
+            </MudCard>
         </div>
     </div>
 }
 else
 {
-    <p><em>Loading...</em></p>
+    <p>Course not found.</p>
 }
 
-<Modal @ref="addLessonModal" Title="Add New Lesson">
-    <BodyTemplate>
-        <EditForm Model="newLesson" OnValidSubmit="AddLesson">
-            <DataAnnotationsValidator />
-            <ValidationSummary />
-
-            <div class="mb-3">
-                <label class="form-label">Title</label>
-                <InputText @bind-Value="newLesson.Title" class="form-control" />
-            </div>
-
-            <div class="mb-3">
-                <label class="form-label">Description</label>
-                <InputTextArea @bind-Value="newLesson.Description" class="form-control" />
-            </div>
-
-            <Button Color="ButtonColor.Primary" Type="ButtonType.Submit">Add Lesson</Button>
-        </EditForm>
-    </BodyTemplate>
-</Modal>
+<MudDialog @bind-IsVisible="@showAddLessonModal" Options="@dialogOptions">
+    <TitleContent>
+        <MudText Typo="Typo.h6">Add New Lesson</MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudForm Model="newLesson" OnValidSubmit="AddLesson" @ref="lessonForm">
+            <MudAlert Severity="Severity.Error" Class="mb-3" Visible="@(!lessonForm.IsValid)">
+                <MudText>Please correct the errors below.</MudText>
+            </MudAlert>
+            <MudTextField @bind-Value="newLesson.Title" Label="Title" Variant="Variant.Text" />
+            <MudTextField @bind-Value="newLesson.Description" Label="Description" Variant="Variant.Text" Lines="3" />
+            <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary">Add Lesson</MudButton>
+        </MudForm>
+    </DialogContent>
+</MudDialog>
 
 @code {
     [Parameter]
@@ -121,31 +114,42 @@ else
     private CourseModel course;
     private CreateModuleRequest newModule = new();
     private CreateLessonRequest newLesson = new();
-    private Modal addLessonModal;
+    private bool showAddLessonModal;
+    private DialogOptions dialogOptions = new DialogOptions() { MaxWidth = MaxWidth.Medium, FullWidth = true };
     private int selectedModuleId;
+    private bool isLoading = true;
+    private MudForm moduleForm;
+    private MudForm lessonForm;
 
     protected override async Task OnInitializedAsync()
     {
-        // Try to get course from server
-        course = await CourseRepository.GetCourseByIdAsync(Id);
+        try
+        {
+            // Try to get course from server
+            course = await CourseRepository.GetCourseByIdAsync(Id);
 
-        if (course == null)
-        {
-            course = AddDummyCourses().FirstOrDefault(c => c.Id == Id) ?? AddDummyCourses().First();
-        }
-        else if (course.Modules == null || !course.Modules.Any())
-        {
-            course.Modules = AddDummyModules(course.Id);
-        }
-        else
-        {
-            foreach (var module in course.Modules)
+            if (course == null)
             {
-                if (module.Lessons == null || !module.Lessons.Any())
+                course = AddDummyCourses().FirstOrDefault(c => c.Id == Id) ?? AddDummyCourses().First();
+            }
+            else if (course.Modules == null || !course.Modules.Any())
+            {
+                course.Modules = AddDummyModules(course.Id);
+            }
+            else
+            {
+                foreach (var module in course.Modules)
                 {
-                    module.Lessons = AddDummyLessons(module.Id);
+                    if (module.Lessons == null || !module.Lessons.Any())
+                    {
+                        module.Lessons = AddDummyLessons(module.Id);
+                    }
                 }
             }
+        }
+        finally
+        {
+            isLoading = false;
         }
     }
 
@@ -169,7 +173,7 @@ else
     private void ShowAddLessonModal(int moduleId)
     {
         selectedModuleId = moduleId;
-        addLessonModal.ShowAsync();
+        showAddLessonModal = true;
     }
 
     private async Task AddLesson()
@@ -181,7 +185,7 @@ else
             course = await CourseRepository.GetCourseByIdAsync(Id)
                      ?? AddDummyCourses().FirstOrDefault(c => c.Id == Id) ?? AddDummyCourses().First();
             newLesson = new();
-            addLessonModal.HideAsync();
+            showAddLessonModal = false;
             ToastService.ShowSuccess("Success", "Lesson created successfully!");
         }
         else

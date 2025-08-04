@@ -14,88 +14,88 @@
         <p class="text-muted mb-0">Track enrollment statistics and trends over time</p>
     </div>
     <div class="export-buttons">
-        <button class="btn btn-outline-report" @onclick="ExportToPdf">
-            <i class="fas fa-file-pdf"></i> Export PDF
-        </button>
-        <button class="btn btn-outline-report" @onclick="ExportToExcel">
-            <i class="fas fa-file-excel"></i> Export Excel
-        </button>
+        <MudButton Variant="Variant.Outlined" Color="Color.Primary" OnClick="ExportToPdf">
+            <MudIcon Icon="@Icons.Material.Filled.PictureAsPdf" Class="me-2" /> Export PDF
+        </MudButton>
+        <MudButton Variant="Variant.Outlined" Color="Color.Primary" OnClick="ExportToExcel">
+            <MudIcon Icon="@Icons.Material.Filled.Description" Class="me-2" /> Export Excel
+        </MudButton>
     </div>
 </div>
 
 <!-- Filters -->
-<div class="report-filters">
-    <div class="row">
-        <div class="col-md-3">
-            <div class="form-group">
-                <label class="form-label">Start Date</label>
-                <input type="date" class="form-control" @bind="startDate" @bind:after="LoadData" />
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="form-group">
-                <label class="form-label">End Date</label>
-                <input type="date" class="form-control" @bind="endDate" @bind:after="LoadData" />
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="form-group">
-                <label class="form-label">Period</label>
-                <select class="form-select" @bind="selectedPeriod" @bind:after="LoadData">
-                    <option value="daily">Daily</option>
-                    <option value="weekly">Weekly</option>
-                    <option value="monthly" selected>Monthly</option>
-                </select>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="form-group">
-                <label class="form-label">Course</label>
-                <select class="form-select" @bind="selectedCourseId" @bind:after="LoadData">
-                    <option value="">All Courses</option>
-                    @if (courses?.Any() == true)
-                    {
-                        @foreach (var course in courses)
-                        {
-                            <option value="@course.Id">@course.Title</option>
-                        }
-                    }
-                </select>
-            </div>
-        </div>
-    </div>
-</div>
+<MudGrid Class="report-filters">
+    <MudItem xs="12" md="3">
+        <MudDatePicker Label="Start Date" @bind-Date="startDate" DateFormat="yyyy-MM-dd" OnChange="LoadData" />
+    </MudItem>
+    <MudItem xs="12" md="3">
+        <MudDatePicker Label="End Date" @bind-Date="endDate" DateFormat="yyyy-MM-dd" OnChange="LoadData" />
+    </MudItem>
+    <MudItem xs="12" md="3">
+        <MudSelect T="string" Label="Period" @bind-Value="selectedPeriod" OnChange="LoadData">
+            <MudSelectItem Value="@("daily")">Daily</MudSelectItem>
+            <MudSelectItem Value="@("weekly")">Weekly</MudSelectItem>
+            <MudSelectItem Value="@("monthly")">Monthly</MudSelectItem>
+        </MudSelect>
+    </MudItem>
+    <MudItem xs="12" md="3">
+        <MudSelect T="int?" Label="Course" @bind-Value="selectedCourseId" OnChange="LoadData">
+            <MudSelectItem Value="@((int?)null)">All Courses</MudSelectItem>
+            @if (courses?.Any() == true)
+            {
+                @foreach (var course in courses)
+                {
+                    <MudSelectItem Value="@course.Id">@course.Title</MudSelectItem>
+                }
+            }
+        </MudSelect>
+    </MudItem>
+</MudGrid>
 
 @if (loading)
 {
-    <div class="report-loading">
-        <div class="spinner-border" role="status">
-            <span class="visually-hidden">Loading...</span>
-        </div>
-        <p class="mt-2">Loading enrollment summary data...</p>
+    <div class="report-loading d-flex flex-column align-items-center justify-content-center py-5">
+        <MudProgressCircular Indeterminate="true" Color="Color.Primary" Size="Size.Large" />
+        <MudText Class="mt-2">Loading enrollment summary data...</MudText>
     </div>
 }
 else if (reports?.Any() == true)
 {
     <!-- Summary Statistics -->
-    <div class="stats-grid mb-4">
-        <div class="stat-card">
-            <div class="stat-value">@reports.Sum(r => r.TotalEnrollments)</div>
-            <div class="stat-label">Total Enrollments</div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-value">@reports.Sum(r => r.NewEnrollments)</div>
-            <div class="stat-label">New Enrollments</div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-value">@reports.Sum(r => r.CompletedEnrollments)</div>
-            <div class="stat-label">Completed</div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-value">@reports.Sum(r => r.DroppedEnrollments)</div>
-            <div class="stat-label">Dropped</div>
-        </div>
-    </div>
+    <MudGrid Class="stats-grid mb-4">
+        <MudItem xs="12" sm="6" md="3">
+            <MudCard Elevation="2">
+                <MudCardContent>
+                    <MudText Typo="Typo.h4">@reports.Sum(r => r.TotalEnrollments)</MudText>
+                    <MudText Typo="Typo.subtitle2">Total Enrollments</MudText>
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
+        <MudItem xs="12" sm="6" md="3">
+            <MudCard Elevation="2">
+                <MudCardContent>
+                    <MudText Typo="Typo.h4">@reports.Sum(r => r.NewEnrollments)</MudText>
+                    <MudText Typo="Typo.subtitle2">New Enrollments</MudText>
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
+        <MudItem xs="12" sm="6" md="3">
+            <MudCard Elevation="2">
+                <MudCardContent>
+                    <MudText Typo="Typo.h4">@reports.Sum(r => r.CompletedEnrollments)</MudText>
+                    <MudText Typo="Typo.subtitle2">Completed</MudText>
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
+        <MudItem xs="12" sm="6" md="3">
+            <MudCard Elevation="2">
+                <MudCardContent>
+                    <MudText Typo="Typo.h4">@reports.Sum(r => r.DroppedEnrollments)</MudText>
+                    <MudText Typo="Typo.subtitle2">Dropped</MudText>
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
+    </MudGrid>
 
     <!-- Chart Container -->
     <div class="report-chart mb-4">
@@ -103,85 +103,57 @@ else if (reports?.Any() == true)
     </div>
 
     <!-- Data Table -->
-    <div class="report-table">
-        <table class="table table-hover">
-            <thead>
-                <tr>
-                    <th>Period</th>
-                    <th>Date</th>
-                    <th>Total Enrollments</th>
-                    <th>New Enrollments</th>
-                    <th>Active Enrollments</th>
-                    <th>Completed</th>
-                    <th>Dropped</th>
-                    <th>Completion Rate</th>
-                    <th>Trend</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach (var report in reports.OrderByDescending(r => r.ReportDate))
-                {
-                    <tr>
-                        <td>@report.Period</td>
-                        <td>@report.ReportDate.ToString("MMM dd, yyyy")</td>
-                        <td>@report.TotalEnrollments</td>
-                        <td>
-                            <span class="badge bg-success">@report.NewEnrollments</span>
-                        </td>
-                        <td>@report.ActiveEnrollments</td>
-                        <td>
-                            <span class="badge bg-info">@report.CompletedEnrollments</span>
-                        </td>
-                        <td>
-                            <span class="badge bg-danger">@report.DroppedEnrollments</span>
-                        </td>
-                        <td>
-                            <div class="d-flex align-items-center">
-                                <div class="progress me-2" style="width: 60px; height: 20px;">
-                                    <div class="progress-bar bg-success" 
-                                         style="width: @(report.AverageProgressPercentage)%"></div>
-                                </div>
-                                <span>@($"{report.AverageProgressPercentage:F1}%")</span>
-                            </div>
-                        </td>
-                        <td>
-                            <span class="text-info">
-                                <i class="fas fa-certificate"></i> @report.CertificatesIssued
-                            </span>
-                        </td>
-                    </tr>
-                }
-            </tbody>
-        </table>
-    </div>
+    <MudTable T="EnrollmentSummaryReportDto" Items="@reports" Hover="true" Breakpoint="Breakpoint.Sm" Class="report-table">
+        <HeaderContent>
+            <MudTh>Period</MudTh>
+            <MudTh>Date</MudTh>
+            <MudTh>Total Enrollments</MudTh>
+            <MudTh>New Enrollments</MudTh>
+            <MudTh>Active Enrollments</MudTh>
+            <MudTh>Completed</MudTh>
+            <MudTh>Dropped</MudTh>
+            <MudTh>Completion Rate</MudTh>
+            <MudTh>Trend</MudTh>
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd DataLabel="Period">@context.Period</MudTd>
+            <MudTd DataLabel="Date">@context.ReportDate.ToString("MMM dd, yyyy")</MudTd>
+            <MudTd DataLabel="Total Enrollments">@context.TotalEnrollments</MudTd>
+            <MudTd DataLabel="New Enrollments">
+                <MudChip T="int" Color="Color.Success">@context.NewEnrollments</MudChip>
+            </MudTd>
+            <MudTd DataLabel="Active Enrollments">@context.ActiveEnrollments</MudTd>
+            <MudTd DataLabel="Completed">
+                <MudChip T="int" Color="Color.Info">@context.CompletedEnrollments</MudChip>
+            </MudTd>
+            <MudTd DataLabel="Dropped">
+                <MudChip T="int" Color="Color.Error">@context.DroppedEnrollments</MudChip>
+            </MudTd>
+            <MudTd DataLabel="Completion Rate">
+                <MudProgressLinear Value="@context.AverageProgressPercentage" Color="Color.Success" Class="my-2" Style="height: 20px;" />
+                <MudText Typo="Typo.caption">@($"{context.AverageProgressPercentage:F1}%")</MudText>
+            </MudTd>
+            <MudTd DataLabel="Trend">
+                <MudIcon Icon="@Icons.Material.Filled.TrendingUp" Color="Color.Info" /> @context.CertificatesIssued
+            </MudTd>
+        </RowTemplate>
+        <PagerContent>
+            <MudTablePager PageSizeOptions="@(new int[]{10, 20, 50})" />
+        </PagerContent>
+    </MudTable>
 
     <!-- Pagination -->
-    <nav aria-label="Report pagination">
-        <ul class="pagination justify-content-center">
-            <li class="page-item @(currentPage == 1 ? "disabled" : "")">
-                <a class="page-link" @onclick="() => ChangePage(currentPage - 1)">Previous</a>
-            </li>
-            @for (int i = 1; i <= totalPages; i++)
-            {
-                <li class="page-item @(currentPage == i ? "active" : "")">
-                    <a class="page-link" @onclick="() => ChangePage(i)">@i</a>
-                </li>
-            }
-            <li class="page-item @(currentPage == totalPages ? "disabled" : "")">
-                <a class="page-link" @onclick="() => ChangePage(currentPage + 1)">Next</a>
-            </li>
-        </ul>
-    </nav>
+    <MudPagination Class="mt-4" Count="@totalPages" Selected="@currentPage" SelectedChanged="ChangePage" />
 }
 else
 {
-    <div class="report-no-data">
-        <div class="text-center">
-            <i class="fas fa-chart-line fa-3x text-muted mb-3"></i>
-            <h5>No Data Available</h5>
-            <p class="text-muted">No enrollment data found for the selected criteria.</p>
-        </div>
-    </div>
+    <MudCard Elevation="2" Class="report-no-data">
+        <MudCardContent Class="text-center py-5">
+            <MudIcon Icon="@Icons.Material.Filled.Info" Size="Size.Large" Class="text-muted mb-3" />
+            <MudText Typo="Typo.h5">No Data Available</MudText>
+            <MudText Typo="Typo.body1" Class="text-muted">No enrollment data found for the selected criteria.</MudText>
+        </MudCardContent>
+    </MudCard>
 }
 
 @code {

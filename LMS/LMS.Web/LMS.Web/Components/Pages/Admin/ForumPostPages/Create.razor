@@ -1,9 +1,7 @@
 @page "/admin/forumposts/create"
 
 @using LMS.Repositories
-@using LMS.Web.Components.Shared
 @using LMS.Web.Services
-
 @inject IForumRepository ForumRepository
 @inject IDropdownRepository DropdownRepository
 @inject NavigationManager NavigationManager
@@ -14,43 +12,32 @@
 
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h1 class="mb-0">Create New Forum Post</h1>
-    <Button Color="ButtonColor.Secondary" Href="/admin/forumposts">
-        <Icon Name="IconName.ArrowLeft" />
+    <MudButton Variant="Variant.Text" Color="Color.Secondary" Href="/admin/forumposts">
+        <MudIcon Icon="@Icons.Material.Filled.ArrowBack" Class="me-2" />
         Back to Forum Posts
-    </Button>
+    </MudButton>
 </div>
 
 <div class="row">
     <div class="col-lg-8">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="card-title mb-0">Forum Post Information</h5>
-            </div>
-            <div class="card-body">
-                <EditForm Model="ForumPost" OnValidSubmit="AddForumPost">
-                    <AntiforgeryToken />
-                    <DataAnnotationsValidator />
-                    <ValidationSummary class="alert alert-danger" role="alert" />
+        <MudCard Elevation="2">
+            <MudCardHeader>
+                <MudText Typo="Typo.h6">Forum Post Information</MudText>
+            </MudCardHeader>
+            <MudCardContent>
+                <MudForm Model="ForumPost" OnValidSubmit="AddForumPost" @ref="form">
+                    <MudAlert Severity="Severity.Error" Class="mb-3" Visible="@(!form.IsValid)">
+                        <MudText>Please correct the errors below.</MudText>
+                    </MudAlert>
 
-                    <div class="mb-3">
-                        <label for="content" class="form-label">Content <span class="text-danger">*</span></label>
-                        <InputTextArea id="content" @bind-Value="ForumPost.Content" class="form-control" rows="6"
-                            aria-required="true" placeholder="Enter post content" />
-                        <ValidationMessage For="() => ForumPost.Content" class="text-danger" />
-                    </div>
+                    <MudTextField @bind-Value="ForumPost.Content" Label="Content" Variant="Variant.Text" Lines="6" Required="true" RequiredError="Content is required!" Placeholder="Enter post content" />
 
-                    <div class="mb-3">
-                        <label for="topicid" class="form-label">Topic <span class="text-danger">*</span></label>
-                        <SearchableSelectComponent TItem="DropdownOption<int>" 
-                                                   TValue="int" 
-                                                   DataProvider="SearchForumsDataProvider"
-                                                   ValueSelector="@(item => item.Value)" 
-                                                   DisplaySelector="@(item => item.Text)"
-                                                   @bind-SelectedValue="ForumPost.TopicId"
-                                                   Placeholder="Select a topic..." 
-                                                   EmptyText="No topics found" />
-                        <ValidationMessage For="() => ForumPost.TopicId" class="text-danger" />
-                    </div>
+                    <MudSelect @bind-Value="ForumPost.TopicId" Label="Topic" Variant="Variant.Text" Required="true" RequiredError="Topic is required!" Placeholder="Select a topic...">
+                        @foreach (var forum in Forums)
+                        {
+                            <MudSelectItem Value="@(Convert.ToInt32(forum.Value))">@forum.Text</MudSelectItem>
+                        }
+                    </MudSelect>
 
                     <div class="mb-3">
                         <label for="parentpostid" class="form-label">Parent Post ID (Optional)</label>
@@ -61,49 +48,32 @@
                     </div>
 
                     <div class="d-flex gap-2">
-                        <Button Color="ButtonColor.Primary" Type="ButtonType.Submit" Loading="@isSubmitting">
-                            <Icon Name="IconName.CheckCircle" />
+                        <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Disabled="@isSubmitting">
+                            <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Class="me-2" />
                             Create Forum Post
-                        </Button>
-                        <Button Color="ButtonColor.Secondary" Href="/admin/forumposts">Cancel</Button>
+                        </MudButton>
+                        <MudButton Variant="Variant.Text" Color="Color.Secondary" Href="/admin/forumposts">Cancel</MudButton>
                     </div>
-                </EditForm>
-            </div>
-        </div>
+                </MudForm>
+            </MudCardContent>
+        </MudCard>
     </div>
 </div>
 
 @code {
-    [SupplyParameterFromForm]
+    private MudForm form;
     private CreateForumPostRequest ForumPost { get; set; } = new();
     private bool isSubmitting = false;
+    private List<DropdownOption> Forums = new();
 
-    private async Task<AutoCompleteDataProviderResult<DropdownOption<int>>> SearchForumsDataProvider(AutoCompleteDataProviderRequest<DropdownOption<int>> request)
+    protected override async Task OnInitializedAsync()
     {
-        try
-        {
-            var forums = await DropdownRepository.GetForumsAsync(search: request.Filter.Value, take: 20);
-            return new AutoCompleteDataProviderResult<DropdownOption<int>>
-            {
-                Data = forums,
-                TotalCount = forums.Count
-            };
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error loading forums: {ex.Message}");
-            return new AutoCompleteDataProviderResult<DropdownOption<int>>
-            {
-                Data = new List<DropdownOption<int>>(),
-                TotalCount = 0
-            };
-        }
+        Forums = await DropdownRepository.GetForumsAsync();
     }
 
     private async Task AddForumPost()
     {
         if (isSubmitting) return;
-        
         isSubmitting = true;
         try
         {

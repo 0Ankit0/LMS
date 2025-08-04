@@ -1,24 +1,63 @@
 @inherits LayoutComponentBase
 @attribute [Authorize]
+@inject NavigationManager NavigationManager
+@inject IJSRuntime JSRuntime
 
-<div class="page">
-    <div class="sidebar">
+<CustomErrorBoundary ShowDetailedErrors="true">
+    <MudLayout>
+    <MudDrawer ClipMode="DrawerClipMode.Always" Elevation="2">
         <ReportNavMenu />
-    </div>
+    </MudDrawer>
 
-    <main>
-        <div class="top-row">
-            <ManageNav />
-        </div>
+    <MudAppBar Elevation="1">
+        <ManageNav></ManageNav>
+    </MudAppBar>
 
-        <div class="container-fluid">
+    <MudMainContent>
+        <MudContainer MaxWidth="MaxWidth.False" Class="mt-4">
             @Body
+        </MudContainer>
+    </MudMainContent>
+</MudLayout>
+</CustomErrorBoundary>
+
+    @if (showPageLoader)
+    {
+        <div class="d-flex justify-content-center py-5">
+            <MudProgressCircular Indeterminate="true" Color="Color.Primary" />
         </div>
-    </main>
-</div>
+    }
 
-<ToastContainer />
+<!-- Toast Container -->
+<MudSnackbarProvider />
 
-@* Chart.js and Dashboard Scripts *@
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script src="~/js/dashboard-charts.js"></script>
+
+
+@code {
+    private bool showPageLoader = false;
+
+    protected override void OnInitialized()
+    {
+        NavigationManager.LocationChanged += HandleLocationChanged;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (showPageLoader)
+        {
+            showPageLoader = false;
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+
+    private void HandleLocationChanged(object? sender, LocationChangedEventArgs e)
+    {
+        showPageLoader = true;
+        InvokeAsync(StateHasChanged);
+    }
+
+    public void Dispose()
+    {
+        NavigationManager.LocationChanged -= HandleLocationChanged;
+    }
+}

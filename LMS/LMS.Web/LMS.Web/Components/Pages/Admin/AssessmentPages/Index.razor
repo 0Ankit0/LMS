@@ -10,119 +10,149 @@
 
 <PageTitle>Assessments - Admin</PageTitle>
 
-<Card>
-    <CardHeader>
-        <div class="d-flex justify-content-between align-items-center">
-            <h5 class="mb-0">Assessments</h5>
-            <a href="/admin/assessments/create" class="btn btn-primary">
-                <i class="bi bi-plus-circle"></i>
-                Add New Assessment
-            </a>
-        </div>
-    </CardHeader>
-    <CardBody>
-        <DataTableComponent TItem="AssessmentModel" DataProvider="AssessmentDataProvider" AllowPaging="true"
-                            AllowSorting="true" AllowFiltering="true" PageSize="10">
-            <Columns>
-                <GridColumn TItem="AssessmentModel" HeaderText="Title" PropertyName="Title">
-                    @context.Title
-                </GridColumn>
-                <GridColumn TItem="AssessmentModel" HeaderText="Description" PropertyName="Description">
-                    @context.Description
-                </GridColumn>
-                <GridColumn TItem="AssessmentModel" HeaderText="Course ID" PropertyName="CourseId">
-                    @context.CourseId
-                </GridColumn>
-                <GridColumn TItem="AssessmentModel" HeaderText="Type" PropertyName="Type">
-                    @context.Type
-                </GridColumn>
-                <GridColumn TItem="AssessmentModel" HeaderText="Max Attempts" PropertyName="MaxAttempts">
-                    @context.MaxAttempts
-                </GridColumn>
-                <GridColumn TItem="AssessmentModel" HeaderText="Passing Score" PropertyName="PassingScore">
-                    @context.PassingScore
-                </GridColumn>
-                <GridColumn TItem="AssessmentModel" HeaderText="Randomized">
-                    @(context.IsRandomized ? "Yes" : "No")
-                </GridColumn>
-                <GridColumn TItem="AssessmentModel" HeaderText="Available From" PropertyName="AvailableFrom"
-                            Format="yyyy-MM-dd">
-                    @context.AvailableFrom?.ToString("yyyy-MM-dd")
-                </GridColumn>
-                <GridColumn TItem="AssessmentModel" HeaderText="Actions" Sortable="false" Filterable="false">
-                    <div class="btn-group" role="group">
-                        <a href='@($"/admin/assessments/edit?id={context.Id}")' class="btn btn-primary btn-sm">
-                            <i class="bi bi-pencil"></i> Edit
-                        </a>
-                        <a href='@($"/admin/assessments/manage?id={context.Id}")' class="btn btn-success btn-sm">
-                            <i class="bi bi-wrench"></i> Manage
-                        </a>
-                        <a href='@($"/admin/assessments/details?id={context.Id}")' class="btn btn-info btn-sm">
-                            <i class="bi bi-eye"></i> Details
-                        </a>
-                        <button class="btn btn-danger btn-sm" @onclick="() => ConfirmDelete(context)">
-                            <i class="bi bi-trash"></i> Delete
-                        </button>
-                    </div>
-                </GridColumn>
-            </Columns>
-        </DataTableComponent>
-    </CardBody>
-</Card>
+<MudCard Elevation="2">
+    <MudCardHeader>
+        <MudText Typo="Typo.h6">Assessments</MudText>
+        <MudSpacer />
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" Href="/admin/assessments/create">
+            <MudIcon Icon="@Icons.Material.Filled.Add" Class="me-2" />
+            Add New Assessment
+        </MudButton>
+    </MudCardHeader>
+    <MudCardContent>
+        @if (_loading)
+        {
+            <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="300px" />
+        }
+        else
+        {
+            <MudTable T="AssessmentModel" ServerData="@ServerData" Hover="true" Breakpoint="Breakpoint.Sm" Loading="@_loading">
+                <HeaderContent>
+                    <MudTh><MudTableSortLabel T="AssessmentModel" SortBy="new Func<AssessmentModel, object>(x => x.Title)">Title</MudTableSortLabel></MudTh>
+                    <MudTh><MudTableSortLabel T="AssessmentModel" SortBy="new Func<AssessmentModel, object>(x => x.Description)">Description</MudTableSortLabel></MudTh>
+                    <MudTh><MudTableSortLabel T="AssessmentModel" SortBy="new Func<AssessmentModel, object>(x => x.CourseId)">Course ID</MudTableSortLabel></MudTh>
+                    <MudTh><MudTableSortLabel T="AssessmentModel" SortBy="new Func<AssessmentModel, object>(x => x.Type)">Type</MudTableSortLabel></MudTh>
+                    <MudTh><MudTableSortLabel T="AssessmentModel" SortBy="new Func<AssessmentModel, object>(x => x.MaxAttempts)">Max Attempts</MudTableSortLabel></MudTh>
+                    <MudTh><MudTableSortLabel T="AssessmentModel" SortBy="new Func<AssessmentModel, object>(x => x.PassingScore)">Passing Score</MudTableSortLabel></MudTh>
+                    <MudTh><MudTableSortLabel T="AssessmentModel" SortBy="new Func<AssessmentModel, object>(x => x.IsRandomized)">Randomized</MudTableSortLabel></MudTh>
+                    <MudTh><MudTableSortLabel T="AssessmentModel" SortBy="new Func<AssessmentModel, object>(x => x.AvailableFrom)">Available From</MudTableSortLabel></MudTh>
+                    <MudTh>Actions</MudTh>
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd DataLabel="Title">@context.Title</MudTd>
+                    <MudTd DataLabel="Description">@context.Description</MudTd>
+                    <MudTd DataLabel="Course ID">@context.CourseId</MudTd>
+                    <MudTd DataLabel="Type">@context.Type</MudTd>
+                    <MudTd DataLabel="Max Attempts">@context.MaxAttempts</MudTd>
+                    <MudTd DataLabel="Passing Score">@context.PassingScore</MudTd>
+                    <MudTd DataLabel="Randomized">@(context.IsRandomized ? "Yes" : "No")</MudTd>
+                    <MudTd DataLabel="Available From">@context.AvailableFrom?.ToString("yyyy-MM-dd")</MudTd>
+                    <MudTd DataLabel="Actions">
+                        <MudButtonGroup>
+                            <MudButton Variant="Variant.Outlined" Color="Color.Primary" Href="@($"/admin/assessments/edit?id={context.Id}")">
+                                <MudIcon Icon="@Icons.Material.Filled.Edit" Class="me-1" /> Edit
+                            </MudButton>
+                            <MudButton Variant="Variant.Outlined" Color="Color.Success" Href="@($"/admin/assessments/manage?id={context.Id}")">
+                                <MudIcon Icon="@Icons.Material.Filled.Settings" Class="me-1" /> Manage
+                            </MudButton>
+                            <MudButton Variant="Variant.Outlined" Color="Color.Info" Href="@($"/admin/assessments/details?id={context.Id}")">
+                                <MudIcon Icon="@Icons.Material.Filled.Info" Class="me-1" /> Details
+                            </MudButton>
+                            <MudButton Variant="Variant.Outlined" Color="Color.Error" OnClick="() => ConfirmDelete(context)">
+                                <MudIcon Icon="@Icons.Material.Filled.Delete" Class="me-1" /> Delete
+                            </MudButton>
+                        </MudButtonGroup>
+                    </MudTd>
+                </RowTemplate>
+                <PagerContent>
+                    <MudTablePager PageSizeOptions="@(new int[]{10, 25, 50})" />
+                </PagerContent>
+            </MudTable>
+        }
+    </MudCardContent>
+</MudCard>
 
 <!-- Delete Confirmation Modal -->
-<ModalComponent @ref="deleteModal" Title="Confirm Delete"
-                Message="@($"Are you sure you want to delete the assessment '{assessmentToDelete?.Title}'? This action cannot be undone.")"
-                ConfirmButtonText="Delete" ConfirmButtonColor="ButtonColor.Danger" OnConfirm="DeleteAssessment" />
+<MudDialog @bind-IsVisible="@showDeleteConfirm" Options="@dialogOptions">
+    <TitleContent>
+        <MudText Typo="Typo.h6" Class="text-danger">
+            <MudIcon Icon="@Icons.Material.Filled.Warning" /> Confirm Delete
+        </MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudText>Are you sure you want to delete the assessment <strong>@assessmentToDelete?.Title</strong>? This action cannot be undone.</MudText>
+    </DialogContent>
+    <DialogActions>
+        <MudButton Color="Color.Error" OnClick="DeleteAssessment">
+            <MudIcon Icon="@Icons.Material.Filled.Delete" Class="me-1" /> Delete
+        </MudButton>
+        <MudButton Color="Color.Secondary" OnClick="CancelDelete">Cancel</MudButton>
+    </DialogActions>
+</MudDialog>
 
 @code {
-    private ModalComponent deleteModal = default!;
+    private bool showDeleteConfirm = false;
     private AssessmentModel? assessmentToDelete;
+    private bool _loading = false;
+    private DialogOptions dialogOptions = new DialogOptions();
 
-    private async Task<GridDataProviderResult<AssessmentModel>>
-    AssessmentDataProvider(GridDataProviderRequest<AssessmentModel> request)
+    private async Task<TableData<AssessmentModel>> ServerData(TableState state, CancellationToken cancellationToken)
     {
+        _loading = true;
+        StateHasChanged();
+
         try
         {
-            var result = await AssessmentRepository.GetAssessmentsPaginatedAsync(new PaginationRequest
+            var paginationRequest = new PaginationRequest
             {
-                PageNumber = request.PageNumber,
-                PageSize = request.PageSize
-            });
+                PageNumber = state.Page,
+                PageSize = state.PageSize
+                // Removed SortBy assignment, property does not exist
+            };
+
+            var result = await AssessmentRepository.GetAssessmentsPaginatedAsync(paginationRequest);
 
             // If no results return, use dummy data
             if (result.Items == null || !result.Items.Any())
             {
                 var dummy = AddDummyAssessments();
-                return new GridDataProviderResult<AssessmentModel>
+                return new TableData<AssessmentModel>
                 {
-                    Data = dummy,
-                    TotalCount = dummy.Count
+                    Items = dummy,
+                    TotalItems = dummy.Count
                 };
             }
 
-            return new GridDataProviderResult<AssessmentModel>
+            _loading = false;
+            return new TableData<AssessmentModel>
             {
-                Data = result.Items,
-                TotalCount = result.TotalCount
+                Items = result.Items,
+                TotalItems = result.TotalCount
             };
         }
         catch (Exception ex)
         {
             ToastService.ShowError("Error", $"Error loading assessments: {ex.Message}");
             var dummy = AddDummyAssessments();
-            return new GridDataProviderResult<AssessmentModel>
+            _loading = false;
+            return new TableData<AssessmentModel>
             {
-                Data = dummy,
-                TotalCount = dummy.Count
+                Items = dummy,
+                TotalItems = dummy.Count
             };
         }
     }
 
-    private async Task ConfirmDelete(AssessmentModel assessment)
+    private void ConfirmDelete(AssessmentModel assessment)
     {
         assessmentToDelete = assessment;
-        await deleteModal.ShowAsync();
+        showDeleteConfirm = true;
+    }
+
+    private void CancelDelete()
+    {
+        showDeleteConfirm = false;
+        assessmentToDelete = null;
     }
 
     private async Task DeleteAssessment()
@@ -133,22 +163,16 @@
             {
                 await AssessmentRepository.DeleteAssessmentAsync(assessmentToDelete.Id);
                 ToastService.ShowSuccess("Success", $"Assessment '{assessmentToDelete.Title}' deleted successfully.");
-                await RefreshGridDataAsync();
+                showDeleteConfirm = false;
+                assessmentToDelete = null;
+                // Refresh the table after deletion
+                await ServerData(new TableState { Page = 0, PageSize = 10 }, CancellationToken.None);
             }
             catch (Exception ex)
             {
                 ToastService.ShowError("Error", $"Error deleting assessment: {ex.Message}");
             }
-            finally
-            {
-                assessmentToDelete = null;
-            }
         }
-    }
-
-    private async Task RefreshGridDataAsync()
-    {
-        await InvokeAsync(StateHasChanged);
     }
 
     // Dummy data for assessments to use if no data is returned from the server
