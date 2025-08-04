@@ -1,6 +1,6 @@
+using LMS.Data.Entities;
 using LMS.Web.Components.Account.Pages;
 using LMS.Web.Components.Account.Pages.Manage;
-using LMS.Data.Entities;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Http.Extensions;

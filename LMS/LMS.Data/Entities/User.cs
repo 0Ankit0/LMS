@@ -4,7 +4,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace LMS.Data.Entities
 {
-    // Add profile data for application users by adding properties to the ApplicationUser class
+    // Add profile data for application users by adding properties to the User class
     public class User : IdentityUser
     {
         [StringLength(100)]

@@ -1,23 +1,45 @@
 ﻿@inherits LayoutComponentBase
 
-<div class="page">
-    <div class="sidebar">
-        <NavMenu />
-    </div>
+@inject ILocalStorageService LocalStorage
+@using Blazored.LocalStorage
 
-    <main>
-        <div class="top-row px-4">
-            <a href="https://learn.microsoft.com/aspnet/core/" target="_blank">About</a>
-        </div>
+<MudThemeProvider @ref="_mudThemeProvider" Theme="@(IsDarkMode? CustomThemes.DarkTheme: CustomThemes.LightTheme)" />
+<MudPopoverProvider />
+<MudDialogProvider />
+<MudSnackbarProvider />
 
-        <article class="content px-4">
-            @Body
-        </article>
-    </main>
-</div>
+
+<MudLayout>
+    <MudMainContent Class="pt-16 pa-4">
+        @Body
+    </MudMainContent>
+</MudLayout>
+
 
 <div id="blazor-error-ui" data-nosnippet>
     An unhandled error has occurred.
     <a href="." class="reload">Reload</a>
     <span class="dismiss">🗙</span>
 </div>
+
+
+@code {
+    private MudThemeProvider? _mudThemeProvider;
+    private bool IsDarkMode { get; set; }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            IsDarkMode = await LocalStorage.GetItemAsync<bool>("IsDarkMode");
+            StateHasChanged();
+        }
+    }
+
+    public async Task ToggleTheme()
+    {
+        IsDarkMode = !IsDarkMode;
+        await LocalStorage.SetItemAsync("IsDarkMode", IsDarkMode);
+        StateHasChanged();
+    }
+}
