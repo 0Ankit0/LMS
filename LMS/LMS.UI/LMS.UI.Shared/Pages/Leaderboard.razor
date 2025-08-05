@@ -1,0 +1,378 @@
+@using MudBlazor.Utilities;
+@using System.Security.Claims
+@page "/user/lms/leaderboard"
+@inject LMS.UI.Shared.Abstractions.IAuthenticationService AuthenticationService
+@inject HttpClient HttpClient
+@inject IJSRuntime JSRuntime
+@using MudBlazor.Components
+
+<MudToolBar Class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <MudText Typo="Typo.h5" Class="h2"><MudIcon Icon="@Icons.Material.Filled.EmojiEvents" Class="me-2" />Leaderboard</MudText>
+    <MudBlazor.Components.MudToolBarSpacer />
+    <MudButtonGroup Color="Color.Primary" Variant="Variant.Outlined">
+        <MudButton OnClick='@(() => SelectPeriod("all"))' Variant="@(selectedPeriod == "all" ? Variant.Filled : Variant.Outlined)">
+            All Time
+        </MudButton>
+        <MudButton OnClick='@(() => SelectPeriod("month"))' Variant="@(selectedPeriod == "month" ? Variant.Filled : Variant.Outlined)">
+            This Month
+        </MudButton>
+        <MudButton OnClick='@(() => SelectPeriod("week"))' Variant="@(selectedPeriod == "week" ? Variant.Filled : Variant.Outlined)">
+            This Week
+        </MudButton>
+    </MudButtonGroup>
+    <MudButton OnClick="RefreshLeaderboard" Variant="Variant.Outlined" Color="Color.Primary" Class="ms-2">
+        <MudIcon Icon="@Icons.Material.Filled.Refresh" Class="me-2" /> Refresh
+    </MudButton>
+</MudToolBar>
+
+@if (isLoading)
+{
+    <!-- Skeleton Loader for Current User Stats -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="150px" />
+        </div>
+    </div>
+
+    <!-- Skeleton Loader for Top 3 Podium -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="250px" />
+        </div>
+    </div>
+
+    <!-- Skeleton Loader for Full Leaderboard Table -->
+    <div class="row">
+        <div class="col-12">
+            <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="400px" />
+        </div>
+    </div>
+}
+else
+{
+    <!-- Current User Stats -->
+    @if (currentUserRank != null)
+    {
+        <div class="row mb-4">
+            <div class="col-12">
+                <MudCard Elevation="2">
+                    <MudCardContent>
+                        <div class="row align-items-center">
+                            <div class="col-md-3 text-center">
+                                <div class="position-relative d-inline-block">
+                                    <MudAvatar Image="@GetAvatarUrl(currentUserRank.UserId)"
+                                               Alt="@currentUserRank.UserName"
+                                               Class="border border-3 border-white"
+                                               Style="width: 80px; height: 80px; object-fit: cover;" />
+                                    <MudChip T="string" Color="Color.Warning" Class="position-absolute top-0 start-100 translate-middle rounded-pill">
+                                        #@currentUserRank.Rank
+                                    </MudChip>
+                                </div>
+                            </div>
+                            <div class="col-md-9">
+                                <MudText Typo="Typo.h5" Class="mb-2">Your Ranking</MudText>
+                                <div class="row">
+                                    <div class="col-md-3">
+                                        <div class="text-center">
+                                            <MudText Typo="Typo.h6" Class="mb-1">@currentUserRank.Rank</MudText>
+                                            <MudText Typo="Typo.caption">Rank</MudText>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="text-center">
+                                            <MudText Typo="Typo.h6" Class="mb-1">@currentUserRank.Score</MudText>
+                                            <MudText Typo="Typo.caption">Points</MudText>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="text-center">
+                                            <MudText Typo="Typo.h6" Class="mb-1">@currentUserRank.CompletedCourses</MudText>
+                                            <MudText Typo="Typo.caption">Courses</MudText>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="text-center">
+                                            <MudText Typo="Typo.h6" Class="mb-1">@currentUserRank.Achievements</MudText>
+                                            <MudText Typo="Typo.caption">Achievements</MudText>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </MudCardContent>
+                </MudCard>
+            </div>
+        </div>
+    }
+
+    <!-- Top 3 Podium -->
+    @if (topRanks?.Count >= 3)
+    {
+        <div class="row mb-4">
+            <div class="col-12">
+                <MudCard Elevation="2">
+                    <MudCardContent>
+                        <MudText Typo="Typo.h5" Class="text-center mb-4">
+                            <MudIcon Icon="@Icons.Material.Filled.EmojiEvents" Class="text-warning me-2" /> Top Performers
+                        </MudText>
+                        <div class="row justify-content-center">
+                            <!-- 2nd Place -->
+                            <div class="col-md-3 text-center order-md-1">
+                                <div class="position-relative mb-3">
+                                    <MudAvatar Image="@GetAvatarUrl(topRanks[1].UserId)"
+                                               Alt="@topRanks[1].UserName"
+                                               Class="border border-3 border-secondary"
+                                               Style="width: 80px; height: 80px; object-fit: cover;" />
+                                    <MudChip T="string" Color="Color.Secondary" Class="position-absolute top-0 start-100 translate-middle rounded-pill">
+                                        <MudIcon Icon="@Icons.Material.Filled.EmojiEvents" Size="Size.Small" Class="me-1" />2
+                                    </MudChip>
+                                </div>
+                                <MudText Typo="Typo.h6" Class="fw-bold">@topRanks[1].UserName</MudText>
+                                <MudText Typo="Typo.body2" Class="text-secondary mb-1">@topRanks[1].Score pts</MudText>
+                                <MudText Typo="Typo.caption" Class="text-muted">@topRanks[1].CompletedCourses courses</MudText>
+                            </div>
+
+                            <!-- 1st Place -->
+                            <div class="col-md-3 text-center order-md-2">
+                                <div class="position-relative mb-3">
+                                    <MudAvatar Image="@GetAvatarUrl(topRanks[0].UserId)"
+                                               Alt="@topRanks[0].UserName"
+                                               Class="border border-3 border-warning"
+                                               Style="width: 100px; height: 100px; object-fit: cover;" />
+                                    <MudChip T="string" Color="Color.Warning" Class="position-absolute top-0 start-100 translate-middle rounded-pill">
+                                        <MudIcon Icon="@Icons.Material.Filled.EmojiEvents" Size="Size.Small" Class="me-1" />1
+                                    </MudChip>
+                                </div>
+                                <MudText Typo="Typo.h5" Class="fw-bold text-warning">@topRanks[0].UserName</MudText>
+                                <MudText Typo="Typo.subtitle1" Class="text-warning mb-1">@topRanks[0].Score pts</MudText>
+                                <MudText Typo="Typo.caption" Class="text-muted">@topRanks[0].CompletedCourses courses</MudText>
+                            </div>
+
+                            <!-- 3rd Place -->
+                            <div class="col-md-3 text-center order-md-3">
+                                <div class="position-relative mb-3">
+                                    <MudAvatar Image="@GetAvatarUrl(topRanks[2].UserId)"
+                                               Alt="@topRanks[2].UserName"
+                                               Class="border border-3 border-error"
+                                               Style="width: 80px; height: 80px; object-fit: cover;" />
+                                    <MudChip T="string" Color="Color.Error" Class="position-absolute top-0 start-100 translate-middle rounded-pill">
+                                        <MudIcon Icon="@Icons.Material.Filled.EmojiEvents" Size="Size.Small" Class="me-1" />3
+                                    </MudChip>
+                                </div>
+                                <MudText Typo="Typo.h6" Class="fw-bold">@topRanks[2].UserName</MudText>
+                                <MudText Typo="Typo.body2" Class="text-error mb-1">@topRanks[2].Score pts</MudText>
+                                <MudText Typo="Typo.caption" Class="text-muted">@topRanks[2].CompletedCourses courses</MudText>
+                            </div>
+                        </div>
+                    </MudCardContent>
+                </MudCard>
+            </div>
+        </div>
+    }
+
+    <!-- Full Leaderboard Table -->
+    @if (leaderboard?.Any() == true)
+    {
+        <div class="row">
+            <div class="col-12">
+                <MudCard Elevation="2">
+                    <MudCardHeader>
+                        <MudText Typo="Typo.h6">
+                            <MudIcon Icon="@Icons.Material.Filled.FormatListNumbered" Class="me-2" /> Full Rankings
+                        </MudText>
+                        <MudSpacer />
+                        <div class="d-flex gap-2">
+                            <MudTextField @bind-Value="searchTerm" Placeholder="Search users..." Variant="Variant.Text" Clearable="true" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" OnClearButtonClick="FilterLeaderboard" />
+                        </div>
+                    </MudCardHeader>
+                    <MudCardContent>
+                        <MudTable T="LeaderboardEntryModel" Items="@filteredLeaderboard" Hover="true" Breakpoint="Breakpoint.Sm">
+                        <HeaderContent>
+                            <MudTh>Rank</MudTh>
+                            <MudTh>User</MudTh>
+                            <MudTh>Points</MudTh>
+                            <MudTh>Courses</MudTh>
+                            <MudTh>Achievements</MudTh>
+                            <MudTh>Avg. Score</MudTh>
+                            <MudTh>Streak</MudTh>
+                        </HeaderContent>
+                        <RowTemplate>
+                            <MudTd DataLabel="Rank">
+                                <div class="d-flex align-items-center">
+                                    @if (context.Rank <= 3)
+                                    {
+                                        <MudIcon Icon="@Icons.Material.Filled.EmojiEvents" Class="@(GetRankColor(context.Rank) + " me-2")" />
+                                    }
+                                    <MudText Typo="Typo.body2" Class="fw-bold">@context.Rank</MudText>
+                                    @if (context.UserId == currentUserId)
+                                    {
+                                        <MudChip T="string" Color="Color.Primary" Size="Size.Small" Class="ms-2">You</MudChip>
+                                    }
+                                </div>
+                            </MudTd>
+                            <MudTd DataLabel="User">
+                                <div class="d-flex align-items-center">
+                                    <MudAvatar Image="@GetAvatarUrl(context.UserId)"
+                                               Alt="@context.UserName"
+                                               Class="me-3"
+                                               Style="width: 40px; height: 40px; object-fit: cover;" />
+                                    <div>
+                                        <MudText Typo="Typo.body1" Class="fw-bold">@context.UserName</MudText>
+                                        <MudText Typo="Typo.caption" Class="text-muted">@context.UserName</MudText>
+                                    </div>
+                                </div>
+                            </MudTd>
+                            <MudTd DataLabel="Points" Class="text-center">
+                                <MudChip T="string" Color="Color.Primary" Size="Size.Medium">@context.Score</MudChip>
+                            </MudTd>
+                            <MudTd DataLabel="Courses" Class="text-center">
+                                <MudChip T="string" Color="Color.Success" Size="Size.Medium">@context.CompletedCourses</MudChip>
+                            </MudTd>
+                            <MudTd DataLabel="Achievements" Class="text-center">
+                                <MudChip T="string" Color="Color.Warning" Size="Size.Medium">@context.Achievements</MudChip>
+                            </MudTd>
+                            <MudTd DataLabel="Avg. Score" Class="text-center">
+                                <MudChip T="string" Color="@GetScoreBadgeColor(context.AverageScore)">
+                                    @context.AverageScore.ToString("F1")%
+                                </MudChip>
+                            </MudTd>
+                            <MudTd DataLabel="Streak" Class="text-center">
+                                @if (context.CurrentStreak > 0)
+                                {
+                                    <MudChip T="string" Color="Color.Info">
+                                        <MudIcon Icon="@Icons.Material.Filled.LocalFireDepartment" Size="Size.Small" Class="me-1" /> @context.CurrentStreak
+                                    </MudChip>
+                                }
+                                else
+                                {
+                                    <MudText Typo="Typo.body2" Class="text-muted">-</MudText>
+                                }
+                            </MudTd>
+                        </RowTemplate>
+                    </MudTable>
+
+                        @if (filteredLeaderboard.Count == 0 && !string.IsNullOrEmpty(searchTerm))
+                        {
+                            <div class="text-center py-4">
+                                <p class="text-muted">No users found matching "@searchTerm"</p>
+                            </div>
+                        }
+                    </MudCardContent>
+                </MudCard>
+            </div>
+        </div>
+    }
+}
+
+@code {
+    private List<LeaderboardEntryModel>? leaderboard;
+    private List<LeaderboardEntryModel> filteredLeaderboard = new();
+    private List<LeaderboardEntryModel>? topRanks;
+    private LeaderboardEntryModel? currentUserRank;
+    private bool isLoading = true;
+    private string searchTerm = string.Empty;
+    private string selectedPeriod = "all";
+    private string? currentUserId;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var user = await AuthenticationService.GetUser();
+        if (user.Identity?.IsAuthenticated == true)
+        {
+            currentUserId = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        }
+
+        await LoadLeaderboard();
+    }
+
+    private async Task LoadLeaderboard()
+    {
+        try
+        {
+            isLoading = true;
+
+            // Load leaderboard data based on selected period via HTTP endpoints
+            var endpoint = selectedPeriod switch
+            {
+                "week" => "/api/leaderboards/weekly",
+                "month" => "/api/leaderboards/monthly",
+                _ => "/api/leaderboards/overall"
+            };
+
+            var response = await HttpClient.GetAsync(endpoint);
+            if (response.IsSuccessStatusCode)
+            {
+                leaderboard = await response.Content.ReadFromJsonAsync<List<LeaderboardEntryModel>>() ?? new List<LeaderboardEntryModel>();
+            }
+
+            topRanks = leaderboard?.Take(3).ToList() ?? new List<LeaderboardEntryModel>();
+            currentUserRank = leaderboard?.FirstOrDefault(l => l.UserId == currentUserId);
+
+            FilterLeaderboard();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading leaderboard: {ex.Message}");
+            leaderboard = new List<LeaderboardEntryModel>();
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private async Task RefreshLeaderboard()
+    {
+        await LoadLeaderboard();
+    }
+
+    private async Task SelectPeriod(string period)
+    {
+        selectedPeriod = period;
+        await LoadLeaderboard();
+    }
+
+    private void OnSearchTermChanged(ChangeEventArgs e)
+    {
+        searchTerm = e.Value?.ToString() ?? string.Empty;
+        FilterLeaderboard();
+    }
+
+    private void FilterLeaderboard()
+    {
+        if (leaderboard == null) return;
+
+        var filtered = leaderboard.AsEnumerable();
+
+        // Apply search filter
+        if (!string.IsNullOrWhiteSpace(searchTerm))
+        {
+            filtered = filtered.Where(l =>
+                l.UserName.Contains(searchTerm, StringComparison.OrdinalIgnoreCase));
+        }
+
+        filteredLeaderboard = filtered.ToList();
+    }
+
+    private string GetAvatarUrl(string userId)
+    {
+        // In a real implementation, this would return the actual user avatar URL
+        return $"https://ui-avatars.com/api/?name={Uri.EscapeDataString(userId)}&background=007bff&color=fff&size=100";
+    }
+
+    private string GetRankColor(int rank) => rank switch
+    {
+        1 => "text-warning", // Gold
+        2 => "text-secondary", // Silver
+        3 => "text-danger", // Bronze
+        _ => "text-muted"
+    };
+
+    private MudBlazor.Color GetScoreBadgeColor(double score) => score switch
+    {
+        >= 90 => MudBlazor.Color.Success,
+        >= 80 => MudBlazor.Color.Info,
+        >= 70 => MudBlazor.Color.Warning,
+        _ => MudBlazor.Color.Secondary
+    };
+}

@@ -1,0 +1,214 @@
+@using MudBlazor;
+@using MudBlazor.Utilities;
+@page "/user/lms/announcements"
+@inject HttpClient HttpClient
+@inject ISnackbar Snackbar
+@using MudBlazor
+
+<PageTitle>Announcements - LMS</PageTitle>
+
+<MudGrid Spacing="3">
+    @if (isLoading)
+    {
+        @for (int i = 0; i < 3; i++)
+        {
+            <MudItem xs="12">
+                <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="120px" />
+            </MudItem>
+        }
+    }
+    else if (announcements?.Any() == true)
+    {
+        @foreach (var announcement in announcements)
+        {
+            <MudItem xs="12">
+                <MudCard Elevation="2" OnClick="() => ShowAnnouncement(announcement)">
+                    <MudCardHeader>
+                        <CardHeaderContent>
+                            <MudText Typo="Typo.h5">@announcement.Title</MudText>
+                        </CardHeaderContent>
+                        <CardHeaderActions>
+                            <MudChip T="string" Icon="@GetPriorityIcon(announcement.Priority)" Color="@GetPriorityBadgeColor(announcement.Priority)">@announcement.Priority Priority</MudChip>
+                        </CardHeaderActions>
+                    </MudCardHeader>
+                    <MudCardContent>
+                        <MudText Typo="Typo.body2">@GetExcerpt(announcement.Content)</MudText>
+                    </MudCardContent>
+                    <MudCardActions>
+                        <MudText Typo="Typo.caption" Class="text-muted mx-2">
+                            <MudIcon Icon="@Icons.Material.Filled.Person" Class="me-1" />
+                            @announcement.AuthorName
+                        </MudText>
+                        <MudText Typo="Typo.caption" Class="text-muted">
+                            <MudIcon Icon="@Icons.Material.Filled.CalendarToday" Class="me-1" />
+                            @FormatDate(announcement.PublishedAt)
+                        </MudText>
+                        <MudSpacer />
+                        <MudButton Variant="Variant.Outlined" Color="Color.Primary" OnClick="() => ShowAnnouncement(announcement)" StartIcon="@Icons.Material.Filled.Visibility">View</MudButton>
+                    </MudCardActions>
+                </MudCard>
+            </MudItem>
+        }
+        <MudItem xs="12" Class="d-flex justify-content-end">
+            <MudLink Href="/user/lms/announcement-list" Color="Color.Primary">View All</MudLink>
+        </MudItem>
+    }
+    else
+    {
+        <MudItem xs="12">
+            <MudAlert Severity="Severity.Info" Icon="@Icons.Material.Filled.Campaign">
+                <MudText Typo="Typo.h5">No announcements available</MudText>
+                <MudText>There are no announcements at this time.</MudText>
+            </MudAlert>
+        </MudItem>
+    }
+</MudGrid>
+
+<MudDialog @bind-IsVisible="@isModalVisible" Options="@dialogOptions">
+    <TitleContent>
+        <MudText Typo="Typo.h6">@selectedAnnouncement?.Title</MudText>
+    </TitleContent>
+    <DialogContent>
+        @if (selectedAnnouncement != null)
+        {
+            <div class="announcement-detail-meta mb-3">
+                <div class="meta-item">
+                    <MudIcon Icon="@Icons.Material.Filled.Person" Color="Color.Primary" />
+                    <span>@selectedAnnouncement.AuthorName</span>
+                </div>
+                <div class="meta-item">
+                    <MudIcon Icon="@Icons.Material.Filled.CalendarToday" Color="Color.Primary" />
+                    <span>@selectedAnnouncement.PublishedAt.ToString("MMM dd, yyyy HH:mm")</span>
+                </div>
+                <div class="meta-item">
+                    <MudChip T="string" Color="@GetPriorityBadgeColor(selectedAnnouncement.Priority)">
+                                        <MudIcon Icon="@GetPriorityIcon(selectedAnnouncement.Priority)" Class="me-1" />
+                                        @selectedAnnouncement.Priority Priority
+                                    </MudChip>
+                </div>
+            </div>
+            <div class="announcement-detail-content">
+                @((MarkupString)selectedAnnouncement.Content)
+            </div>
+        }
+    </DialogContent>
+    <DialogActions>
+        <MudButton Color="Color.Secondary" OnClick="CloseModal">Close</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    // Properties
+    private bool isLoading = true;
+
+    // Collections and selected items
+    private List<AnnouncementModel> announcements = new();
+    private AnnouncementModel? selectedAnnouncement;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadAnnouncements();
+    }
+
+    private async Task LoadAnnouncements()
+    {
+        isLoading = true;
+        await InvokeAsync(StateHasChanged);
+
+        try
+        {
+            // Load announcements from HTTP endpoint
+            var response = await HttpClient.GetAsync("api/announcements/latest");
+            if (response.IsSuccessStatusCode)
+            {
+                announcements = await response.Content.ReadFromJsonAsync<List<AnnouncementModel>>() ?? new List<AnnouncementModel>();
+            }
+        }
+        catch (Exception ex)
+        {
+            // Log error
+            Console.WriteLine($"Error loading announcements: {ex.Message}");
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private MudDialog? announcementModal;
+    private bool isModalVisible = false;
+    private DialogOptions dialogOptions = new() { CloseButton = true, MaxWidth = MaxWidth.Medium, FullWidth = true };
+
+    private async Task ShowAnnouncement(AnnouncementModel announcement)
+    {
+        selectedAnnouncement = announcement;
+        isModalVisible = true;
+    }
+
+    private void CloseModal()
+    {
+        isModalVisible = false;
+        selectedAnnouncement = null;
+    }
+
+    private string GetPriorityClass(string priority)
+    {
+        return priority.ToLower();
+    }
+
+    private string GetPriorityIcon(string priority)
+    {
+        return priority.ToLower() switch
+        {
+            "high" => Icons.Material.Filled.Warning,
+            "medium" => Icons.Material.Filled.Info,
+            "low" => Icons.Material.Filled.Notifications,
+            _ => Icons.Material.Filled.Info
+        };
+    }
+
+    private MudBlazor.Color GetPriorityBadgeColor(string? priority)
+    {
+        return (priority ?? "").ToLower() switch
+        {
+            "high" => MudBlazor.Color.Error,
+            "medium" => MudBlazor.Color.Warning,
+            "low" => MudBlazor.Color.Info,
+            _ => MudBlazor.Color.Secondary
+        };
+    }
+
+    private string FormatDate(DateTime date)
+    {
+        var timeSpan = DateTime.Now - date;
+
+        if (timeSpan.Days > 0)
+        {
+            return $"{timeSpan.Days} day{(timeSpan.Days > 1 ? "s" : "")} ago";
+        }
+        else if (timeSpan.Hours > 0)
+        {
+            return $"{timeSpan.Hours} hour{(timeSpan.Hours > 1 ? "s" : "")} ago";
+        }
+        else if (timeSpan.Minutes > 0)
+        {
+            return $"{timeSpan.Minutes} minute{(timeSpan.Minutes > 1 ? "s" : "")} ago";
+        }
+        else
+        {
+            return "Just now";
+        }
+    }
+
+    private string GetExcerpt(string content)
+    {
+        if (string.IsNullOrEmpty(content))
+            return "";
+
+        const int maxLength = 120;
+        if (content.Length <= maxLength)
+            return content;
+
+        return content.Substring(0, maxLength) + "...";
+    }
+}
