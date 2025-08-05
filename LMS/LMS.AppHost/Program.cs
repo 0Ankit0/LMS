@@ -2,7 +2,7 @@ var builder = DistributedApplication.CreateBuilder(args);
 
 //var apiService = builder.AddProject<Projects.LMS_ApiService>("apiservice");
 
-builder.AddProject<Projects.LMS_Web>("webfrontend")
+builder.AddProject<Projects.LMS_UI_Web>("webfrontend")
     .WithExternalHttpEndpoints();
     //.WithReference(apiService)
     //.WaitFor(apiService);

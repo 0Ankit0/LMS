@@ -16,8 +16,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\LMS.Web\LMS.Web.Client\LMS.Web.Client.csproj" />
-    <ProjectReference Include="..\LMS.Web\LMS.Web\LMS.Web.csproj" />
+    <ProjectReference Include="..\LMS.UI\LMS.UI.Web\LMS.UI.Web.csproj" />
   </ItemGroup>
 
 </Project>
