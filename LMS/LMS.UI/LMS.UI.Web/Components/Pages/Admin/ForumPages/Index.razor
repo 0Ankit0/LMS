@@ -1,0 +1,172 @@
+@page "/admin/forums"
+@attribute [OutputCache(Duration = 60)]
+@rendermode @(new InteractiveServerRenderMode())
+
+@using LMS.Repositories
+@using LMS.Data.DTOs
+@using LMS.Data.Entities
+
+@inject IForumRepository ForumRepository
+@inject ISnackbar Snackbar
+
+<PageTitle>Forums - Admin</PageTitle>
+
+<MudCard Elevation="2">
+    <MudCardHeader>
+        <MudText Typo="Typo.h6">Forums</MudText>
+        <MudSpacer />
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" Href="/admin/forums/create">
+            <MudIcon Icon="@Icons.Material.Filled.Add" Class="me-2" />
+            Add New Forum
+        </MudButton>
+    </MudCardHeader>
+    <MudCardContent>
+        @if (_loading)
+        {
+            <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="300px" />
+        }
+        else
+        {
+            <MudTable T="ForumModel" ServerData="@ServerData" Hover="true" Breakpoint="Breakpoint.Sm" Loading="@_loading">
+                <HeaderContent>
+                    <MudTh><MudTableSortLabel T="ForumModel" SortBy="new Func<ForumModel, object>(x => x.Title)">Title</MudTableSortLabel></MudTh>
+                    <MudTh><MudTableSortLabel T="ForumModel" SortBy="new Func<ForumModel, object>(x => x.Description)">Description</MudTableSortLabel></MudTh>
+                    <MudTh><MudTableSortLabel T="ForumModel" SortBy="new Func<ForumModel, object>(x => x.CourseId)">Course ID</MudTableSortLabel></MudTh>
+                    <MudTh><MudTableSortLabel T="ForumModel" SortBy="new Func<ForumModel, object>(x => x.IsGeneral)">General</MudTableSortLabel></MudTh>
+                    <MudTh><MudTableSortLabel T="ForumModel" SortBy="new Func<ForumModel, object>(x => x.IsActive)">Active</MudTableSortLabel></MudTh>
+                    <MudTh><MudTableSortLabel T="ForumModel" SortBy="new Func<ForumModel, object>(x => x.TopicCount)">Topics</MudTableSortLabel></MudTh>
+                    <MudTh><MudTableSortLabel T="ForumModel" SortBy="new Func<ForumModel, object>(x => x.CreatedAt)">Created</MudTableSortLabel></MudTh>
+                    <MudTh>Actions</MudTh>
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd DataLabel="Title">@context.Title</MudTd>
+                    <MudTd DataLabel="Description">@context.Description</MudTd>
+                    <MudTd DataLabel="Course ID">@(context.CourseId?.ToString() ?? "N/A")</MudTd>
+                    <MudTd DataLabel="General">
+                        <MudChip T="bool" Color="@(context.IsGeneral? Color.Info: Color.Secondary)">
+                            @(context.IsGeneral ? "General" : "Course")
+                        </MudChip>
+                    </MudTd>
+                    <MudTd DataLabel="Active">
+                        <MudChip T="bool" Color="@(context.IsActive? Color.Success: Color.Secondary)">
+                            @(context.IsActive ? "Yes" : "No")
+                        </MudChip>
+                    </MudTd>
+                    <MudTd DataLabel="Topics">@context.TopicCount</MudTd>
+                    <MudTd DataLabel="Created">@context.CreatedAt.ToString("yyyy-MM-dd")</MudTd>
+                    <MudTd DataLabel="Actions">
+                        <MudButtonGroup>
+                            <MudButton Variant="Variant.Outlined" Color="Color.Primary" Href='@($"/admin/forums/edit?id={context.Id}")'>
+                                <MudIcon Icon="@Icons.Material.Filled.Edit" Class="me-1" /> Edit
+                            </MudButton>
+                            <MudButton Variant="Variant.Outlined" Color="Color.Info" Href='@($"/admin/forums/details?id={context.Id}")'>
+                                <MudIcon Icon="@Icons.Material.Filled.Info" Class="me-1" /> Details
+                            </MudButton>
+                            <MudButton Variant="Variant.Outlined" Color="Color.Error" OnClick="() => ConfirmDelete(context)">
+                                <MudIcon Icon="@Icons.Material.Filled.Delete" Class="me-1" /> Delete
+                            </MudButton>
+                        </MudButtonGroup>
+                    </MudTd>
+                </RowTemplate>
+                <PagerContent>
+                    <MudTablePager PageSizeOptions="@(new int[]{10, 25, 50})" />
+                </PagerContent>
+            </MudTable>
+        }
+    </MudCardContent>
+</MudCard>
+
+<!-- Delete Confirmation Modal -->
+<MudDialog @bind-IsVisible="@showDeleteConfirm" Options="@dialogOptions">
+    <TitleContent>
+        <MudText Typo="Typo.h6" Class="text-danger">
+            <MudIcon Icon="@Icons.Material.Filled.Warning" /> Confirm Delete
+        </MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudText>Are you sure you want to delete the forum <strong>@forumToDelete?.Title</strong>? This action cannot be undone.</MudText>
+    </DialogContent>
+    <DialogActions>
+        <MudButton Color="Color.Error" OnClick="DeleteForum">
+            <MudIcon Icon="@Icons.Material.Filled.Delete" Class="me-1" /> Delete
+        </MudButton>
+        <MudButton Color="Color.Secondary" OnClick="CancelDelete">Cancel</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    private bool showDeleteConfirm = false;
+    private ForumModel? forumToDelete;
+    private bool _loading = false;
+    private DialogOptions dialogOptions = new() { CloseButton = true, MaxWidth = MaxWidth.Small, FullWidth = true };
+
+    private async Task<TableData<ForumModel>> ServerData(TableState state, CancellationToken cancellationToken)
+    {
+        _loading = true;
+        StateHasChanged();
+        try
+        {
+            var paginationRequest = new PaginationRequest
+            {
+                PageNumber = state.Page,
+                PageSize = state.PageSize,
+                // Sorting logic commented out
+                // SortColumn = state.SortLabel,
+                // SortDirection = state.SortDirection == MudBlazor.SortDirection.Ascending ? "asc" : "desc"
+            };
+            var result = await ForumRepository.GetForumsPaginatedAsync(paginationRequest);
+            var data = result?.Items ?? new List<ForumModel>();
+            var totalCount = result?.TotalCount ?? data.Count;
+            _loading = false;
+            return new TableData<ForumModel>
+            {
+                Items = data,
+                TotalItems = totalCount
+            };
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error loading forums: {ex.Message}", Severity.Error);
+            var dummy = new List<ForumModel>();
+            _loading = false;
+            return new TableData<ForumModel>
+            {
+                Items = dummy,
+                TotalItems = dummy.Count
+            };
+        }
+    }
+
+    private void ConfirmDelete(ForumModel forum)
+    {
+        forumToDelete = forum;
+        showDeleteConfirm = true;
+    }
+
+    private void CancelDelete()
+    {
+        showDeleteConfirm = false;
+        forumToDelete = null;
+    }
+
+    private async Task DeleteForum()
+    {
+        if (forumToDelete != null)
+        {
+            try
+            {
+                await ForumRepository.DeleteForumAsync(forumToDelete.Id);
+                Snackbar.Add($"Forum '{forumToDelete.Title}' deleted successfully.", Severity.Success);
+                showDeleteConfirm = false;
+                forumToDelete = null;
+                // Refresh the table after deletion
+                await ServerData(new TableState { Page = 0, PageSize = 10 }, CancellationToken.None);
+            }
+            catch (Exception ex)
+            {
+                Snackbar.Add($"Error deleting forum: {ex.Message}", Severity.Error);
+            }
+        }
+    }
+}
+

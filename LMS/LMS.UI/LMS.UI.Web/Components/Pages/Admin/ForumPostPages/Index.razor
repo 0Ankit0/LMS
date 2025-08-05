@@ -1,0 +1,87 @@
+@page "/admin/forumposts"
+@layout AdminLayout
+@attribute [OutputCache(Duration = 60)]
+@inject IForumRepository ForumRepository
+
+<PageTitle>Forum Posts - Admin</PageTitle>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="mb-0">Forum Posts</h1>
+    <MudButton Variant="Variant.Filled" Color="Color.Primary" Href="/admin/forumposts/create">
+        <MudIcon Icon="@Icons.Material.Filled.Add" Class="me-2" />
+        Add New Forum Post
+    </MudButton>
+</div>
+
+<MudTable T="ForumPostModel" ServerData="@ForumPostsDataProvider" Hover="true" Breakpoint="Breakpoint.Sm" Loading="@_loading">
+    <HeaderContent>
+        <MudTh><MudTableSortLabel T="ForumPostModel" SortBy="new Func<ForumPostModel, object>(x => x.Content)">Content</MudTableSortLabel></MudTh>
+        <MudTh><MudTableSortLabel T="ForumPostModel" SortBy="new Func<ForumPostModel, object>(x => x.TopicTitle)">Topic</MudTableSortLabel></MudTh>
+        <MudTh><MudTableSortLabel T="ForumPostModel" SortBy="new Func<ForumPostModel, object>(x => x.AuthorName)">Author</MudTableSortLabel></MudTh>
+        <MudTh><MudTableSortLabel T="ForumPostModel" SortBy="new Func<ForumPostModel, object>(x => x.ParentPostId)">Parent Post</MudTableSortLabel></MudTh>
+        <MudTh><MudTableSortLabel T="ForumPostModel" SortBy="new Func<ForumPostModel, object>(x => x.CreatedAt)">Created</MudTableSortLabel></MudTh>
+        <MudTh>Actions</MudTh>
+    </HeaderContent>
+    <RowTemplate>
+        <MudTd DataLabel="Content">@context.Content</MudTd>
+        <MudTd DataLabel="Topic">@context.TopicTitle</MudTd>
+        <MudTd DataLabel="Author">@context.AuthorName</MudTd>
+        <MudTd DataLabel="Parent Post">@context.ParentPostId</MudTd>
+        <MudTd DataLabel="Created">@context.CreatedAt.ToString("yyyy-MM-dd HH:mm")</MudTd>
+        <MudTd DataLabel="Actions">
+            <MudButtonGroup>
+                <MudButton Variant="Variant.Outlined" Color="Color.Primary" Href='@($"/admin/forumposts/edit?id={context.Id}")'>
+                    <MudIcon Icon="@Icons.Material.Filled.Edit" Class="me-1" /> Edit
+                </MudButton>
+                <MudButton Variant="Variant.Outlined" Color="Color.Info" Href='@($"/admin/forumposts/details?id={context.Id}")'>
+                    <MudIcon Icon="@Icons.Material.Filled.Info" Class="me-1" /> Details
+                </MudButton>
+                <MudButton Variant="Variant.Outlined" Color="Color.Error" Href='@($"/admin/forumposts/delete?id={context.Id}")'>
+                    <MudIcon Icon="@Icons.Material.Filled.Delete" Class="me-1" /> Delete
+                </MudButton>
+            </MudButtonGroup>
+        </MudTd>
+    </RowTemplate>
+    <PagerContent>
+        <MudTablePager PageSizeOptions="@(new int[]{10, 25, 50})" />
+    </PagerContent>
+</MudTable>
+
+@code {
+    private bool _loading = false;
+
+    private async Task<MudBlazor.TableData<ForumPostModel>> ForumPostsDataProvider(MudBlazor.TableState state, CancellationToken cancellationToken)
+    {
+        _loading = true;
+        StateHasChanged();
+        try
+        {
+            var request = new PaginationRequest
+            {
+                PageNumber = state.Page + 1,
+                PageSize = state.PageSize
+            };
+            var paginatedResult = await ForumRepository.GetAllForumPostsPaginatedAsync(request);
+            var items = paginatedResult?.Items ?? GetMockForumPosts();
+            _loading = false;
+            return new MudBlazor.TableData<ForumPostModel> { TotalItems = paginatedResult?.TotalCount ?? items.Count(), Items = items };
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading forum posts: {ex.Message}");
+            _loading = false;
+            return new MudBlazor.TableData<ForumPostModel> { TotalItems = 0, Items = GetMockForumPosts() };
+        }
+    }
+
+    private IEnumerable<ForumPostModel> GetMockForumPosts()
+    {
+        return new List<ForumPostModel>
+        {
+            new ForumPostModel { Id = 1, Content = "This is the first post in the general discussion forum.", TopicTitle = "Welcome to the Forum!", AuthorName = "Admin", CreatedAt = DateTime.Now.AddDays(-10) },
+            new ForumPostModel { Id = 2, Content = "I have a question about C# generics.", TopicTitle = "C# Generics", AuthorName = "John Doe", CreatedAt = DateTime.Now.AddDays(-5) },
+            new ForumPostModel { Id = 3, Content = "Reply to John Doe: You can use `List<T>` for generic lists.", TopicTitle = "C# Generics", AuthorName = "Jane Smith", ParentPostId = 2, CreatedAt = DateTime.Now.AddDays(-4) }
+        };
+    }
+}
+

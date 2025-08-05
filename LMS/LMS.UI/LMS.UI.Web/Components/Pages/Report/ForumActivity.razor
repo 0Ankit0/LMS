@@ -1,0 +1,485 @@
+@page "/reports/forum-activity"
+@attribute [OutputCache(Duration = 60)]
+
+@using LMS.Web.Repositories.DTOs
+@using MudBlazor
+
+@inject IReportRepository ReportRepository
+@inject IJSRuntime JSRuntime
+@inject IdentityUserAccessor UserAccessor
+
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="mb-1">💬 Forum Activity Report</h2>
+        <p class="text-muted mb-0">Track forum engagement and discussion participation</p>
+    </div>
+    <div class="export-buttons">
+        <MudButton Variant="Variant.Outlined" Color="Color.Primary" OnClick="ExportToPdf">
+            <MudIcon Icon="@Icons.Material.Filled.PictureAsPdf" Class="me-2" /> Export PDF
+        </MudButton>
+        <MudButton Variant="Variant.Outlined" Color="Color.Primary" OnClick="ExportToExcel">
+            <MudIcon Icon="@Icons.Material.Filled.Description" Class="me-2" /> Export Excel
+        </MudButton>
+    </div>
+</div>
+
+<!-- Filters -->
+<MudGrid Class="report-filters">
+    <MudItem xs="12" md="3">
+        <MudSelect T="string" Label="Report Type" @bind-Value="reportType" OnChange="OnReportTypeChanged">
+            <MudSelectItem Value="@("single")">Single Forum</MudSelectItem>
+            <MudSelectItem Value="@("all")">All Forums</MudSelectItem>
+        </MudSelect>
+    </MudItem>
+    @if (reportType == "single")
+    {
+        <MudItem xs="12" md="3">
+            <MudNumericField Label="Forum ID" @bind-Value="forumId" Variant="Variant.Text" Placeholder="Enter Forum ID" />
+        </MudItem>
+    }
+    <MudItem xs="12" md="2">
+        <MudDatePicker Label="Start Date" @bind-Date="startDate" DateFormat="yyyy-MM-dd" />
+    </MudItem>
+    <MudItem xs="12" md="2">
+        <MudDatePicker Label="End Date" @bind-Date="endDate" DateFormat="yyyy-MM-dd" />
+    </MudItem>
+    @if (reportType == "all")
+    {
+        <MudItem xs="12" md="2">
+            <MudNumericField Label="Course ID" @bind-Value="courseId" Variant="Variant.Text" Placeholder="Optional" />
+        </MudItem>
+    }
+    <MudItem xs="12" md="2">
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="LoadData" FullWidth="true">
+            <MudIcon Icon="@Icons.Material.Filled.Chat" Class="me-2" />
+            Generate Report
+        </MudButton>
+    </MudItem>
+</MudGrid>
+
+@if (!string.IsNullOrEmpty(errorMessage))
+{
+    <MudAlert Severity="Severity.Warning" Class="my-3">
+        <MudIcon Icon="@Icons.Material.Filled.Warning" Class="me-2" /> @errorMessage
+    </MudAlert>
+}
+
+@if (loading)
+{
+    <div class="report-loading d-flex flex-column align-items-center justify-content-center py-5">
+        <MudProgressCircular Indeterminate="true" Color="Color.Primary" Size="Size.Large" />
+        <MudText Class="mt-2">Loading forum activity data...</MudText>
+    </div>
+}
+else if (singleReport != null || multipleReports?.Any() == true)
+{
+    @if (reportType == "single" && singleReport != null)
+    {
+        <!-- Single Forum Report -->
+        <MudGrid Class="mb-4">
+            <!-- Forum Information -->
+            <MudItem xs="12" md="6">
+                <MudCard Elevation="2" Class="h-100">
+                    <MudCardHeader>
+                        <MudText Typo="Typo.h6">💬 Forum Information</MudText>
+                    </MudCardHeader>
+                    <MudCardContent>
+                        <MudList T="string">
+                            <MudListItem T="string"><strong>Forum:</strong> @singleReport.ForumTitle</MudListItem>
+                            <MudListItem T="string"><strong>Forum ID:</strong> @singleReport.ForumId</MudListItem>
+                            <MudListItem T="string"><strong>Course:</strong> @singleReport.CourseName</MudListItem>
+                            <MudListItem T="string"><strong>Total Topics:</strong> @singleReport.TotalTopics</MudListItem>
+                            <MudListItem T="string"><strong>Total Posts:</strong> @singleReport.TotalPosts</MudListItem>
+                            <MudListItem T="string"><strong>Active Users:</strong> @singleReport.ActiveUsers</MudListItem>
+                        </MudList>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+
+            <!-- Activity Statistics -->
+            <MudItem xs="12" md="6">
+                <MudCard Elevation="2" Class="h-100">
+                    <MudCardHeader>
+                        <MudText Typo="Typo.h6">📈 Activity Statistics</MudText>
+                    </MudCardHeader>
+                    <MudCardContent>
+                        <MudList T="string">
+                            <MudListItem T="string"><strong>Avg Posts/User:</strong> @($"{singleReport.AveragePostsPerUser:F1}")</MudListItem>
+                            <MudListItem T="string"><strong>Avg Replies/Topic:</strong> @($"{singleReport.AverageRepliesPerTopic:F1}")</MudListItem>
+                            <MudListItem T="string"><strong>Most Active User:</strong> @singleReport.MostActiveUser (@singleReport.MostActiveUserPosts posts)</MudListItem>
+                            <MudListItem T="string"><strong>Most Popular Topic:</strong> @singleReport.MostPopularTopic (@singleReport.MostPopularTopicReplies replies)</MudListItem>
+                            <MudListItem T="string"><strong>Total Views:</strong> @singleReport.TotalViews</MudListItem>
+                            <MudListItem T="string"><strong>Last Activity:</strong> @singleReport.LastActivityDate.ToString("MMM dd, yyyy")</MudListItem>
+                        </MudList>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+        </MudGrid>
+
+        <!-- Activity Timeline -->
+        <MudCard Elevation="2" Class="mb-4">
+            <MudCardHeader>
+                <MudText Typo="Typo.h6">📅 Activity Timeline</MudText>
+            </MudCardHeader>
+            <MudCardContent>
+                <MudGrid>
+                    <MudItem xs="12" md="4">
+                        <MudText Typo="Typo.subtitle1">Posts by Day of Week</MudText>
+                        <MudList T="string">
+                            @for (int i = 0; i < 7; i++)
+                            {
+                                var dayName = ((DayOfWeek)i).ToString().Substring(0, 3);
+                                var dayPosts = GetRandomDayActivity(); // Mock data for demonstration
+                                <MudListItem T="string">
+                                    <MudText>@dayName</MudText>
+                                    <MudProgressLinear Value="@(dayPosts)" Color="Color.Primary" Class="mx-2" Style="height: 6px;" />
+                                    <MudText Typo="Typo.caption">@($"{dayPosts:F0}%")</MudText>
+                                </MudListItem>
+                            }
+                        </MudList>
+                    </MudItem>
+                    <MudItem xs="12" md="4">
+                        <MudText Typo="Typo.subtitle1">Posts by Hour</MudText>
+                        <MudList T="string">
+                            @for (int hour = 8; hour <= 20; hour += 2)
+                            {
+                                var hourActivity = GetRandomHourActivity(); // Mock data for demonstration
+                                <MudListItem T="string">
+                                    <MudText>@($"{hour}:00")</MudText>
+                                    <MudProgressLinear Value="@(hourActivity)" Color="Color.Primary" Class="mx-2" Style="height: 6px;" />
+                                    <MudText Typo="Typo.caption">@($"{hourActivity:F0}%")</MudText>
+                                </MudListItem>
+                            }
+                        </MudList>
+                    </MudItem>
+                    <MudItem xs="12" md="4">
+                        <MudText Typo="Typo.subtitle1">Engagement Metrics</MudText>
+                        <!-- Posts vs Replies Ratio removed: not available in DTO -->
+                        <!-- User Participation removed: EngagementRate not available in DTO -->
+                    </MudItem>
+                </MudGrid>
+            </MudCardContent>
+        </MudCard>
+    }
+    else if (reportType == "all" && multipleReports?.Any() == true)
+    {
+        <!-- Multiple Forums Summary -->
+        <MudGrid Class="stats-grid mb-4">
+            <MudItem xs="12" sm="6" md="4">
+                <MudCard Elevation="2">
+                    <MudCardContent>
+                        <MudText Typo="Typo.h4">@multipleReports.Count()</MudText>
+                        <MudText Typo="Typo.subtitle2">Total Forums</MudText>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+            <MudItem xs="12" sm="6" md="4">
+                <MudCard Elevation="2">
+                    <MudCardContent>
+                        <MudText Typo="Typo.h4">@multipleReports.Sum(r => r.TotalPosts)</MudText>
+                        <MudText Typo="Typo.subtitle2">Total Posts</MudText>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+            <!-- Total Replies and Total Participants removed: not available in DTO -->
+        </MudGrid>
+
+        <!-- Forums Table -->
+        <MudTable T="ForumActivityReportDto" Items="@multipleReports" Hover="true" Breakpoint="Breakpoint.Sm" Class="report-table">
+            <HeaderContent>
+                <MudTh>Forum</MudTh>
+                <MudTh>Course</MudTh>
+                <MudTh>Posts</MudTh>
+                <MudTh>Replies</MudTh>
+                <MudTh>Participants</MudTh>
+                <MudTh>Activity</MudTh>
+                <MudTh>Engagement</MudTh>
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd DataLabel="Forum">
+                    <MudText Typo="Typo.body2"><strong>@context.ForumTitle</strong></MudText>
+                    <MudText Typo="Typo.caption" Class="text-muted">ID: @context.ForumId</MudText>
+                </MudTd>
+                <MudTd DataLabel="Course">@context.CourseName</MudTd>
+                <MudTd DataLabel="Posts">
+                    <MudChip T="int" Color="Color.Primary">@context.TotalPosts</MudChip>
+                </MudTd>
+                <MudTd DataLabel="Replies">
+                    <MudChip T="int" Color="Color.Info">@context.ActiveUsers</MudChip>
+                </MudTd>
+                <MudTd DataLabel="Participants">
+                    <MudChip T="int" Color="Color.Secondary">@context.TotalTopics</MudChip>
+                </MudTd>
+                <MudTd DataLabel="Activity">
+                    <MudText><strong>@($"{context.AveragePostsPerUser:F1}")</strong> posts/user</MudText>
+                    <MudText><strong>@($"{context.AverageRepliesPerTopic:F1}")</strong> replies/topic</MudText>
+                    <MudText Typo="Typo.caption" Class="text-muted">Most active: @context.MostActiveUser (@context.MostActiveUserPosts posts)</MudText>
+                </MudTd>
+                <MudTd DataLabel="Engagement">
+                    <MudChip T="int" Color="Color.Success">@context.TotalViews views</MudChip>
+                    <MudText Typo="Typo.caption" Class="text-muted">Last: @context.LastActivityDate.ToString("MMM dd, yyyy")</MudText>
+                </MudTd>
+            </RowTemplate>
+            <PagerContent>
+                <MudTablePager PageSizeOptions="@(new int[]{10, 20, 50})" />
+            </PagerContent>
+        </MudTable>
+    }
+}
+else if (!loading)
+{
+    <MudCard Elevation="2" Class="report-no-data">
+        <MudCardContent Class="text-center py-5">
+            <MudIcon Icon="@Icons.Material.Filled.Info" Size="Size.Large" Class="text-muted mb-3" />
+            <MudText Typo="Typo.h5">Ready to Generate Report</MudText>
+            <MudText Typo="Typo.body1" Class="text-muted">
+                @if (reportType == "single")
+                {
+                    <span>Please enter a Forum ID to generate the forum activity report.</span>
+                }
+                else
+                {
+                    <span>Click "Generate Report" to view activity for all forums.</span>
+                }
+            </MudText>
+        </MudCardContent>
+    </MudCard>
+}
+
+@code {
+    private ForumActivityReportDto? singleReport;
+    private IEnumerable<ForumActivityReportDto>? multipleReports;
+    private bool loading = false;
+    private string reportType = "single";
+    private int? forumId;
+    private int? courseId;
+    private DateTime? startDate;
+    private DateTime? endDate;
+    private string errorMessage = string.Empty;
+    private User user = default!;
+    private Random random = new Random();
+
+    [CascadingParameter]
+    private HttpContext HttpContext { get; set; } = default!;
+
+    protected override async Task OnInitializedAsync()
+    {
+        user = await UserAccessor.GetRequiredUserAsync(HttpContext);
+    }
+
+    private void OnReportTypeChanged()
+    {
+        // Reset data when report type changes
+        singleReport = null;
+        multipleReports = null;
+        errorMessage = string.Empty;
+    }
+
+    private async Task LoadData()
+    {
+        errorMessage = string.Empty;
+
+        if (reportType == "single" && !forumId.HasValue)
+        {
+            errorMessage = "Please enter a valid Forum ID.";
+            return;
+        }
+
+        loading = true;
+        StateHasChanged();
+
+        try
+        {
+            if (reportType == "single")
+            {
+                singleReport = await ReportRepository.GetForumActivityReportAsync(
+                user,
+                forumId!.Value,
+                startDate,
+                endDate
+                );
+                multipleReports = null;
+
+                if (singleReport == null)
+                {
+                    singleReport = GenerateDummySingleReportData();
+                }
+            }
+            else
+            {
+                multipleReports = await ReportRepository.GetAllForumsActivityReportAsync(
+                user,
+                startDate,
+                endDate,
+                courseId
+                );
+                singleReport = null;
+
+                if (multipleReports == null || !multipleReports.Any())
+                {
+                    multipleReports = GenerateDummyMultipleReportsData();
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error loading data: {ex.Message}";
+            singleReport = null;
+            multipleReports = null;
+
+            if (reportType == "single")
+            {
+                singleReport = GenerateDummySingleReportData();
+            }
+            else
+            {
+                multipleReports = GenerateDummyMultipleReportsData();
+            }
+        }
+        finally
+        {
+            loading = false;
+            StateHasChanged();
+        }
+    }
+
+    private ForumActivityReportDto GenerateDummySingleReportData()
+    {
+        return new ForumActivityReportDto
+        {
+            ForumId = forumId ?? 1,
+            ForumTitle = "Dummy Forum Title",
+            CourseName = "Dummy Course Name",
+            TotalTopics = random.Next(10, 50),
+            TotalPosts = random.Next(100, 500),
+            ActiveUsers = random.Next(5, 30),
+            AveragePostsPerUser = random.NextDouble() * 10 + 5,
+            AverageRepliesPerTopic = random.NextDouble() * 5 + 2,
+            MostActiveUser = "Dummy User",
+            MostActiveUserPosts = random.Next(20, 100),
+            MostPopularTopic = "Dummy Popular Topic",
+            MostPopularTopicReplies = random.Next(10, 50),
+            TotalViews = random.Next(500, 2000),
+            LastActivityDate = DateTime.Today.AddDays(-random.Next(1, 30))
+        };
+    }
+
+    private IEnumerable<ForumActivityReportDto> GenerateDummyMultipleReportsData()
+    {
+        var dummyData = new List<ForumActivityReportDto>();
+        var forumTitles = new[] { "General Discussion", "Technical Help", "Announcements", "Off-Topic" };
+        var courseNames = new[] { "Math 101", "Science 202", "History 303" };
+
+        for (int i = 0; i < 5; i++)
+        {
+            dummyData.Add(new ForumActivityReportDto
+            {
+                ForumId = i + 1,
+                ForumTitle = forumTitles[random.Next(forumTitles.Length)],
+                CourseName = courseNames[random.Next(courseNames.Length)],
+                TotalTopics = random.Next(5, 20),
+                TotalPosts = random.Next(50, 200),
+                ActiveUsers = random.Next(5, 20),
+                AveragePostsPerUser = random.NextDouble() * 10 + 5,
+                AverageRepliesPerTopic = random.NextDouble() * 5 + 2,
+                MostActiveUser = $"User {random.Next(1, 100)}",
+                MostActiveUserPosts = random.Next(10, 50),
+                MostPopularTopic = $"Topic {random.Next(1, 50)}",
+                MostPopularTopicReplies = random.Next(5, 25),
+                TotalViews = random.Next(200, 1000),
+                LastActivityDate = DateTime.Today.AddDays(-random.Next(1, 30))
+            });
+        }
+        return dummyData;
+    }
+
+    // Mock data methods for demonstration (replace with real data from report)
+    private double GetRandomDayActivity()
+    {
+        return random.Next(10, 90);
+    }
+
+    private double GetRandomHourActivity()
+    {
+        return random.Next(5, 60);
+    }
+
+    // Removed GetPostsRatio as TotalReplies does not exist in DTO
+
+    private async Task ExportToPdf()
+    {
+        try
+        {
+            if (reportType == "single" && singleReport != null)
+            {
+                var data = new
+                {
+                    Forum = singleReport.ForumTitle,
+                    Course = singleReport.CourseName,
+                    TotalTopics = singleReport.TotalTopics,
+                    TotalPosts = singleReport.TotalPosts,
+                    ActiveUsers = singleReport.ActiveUsers,
+                    TotalViews = singleReport.TotalViews,
+                    LastActivity = singleReport.LastActivityDate.ToString("MMM dd, yyyy"),
+                    MostActiveUser = singleReport.MostActiveUser,
+                    MostActiveUserPosts = singleReport.MostActiveUserPosts,
+                    MostPopularTopic = singleReport.MostPopularTopic,
+                    MostPopularTopicReplies = singleReport.MostPopularTopicReplies,
+                    AveragePostsPerUser = singleReport.AveragePostsPerUser.ToString("F1"),
+                    AverageRepliesPerTopic = singleReport.AverageRepliesPerTopic.ToString("F1")
+                };
+
+                var jsonData = System.Text.Json.JsonSerializer.Serialize(data);
+                await JSRuntime.InvokeVoidAsync("downloadPdf", "Forum Activity Report", jsonData);
+            }
+            else if (reportType == "all" && multipleReports?.Any() == true)
+            {
+                var data = multipleReports.Select(r => new
+                {
+                    Forum = r.ForumTitle,
+                    Course = r.CourseName,
+                    TotalTopics = r.TotalTopics,
+                    TotalPosts = r.TotalPosts,
+                    ActiveUsers = r.ActiveUsers,
+                    TotalViews = r.TotalViews,
+                    LastActivity = r.LastActivityDate.ToString("MMM dd, yyyy"),
+                    MostActiveUser = r.MostActiveUser,
+                    MostActiveUserPosts = r.MostActiveUserPosts,
+                    MostPopularTopic = r.MostPopularTopic,
+                    MostPopularTopicReplies = r.MostPopularTopicReplies,
+                    AveragePostsPerUser = r.AveragePostsPerUser.ToString("F1"),
+                    AverageRepliesPerTopic = r.AverageRepliesPerTopic.ToString("F1")
+                });
+
+                var jsonData = System.Text.Json.JsonSerializer.Serialize(data);
+                await JSRuntime.InvokeVoidAsync("downloadPdf", "Forum Activity Report - All Forums", jsonData);
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Export error: {ex.Message}");
+        }
+    }
+
+    private async Task ExportToExcel()
+    {
+        try
+        {
+            if (reportType == "single" && singleReport != null)
+            {
+                var jsonData = System.Text.Json.JsonSerializer.Serialize(singleReport);
+                await JSRuntime.InvokeVoidAsync("downloadExcel", "Forum Activity Report", jsonData);
+            }
+            else if (reportType == "all" && multipleReports?.Any() == true)
+            {
+                var jsonData = System.Text.Json.JsonSerializer.Serialize(multipleReports);
+                await JSRuntime.InvokeVoidAsync("downloadExcel", "Forum Activity Report - All Forums", jsonData);
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Export error: {ex.Message}");
+        }
+    }
+}

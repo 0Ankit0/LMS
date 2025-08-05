@@ -1,0 +1,273 @@
+@page "/admin/course-master"
+@using LMS.Repositories
+@using MudBlazor
+@inject NavigationManager NavigationManager
+@inject ICourseRepository CourseRepository
+
+@if (isLoading)
+{
+    <div class="d-flex flex-column" style="min-height: 100vh;">
+        <!-- Skeleton for Top Navigation Bar -->
+        <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="64px" Class="w-100" />
+
+        <!-- Skeleton for Tab Navigation -->
+        <div class="d-flex justify-content-around p-4">
+            <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="100px" Height="40px" />
+            <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="100px" Height="40px" />
+            <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="100px" Height="40px" />
+        </div>
+
+        <!-- Skeleton for Tab Content -->
+        <div class="flex-grow-1 p-4">
+            <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="500px" />
+        </div>
+    </div>
+}
+else
+{
+    <div class="d-flex" style="min-height: 100vh; background: #36393f;">
+        <!-- Discord-like Sidebar (Only visible when Forum tab is active) -->
+        @if (activeTab == "Forum")
+        {
+            <MudNavMenu Class="sidebar bg-dark text-white p-3" Style="width: 260px; min-height: 100vh;">
+                <MudNavGroup Title="Course Forums" Expanded="true">
+                    <MudNavLink OnClick="@(() => SelectForumChannel("general"))" Icon="@Icons.Material.Filled.Tag" Active="@(selectedForumChannel == "general")">general</MudNavLink>
+                    <MudNavLink OnClick="@(() => SelectForumChannel("announcements"))" Icon="@Icons.Material.Filled.Campaign" Active="@(selectedForumChannel == "announcements")">announcements</MudNavLink>
+                    <MudNavLink OnClick="@(() => SelectForumChannel("questions"))" Icon="@Icons.Material.Filled.Help" Active="@(selectedForumChannel == "questions")">questions</MudNavLink>
+                    <MudNavLink OnClick="@(() => SelectForumChannel("assignments"))" Icon="@Icons.Material.Filled.Assignment" Active="@(selectedForumChannel == "assignments")">assignments</MudNavLink>
+                </MudNavGroup>
+                <MudNavGroup Title="Study Groups" Expanded="true">
+                    <MudNavLink Icon="@Icons.Material.Filled.People">Study Group 1</MudNavLink>
+                    <MudNavLink Icon="@Icons.Material.Filled.People">Study Group 2</MudNavLink>
+                </MudNavGroup>
+            </MudNavMenu>
+        }
+
+        <!-- Main Content Area -->
+        <div class="flex-grow-1 d-flex flex-column">
+            <!-- Top Navigation Bar -->
+            <MudAppBar Elevation="1">
+                <MudText Typo="Typo.h6" Class="fw-bold mb-1">@course.Title</MudText>
+                <MudText Typo="Typo.caption" Class="text-muted small mb-0">@course.Description</MudText>
+                <MudSpacer />
+                <MudChip T="string" Color="Color.Primary" Class="me-2">@course.Level</MudChip>
+                <MudText Typo="Typo.caption" Class="text-muted small">@course.EstimatedDuration</MudText>
+            </MudAppBar>
+
+            <!-- Tab Navigation -->
+            <MudTabs Elevation="0" Rounded="true" PanelClass="mt-4">
+                <MudTabPanel Text="Forum" Icon="@Icons.Material.Filled.Forum" Active="@(activeTab == "Forum")" OnClick="@(() => SetActiveTab("Forum"))" />
+                <MudTabPanel Text="Resources" Icon="@Icons.Material.Filled.Folder" Active="@(activeTab == "Resources")" OnClick="@(() => SetActiveTab("Resources"))" />
+                <MudTabPanel Text="Assessment" Icon="@Icons.Material.Filled.Assignment" Active="@(activeTab == "Assessment")" OnClick="@(() => SetActiveTab("Assessment"))" />
+            </MudTabs>
+
+            <!-- Tab Content -->
+            <div class="flex-grow-1 p-4" style="background: #f8f9fa;">
+                @if (activeTab == "Forum")
+                {
+                    <MudContainer MaxWidth="MaxWidth.False">
+                        <MudCard Elevation="2">
+                            <MudCardHeader>
+                                <MudText Typo="Typo.h6">
+                                    <MudIcon Icon="@Icons.Material.Filled.Tag" Class="me-2" />@selectedForumChannel
+                                </MudText>
+                                <MudSpacer />
+                                <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small">
+                                    <MudIcon Icon="@Icons.Material.Filled.Add" Class="me-1" /> New Post
+                                </MudButton>
+                            </MudCardHeader>
+                            <MudCardContent>
+                                @if (forumPosts.Any())
+                                {
+                                    @foreach (var post in forumPosts)
+                                    {
+                                        <MudPaper Elevation="0" Class="mb-3 py-3 px-2 mud-border-b">
+                                            <MudGrid Spacing="2">
+                                                <MudItem xs="12">
+                                                    <MudAvatar Color="Color.Primary" Variant="Variant.Filled" Size="Size.Medium">
+                                                        <MudText Typo="Typo.h6">@post.AuthorName.Substring(0, 1)</MudText>
+                                                    </MudAvatar>
+                                                </MudItem>
+                                                <MudItem xs="12">
+                                                    <MudText Typo="Typo.subtitle1" Class="fw-semibold">@post.AuthorName</MudText>
+                                                    <MudText Typo="Typo.caption" Class="text-muted">@post.CreatedAt.ToString("MMM dd, yyyy")</MudText>
+                                                    <MudText Class="mb-2">@post.Content</MudText>
+                                                    <MudButtonGroup>
+                                                        <MudButton Variant="Variant.Outlined" Color="Color.Primary" Size="Size.Small">
+                                                            <MudIcon Icon="@Icons.Material.Filled.FavoriteBorder" Class="me-1" /> Like
+                                                        </MudButton>
+                                                        <MudButton Variant="Variant.Outlined" Color="Color.Secondary" Size="Size.Small">
+                                                            <MudIcon Icon="@Icons.Material.Filled.Reply" Class="me-1" /> Reply
+                                                        </MudButton>
+                                                    </MudButtonGroup>
+                                                </MudItem>
+                                            </MudGrid>
+                                        </MudPaper>
+                                    }
+                                }
+                                else
+                                {
+                                    <MudText Align="MudBlazor.Align.Center" Class="py-5">
+                                        <MudIcon Icon="@Icons.Material.Filled.Chat" Size="Size.Large" Class="text-muted" />
+                                        <MudText Typo="Typo.subtitle1" Class="text-muted mt-3">No posts yet. Be the first to start a discussion!</MudText>
+                                    </MudText>
+                                }
+                            </MudCardContent>
+                        </MudCard>
+                    </MudContainer>
+                }
+                else if (activeTab == "Resources")
+                {
+                    <MudContainer MaxWidth="MaxWidth.False">
+                        <MudCard Elevation="2">
+                            <MudCardHeader>
+                                <MudText Typo="Typo.h6">
+                                    <MudIcon Icon="@Icons.Material.Filled.Folder" Class="me-2" />Course Resources
+                                </MudText>
+                            </MudCardHeader>
+                            <MudCardContent>
+                                <MudGrid Spacing="4">
+                                    @foreach (var resource in courseResources)
+                                    {
+                                        <MudItem xs="12" md="6" lg="4">
+                                            <MudCard Outlined="true" Height="100%">
+                                                <MudCardContent>
+                                                    <div class="d-flex align-items-center mb-3">
+                                                        <MudIcon Icon="@Icons.Material.Filled.PictureAsPdf" Color="Color.Error" Size="Size.Large" Class="me-2" />
+                                                        <div>
+                                                            <MudText Typo="Typo.subtitle1">@resource.Name</MudText>
+                                                            <MudText Typo="Typo.caption" Class="text-muted">@resource.Type</MudText>
+                                                        </div>
+                                                    </div>
+                                                    <MudText Typo="Typo.body2" Class="text-muted mb-3">@resource.Description</MudText>
+                                                    <MudButton Href="@resource.ExternalUrl" Target="_blank" Variant="Variant.Outlined" Color="Color.Primary" FullWidth="true">
+                                                        <MudIcon Icon="@Icons.Material.Filled.Download" Class="me-1" /> Download
+                                                    </MudButton>
+                                                </MudCardContent>
+                                            </MudCard>
+                                        </MudItem>
+                                    }
+                                </MudGrid>
+                            </MudCardContent>
+                        </MudCard>
+                    </MudContainer>
+                }
+                else if (activeTab == "Assessment")
+                {
+                    <MudContainer MaxWidth="MaxWidth.False">
+                        <MudCard Elevation="2">
+                            <MudCardHeader>
+                                <MudText Typo="Typo.h6">
+                                    <MudIcon Icon="@Icons.Material.Filled.Assignment" Class="me-2" />Assessments
+                                </MudText>
+                            </MudCardHeader>
+                            <MudCardContent>
+                                <MudGrid Spacing="4">
+                                    @foreach (var assessment in assessments)
+                                    {
+                                        <MudItem xs="12" md="6">
+                                            <MudCard Outlined="true" Height="100%">
+                                                <MudCardContent>
+                                                    <div class="d-flex justify-content-between align-items-start mb-3">
+                                                        <div>
+                                                            <MudText Typo="Typo.subtitle1">@assessment.Title</MudText>
+                                                            <MudChip T="string" Color="Color.Info" Size="Size.Small">@assessment.Type</MudChip>
+                                                        </div>
+                                                        <MudText Typo="Typo.caption" Class="text-muted">100 pts</MudText>
+                                                    </div>
+                                                    <MudText Typo="Typo.body2" Class="text-muted mb-3">@assessment.Description</MudText>
+                                                    <MudText Typo="Typo.caption" Class="text-muted mb-3">Due: @assessment.AvailableUntil?.ToString("MMM dd, yyyy")</MudText>
+                                                    <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true">
+                                                        <MudIcon Icon="@Icons.Material.Filled.PlayCircle" Class="me-1" /> Start Assessment
+                                                    </MudButton>
+                                                </MudCardContent>
+                                            </MudCard>
+                                        </MudItem>
+                                    }
+                                </MudGrid>
+                            </MudCardContent>
+                        </MudCard>
+                    </MudContainer>
+                }
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private CourseModel? course;
+    private string activeTab = "Forum";
+    private string selectedForumChannel = "general";
+    private bool isLoading = true; // Add isLoading state
+
+    // Data lists
+    private List<ForumPostModel> forumPosts = new();
+    private List<LessonResourceModel> courseResources = new();
+    private List<AssessmentModel> assessments = new();
+
+    [SupplyParameterFromQuery]
+    private int Id { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Simulate data loading
+        await Task.Delay(1000);
+
+        var course = await CourseRepository.GetCourseByIdAsync(Id);
+
+        if (course is null)
+        {
+            InitializeMockData();
+            // NavigationManager.NavigateTo("notfound");
+            return;
+        }
+
+        isLoading = false; // Set isLoading to false after data is loaded
+    }
+
+    private void SetActiveTab(string tab)
+    {
+        activeTab = tab;
+    }
+
+    private void SelectForumChannel(string channel)
+    {
+        selectedForumChannel = channel;
+        LoadForumPosts();
+    }
+
+    private void InitializeMockData()
+    {
+        forumPosts = new List<ForumPostModel>
+        {
+            new ForumPostModel { Id = 1, AuthorName = "John Doe", Content = "Welcome to the course! Looking forward to learning with everyone.", CreatedAt = DateTime.Now.AddDays(-2) },
+            new ForumPostModel { Id = 2, AuthorName = "Jane Smith", Content = "Has anyone started the first assignment yet? I'm having trouble with the setup.", CreatedAt = DateTime.Now.AddDays(-1) }
+        };
+
+        courseResources = new List<LessonResourceModel>
+        {
+            new LessonResourceModel { Id = 1, Name = "Course Syllabus", Type = "PDF", Description = "Complete course outline and schedule", ExternalUrl = "#" },
+            new LessonResourceModel { Id = 2, Name = "Getting Started Guide", Type = "PDF", Description = "Setup instructions and prerequisites", ExternalUrl = "#" },
+            new LessonResourceModel { Id = 3, Name = "Sample Code", Type = "ZIP", Description = "Code examples and templates", ExternalUrl = "#" }
+        };
+
+        assessments = new List<AssessmentModel>
+        {
+            new AssessmentModel { Id = 1, Title = "Quiz 1: Fundamentals", Type = "Quiz", Description = "Basic concepts and terminology", AvailableUntil = DateTime.Now.AddDays(7) },
+            new AssessmentModel { Id = 2, Title = "Assignment 1: Hello World", Type = "Assignment", Description = "Create your first application", AvailableUntil = DateTime.Now.AddDays(14) }
+        };
+    }
+
+    private void LoadForumPosts()
+    {
+        // Mock implementation - replace with actual data loading based on selectedForumChannel
+        forumPosts = new List<ForumPostModel>
+        {
+            new ForumPostModel { Id = 1, AuthorName = "John Doe", Content = $"This is a post in {selectedForumChannel} channel", CreatedAt = DateTime.Now.AddDays(-1) }
+        };
+    }
+}
+
+
+
+

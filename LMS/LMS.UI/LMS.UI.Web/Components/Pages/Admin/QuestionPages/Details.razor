@@ -1,0 +1,72 @@
+﻿@page "/questions/details"
+@rendermode @(new InteractiveServerRenderMode())
+@using LMS.Data.Entities
+@inject IAssessmentRepository AssessmentRepository
+@inject NavigationManager NavigationManager
+
+<PageTitle>Details</PageTitle>
+
+<h1>Details</h1>
+
+<div>
+    <h2>Question</h2>
+    <hr />
+</div>
+@if (isLoading)
+{
+    <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="300px" />
+}
+else if (question is not null)
+{
+    <dl class="row">
+        <dt class="col-sm-2">Text</dt>
+        <dd class="col-sm-10">@question.Text</dd>
+        <dt class="col-sm-2">AssessmentId</dt>
+        <dd class="col-sm-10">@question.AssessmentId</dd>
+        <dt class="col-sm-2">Type</dt>
+        <dd class="col-sm-10">@question.Type</dd>
+        <dt class="col-sm-2">Points</dt>
+        <dd class="col-sm-10">@question.Points</dd>
+        <dt class="col-sm-2">OrderIndex</dt>
+        <dd class="col-sm-10">@question.OrderIndex</dd>
+        <dt class="col-sm-2">Explanation</dt>
+        <dd class="col-sm-10">@question.Explanation</dd>
+        <dt class="col-sm-2">IsRequired</dt>
+        <dd class="col-sm-10">@question.IsRequired</dd>
+        <dt class="col-sm-2">CreatedAt</dt>
+        <dd class="col-sm-10">@question.CreatedAt</dd>
+    </dl>
+    <div>
+        <MudLink Href="@($"/admin/questions/edit?id={question.Id}")">Edit</MudLink> |
+        <MudLink Href="@($"/admin/questions")">Back to List</MudLink>
+    </div>
+}
+else
+{
+    <p>Question not found.</p>
+}
+
+@code {
+    private QuestionModel? question;
+    private bool isLoading = true;
+
+    [SupplyParameterFromQuery]
+    private int Id { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var allQuestions = await AssessmentRepository.GetAllQuestionsAsync();
+            question = allQuestions.FirstOrDefault(q => q.Id == Id);
+            if (question is null)
+            {
+                NavigationManager.NavigateTo("notfound");
+            }
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+}

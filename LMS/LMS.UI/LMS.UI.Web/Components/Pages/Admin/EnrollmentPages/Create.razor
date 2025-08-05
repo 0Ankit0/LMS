@@ -1,0 +1,108 @@
+@rendermode @(new InteractiveServerRenderMode())
+@using MudBlazor
+@using LMS.Repositories
+@inject IDropdownRepository DropdownRepository
+@inject IEnrollmentRepository EnrollmentRepository
+@inject ISnackbar Snackbar
+@inject NavigationManager NavigationManager
+
+<PageTitle>Create Enrollment - Admin</PageTitle>
+
+@if (isLoading)
+{
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <MudSkeleton SkeletonType="SkeletonType.Text" Width="200px" Height="40px" />
+        <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="180px" Height="40px" />
+    </div>
+
+    <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="400px" />
+}
+else
+{
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="mb-0">Create New Enrollment</h1>
+        <MudButton Variant="Variant.Text" Color="Color.Secondary" Href="/admin/enrollments">
+            <MudIcon Icon="@Icons.Material.Filled.ArrowBack" Class="me-2" />
+            Back to Enrollments
+        </MudButton>
+    </div>
+
+    <MudCard Elevation="2">
+        <MudCardHeader>
+            <MudText Typo="Typo.h6">Enrollment Information</MudText>
+        </MudCardHeader>
+        <MudCardContent>
+            <MudForm Model="Enrollment" OnValidSubmit="AddEnrollment" @ref="form">
+                <MudAlert Severity="Severity.Error" Class="mb-3" Visible="@(!form.IsValid)">
+                    <MudText>Please correct the errors below.</MudText>
+                </MudAlert>
+
+                <MudSelect @bind-Value="Enrollment.UserId" Label="User" Variant="Variant.Text" Required="true" RequiredError="User is required!" Placeholder="Select a user...">
+                    @foreach (var user in Users)
+                    {
+                        <MudSelectItem Value="@user.Value">@user.Text</MudSelectItem>
+                    }
+                </MudSelect>
+
+                <MudSelect @bind-Value="Enrollment.CourseId" Label="Course" Variant="Variant.Text" Required="true" RequiredError="Course is required!" Placeholder="Select a course...">
+                    @foreach (var course in Courses)
+                    {
+                        <MudSelectItem Value="@course.Value">@course.Text</MudSelectItem>
+                    }
+                </MudSelect>
+
+                <div class="d-flex gap-2">
+                    <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Disabled="@isSubmitting">
+                        <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Class="me-2" />
+                        Create Enrollment
+                    </MudButton>
+                    <MudButton Variant="Variant.Filled" Color="Color.Secondary" Href="/admin/enrollments">Cancel</MudButton>
+                </div>
+            </MudForm>
+        </MudCardContent>
+    </MudCard>
+}
+
+@code {
+    private MudForm form;
+    private CreateEnrollmentRequest Enrollment { get; set; } = new();
+    private bool isSubmitting = false;
+    private bool isLoading = true;
+    private List<DropdownOption<string>> Users = new();
+    private List<DropdownOption<int>> Courses = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        Users = await DropdownRepository.GetUsersAsync();
+        Courses = await DropdownRepository.GetCoursesAsync();
+        await Task.Delay(500); // Simulate data loading
+        isLoading = false;
+    }
+
+    private async Task AddEnrollment()
+    {
+        if (isSubmitting) return;
+        isSubmitting = true;
+        try
+        {
+            var result = await EnrollmentRepository.CreateEnrollmentAsync(Enrollment.UserId, Enrollment);
+            if (result != null)
+            {
+                Snackbar.Add("Enrollment created successfully!", Severity.Success);
+                NavigationManager.NavigateTo("/admin/enrollments");
+            }
+            else
+            {
+                Snackbar.Add("Failed to create enrollment. Please try again.", Severity.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error creating enrollment: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            isSubmitting = false;
+        }
+    }
+}

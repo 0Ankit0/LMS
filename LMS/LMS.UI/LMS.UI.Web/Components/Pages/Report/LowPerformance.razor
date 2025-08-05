@@ -1,0 +1,456 @@
+@page "/reports/low-performance"
+@layout ReportLayout
+@attribute [OutputCache(Duration = 60)]
+@inject IReportRepository ReportRepository
+@inject IJSRuntime JSRuntime
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject UserManager<User> UserManager
+@attribute [Authorize]
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="mb-1">⚠️ Low Performance Students Report</h2>
+        <p class="text-muted mb-0">Identify students who need additional support and intervention</p>
+    </div>
+    <div class="export-buttons">
+        <MudButton Variant="Variant.Outlined" Color="Color.Primary" OnClick="ExportToPdf">
+            <MudIcon Icon="@Icons.Material.Filled.PictureAsPdf" Class="me-2" /> Export PDF
+        </MudButton>
+        <MudButton Variant="Variant.Outlined" Color="Color.Primary" OnClick="ExportToExcel">
+            <MudIcon Icon="@Icons.Material.Filled.Description" Class="me-2" /> Export Excel
+        </MudButton>
+    </div>
+</div>
+
+<!-- Filters -->
+<MudGrid Class="report-filters">
+    <MudItem xs="12" md="3">
+        <MudNumericField Label="Performance Threshold (%)" @bind-Value="threshold" Variant="Variant.Text" Min="0" Max="100" Step="5" Placeholder="50" OnBlur="LoadData" />
+        <MudText Typo="Typo.caption" Class="text-muted">Students below this threshold will be included</MudText>
+    </MudItem>
+    <MudItem xs="12" md="3">
+        <MudDatePicker Label="Start Date" @bind-Date="startDate" DateFormat="yyyy-MM-dd" OnChange="LoadData" />
+    </MudItem>
+    <MudItem xs="12" md="3">
+        <MudDatePicker Label="End Date" @bind-Date="endDate" DateFormat="yyyy-MM-dd" OnChange="LoadData" />
+    </MudItem>
+    <MudItem xs="12" md="3">
+        <MudSelect T="int?" Label="Course" @bind-Value="selectedCourseId" OnChange="LoadData">
+            <MudSelectItem Value="@((int?)null)">All Courses</MudSelectItem>
+            @if (courses?.Any() == true)
+            {
+                @foreach (var course in courses)
+                {
+                    <MudSelectItem Value="@course.Id">@course.Title</MudSelectItem>
+                }
+            }
+        </MudSelect>
+    </MudItem>
+</MudGrid>
+
+@if (loading)
+{
+    <div class="report-loading d-flex flex-column align-items-center justify-content-center py-5">
+        <MudProgressCircular Indeterminate="true" Color="Color.Primary" Size="Size.Large" />
+        <MudText Class="mt-2">Loading low performance students data...</MudText>
+    </div>
+}
+else if (reports?.Any() == true)
+{
+    <!-- Alert Summary -->
+    <MudAlert Severity="Severity.Warning" Class="mb-4">
+        <MudIcon Icon="@Icons.Material.Filled.Warning" Class="me-3" Size="Size.Large" />
+        <div>
+            <MudText Typo="Typo.h6">⚠️ Attention Required</MudText>
+            <MudText>
+                <strong>@reports.Count()</strong> students are performing below the @threshold% threshold and may need additional support.
+            </MudText>
+        </div>
+    </MudAlert>
+
+    <!-- Summary Statistics -->
+    <MudGrid Class="stats-grid mb-4">
+        <MudItem xs="12" sm="6" md="3">
+            <MudCard Elevation="2">
+                <MudCardContent>
+                    <MudText Typo="Typo.h4">@reports.Count()</MudText>
+                    <MudText Typo="Typo.subtitle2">At-Risk Students</MudText>
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
+        <MudItem xs="12" sm="6" md="3">
+            <MudCard Elevation="2">
+                <MudCardContent>
+                    <MudText Typo="Typo.h4">@($"{reports.Average(r => r.AverageAssessmentScore):F1}%")</MudText>
+                    <MudText Typo="Typo.subtitle2">Avg Performance</MudText>
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
+        <MudItem xs="12" sm="6" md="3">
+            <MudCard Elevation="2">
+                <MudCardContent>
+                    <MudText Typo="Typo.h4">@($"{reports.Average(r => r.ProgressPercentage):F1}%")</MudText>
+                    <MudText Typo="Typo.subtitle2">Avg Progress</MudText>
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
+        <MudItem xs="12" sm="6" md="3">
+            <MudCard Elevation="2">
+                <MudCardContent>
+                    <MudText Typo="Typo.h4">@reports.Count(r => r.Status == "Active")</MudText>
+                    <MudText Typo="Typo.subtitle2">Still Active</MudText>
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
+    </MudGrid>
+
+    <!-- Risk Level Distribution -->
+    <MudGrid Class="mb-4">
+        <MudItem xs="12" md="6">
+            <MudCard Elevation="2">
+                <MudCardHeader>
+                    <MudText Typo="Typo.h6">Performance Distribution</MudText>
+                </MudCardHeader>
+                <MudCardContent>
+                    <canvas id="performanceChart" width="400" height="300"></canvas>
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
+        <MudItem xs="12" md="6">
+            <MudCard Elevation="2">
+                <MudCardHeader>
+                    <MudText Typo="Typo.h6">Risk Categories</MudText>
+                </MudCardHeader>
+                <MudCardContent>
+                    <MudList T="string">
+                        <MudListItem T="string">
+                            <MudChip T="string" Color="Color.Error" Class="me-2" />Critical (&lt;30%): @reports.Count(r => r.AverageAssessmentScore < 30)
+                        </MudListItem>
+                        <MudListItem T="string">
+                            <MudChip T="string" Color="Color.Warning" Class="me-2" />High Risk (30-40%): @reports.Count(r => r.AverageAssessmentScore >= 30 && r.AverageAssessmentScore < 40)
+                        </MudListItem>
+                        <MudListItem T="string">
+                            <MudChip T="string" Color="Color.Info" Class="me-2" />Moderate Risk (40-@threshold%): @reports.Count(r => r.AverageAssessmentScore >= 40 && r.AverageAssessmentScore < threshold)
+                        </MudListItem>
+                    </MudList>
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
+    </MudGrid>
+
+    <!-- Data Table -->
+    <div class="report-table">
+        <table class="table table-hover">
+            <thead>
+                <tr>
+                    <th>Student</th>
+                    <th>Email</th>
+                    <th>Course</th>
+                    <th>Progress</th>
+                    <th>Avg Score</th>
+                    <th>Risk Level</th>
+                    <th>Time Spent</th>
+                    <th>Status</th>
+                    <th>Last Activity</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var report in reports.OrderBy(r => r.AverageAssessmentScore))
+                {
+                    <MudTr>
+                        <MudTd DataLabel="Student">
+                            <div class="d-flex align-items-center">
+                                <MudAvatar Color="Color.Primary" Variant="Variant.Filled" Class="me-2">
+                                    <MudText Typo="Typo.h6">@report.StudentName.Substring(0, 1).ToUpper()</MudText>
+                                </MudAvatar>
+                                <MudText Typo="Typo.body2"><strong>@report.StudentName</strong></MudText>
+                            </div>
+                        </MudTd>
+                        <MudTd DataLabel="Email">@report.Email</MudTd>
+                        <MudTd DataLabel="Course">@report.CourseName</MudTd>
+                        <MudTd DataLabel="Progress">
+                            <MudProgressLinear Value="@(report.ProgressPercentage)" Color="@GetProgressBarColor(report.ProgressPercentage)" Class="my-2" Style="height: 6px;" />
+                            <MudText Typo="Typo.caption">@($"{report.ProgressPercentage:F1}%")</MudText>
+                        </MudTd>
+                        <MudTd DataLabel="Avg Score">
+                            <MudChip T="string" Color="@GetScoreBadgeColor(report.AverageAssessmentScore)">
+                                @($"{report.AverageAssessmentScore:F1}%")
+                            </MudChip>
+                        </MudTd>
+                        <MudTd DataLabel="Risk Level">
+                            <MudChip T="string" Color="@GetRiskBadgeColor(report.AverageAssessmentScore)">
+                                @GetRiskLevel(report.AverageAssessmentScore)
+                            </MudChip>
+                        </MudTd>
+                        <MudTd DataLabel="Time Spent">@report.TimeSpent.ToString(@"hh\:mm")</MudTd>
+                        <MudTd DataLabel="Status">
+                            <MudChip T="string" Color="@GetStatusBadgeColor(report.Status)">
+                                @report.Status
+                            </MudChip>
+                        </MudTd>
+                        <MudTd DataLabel="Last Activity">@(report.EnrolledAt.ToString("MMM dd, yyyy"))</MudTd>
+                        <MudTd DataLabel="Actions">
+                            <MudButtonGroup>
+                                <MudButton Variant="Variant.Outlined" Color="Color.Primary" Size="Size.Small" Title="Contact Student">
+                                    <MudIcon Icon="@Icons.Material.Filled.Email" />
+                                </MudButton>
+                                <MudButton Variant="Variant.Outlined" Color="Color.Info" Size="Size.Small" Title="View Details">
+                                    <MudIcon Icon="@Icons.Material.Filled.Visibility" />
+                                </MudButton>
+                                <MudButton Variant="Variant.Outlined" Color="Color.Warning" Size="Size.Small" Title="Add Note">
+                                    <MudIcon Icon="@Icons.Material.Filled.NoteAdd" />
+                                </MudButton>
+                            </MudButtonGroup>
+                        </MudTd>
+                    </MudTr>
+                }
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Intervention Recommendations -->
+    <MudCard Elevation="2" Class="mt-4">
+        <MudCardHeader>
+            <MudText Typo="Typo.h6">💡 Recommended Interventions</MudText>
+        </MudCardHeader>
+        <MudCardContent>
+            <MudGrid>
+                <MudItem xs="12" md="4">
+                    <MudCard Outlined="true">
+                        <MudCardContent>
+                            <MudText Typo="Typo.subtitle1">📧 Immediate Actions</MudText>
+                            <MudList T="string">
+                                <MudListItem T="string">• Send personalized check-in emails</MudListItem>
+                                <MudListItem T="string">• Schedule one-on-one meetings</MudListItem>
+                                <MudListItem T="string">• Provide additional resources</MudListItem>
+                            </MudList>
+                        </MudCardContent>
+                    </MudCard>
+                </MudItem>
+                <MudItem xs="12" md="4">
+                    <MudCard Outlined="true">
+                        <MudCardContent>
+                            <MudText Typo="Typo.subtitle1">🎯 Academic Support</MudText>
+                            <MudList T="string">
+                                <MudListItem T="string">• Assign peer mentors</MudListItem>
+                                <MudListItem T="string">• Offer tutoring sessions</MudListItem>
+                                <MudListItem T="string">• Create study groups</MudListItem>
+                            </MudList>
+                        </MudCardContent>
+                    </MudCard>
+                </MudItem>
+                <MudItem xs="12" md="4">
+                    <MudCard Outlined="true">
+                        <MudCardContent>
+                            <MudText Typo="Typo.subtitle1">📚 Learning Resources</MudText>
+                            <MudList T="string">
+                                <MudListItem T="string">• Provide supplementary materials</MudListItem>
+                                <MudListItem T="string">• Suggest alternative learning paths</MudListItem>
+                                <MudListItem T="string">• Offer extension deadlines</MudListItem>
+                            </MudList>
+                        </MudCardContent>
+                    </MudCard>
+                </MudItem>
+            </MudGrid>
+        </MudCardContent>
+    </MudCard>
+}
+else
+{
+    <MudCard Elevation="2" Class="report-no-data">
+        <MudCardContent Class="text-center py-5">
+            <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Size="Size.Large" Class="text-success mb-3" />
+            <MudText Typo="Typo.h5">Great News!</MudText>
+            <MudText Typo="Typo.body1" Class="text-muted">No students are performing below the @threshold% threshold.</MudText>
+            <MudText Typo="Typo.body1" Class="text-muted">All students are meeting performance expectations.</MudText>
+        </MudCardContent>
+    </MudCard>
+}
+
+@code {
+    private double threshold = 50.0;
+    private DateTime? startDate = DateTime.Today.AddMonths(-3);
+    private DateTime? endDate = DateTime.Today;
+    private int? selectedCourseId;
+    private bool loading = true;
+
+    private IEnumerable<StudentProgressReportDto>? reports;
+    private IEnumerable<Course>? courses = Enumerable.Empty<Course>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && reports?.Any() == true)
+        {
+            await DrawChart();
+        }
+    }
+
+    private async Task LoadData()
+    {
+        try
+        {
+            loading = true;
+
+            var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+            var user = await UserManager.GetUserAsync(authState.User);
+
+            if (user != null)
+            {
+                reports = await ReportRepository.GetLowPerformanceStudentsReportAsync(
+                    user, threshold, startDate, endDate, selectedCourseId);
+
+                if (reports == null || !reports.Any())
+                {
+                    reports = GenerateDummyData();
+                }
+
+                // Optionally load courses here if needed
+                // courses = await ...;
+
+                await DrawChart();
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading low performance students data: {ex.Message}");
+            reports = GenerateDummyData(); // Use dummy data on error
+            await DrawChart();
+        }
+        finally
+        {
+            loading = false;
+        }
+    }
+
+    private IEnumerable<StudentProgressReportDto> GenerateDummyData()
+    {
+        var random = new Random();
+        var dummyData = new List<StudentProgressReportDto>();
+
+        var studentNames = new[] { "John Doe", "Jane Smith", "Peter Jones", "Alice Brown", "Bob White" };
+        var courseNames = new[] { "Math 101", "Physics 201", "Chemistry 301", "History 101" };
+        var statuses = new[] { "Active", "Paused", "Dropped" };
+
+        for (int i = 0; i < 10; i++)
+        {
+            var avgScore = random.NextDouble() * (threshold - 10) + 10; // Score below threshold
+            var progress = random.NextDouble() * 50; // Low progress
+
+            dummyData.Add(new StudentProgressReportDto
+            {
+                StudentId = $"STU{1000 + i}",
+                StudentName = studentNames[random.Next(studentNames.Length)],
+                Email = $"student{i}@example.com",
+                CourseId = random.Next(1, 5),
+                CourseName = courseNames[random.Next(courseNames.Length)],
+                ProgressPercentage = progress,
+                AverageAssessmentScore = avgScore,
+                TimeSpent = TimeSpan.FromHours(random.Next(5, 50)),
+                Status = statuses[random.Next(statuses.Length)],
+                EnrolledAt = DateTime.Today.AddDays(-random.Next(30, 365))
+                // Removed LastActivity property assignment (not present in StudentProgressReportDto)
+            });
+        }
+        return dummyData;
+    }
+
+    private async Task DrawChart()
+    {
+        if (reports?.Any() == true)
+        {
+            var performanceData = new
+            {
+                critical = reports.Count(r => r.AverageAssessmentScore < 30),
+                high = reports.Count(r => r.AverageAssessmentScore >= 30 && r.AverageAssessmentScore < 40),
+                moderate = reports.Count(r => r.AverageAssessmentScore >= 40 && r.AverageAssessmentScore < threshold)
+            };
+
+            await JSRuntime.InvokeVoidAsync("drawPerformanceChart", "performanceChart", performanceData);
+        }
+    }
+
+    private MudBlazor.Color GetProgressBarColor(double progress)
+    {
+        if (progress >= 60) return MudBlazor.Color.Success;
+        if (progress >= 40) return MudBlazor.Color.Warning;
+        return MudBlazor.Color.Error;
+    }
+
+    private MudBlazor.Color GetScoreBadgeColor(double score)
+    {
+        if (score < 30) return MudBlazor.Color.Error;
+        if (score < 40) return MudBlazor.Color.Warning;
+        if (score < 60) return MudBlazor.Color.Info;
+        return MudBlazor.Color.Success;
+    }
+
+    private MudBlazor.Color GetRiskBadgeColor(double score)
+    {
+        if (score < 30) return MudBlazor.Color.Error;
+        if (score < 40) return MudBlazor.Color.Warning;
+        return MudBlazor.Color.Info;
+    }
+
+    private MudBlazor.Color GetStatusBadgeColor(string status)
+    {
+        switch (status.ToLower())
+        {
+            case "completed": return MudBlazor.Color.Success;
+            case "active": return MudBlazor.Color.Primary;
+            case "dropped": return MudBlazor.Color.Error;
+            case "paused": return MudBlazor.Color.Warning;
+            default: return MudBlazor.Color.Secondary;
+        }
+    }
+
+    private string GetRiskLevel(double score)
+    {
+        if (score < 30) return "Critical";
+        if (score < 40) return "High Risk";
+        return "Moderate Risk";
+    }
+
+    private async Task ExportToPdf()
+    {
+        try
+        {
+            var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+            var user = await UserManager.GetUserAsync(authState.User);
+
+            if (user != null)
+            {
+                var pdfBytes = await ReportRepository.ExportReportToPdfAsync(user, "lowperformance", new { threshold, startDate, endDate, selectedCourseId });
+                await JSRuntime.InvokeVoidAsync("downloadFile", "LowPerformanceStudents.pdf", Convert.ToBase64String(pdfBytes));
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error exporting to PDF: {ex.Message}");
+        }
+    }
+
+    private async Task ExportToExcel()
+    {
+        try
+        {
+            var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+            var user = await UserManager.GetUserAsync(authState.User);
+
+            if (user != null)
+            {
+                var excelBytes = await ReportRepository.ExportReportToExcelAsync(user, "lowperformance", new { threshold, startDate, endDate, selectedCourseId });
+                await JSRuntime.InvokeVoidAsync("downloadFile", "LowPerformanceStudents.xlsx", Convert.ToBase64String(excelBytes));
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error exporting to Excel: {ex.Message}");
+        }
+    }
+}

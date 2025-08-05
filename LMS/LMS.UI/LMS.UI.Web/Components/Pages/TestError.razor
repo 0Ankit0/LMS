@@ -1,0 +1,85 @@
+@page "/test-error"
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+
+<PageTitle>Test Error Boundary</PageTitle>
+
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-8">
+            <h2>Error Boundary Test Page</h2>
+            <p class="text-muted">This page is for testing the custom error boundary functionality.</p>
+
+            <MudCard Elevation="2">
+                <MudCardHeader>
+                    <MudText Typo="Typo.h6">Error Testing Controls</MudText>
+                </MudCardHeader>
+                <MudCardContent>
+                    <MudStack Spacing="2">
+                        <MudButton Variant="Variant.Filled" Color="Color.Error" OnClick="ThrowNullReferenceException">
+                            Throw Null Reference Exception
+                        </MudButton>
+                        <MudButton Variant="Variant.Filled" Color="Color.Warning" OnClick="ThrowArgumentException">
+                            Throw Argument Exception
+                        </MudButton>
+                        <MudButton Variant="Variant.Filled" Color="Color.Info" OnClick="ThrowInvalidOperationException">
+                            Throw Invalid Operation Exception
+                        </MudButton>
+                        <MudButton Variant="Variant.Filled" Color="Color.Secondary" OnClick="ThrowCustomException">
+                            Throw Custom Exception
+                        </MudButton>
+                    </MudStack>
+
+                    <MudText Typo="Typo.caption" Class="mt-3">
+                        Click any button above to trigger an exception and see how the error boundary handles it.
+                        The error boundary will display detailed error information including stack traces and inner
+                        exceptions.
+                    </MudText>
+                </MudCardContent>
+            </MudCard>
+
+            <div class="mt-4">
+                <h5>How it works:</h5>
+                <ul>
+                    <li>✅ <strong>Error Boundary Wrapper:</strong> All layouts now use <code>CustomErrorBoundary</code>
+                    </li>
+                    <li>✅ <strong>Detailed Error Display:</strong> Shows exception type, message, and stack trace</li>
+                    <li>✅ <strong>User-Friendly Actions:</strong> Try Again, Go Home, Reload Page buttons</li>
+                    <li>✅ <strong>Error Logging:</strong> Exceptions are logged automatically</li>
+                    <li>✅ <strong>Development vs Production:</strong> More details shown in development mode</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private void ThrowNullReferenceException()
+    {
+        string? nullString = null;
+        var length = nullString.Length; // This will throw NullReferenceException
+    }
+
+    private void ThrowArgumentException()
+    {
+        throw new ArgumentException("This is a test argument exception with a custom message.", nameof(ThrowArgumentException));
+    }
+
+    private void ThrowInvalidOperationException()
+    {
+        var list = new List<string>();
+        var item = list.Single(); // This will throw InvalidOperationException
+    }
+
+    private void ThrowCustomException()
+    {
+        try
+        {
+            // Simulate a nested exception scenario
+            throw new InvalidOperationException("Inner exception occurred during data processing.");
+        }
+        catch (Exception innerEx)
+        {
+            throw new ApplicationException("Custom application exception with inner exception details.", innerEx);
+        }
+    }
+}

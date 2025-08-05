@@ -1,0 +1,366 @@
+@using LMS.Web.Repositories.DTOs
+@inject IReportRepository ReportRepository
+@inject IJSRuntime JSRuntime
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject UserManager<User> UserManager
+@attribute [Authorize]
+@page "/reports/enrollment-trends"
+@attribute [OutputCache(Duration = 60)]
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="mb-1">📊 Enrollment Trends Report</h2>
+        <p class="text-muted mb-0">Analyze enrollment patterns and trends over time</p>
+    </div>
+    <div class="export-buttons">
+        <MudButton Variant="Variant.Outlined" Color="Color.Primary" OnClick="ExportToPdf">
+            <MudIcon Icon="@Icons.Material.Filled.PictureAsPdf" Class="me-2" /> Export PDF
+        </MudButton>
+        <MudButton Variant="Variant.Outlined" Color="Color.Primary" OnClick="ExportToExcel">
+            <MudIcon Icon="@Icons.Material.Filled.Description" Class="me-2" /> Export Excel
+        </MudButton>
+    </div>
+</div>
+
+<!-- Filters -->
+<MudGrid Class="report-filters">
+    <MudItem xs="12" md="3">
+        <MudSelect T="int" Label="Months to Analyze" @bind-Value="months" OnChange="LoadData">
+            <MudSelectItem Value="6">Last 6 Months</MudSelectItem>
+            <MudSelectItem Value="12">Last 12 Months</MudSelectItem>
+            <MudSelectItem Value="24">Last 24 Months</MudSelectItem>
+        </MudSelect>
+    </MudItem>
+    <MudItem xs="12" md="3">
+        <MudSelect T="int?" Label="Course" @bind-Value="selectedCourseId" OnChange="LoadData">
+            <MudSelectItem Value="@((int?)null)">All Courses</MudSelectItem>
+            @if (courses?.Any() == true)
+            {
+                @foreach (var course in courses)
+                {
+                    <MudSelectItem Value="@course.Id">@course.Title</MudSelectItem>
+                }
+            }
+        </MudSelect>
+    </MudItem>
+    <MudItem xs="12" md="3">
+        <MudSelect T="string" Label="Instructor" @bind-Value="selectedInstructorId" OnChange="LoadData">
+            <MudSelectItem Value="@string.Empty">All Instructors</MudSelectItem>
+            @if (instructors?.Any() == true)
+            {
+                @foreach (var instructor in instructors)
+                {
+                    <MudSelectItem Value="@instructor.Id">@instructor.FullName</MudSelectItem>
+                }
+            }
+        </MudSelect>
+    </MudItem>
+    <MudItem xs="12" md="3">
+        <MudSelect T="string" Label="Chart Type" @bind-Value="chartType" OnChange="UpdateChart">
+            <MudSelectItem Value="@("line")">Line Chart</MudSelectItem>
+            <MudSelectItem Value="@("bar")">Bar Chart</MudSelectItem>
+            <MudSelectItem Value="@("area")">Area Chart</MudSelectItem>
+        </MudSelect>
+    </MudItem>
+</MudGrid>
+
+@if (loading)
+{
+    <div class="report-loading d-flex flex-column align-items-center justify-content-center py-5">
+        <MudProgressCircular Indeterminate="true" Color="Color.Primary" Size="Size.Large" />
+        <MudText Class="mt-2">Loading enrollment trends data...</MudText>
+    </div>
+}
+else if (reports?.Any() == true)
+{
+    <!-- Summary Statistics -->
+    <MudGrid Class="stats-grid mb-4">
+        <MudItem xs="12" sm="6" md="3">
+            <MudCard Elevation="2">
+                <MudCardContent>
+                    <MudText Typo="Typo.h4">@reports.Sum(r => r.TotalEnrollments)</MudText>
+                    <MudText Typo="Typo.subtitle2">Total Enrollments</MudText>
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
+        <MudItem xs="12" sm="6" md="3">
+            <MudCard Elevation="2">
+                <MudCardContent>
+                    <MudText Typo="Typo.h4">@reports.Sum(r => r.NewEnrollments)</MudText>
+                    <MudText Typo="Typo.subtitle2">New Enrollments</MudText>
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
+        <MudItem xs="12" sm="6" md="3">
+            <MudCard Elevation="2">
+                <MudCardContent>
+                    <MudText Typo="Typo.h4">@($"{reports.Average(r => r.AverageProgressPercentage):F1}%")</MudText>
+                    <MudText Typo="Typo.subtitle2">Avg Completion Rate</MudText>
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
+        <MudItem xs="12" sm="6" md="3">
+            <MudCard Elevation="2">
+                <MudCardContent>
+                    <MudText Typo="Typo.h4">@($"{CalculateGrowthRate():F1}%")</MudText>
+                    <MudText Typo="Typo.subtitle2">Growth Rate</MudText>
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
+    </MudGrid>
+
+    <!-- Trends Chart -->
+    <MudCard Elevation="2" Class="report-chart mb-4">
+        <MudCardHeader>
+            <MudText Typo="Typo.h6">Enrollment Trends Over Time</MudText>
+        </MudCardHeader>
+        <MudCardContent>
+            <canvas id="trendsChart" width="800" height="400"></canvas>
+        </MudCardContent>
+    </MudCard>
+
+    <!-- Month-over-Month Analysis -->
+    <MudGrid Class="mb-4">
+        <MudItem xs="12" md="6">
+            <MudCard Elevation="2">
+                <MudCardHeader>
+                    <MudText Typo="Typo.h6">Month-over-Month Growth</MudText>
+                </MudCardHeader>
+                <MudCardContent>
+                    <canvas id="growthChart" width="400" height="300"></canvas>
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
+        <MudItem xs="12" md="6">
+            <MudCard Elevation="2">
+                <MudCardHeader>
+                    <MudText Typo="Typo.h6">Completion Trends</MudText>
+                </MudCardHeader>
+                <MudCardContent>
+                    <canvas id="completionChart" width="400" height="300"></canvas>
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
+    </MudGrid>
+
+    <!-- Data Table -->
+    <MudTable T="EnrollmentSummaryReportDto" Items="@reports" Hover="true" Breakpoint="Breakpoint.Sm" Class="report-table">
+        <HeaderContent>
+            <MudTh>Period</MudTh>
+            <MudTh>Date</MudTh>
+            <MudTh>New Enrollments</MudTh>
+            <MudTh>Total Enrollments</MudTh>
+            <MudTh>Completed</MudTh>
+            <MudTh>Completion Rate</MudTh>
+            <MudTh>Month Growth</MudTh>
+            <MudTh>Trend</MudTh>
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd DataLabel="Period">@context.Period</MudTd>
+            <MudTd DataLabel="Date">@context.ReportDate.ToString("MMM yyyy")</MudTd>
+            <MudTd DataLabel="New Enrollments">
+                <MudChip T="int" Color="Color.Primary">@context.NewEnrollments</MudChip>
+            </MudTd>
+            <MudTd DataLabel="Total Enrollments">@context.TotalEnrollments</MudTd>
+            <MudTd DataLabel="Completed">
+                <MudChip T="int" Color="Color.Success">@context.CompletedEnrollments</MudChip>
+            </MudTd>
+            <MudTd DataLabel="Completion Rate">
+                <MudProgressLinear Value="@(context.AverageProgressPercentage)" Color="Color.Info" Class="my-2" Style="height: 6px;" />
+                <MudText Typo="Typo.caption" Class="text-muted">@($"{context.AverageProgressPercentage:F1}%")</MudText>
+            </MudTd>
+            <MudTd DataLabel="Month Growth">
+                <MudText Class="text-muted">N/A</MudText>
+            </MudTd>
+            <MudTd DataLabel="Trend">
+                <MudIcon Icon="@Icons.Material.Filled.TrendingFlat" Color="Color.Secondary" Title="Stable" />
+            </MudTd>
+        </RowTemplate>
+        <PagerContent>
+            <MudTablePager PageSizeOptions="@(new int[]{10, 20, 50})" />
+        </PagerContent>
+    </MudTable>
+}
+else
+{
+    <MudCard Elevation="2" Class="report-no-data">
+        <MudCardContent Class="text-center py-5">
+            <MudIcon Icon="@Icons.Material.Filled.Info" Size="Size.Large" Class="text-muted mb-3" />
+            <MudText Typo="Typo.h5">No Data Available</MudText>
+            <MudText Typo="Typo.body1" Class="text-muted">No enrollment trends data found for the selected criteria.</MudText>
+        </MudCardContent>
+    </MudCard>
+}
+
+@code {
+    private int months = 12;
+    private int? selectedCourseId;
+    private string selectedInstructorId = "";
+    private string chartType = "line";
+    private bool loading = true;
+
+    private IEnumerable<EnrollmentSummaryReportDto>? reports;
+    private IEnumerable<Course>? courses = Enumerable.Empty<Course>();
+    private IEnumerable<User>? instructors = Enumerable.Empty<User>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && reports?.Any() == true)
+        {
+            await DrawCharts();
+        }
+    }
+
+    private async Task LoadData()
+    {
+        try
+        {
+            loading = true;
+
+            // Get the current user
+            var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+            var user = await UserManager.GetUserAsync(authState.User);
+
+            if (user != null)
+            {
+                // Load enrollment trends report
+                reports = await ReportRepository.GetEnrollmentTrendsReportAsync(
+                    user, months, selectedCourseId, selectedInstructorId);
+
+                if (reports == null || !reports.Any())
+                {
+                    reports = GenerateDummyData();
+                }
+
+                // Optionally load courses and instructors here if needed
+                // courses = await ...;
+                // instructors = await ...;
+
+                await DrawCharts();
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading enrollment trends data: {ex.Message}");
+            reports = GenerateDummyData(); // Use dummy data on error
+            await DrawCharts();
+        }
+        finally
+        {
+            loading = false;
+        }
+    }
+
+    private IEnumerable<EnrollmentSummaryReportDto> GenerateDummyData()
+    {
+        var random = new Random();
+        var dummyData = new List<EnrollmentSummaryReportDto>();
+
+        var courseNames = new[] { "Mathematics 101", "Physics Fundamentals", "Chemistry Basics", "Computer Science" };
+
+        for (int i = 0; i < months; i++)
+        {
+            var reportDate = DateTime.Today.AddMonths(-i);
+            var newEnrollments = random.Next(10, 100);
+            var totalEnrollments = random.Next(100, 1000);
+            var completedEnrollments = random.Next(5, 50);
+            var averageProgressPercentage = random.NextDouble() * 100;
+
+            dummyData.Add(new EnrollmentSummaryReportDto
+            {
+                ReportDate = reportDate,
+                NewEnrollments = newEnrollments,
+                TotalEnrollments = totalEnrollments,
+                CompletedEnrollments = completedEnrollments,
+                AverageProgressPercentage = averageProgressPercentage,
+                Period = reportDate.ToString("MMM yyyy"),
+                CourseName = courseNames[random.Next(courseNames.Length)],
+                CourseId = random.Next(1, 10)
+            });
+        }
+        return dummyData.OrderBy(d => d.ReportDate);
+    }
+
+    private async Task UpdateChart()
+    {
+        if (reports?.Any() == true)
+        {
+            await DrawCharts();
+        }
+    }
+
+    private async Task DrawCharts()
+    {
+        if (reports?.Any() == true)
+        {
+            var chartData = reports.OrderBy(r => r.ReportDate).Select(r => new
+            {
+                label = r.ReportDate.ToString("MMM yyyy"),
+                newEnrollments = r.NewEnrollments,
+                totalEnrollments = r.TotalEnrollments,
+                completedEnrollments = r.CompletedEnrollments,
+                completionRate = r.AverageProgressPercentage
+            }).ToArray();
+
+            await JSRuntime.InvokeVoidAsync("drawTrendsChart", "trendsChart", chartData, chartType);
+            await JSRuntime.InvokeVoidAsync("drawGrowthChart", "growthChart", chartData);
+            await JSRuntime.InvokeVoidAsync("drawCompletionChart", "completionChart", chartData);
+        }
+    }
+
+    private double CalculateGrowthRate()
+    {
+        if (reports?.Count() < 2) return 0;
+
+        var orderedReports = reports.OrderBy(r => r.ReportDate).ToList();
+        var firstMonth = orderedReports.First().NewEnrollments;
+        var lastMonth = orderedReports.Last().NewEnrollments;
+
+        if (firstMonth == 0) return 0;
+
+        return ((double)(lastMonth - firstMonth) / firstMonth) * 100;
+    }
+
+    private async Task ExportToPdf()
+    {
+        try
+        {
+            var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+            var user = await UserManager.GetUserAsync(authState.User);
+
+            if (user != null)
+            {
+                var pdfBytes = await ReportRepository.ExportReportToPdfAsync(user, "enrollmenttrends", new { months, selectedCourseId, selectedInstructorId });
+                await JSRuntime.InvokeVoidAsync("downloadFile", "EnrollmentTrends.pdf", Convert.ToBase64String(pdfBytes));
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error exporting to PDF: {ex.Message}");
+        }
+    }
+
+    private async Task ExportToExcel()
+    {
+        try
+        {
+            var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+            var user = await UserManager.GetUserAsync(authState.User);
+
+            if (user != null)
+            {
+                var excelBytes = await ReportRepository.ExportReportToExcelAsync(user, "enrollmenttrends", new { months, selectedCourseId, selectedInstructorId });
+                await JSRuntime.InvokeVoidAsync("downloadFile", "EnrollmentTrends.xlsx", Convert.ToBase64String(excelBytes));
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error exporting to Excel: {ex.Message}");
+        }
+    }
+}

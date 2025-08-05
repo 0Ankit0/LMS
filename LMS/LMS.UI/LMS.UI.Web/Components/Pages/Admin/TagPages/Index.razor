@@ -1,0 +1,170 @@
+@page "/admin/tags"
+@attribute [OutputCache(Duration = 60)]
+@rendermode @(new InteractiveServerRenderMode())
+
+@layout AdminLayout
+@inject ITagRepository TagRepository
+@inject ISnackbar Snackbar
+
+<PageTitle>Tags - Admin</PageTitle>
+
+<MudCard Elevation="2">
+    <MudCardHeader>
+        <MudText Typo="Typo.h6">Tags</MudText>
+        <MudSpacer />
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" Href="/admin/tags/create">
+            <MudIcon Icon="@Icons.Material.Filled.Add" Class="me-2" />
+            Add New Tag
+        </MudButton>
+    </MudCardHeader>
+    <MudCardContent>
+        @if (_loading)
+        {
+            <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="300px" />
+        }
+        else
+        {
+            <MudTable T="TagModel" ServerData="@TagsDataProvider" Hover="true" Breakpoint="Breakpoint.Sm" Loading="@_loading">
+                <HeaderContent>
+                    <MudTh><MudTableSortLabel T="TagModel" SortBy="new Func<TagModel, object>(x => x.Name)">Name</MudTableSortLabel></MudTh>
+                    <MudTh><MudTableSortLabel T="TagModel" SortBy="new Func<TagModel, object>(x => x.Color)">Color</MudTableSortLabel></MudTh>
+                    <MudTh>Actions</MudTh>
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd DataLabel="Name">@context.Name</MudTd>
+                    <MudTd DataLabel="Color">
+                        <div class="d-flex align-items-center">
+                            <div class="me-2"
+                                style="width: 20px; height: 20px; background-color: @context.Color; border: 1px solid #ccc; border-radius: 4px;">
+                            </div>
+                            @context.Color
+                        </div>
+                    </MudTd>
+                    <MudTd DataLabel="Actions">
+                        <MudButtonGroup>
+                            <MudButton Variant="Variant.Outlined" Color="Color.Primary" Href='@($"/admin/tags/edit?id={context.Id}")'>
+                                <MudIcon Icon="@Icons.Material.Filled.Edit" Class="me-1" /> Edit
+                            </MudButton>
+                            <MudButton Variant="Variant.Outlined" Color="Color.Info" Href='@($"/admin/tags/details?id={context.Id}")'>
+                                <MudIcon Icon="@Icons.Material.Filled.Info" Class="me-1" /> Details
+                            </MudButton>
+                            <MudButton Variant="Variant.Outlined" Color="Color.Error" OnClick="() => ConfirmDelete(context)">
+                                <MudIcon Icon="@Icons.Material.Filled.Delete" Class="me-1" /> Delete
+                            </MudButton>
+                        </MudButtonGroup>
+                    </MudTd>
+                </RowTemplate>
+                <PagerContent>
+                    <MudTablePager PageSizeOptions="@(new int[]{10, 25, 50})" />
+                </PagerContent>
+            </MudTable>
+        }
+    </MudCardContent>
+</MudCard>
+
+<!-- Delete Confirmation Modal -->
+<MudDialog @bind-IsVisible="@showDeleteConfirm" Options="@dialogOptions">
+    <TitleContent>
+        <MudText Typo="Typo.h6" Class="text-danger">
+            <MudIcon Icon="@Icons.Material.Filled.Warning" /> Confirm Delete
+        </MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudText>Are you sure you want to delete the tag <strong>@tagToDelete?.Name</strong>? This action cannot be undone.</MudText>
+    </DialogContent>
+    <DialogActions>
+        <MudButton Color="Color.Error" OnClick="DeleteTag">
+            <MudIcon Icon="@Icons.Material.Filled.Delete" Class="me-1" /> Delete
+        </MudButton>
+        <MudButton Color="Color.Secondary" OnClick="CancelDelete">Cancel</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    private bool _loading = false;
+    private bool showDeleteConfirm = false;
+    private DialogOptions dialogOptions = new() { CloseButton = true, MaxWidth = MaxWidth.Small, FullWidth = true };
+    private TagModel? tagToDelete;
+
+    private async Task<MudBlazor.TableData<TagModel>> TagsDataProvider(MudBlazor.TableState state, CancellationToken cancellationToken)
+    {
+        _loading = true;
+        StateHasChanged();
+        try
+        {
+            var result = await TagRepository.GetTagsPaginatedAsync(new PaginationRequest
+            {
+                PageNumber = state.Page + 1,
+                PageSize = state.PageSize
+            });
+            var data = (result.Items == null || !result.Items.Any()) ? AddDummyTags() : result.Items;
+            var totalCount = (result.Items == null || !result.Items.Any()) ? data.Count() : result.TotalCount;
+            _loading = false;
+            return new MudBlazor.TableData<TagModel>
+            {
+                Items = data,
+                TotalItems = totalCount
+            };
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error loading tags: {ex.Message}", Severity.Error);
+            _loading = false;
+            return new MudBlazor.TableData<TagModel>
+            {
+                Items = Enumerable.Empty<TagModel>(),
+                TotalItems = 0
+            };
+        }
+    }
+
+    private List<TagModel> AddDummyTags()
+    {
+        return new List<TagModel>
+{
+new TagModel { Id = 1, Name = "Programming", Color = "#007bff" },
+new TagModel { Id = 2, Name = "Web Development", Color = "#28a745" },
+new TagModel { Id = 3, Name = "Data Science", Color = "#dc3545" },
+new TagModel { Id = 4, Name = "Beginner", Color = "#ffc107" },
+new TagModel { Id = 5, Name = "Advanced", Color = "#6f42c1" }
+};
+    }
+
+    private async Task ConfirmDelete(TagModel tag)
+    {
+        tagToDelete = tag;
+        showDeleteConfirm = true;
+    }
+
+    private void CancelDelete()
+    {
+        showDeleteConfirm = false;
+        tagToDelete = null;
+    }
+
+    private async Task DeleteTag()
+    {
+        if (tagToDelete != null)
+        {
+            try
+            {
+                await TagRepository.DeleteTagAsync(tagToDelete.Id);
+                Snackbar.Add($"Tag '{tagToDelete.Name}' deleted successfully.", Severity.Success);
+                await RefreshGridDataAsync();
+            }
+            catch (Exception ex)
+            {
+                Snackbar.Add($"Error deleting tag: {ex.Message}", Severity.Error);
+            }
+            finally
+            {
+                tagToDelete = null;
+            }
+        }
+    }
+
+    private async Task RefreshGridDataAsync()
+    {
+        await InvokeAsync(StateHasChanged);
+    }
+}

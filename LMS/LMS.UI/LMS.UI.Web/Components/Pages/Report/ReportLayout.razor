@@ -1,0 +1,27 @@
+@using LMS.UI.Shared.Layout
+@inherits LayoutComponentBase
+@layout MainLayout
+
+<MudText Typo="Typo.h3" GutterBottom="true">Reports</MudText>
+
+<MudGrid>
+    <MudItem md="3">
+        <MudNavMenu>
+            <MudNavLink Href="/reports/assessment-performance" Icon="@Icons.Material.Filled.Assessment">Assessment Performance</MudNavLink>
+            <MudNavLink Href="/reports/attendance" Icon="@Icons.Material.Filled.EventAvailable">Attendance</MudNavLink>
+            <MudNavLink Href="/reports/course-completion" Icon="@Icons.Material.Filled.CheckCircle">Course Completion</MudNavLink>
+            <MudNavLink Href="/reports/enrollment-summary" Icon="@Icons.Material.Filled.Group">Enrollment Summary</MudNavLink>
+            <MudNavLink Href="/reports/enrollment-trends" Icon="@Icons.Material.Filled.TrendingUp">Enrollment Trends</MudNavLink>
+            <MudNavLink Href="/reports/forum-activity" Icon="@Icons.Material.Filled.Forum">Forum Activity</MudNavLink>
+            <MudNavLink Href="/reports/grade-distribution" Icon="@Icons.Material.Filled.Grade">Grade Distribution</MudNavLink>
+            <MudNavLink Href="/reports/low-performance" Icon="@Icons.Material.Filled.Warning">Low Performance</MudNavLink>
+            <MudNavLink Href="/reports/student-engagement" Icon="@Icons.Material.Filled.Favorite">Student Engagement</MudNavLink>
+            <MudNavLink Href="/reports/student-information" Icon="@Icons.Material.Filled.Person">Student Information</MudNavLink>
+            <MudNavLink Href="/reports/student-progress" Icon="@Icons.Material.Filled.ShowChart">Student Progress</MudNavLink>
+            <MudNavLink Href="/reports/teacher-performance" Icon="@Icons.Material.Filled.Stars">Teacher Performance</MudNavLink>
+        </MudNavMenu>
+    </MudItem>
+    <MudItem md="9">
+        @Body
+    </MudItem>
+</MudGrid>

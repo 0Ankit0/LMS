@@ -1,0 +1,134 @@
+@page "/admin/lessons/create"
+
+@layout AdminLayout
+
+@inject ICourseRepository CourseRepository
+@inject IDropdownRepository DropdownRepository
+@inject NavigationManager NavigationManager
+@inject ISnackbar Snackbar
+@rendermode @(new InteractiveServerRenderMode())
+
+<PageTitle>Create Lesson - Admin</PageTitle>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="mb-0">Create New Lesson</h1>
+    <MudButton Variant="Variant.Text" Color="Color.Secondary" Href="/admin/lessons">
+        <MudIcon Icon="@Icons.Material.Filled.ArrowBack" Class="me-2" />
+        Back to Lessons
+    </MudButton>
+</div>
+
+<MudCard Elevation="2">
+    <MudCardHeader>
+        <MudText Typo="Typo.h6">Lesson Information</MudText>
+    </MudCardHeader>
+    <MudCardContent>
+        <MudForm @ref="form" Model="Lesson" OnValidSubmit="AddLesson">
+            <MudAlert Severity="Severity.Error" Class="my-3" Visible="@(!form.IsValid)">
+                <MudText>Please correct the errors below.</MudText>
+            </MudAlert>
+
+            <MudTextField @bind-Value="Lesson.Title" Label="Title" Variant="Variant.Text" Required="true" RequiredError="Title is required!" />
+
+            <MudTextField @bind-Value="Lesson.Description" Label="Description" Variant="Variant.Text" Lines="3" Placeholder="Enter lesson description" />
+
+            <MudSelect @bind-Value="Lesson.ModuleId" Label="Module" Variant="Variant.Text" Required="true" RequiredError="Module is required!" Placeholder="Select a module...">
+                @foreach (var module in modules)
+                {
+                    <MudSelectItem Value="@module.Value">@module.Text</MudSelectItem>
+                }
+            </MudSelect>
+
+            <div class="row">
+                <MudItem xs="12" md="6">
+                    <MudSelect @bind-Value="Lesson.Type" Label="Lesson Type" Variant="Variant.Text">
+                        @foreach (var enumValue in Enum.GetValues(typeof(LessonType)))
+                        {
+                            <MudSelectItem Value="@enumValue">@enumValue.ToString()</MudSelectItem>
+                        }
+                    </MudSelect>
+                </MudItem>
+                <MudItem xs="12" md="6">
+                    <MudNumericField @bind-Value="EstimatedDurationMinutes" Label="Duration (minutes)" Variant="Variant.Text" Placeholder="30" />
+                </MudItem>
+            </div>
+
+            <MudTextField @bind-Value="Lesson.Content" Label="Content" Variant="Variant.Text" Lines="5" Placeholder="Enter lesson content..." />
+
+            <div class="row">
+                <MudItem xs="12" md="6">
+                    <MudTextField @bind-Value="Lesson.VideoUrl" Label="Video URL" Variant="Variant.Text" Placeholder="https://example.com/video.mp4" />
+                </MudItem>
+                <MudItem xs="12" md="6">
+                    <MudTextField @bind-Value="Lesson.DocumentUrl" Label="Document URL" Variant="Variant.Text" Placeholder="https://example.com/document.pdf" />
+                </MudItem>
+            </div>
+
+            <div class="row">
+                <MudItem xs="12" md="6">
+                    <MudTextField @bind-Value="Lesson.ExternalUrl" Label="External URL" Variant="Variant.Text" Placeholder="https://external-resource.com" />
+                </MudItem>
+                <MudItem xs="12" md="6">
+                    <MudNumericField @bind-Value="Lesson.OrderIndex" Label="Order Index" Variant="Variant.Text" Placeholder="1" />
+                </MudItem>
+            </div>
+
+            <MudCheckBox T="bool" @bind-Checked="Lesson.IsRequired" Label="Is Required" Color="Color.Primary" />
+
+            <div class="d-flex gap-2">
+                <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Disabled="@isSubmitting">
+                    <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Class="me-2" />
+                    Create Lesson
+                </MudButton>
+                <MudButton Variant="Variant.Filled" Color="Color.Secondary" Href="/admin/lessons">Cancel</MudButton>
+            </div>
+        </MudForm>
+    </MudCardContent>
+</MudCard>
+
+@code {
+    [SupplyParameterFromForm]
+    private CreateLessonRequest Lesson { get; set; } = new();
+    private bool isSubmitting = false;
+    private MudForm form;
+    private List<DropdownOption> modules = new();
+
+    // Helper property for binding EstimatedDuration as minutes
+    private int EstimatedDurationMinutes
+    {
+        get => (int)Lesson.EstimatedDuration.TotalMinutes;
+        set => Lesson.EstimatedDuration = TimeSpan.FromMinutes(value);
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        modules = (await DropdownRepository.GetModulesAsync()).ToList();
+    }
+
+    private async Task AddLesson()
+    {
+        if (isSubmitting) return;
+        isSubmitting = true;
+        try
+        {
+            var result = await CourseRepository.CreateLessonAsync(Lesson);
+            if (result != null)
+            {
+                Snackbar.Add("Lesson created successfully!", Severity.Success);
+                NavigationManager.NavigateTo("/admin/lessons");
+            }
+            else
+            {
+                Snackbar.Add("Failed to create lesson. Please try again.", Severity.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error creating lesson: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            isSubmitting = false;
+        }
+    }
+}

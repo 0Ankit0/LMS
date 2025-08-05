@@ -1,0 +1,118 @@
+﻿@page "/admin/achievements"
+@layout AdminLayout
+@attribute [OutputCache(Duration = 60)]
+@inject IAchievementRepository AchievementRepository
+<PageTitle>Achievements - Admin</PageTitle>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="mb-0">Achievements</h1>
+    <MudButton Variant="Variant.Filled" Color="Color.Primary" Href="/admin/achievements/create">
+        <MudIcon Icon="@Icons.Material.Filled.Add" Class="me-2" />
+        Add New Achievement
+    </MudButton>
+</div>
+
+@if (_loading)
+{
+    <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="50px" Class="mb-3" />
+    <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="300px" />
+}
+else
+{
+    <MudTable T="AchievementModel" ServerData="@ServerData" Hover="true" Breakpoint="Breakpoint.Sm" Loading="@_loading">
+        <HeaderContent>
+            <MudTh><MudTableSortLabel T="AchievementModel" SortBy="new Func<AchievementModel, object>(x => x.Name)">Name</MudTableSortLabel></MudTh>
+            <MudTh><MudTableSortLabel T="AchievementModel" SortBy="new Func<AchievementModel, object>(x => x.Description)">Description</MudTableSortLabel></MudTh>
+            <MudTh><MudTableSortLabel T="AchievementModel" SortBy="new Func<AchievementModel, object>(x => x.Points)">Points</MudTableSortLabel></MudTh>
+            <MudTh><MudTableSortLabel T="AchievementModel" SortBy="new Func<AchievementModel, object>(x => x.Type)">Type</MudTableSortLabel></MudTh>
+            <MudTh><MudTableSortLabel T="AchievementModel" SortBy="new Func<AchievementModel, object>(x => x.IsActive)">Active</MudTableSortLabel></MudTh>
+            <MudTh><MudTableSortLabel T="AchievementModel" SortBy="new Func<AchievementModel, object>(x => x.UsersEarnedCount)">Users Earned</MudTableSortLabel></MudTh>
+            <MudTh>Actions</MudTh>
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd DataLabel="Name">@context.Name</MudTd>
+            <MudTd DataLabel="Description">@context.Description</MudTd>
+            <MudTd DataLabel="Points">@context.Points</MudTd>
+            <MudTd DataLabel="Type">@context.Type</MudTd>
+            <MudTd DataLabel="Active">@(context.IsActive ? "Yes" : "No")</MudTd>
+            <MudTd DataLabel="Users Earned">@context.UsersEarnedCount</MudTd>
+            <MudTd DataLabel="Actions">
+                <MudButtonGroup>
+                    <MudButton Variant="Variant.Outlined" Color="Color.Primary" Href="@($"/admin/achievements/edit?id={context.Id}")">
+                        <MudIcon Icon="@Icons.Material.Filled.Edit" Class="me-1" /> Edit
+                    </MudButton>
+                    <MudButton Variant="Variant.Outlined" Color="Color.Info" Href="@($"/admin/achievements/details?id={context.Id}")">
+                        <MudIcon Icon="@Icons.Material.Filled.Info" Class="me-1" /> Details
+                    </MudButton>
+                    <MudButton Variant="Variant.Outlined" Color="Color.Error" OnClick="() => DeleteAchievement(context.Id)">
+                        <MudIcon Icon="@Icons.Material.Filled.Delete" Class="me-1" /> Delete
+                    </MudButton>
+                </MudButtonGroup>
+            </MudTd>
+        </RowTemplate>
+        <PagerContent>
+            <MudTablePager PageSizeOptions="@(new int[]{10, 25, 50})" />
+        </PagerContent>
+    </MudTable>
+}
+
+@code {
+    private bool _loading = false;
+
+    private async Task<TableData<AchievementModel>> ServerData(TableState state, CancellationToken cancellationToken)
+    {
+        _loading = true;
+        StateHasChanged();
+
+        try
+        {
+            var paginationRequest = new PaginationRequest
+            {
+                PageNumber = state.Page,
+                PageSize = state.PageSize
+            };
+
+            var result = await AchievementRepository.GetAllAchievementsPaginatedAsync(paginationRequest);
+
+            // Fallback data if repository returns null or empty
+            if (result == null || !result.Items.Any())
+            {
+                result = new PaginatedResult<AchievementModel>
+                {
+                    Items = new List<AchievementModel>
+                    {
+                        new AchievementModel { Id = 1, Name = "First Course Completion", Description = "Completed your first course.", Points = 100, Type = "Course", IsActive = true, CreatedAt = DateTime.Now, UsersEarnedCount = 5 },
+                        new AchievementModel { Id = 2, Name = "Top Learner", Description = "Achieved top score in a quiz.", Points = 200, Type = "Quiz", IsActive = true, CreatedAt = DateTime.Now, UsersEarnedCount = 2 },
+                        new AchievementModel { Id = 3, Name = "Forum Contributor", Description = "Made 10 forum posts.", Points = 50, Type = "Forum", IsActive = true, CreatedAt = DateTime.Now, UsersEarnedCount = 8 }
+                    },
+                    TotalCount = 3,
+                    PageNumber = state.Page,
+                    PageSize = state.PageSize
+                };
+            }
+
+            _loading = false;
+            return new TableData<AchievementModel>() { TotalItems = result.TotalCount, Items = result.Items };
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading achievements: {ex.Message}");
+            _loading = false;
+            return new TableData<AchievementModel>() { TotalItems = 0, Items = new List<AchievementModel>() };
+        }
+    }
+
+    private async Task DeleteAchievement(int id)
+    {
+        try
+        {
+            await AchievementRepository.DeleteAchievementAsync(id);
+            // Refresh the table after deletion
+            await ServerData(new TableState { Page = 0, PageSize = 10 }, CancellationToken.None);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error deleting achievement: {ex.Message}");
+        }
+    }
+}

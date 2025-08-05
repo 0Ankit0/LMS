@@ -1,0 +1,176 @@
+﻿@rendermode @(new InteractiveServerRenderMode())
+@using LMS.Repositories
+@inject IDropdownRepository DropdownRepository
+@inject ICourseRepository CourseRepository
+@inject NavigationManager NavigationManager
+@inject ISnackbar Snackbar
+
+<PageTitle>Create Course - Admin</PageTitle>
+
+@if (isLoading)
+{
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <MudSkeleton SkeletonType="SkeletonType.Text" Width="200px" Height="40px" />
+        <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="180px" Height="40px" />
+    </div>
+
+    <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="800px" />
+}
+else
+{
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="mb-0">Create New Course</h1>
+        <MudButton Variant="Variant.Text" Color="Color.Secondary" Href="/admin/courses">
+            <MudIcon Icon="@Icons.Material.Filled.ArrowBack" Class="me-2" />
+            Back to Courses
+        </MudButton>
+    </div>
+
+    <MudCard Elevation="2">
+        <MudCardHeader>
+            <MudText Typo="Typo.h6">Course Information</MudText>
+        </MudCardHeader>
+        <MudCardContent>
+            <MudForm Model="Course" OnValidSubmit="AddCourse" @ref="form">
+                <MudAlert Severity="Severity.Error" Class="mb-3" Visible="@(!form.IsValid)">
+                    <MudText>Please correct the errors below.</MudText>
+                </MudAlert>
+
+                <MudGrid>
+                    <MudItem xs="12" md="8">
+                        <MudTextField @bind-Value="Course.Title" Label="Title" Variant="Variant.Text" Required="true" RequiredError="Title is required!" />
+                    </MudItem>
+                    <MudItem xs="12" md="4">
+                        <MudSelect @bind-Value="Course.Level" Label="Level" Variant="Variant.Text">
+                            @foreach (int level in Enum.GetValues(typeof(CourseLevel)))
+                            {
+                                <MudSelectItem Value="@level">@Enum.GetName(typeof(CourseLevel), @level)</MudSelectItem>
+                            }
+                        </MudSelect>
+                    </MudItem>
+                </MudGrid>
+
+                <MudTextField @bind-Value="Course.Description" Label="Description" Variant="Variant.Text" Lines="4" Required="true" RequiredError="Description is required!" Placeholder="Enter course description" />
+
+                <MudGrid>
+                    <MudItem xs="12" md="6">
+                        <MudTextField @bind-Value="Course.ThumbnailUrl" Label="Thumbnail URL" Variant="Variant.Text" Placeholder="https://example.com/image.jpg" />
+                    </MudItem>
+                    <MudItem xs="12" md="6">
+                        <MudSelect @bind-Value="Course.InstructorId" Label="Instructor" Variant="Variant.Text" Required="true" RequiredError="Instructor is required!" Placeholder="Search and select instructor...">
+                            @foreach (var instructor in instructors)
+                            {
+                                <MudSelectItem Value="@instructor.Value">@instructor.Text</MudSelectItem>
+                            }
+                        </MudSelect>
+                    </MudItem>
+                </MudGrid>
+
+                <MudGrid>
+                    <MudItem xs="12" md="4">
+                        <MudSelect @bind-Value="Course.Status" Label="Status" Variant="Variant.Text">
+                            @foreach (int status in Enum.GetValues(typeof(CourseStatus)))
+                            {
+                                <MudSelectItem Value="@status">@Enum.GetName(typeof(CourseStatus), @status)</MudSelectItem>
+                            }
+                        </MudSelect>
+                    </MudItem>
+                    <MudItem xs="12" md="4">
+                        <MudNumericField @bind-Value="Course.MaxEnrollments" Label="Max Enrollments" Variant="Variant.Text" Placeholder="100" />
+                    </MudItem>
+                    <MudItem xs="12" md="4">
+                        <MudNumericField @bind-Value="EstimatedDurationHours" Label="Duration (hours)" Variant="Variant.Text" Placeholder="40" />
+                    </MudItem>
+                </MudGrid>
+
+                <MudGrid>
+                    <MudItem xs="12" md="6">
+                        <MudDatePicker Date="@Course.StartDate" Label="Start Date" Variant="Variant.Text" />
+                    </MudItem>
+                    <MudItem xs="12" md="6">
+                        <MudDatePicker Date="@Course.EndDate" Label="End Date" Variant="Variant.Text" />
+                    </MudItem>
+                </MudGrid>
+
+                <MudTextField @bind-Value="Course.Prerequisites" Label="Prerequisites" Variant="Variant.Text" Lines="3" Placeholder="List any prerequisites..." />
+
+                <MudTextField @bind-Value="Course.LearningObjectives" Label="Learning Objectives" Variant="Variant.Text" Lines="3" Placeholder="What will students learn..." />
+
+                <MudCheckBox T="bool" @bind-Checked="Course.IsActive" Label="Is Active" Color="Color.Primary" />
+
+                <div class="d-flex gap-2">
+                    <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Disabled="@isSubmitting">
+                        <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Class="me-2" />
+                        Create Course
+                    </MudButton>
+                    <MudButton Variant="Variant.Filled" Color="Color.Secondary" Href="/admin/courses">Cancel</MudButton>
+                </div>
+            </MudForm>
+        </MudCardContent>
+    </MudCard>
+}
+
+@code {
+    [SupplyParameterFromForm]
+    private CreateCourseRequest Course { get; set; } = new();
+    private bool isSubmitting = false;
+    private bool isLoading = true;
+    private MudForm form;
+    private List<DropdownOption<string>> instructors = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Simulate data loading
+        await Task.Delay(500);
+        instructors = (await LoadInstructorsAsync()).ToList();
+        isLoading = false;
+    }
+
+    // Helper property for binding EstimatedDuration as hours
+    private int EstimatedDurationHours
+    {
+        get => (int)Course.EstimatedDuration.TotalHours;
+        set => Course.EstimatedDuration = TimeSpan.FromHours(value);
+    }
+
+    private async Task<IEnumerable<DropdownOption<string>>> LoadInstructorsAsync()
+    {
+        try
+        {
+            var result = await DropdownRepository.GetInstructorsAsync(search: null, take: 100);
+            return result;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading instructors: {ex.Message}");
+            return Enumerable.Empty<DropdownOption<string>>();
+        }
+    }
+
+    private async Task AddCourse()
+    {
+        if (isSubmitting) return;
+        isSubmitting = true;
+        try
+        {
+            var result = await CourseRepository.CreateCourseAsync(Course);
+            if (result != null)
+            {
+                Snackbar.Add("Course created successfully!", Severity.Success);
+                NavigationManager.NavigateTo("/admin/courses");
+            }
+            else
+            {
+                Snackbar.Add("Failed to create course. Please try again.", Severity.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error creating course: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            isSubmitting = false;
+        }
+    }
+}

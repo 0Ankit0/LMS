@@ -1,0 +1,122 @@
+﻿@rendermode @(new InteractiveServerRenderMode())
+
+@using LMS.Repositories
+@using LMS.Data.DTOs
+@using MudBlazor
+@inject IDropdownRepository DropdownRepository
+@inject ICertificateRepository CertificateRepository
+@inject ISnackbar Snackbar
+@inject NavigationManager NavigationManager
+
+<PageTitle>Create Certificate - Admin</PageTitle>
+
+@if (isLoading)
+{
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <MudSkeleton SkeletonType="SkeletonType.Text" Width="200px" Height="40px" />
+        <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="180px" Height="40px" />
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="500px" />
+        </div>
+    </div>
+}
+else
+{
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="mb-0">Create New Certificate</h1>
+        <MudButton Variant="Variant.Text" Color="Color.Secondary" Href="/admin/certificates">
+            <MudIcon Icon="@Icons.Material.Filled.ArrowBack" Class="me-2" />
+            Back to Certificates
+        </MudButton>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <MudCard Elevation="2">
+                <MudCardHeader>
+                    <MudText Typo="Typo.h6">Certificate Information</MudText>
+                </MudCardHeader>
+                <MudCardContent>
+                    <MudForm Model="Certificate" OnValidSubmit="AddCertificate">
+                        <MudAlert Severity="Severity.Error" Class="mb-3" Visible="@(!form.IsValid)">
+                            <MudText>Please correct the errors below.</MudText>
+                        </MudAlert>
+
+                        <MudSelect @bind-Value="Certificate.UserId" Label="User" Variant="Variant.Text" Required="true" RequiredError="User is required!" Placeholder="Select a user...">
+                            @foreach (var user in Users)
+                            {
+                                <MudSelectItem Value="@user.Value">@user.Text</MudSelectItem>
+                            }
+                        </MudSelect>
+
+                        <MudSelect @bind-Value="Certificate.CourseId" Label="Course" Variant="Variant.Text" Required="true" RequiredError="Course is required!" Placeholder="Select a course...">
+                            @foreach (var course in Courses)
+                            {
+                                <MudSelectItem Value="@course.Value">@course.Text</MudSelectItem>
+                            }
+                        </MudSelect>
+
+                        <MudNumericField @bind-Value="Certificate.FinalGrade" Label="Final Grade" Variant="Variant.Text" Step="0.01" />
+
+                        <MudDatePicker @bind-Date="Certificate.ExpiresAt" Label="Expires At" Variant="Variant.Text" />
+
+                        <div class="d-flex gap-2">
+                            <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Disabled="@isSubmitting">
+                                <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Class="me-2" />
+                                Create Certificate
+                            </MudButton>
+                            <MudButton Variant="Variant.Filled" Color="Color.Secondary" Href="/admin/certificates">Cancel</MudButton>
+                        </div>
+                    </MudForm>
+                </MudCardContent>
+            </MudCard>
+        </div>
+    </div>
+}
+
+@code {
+    private CreateCertificateRequest Certificate { get; set; } = new();
+    private bool isSubmitting = false;
+    private bool isLoading = true;
+    private MudForm form;
+    private List<DropdownOption<string>> Users = new();
+    private List<DropdownOption<int>> Courses = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        Users = await DropdownRepository.GetUsersAsync();
+        Courses = await DropdownRepository.GetCoursesAsync();
+        await Task.Delay(500); // Simulate data loading
+        isLoading = false;
+    }
+
+    private async Task AddCertificate()
+    {
+        if (isSubmitting) return;
+        isSubmitting = true;
+        try
+        {
+            var result = await CertificateRepository.IssueCertificateAsync(Certificate);
+            if (result != null)
+            {
+                Snackbar.Add("Certificate created successfully!", Severity.Success);
+                NavigationManager.NavigateTo("/admin/certificates");
+            }
+            else
+            {
+                Snackbar.Add("Failed to create certificate. Please try again.", Severity.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error creating certificate: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            isSubmitting = false;
+        }
+    }
+}

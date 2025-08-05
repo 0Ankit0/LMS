@@ -1,0 +1,121 @@
+@layout AdminLayout
+@inject IAssessmentRepository AssessmentRepository
+@inject ISnackbar Snackbar
+@if (isLoading)
+{
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <MudSkeleton SkeletonType="SkeletonType.Text" Width="300px" Height="40px" />
+        <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="180px" Height="40px" />
+    </div>
+
+    <div class="row">
+        <div class="col-md-4">
+            <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="300px" />
+        </div>
+        <div class="col-md-8">
+            <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="300px" />
+        </div>
+    </div>
+}
+else if (assessment != null)
+{
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="mb-0">Manage Assessment: @assessment.Title</h1>
+        <MudButton Variant="Variant.Text" Color="Color.Secondary" Href="/admin/assessments">
+            <MudIcon Icon="@Icons.Material.Filled.ArrowBack" Class="me-2" />
+            Back to Assessments
+        </MudButton>
+    </div>
+
+    <div class="row">
+        <div class="col-md-4">
+            <MudCard Elevation="2">
+                <MudCardHeader>
+                    <MudText Typo="Typo.h6">Add New Question</MudText>
+                </MudCardHeader>
+                <MudCardContent>
+                    <MudForm Model="newQuestion" ref="QuestionForm" OnValidSubmit="AddQuestion">
+                        <MudAlert Severity="Severity.Error" Class="mb-3" Visible="@(!QuestionForm.IsValid)">
+                            <MudText>Please correct the errors below.</MudText>
+                        </MudAlert>
+                        <MudTextField @bind-Value="newQuestion.Text" Label="Question Text" Variant="Variant.Text" Lines="3" />
+                        <MudSelect @bind-Value="newQuestion.Type" Label="Question Type" Variant="Variant.Text">
+                            @foreach (var type in Enum.GetValues<QuestionType>())
+                            {
+                                <MudSelectItem Value="@type">@type</MudSelectItem>
+                            }
+                        </MudSelect>
+                        <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary">Add Question</MudButton>
+                    </MudForm>
+                </MudCardContent>
+            </MudCard>
+        </div>
+        <div class="col-md-8">
+            <MudCard Elevation="2">
+                <MudCardHeader>
+                    <MudText Typo="Typo.h6">Questions</MudText>
+                </MudCardHeader>
+                <MudCardContent>
+                    @if (assessment.Questions != null && assessment.Questions.Any())
+                    {
+                        <MudList T="Question">
+                            @foreach (var question in assessment.Questions)
+                            {
+                                <MudListItem T="Question">@question.Text</MudListItem>
+                            }
+                        </MudList>
+                    }
+                    else
+                    {
+                        <MudText>No questions have been added to this assessment yet.</MudText>
+                    }
+                </MudCardContent>
+            </MudCard>
+        </div>
+    </div>
+}
+else
+{
+    <p>Assessment not found.</p>
+}
+
+@code {
+    [Parameter]
+    [SupplyParameterFromQuery]
+    public int Id { get; set; }
+
+    private AssessmentModel? assessment;
+    private CreateQuestionRequest newQuestion = new();
+    private bool isLoading = true;
+
+    private MudForm QuestionForm;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            assessment = await AssessmentRepository.GetAssessmentAsync(Id);
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private async Task AddQuestion()
+    {
+        newQuestion.AssessmentId = Id;
+        var result = await AssessmentRepository.CreateQuestionAsync(newQuestion);
+        if (result != null)
+        {
+            // Refresh the assessment after adding a question
+            assessment = await AssessmentRepository.GetAssessmentAsync(Id);
+            newQuestion = new();
+            Snackbar.Add("Question created successfully!", Severity.Success);
+        }
+        else
+        {
+            Snackbar.Add("Failed to create question. Please try again.", Severity.Error);
+        }
+    }
+}

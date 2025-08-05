@@ -1,0 +1,101 @@
+@page "/admin/forumposts/create"
+@layout AdminLayout
+@inject IForumRepository ForumRepository
+@inject IDropdownRepository DropdownRepository
+@inject NavigationManager NavigationManager
+@inject ISnackbar Snackbar
+
+<PageTitle>Create Forum Post - Admin</PageTitle>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="mb-0">Create New Forum Post</h1>
+    <MudButton Variant="Variant.Text" Color="Color.Secondary" Href="/admin/forumposts">
+        <MudIcon Icon="@Icons.Material.Filled.ArrowBack" Class="me-2" />
+        Back to Forum Posts
+    </MudButton>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <MudCard Elevation="2">
+            <MudCardHeader>
+                <MudText Typo="Typo.h6">Forum Post Information</MudText>
+            </MudCardHeader>
+            <MudCardContent>
+                <MudForm Model="ForumPost" OnValidSubmit="AddForumPost" @ref="form">
+                    <MudAlert Severity="Severity.Error" Class="mb-3" Visible="@(!form.IsValid)">
+                        <MudText>Please correct the errors below.</MudText>
+                    </MudAlert>
+
+                    <MudTextField @bind-Value="ForumPost.Content" Label="Content" Variant="Variant.Text" Lines="6" Required="true" RequiredError="Content is required!" Placeholder="Enter post content" />
+
+                    <MudSelect @bind-Value="ForumPost.TopicId" Label="Topic" Variant="Variant.Text" Required="true" RequiredError="Topic is required!" Placeholder="Select a topic...">
+                        @foreach (var forum in Forums)
+                        {
+                            <MudSelectItem Value="@(Convert.ToInt32(forum.Value))">@forum.Text</MudSelectItem>
+                        }
+                    </MudSelect>
+
+                    <div class="mb-3">
+                        <label for="parentpostid" class="form-label">Parent Post ID (Optional)</label>
+                        <InputNumber id="parentpostid" @bind-Value="ForumPost.ParentPostId" class="form-control"
+                            placeholder="Enter parent post ID for replies" />
+                        <ValidationMessage For="() => ForumPost.ParentPostId" class="text-danger" />
+                        <div class="form-text">Leave empty for new topics, or enter a post ID to reply to an existing post.</div>
+                    </div>
+
+                    <div class="d-flex gap-2">
+                        <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Disabled="@isSubmitting">
+                            <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Class="me-2" />
+                            Create Forum Post
+                        </MudButton>
+                        <MudButton Variant="Variant.Text" Color="Color.Secondary" Href="/admin/forumposts">Cancel</MudButton>
+                    </div>
+                </MudForm>
+            </MudCardContent>
+        </MudCard>
+    </div>
+</div>
+
+@code {
+    private MudForm form;
+    private CreateForumPostRequest ForumPost { get; set; } = new();
+    private bool isSubmitting = false;
+    private List<DropdownOption> Forums = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        Forums = await DropdownRepository.GetForumsAsync();
+    }
+
+    private async Task AddForumPost()
+    {
+        if (isSubmitting) return;
+        isSubmitting = true;
+        try
+        {
+            // For admin pages, we'll use a placeholder admin user ID
+            // In a real application, you'd get this from the authentication context
+            var adminUserId = "admin-user-id"; // This should come from authentication
+
+            var result = await ForumRepository.CreatePostAsync(ForumPost, adminUserId);
+            if (result != null)
+            {
+                Snackbar.Add("Forum post created successfully!", Severity.Success);
+                NavigationManager.NavigateTo("/admin/forumposts");
+            }
+            else
+            {
+                Snackbar.Add("Failed to create forum post. Please try again.", Severity.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error creating forum post: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            isSubmitting = false;
+        }
+    }
+}

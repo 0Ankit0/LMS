@@ -1,0 +1,176 @@
+@page "/admin/questions"
+@layout AdminLayout
+@inject IAssessmentRepository AssessmentRepository
+@inject ISnackbar Snackbar
+@attribute [OutputCache(Duration = 60)]
+
+<PageTitle>Questions - Admin</PageTitle>
+
+<MudCard Elevation="2">
+    <MudCardHeader>
+        <MudText Typo="Typo.h6">Questions</MudText>
+        <MudSpacer />
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" Href="/admin/questions/create">
+            <MudIcon Icon="@Icons.Material.Filled.Add" Class="me-2" />
+            Add New Question
+        </MudButton>
+    </MudCardHeader>
+    <MudCardContent>
+        @if (_loading)
+        {
+            <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="300px" />
+        }
+        else
+        {
+            <MudTable T="QuestionModel" ServerData="@ServerData" Hover="true" Breakpoint="Breakpoint.Sm" Loading="@_loading">
+                <HeaderContent>
+                    <MudTh><MudTableSortLabel T="QuestionModel" SortBy="new Func<QuestionModel, object>(x => x.Text)">Question Text</MudTableSortLabel></MudTh>
+                    <MudTh><MudTableSortLabel T="QuestionModel" SortBy="new Func<QuestionModel, object>(x => x.AssessmentId)">Assessment ID</MudTableSortLabel></MudTh>
+                    <MudTh><MudTableSortLabel T="QuestionModel" SortBy="new Func<QuestionModel, object>(x => x.Type)">Type</MudTableSortLabel></MudTh>
+                    <MudTh><MudTableSortLabel T="QuestionModel" SortBy="new Func<QuestionModel, object>(x => x.Points)">Points</MudTableSortLabel></MudTh>
+                    <MudTh><MudTableSortLabel T="QuestionModel" SortBy="new Func<QuestionModel, object>(x => x.OrderIndex)">Order</MudTableSortLabel></MudTh>
+                    <MudTh><MudTableSortLabel T="QuestionModel" SortBy="new Func<QuestionModel, object>(x => x.IsRequired)">Required</MudTableSortLabel></MudTh>
+                    <MudTh><MudTableSortLabel T="QuestionModel" SortBy="new Func<QuestionModel, object>(x => x.CreatedAt)">Created</MudTableSortLabel></MudTh>
+                    <MudTh>Actions</MudTh>
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd DataLabel="Question Text">@context.Text</MudTd>
+                    <MudTd DataLabel="Assessment ID">@context.AssessmentId</MudTd>
+                    <MudTd DataLabel="Type">
+                        <MudChip T="QuestionType" Color="@GetQuestionTypeBadgeColor(context.Type)">@context.Type</MudChip>
+                    </MudTd>
+                    <MudTd DataLabel="Points">@context.Points</MudTd>
+                    <MudTd DataLabel="Order">@context.OrderIndex</MudTd>
+                    <MudTd DataLabel="Required">
+                        <MudChip T="bool" Color="@(context.IsRequired ? Color.Primary : Color.Secondary)">
+                            @(context.IsRequired ? "Yes" : "No")
+                        </MudChip>
+                    </MudTd>
+                    <MudTd DataLabel="Created">@context.CreatedAt.ToString("yyyy-MM-dd HH:mm")</MudTd>
+                    <MudTd DataLabel="Actions">
+                        <MudButtonGroup>
+                            <MudButton Variant="Variant.Outlined" Color="Color.Primary" Href='@($"/admin/questions/edit?id={context.Id}")'>
+                                <MudIcon Icon="@Icons.Material.Filled.Edit" Class="me-1" /> Edit
+                            </MudButton>
+                            <MudButton Variant="Variant.Outlined" Color="Color.Info" Href='@($"/admin/questions/details?id={context.Id}")'>
+                                <MudIcon Icon="@Icons.Material.Filled.Info" Class="me-1" /> Details
+                            </MudButton>
+                            <MudButton Variant="Variant.Outlined" Color="Color.Error" OnClick="() => ConfirmDelete(context)">
+                                <MudIcon Icon="@Icons.Material.Filled.Delete" Class="me-1" /> Delete
+                            </MudButton>
+                        </MudButtonGroup>
+                    </MudTd>
+                </RowTemplate>
+                <PagerContent>
+    <MudTablePager PageSizeOptions="@(new int[]{10, 25, 50})" />
+                </PagerContent>
+            </MudTable>
+        }
+    </MudCardContent>
+</MudCard>
+
+<!-- Delete Confirmation Modal -->
+<MudDialog @bind-IsVisible="@showDeleteConfirm" Options="@dialogOptions">
+    <TitleContent>
+        <MudText Typo="Typo.h6" Class="text-danger">
+            <MudIcon Icon="@Icons.Material.Filled.Warning" /> Confirm Delete
+        </MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudText>Are you sure you want to delete this question? This action cannot be undone.</MudText>
+    </DialogContent>
+    <DialogActions>
+        <MudButton Color="Color.Error" OnClick="DeleteQuestion">
+            <MudIcon Icon="@Icons.Material.Filled.Delete" Class="me-1" /> Delete
+        </MudButton>
+        <MudButton Color="Color.Secondary" OnClick="CancelDelete">Cancel</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    private IEnumerable<QuestionModel> questions = default!;
+    private bool showDeleteConfirm = false;
+    private DialogOptions dialogOptions = new() { CloseButton = true, MaxWidth = MaxWidth.Small, FullWidth = true };
+    private QuestionModel? questionToDelete;
+    private bool _loading = false;
+
+    // MudBlazor Table Data Provider
+    private async Task<TableData<QuestionModel>> ServerData(TableState state, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var result = await AssessmentRepository.GetAllQuestionsPaginatedAsync(new PaginationRequest
+            {
+                PageNumber = state.Page + 1,
+                PageSize = state.PageSize
+            });
+
+            return new TableData<QuestionModel>
+            {
+                Items = result.Items,
+                TotalItems = result.TotalCount
+            };
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error loading questions: {ex.Message}", Severity.Error);
+            return new TableData<QuestionModel>
+            {
+                Items = Enumerable.Empty<QuestionModel>(),
+                TotalItems = 0
+            };
+        }
+    }
+
+    private async Task ConfirmDelete(QuestionModel question)
+    {
+        questionToDelete = question;
+        showDeleteConfirm = true;
+    }
+
+    private void CancelDelete()
+    {
+        showDeleteConfirm = false;
+        questionToDelete = null;
+    }
+
+    private async Task DeleteQuestion()
+    {
+        if (questionToDelete != null)
+        {
+            try
+            {
+                Snackbar.Add("Delete operation is not implemented. Please add DeleteQuestionAsync to IAssessmentRepository.", Severity.Error);
+                await RefreshGridDataAsync();
+            }
+            catch (Exception ex)
+            {
+                Snackbar.Add($"Error deleting question: {ex.Message}", Severity.Error);
+            }
+            finally
+            {
+                questionToDelete = null;
+            }
+        }
+    }
+
+    private async Task RefreshGridDataAsync()
+    {
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private MudBlazor.Color GetQuestionTypeBadgeColor(QuestionType type)
+    {
+        return type switch
+        {
+            QuestionType.MultipleChoice => MudBlazor.Color.Info,
+            QuestionType.TrueFalse => MudBlazor.Color.Success,
+            QuestionType.ShortAnswer => MudBlazor.Color.Secondary,
+            QuestionType.Essay => MudBlazor.Color.Warning,
+            QuestionType.Matching => MudBlazor.Color.Primary,
+            QuestionType.FillInTheBlank => MudBlazor.Color.Dark,
+            QuestionType.Ordering => MudBlazor.Color.Default,
+            _ => MudBlazor.Color.Primary
+        };
+    }
+}

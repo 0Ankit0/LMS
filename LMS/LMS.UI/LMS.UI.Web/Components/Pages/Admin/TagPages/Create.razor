@@ -1,0 +1,86 @@
+@page "/admin/tags/create"
+
+@layout AdminLayout
+
+@inject ITagRepository TagRepository
+@inject NavigationManager NavigationManager
+@inject ISnackbar Snackbar
+@rendermode @(new InteractiveServerRenderMode())
+
+<PageTitle>Create Tag - Admin</PageTitle>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="mb-0">Create New Tag</h1>
+    <MudButton Variant="Variant.Text" Color="Color.Secondary" Href="/admin/tags">
+        <MudIcon Icon="@Icons.Material.Filled.ArrowBack" Class="me-2" />
+        Back to Tags
+    </MudButton>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <MudCard Elevation="2">
+            <MudCardHeader>
+                <MudText Typo="Typo.h6">Tag Information</MudText>
+            </MudCardHeader>
+            <MudCardContent>
+                <MudForm Model="Tag" OnValidSubmit="AddTag" @ref="form">
+                    <MudAlert Severity="Severity.Error" Class="my-3" Visible="@(!form.IsValid)">
+                        <MudText>Please correct the errors below.</MudText>
+                    </MudAlert>
+
+                    <MudGrid>
+                        <MudItem xs="12" md="8">
+                            <MudTextField @bind-Value="Tag.Name" Label="Name" Variant="Variant.Text" Required="true" RequiredError="Name is required!" Placeholder="Enter tag name" />
+                        </MudItem>
+                        <MudItem xs="12" md="4">
+                            <MudTextField @bind-Value="Tag.Color" Label="Color" Variant="Variant.Text" InputType="InputType.Color" />
+                        </MudItem>
+                    </MudGrid>
+
+                    <div class="d-flex gap-2">
+                        <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Disabled="@isSubmitting">
+                            <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Class="me-2" />
+                            Create Tag
+                        </MudButton>
+                        <MudButton Variant="Variant.Filled" Color="Color.Secondary" Href="/admin/tags">Cancel</MudButton>
+                    </div>
+                </MudForm>
+            </MudCardContent>
+        </MudCard>
+    </div>
+</div>
+
+@code {
+    private CreateTagRequest Tag { get; set; } = new();
+    private bool isSubmitting = false;
+    private MudForm form;
+
+    private async Task AddTag()
+    {
+        if (isSubmitting) return;
+
+        isSubmitting = true;
+        try
+        {
+            var result = await TagRepository.CreateTagAsync(Tag);
+            if (result != null)
+            {
+                Snackbar.Add("Tag created successfully!", Severity.Success);
+                NavigationManager.NavigateTo("/admin/tags");
+            }
+            else
+            {
+                Snackbar.Add("Failed to create tag. Please try again.", Severity.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error creating tag: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            isSubmitting = false;
+        }
+    }
+}

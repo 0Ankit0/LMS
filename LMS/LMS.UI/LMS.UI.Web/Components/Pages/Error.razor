@@ -1,0 +1,125 @@
+﻿@page "/Error"
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@using System.Diagnostics
+@inject IWebHostEnvironment Environment
+@inject IJSRuntime JSRuntime
+
+<PageTitle>Error - LMS</PageTitle>
+
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <MudCard Elevation="2">
+                <MudCardHeader Class="mud-bg-error mud-text-white">
+                    <MudText Class="mb-0">
+                        <MudIcon Icon="@Icons.Material.Filled.Warning" Class="me-2" />
+                        An Error Occurred
+                    </MudText>
+                </MudCardHeader>
+                <MudCardContent>
+                    <MudAlert Severity="Severity.Error" Class="mb-4">
+                        <MudText>We're sorry, something went wrong</MudText>
+                        <MudText>
+                            An unexpected error occurred while processing your request.
+                            Our technical team has been notified and is working to resolve the issue.
+                        </MudText>
+                    </MudAlert>
+
+                    @if (ShowRequestId)
+                    {
+                        <MudText><strong>Request ID:</strong></MudText>
+                        <MudText>@RequestId</MudText>
+                        <MudText Class="text-muted">Please provide this ID when contacting support.</MudText>
+                    }
+
+                    @if (Environment.IsDevelopment())
+                    {
+                        <MudExpansionPanels>
+                            <MudExpansionPanel Text="Development Information">
+                                <MudAlert Severity="Severity.Warning">
+                                    <MudText>Development Mode Active:</MudText>
+                                    <MudText>This detailed information is only shown in development environment. In production, users would see a generic error message for security reasons.</MudText>
+                                </MudAlert>
+
+                                <MudText Class="mt-3">Environment Details:</MudText>
+                                <MudList T="string">
+                                    <MudListItem T="string"><strong>Environment:</strong> @Environment.EnvironmentName</MudListItem>
+                                    <MudListItem T="string"><strong>Application:</strong> @Environment.ApplicationName</MudListItem>
+                                    <MudListItem T="string"><strong>Timestamp:</strong> @DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")</MudListItem>
+                                </MudList>
+
+                                @if (!string.IsNullOrEmpty(RequestId))
+                                {
+                                    <MudText Class="mt-3">Request Information:</MudText>
+                                    <MudList T="string">
+                                        <MudListItem T="string"><strong>Request ID:</strong> @RequestId</MudListItem>
+                                        <MudListItem T="string"><strong>Activity ID:</strong> @(Activity.Current?.Id ?? "None")</MudListItem>
+                                    </MudList>
+                                }
+
+                                <MudText Class="mt-3">Troubleshooting Tips:</MudText>
+                                <MudList T="string">
+                                    <MudListItem T="string">Check the browser console for JavaScript errors</MudListItem>
+                                    <MudListItem T="string">Review the application logs for detailed error information</MudListItem>
+                                    <MudListItem T="string">Verify that all required services are running</MudListItem>
+                                    <MudListItem T="string">Check database connectivity if data-related operations are failing</MudListItem>
+                                </MudList>
+                            </MudExpansionPanel>
+                        </MudExpansionPanels>
+                    }
+
+                    <div class="mt-4 d-flex gap-2 flex-wrap">
+                        <MudButton Variant="Variant.Filled" Color="Color.Primary" Href="/">
+                            <MudIcon Icon="@Icons.Material.Filled.Home" Class="me-2" />
+                            Go to Home
+                        </MudButton>
+                        <MudButton Variant="Variant.Outlined" Color="Color.Secondary" OnClick="GoBack">
+                            <MudIcon Icon="@Icons.Material.Filled.ArrowBack" Class="me-2" />
+                            Go Back
+                        </MudButton>
+                        <MudButton Variant="Variant.Outlined" Color="Color.Info" OnClick="ReloadPage">
+                            <MudIcon Icon="@Icons.Material.Filled.Refresh" Class="me-2" />
+                            Reload Page
+                        </MudButton>
+                        @if (ShowRequestId)
+                        {
+                            <MudButton Variant="Variant.Outlined" Color="Color.Warning" OnClick="CopyRequestId">
+                                <MudIcon Icon="@Icons.Material.Filled.ContentCopy" Class="me-2" />
+                                Copy Request ID
+                            </MudButton>
+                        }
+                    </div>
+
+                    <MudText Class="text-muted">
+                        <MudIcon Icon="@Icons.Material.Filled.AccessTime" Class="me-1" />
+                        Error occurred at @DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")
+                    </MudText>
+                </MudCardContent>
+            </MudCard>
+        </div>
+    </div>
+</div>
+
+@code {
+    [CascadingParameter]
+    private HttpContext? HttpContext { get; set; }
+
+    private string? RequestId { get; set; }
+    private bool ShowRequestId => !string.IsNullOrEmpty(RequestId);
+
+    protected override void OnInitialized() =>
+        RequestId = Activity.Current?.Id ?? HttpContext?.TraceIdentifier;
+
+    private async Task GoBack()
+    {
+        await JSRuntime.InvokeVoidAsync("eval", "history.back()") ;
+    }
+    private async Task ReloadPage()
+    {
+        await JSRuntime.InvokeVoidAsync("eval", "window.location.reload()") ;
+    }
+    private async Task CopyRequestId()
+    {
+        await JSRuntime.InvokeVoidAsync("eval", $"navigator.clipboard.writeText('{RequestId}')") ;
+    }
+}

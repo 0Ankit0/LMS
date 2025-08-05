@@ -1,0 +1,331 @@
+@layout AdminLayout
+
+<PageTitle>Admin Dashboard</PageTitle>
+
+@if (isLoading)
+{
+    <div class="row mb-4">
+        <div class="col-12">
+            <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="80px" />
+        </div>
+    </div>
+
+    <div class="row g-4">
+        @for (int i = 0; i < 4; i++)
+        {
+            <div class="col-lg-3 col-md-6">
+                <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="150px" />
+            </div>
+        }
+    </div>
+
+    <div class="row g-4 mt-2">
+        <div class="col-lg-8">
+            <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="350px" />
+        </div>
+        <div class="col-lg-4">
+            <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="350px" />
+        </div>
+    </div>
+
+    <div class="row g-4 mt-2">
+        <div class="col-lg-6">
+            <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="350px" />
+        </div>
+        <div class="col-lg-6">
+            <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="350px" />
+        </div>
+    </div>
+
+    <div class="row g-4 mt-2">
+        <div class="col-md-6">
+            <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="250px" />
+        </div>
+        <div class="col-md-6">
+            <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="250px" />
+        </div>
+    </div>
+}
+else
+{
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="mb-0">Admin Dashboard</h1>
+                    <p class="text-muted">Welcome to the LMS Administration Panel</p>
+                </div>
+                <div>
+                    <MudButton Variant="Variant.Filled" Color="Color.Primary" Href="/admin/analytics">
+                        <MudIcon Icon="@Icons.Material.Filled.BarChart" Class="me-2" />
+                        View Detailed Analytics
+                    </MudButton>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-lg-3 col-md-6">
+            <MudCard Elevation="2">
+                <MudCardContent>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <MudText Typo="Typo.h5">Courses</MudText>
+                            <MudText Typo="Typo.h3">@totalCourses</MudText>
+                        </div>
+                        <MudIcon Icon="@Icons.Material.Filled.Book" Class="fs-1 opacity-75" />
+                    </div>
+                    <MudButton Variant="Variant.Text" Color="Color.Primary" Class="mt-2" Href="/admin/courses">Manage Courses</MudButton>
+                </MudCardContent>
+            </MudCard>
+        </div>
+
+        <div class="col-lg-3 col-md-6">
+            <MudCard Elevation="2">
+                <MudCardContent>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <MudText Typo="Typo.h5">Categories</MudText>
+                            <MudText Typo="Typo.h3">@totalCategories</MudText>
+                        </div>
+                        <MudIcon Icon="@Icons.Material.Filled.Category" Class="fs-1 opacity-75" />
+                    </div>
+                    <MudButton Variant="Variant.Text" Color="Color.Primary" Class="mt-2" Href="/admin/categories">Manage Categories</MudButton>
+                </MudCardContent>
+            </MudCard>
+        </div>
+
+        <div class="col-lg-3 col-md-6">
+            <MudCard Elevation="2">
+                <MudCardContent>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <MudText Typo="Typo.h5">Assessments</MudText>
+                            <MudText Typo="Typo.h3">@totalAssessments</MudText>
+                        </div>
+                        <MudIcon Icon="@Icons.Material.Filled.AssignmentTurnedIn" Class="fs-1 opacity-75" />
+                    </div>
+                    <MudButton Variant="Variant.Text" Color="Color.Primary" Class="mt-2" Href="/admin/assessments">Manage Assessments</MudButton>
+                </MudCardContent>
+            </MudCard>
+        </div>
+
+        <div class="col-lg-3 col-md-6">
+            <MudCard Elevation="2">
+                <MudCardContent>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <MudText Typo="Typo.h5">Enrollments</MudText>
+                            <MudText Typo="Typo.h3">@totalEnrollments</MudText>
+                        </div>
+                        <MudIcon Icon="@Icons.Material.Filled.PersonAdd" Class="fs-1 opacity-75" />
+                    </div>
+                    <MudButton Variant="Variant.Text" Color="Color.Primary" Class="mt-2" Href="/admin/enrollments">Manage Enrollments</MudButton>
+                </MudCardContent>
+            </MudCard>
+        </div>
+    </div>
+
+    <!-- Charts Section -->
+    <div class="row g-4 mt-2">
+        <div class="col-lg-8">
+            <MudCard Elevation="2">
+                <MudCardHeader>
+                    <MudText Typo="Typo.h6">Course Enrollment Trends</MudText>
+                </MudCardHeader>
+                <MudCardContent>
+                    <!-- Placeholder for Line Chart -->
+                    <div style="height: 300px; background-color: #f0f0f0; display: flex; align-items: center; justify-content: center;">
+                        <MudText Typo="Typo.h6" Class="text-muted">Line Chart Placeholder</MudText>
+                    </div>
+                </MudCardContent>
+            </MudCard>
+        </div>
+        <div class="col-lg-4">
+            <MudCard Elevation="2">
+                <MudCardHeader>
+                    <MudText Typo="Typo.h6">Course Categories</MudText>
+                </MudCardHeader>
+                <MudCardContent>
+                    <!-- Placeholder for Pie Chart -->
+                    <div style="height: 300px; background-color: #f0f0f0; display: flex; align-items: center; justify-content: center;">
+                        <MudText Typo="Typo.h6" Class="text-muted">Pie Chart Placeholder</MudText>
+                    </div>
+                </MudCardContent>
+            </MudCard>
+        </div>
+    </div>
+
+    <div class="row g-4 mt-2">
+        <div class="col-lg-6">
+            <MudCard Elevation="2">
+                <MudCardHeader>
+                    <MudText Typo="Typo.h6">Assessment Completion Rate</MudText>
+                </MudCardHeader>
+                <MudCardContent>
+                    <!-- Placeholder for Bar Chart -->
+                    <div style="height: 300px; background-color: #f0f0f0; display: flex; align-items: center; justify-content: center;">
+                        <MudText Typo="Typo.h6" Class="text-muted">Bar Chart Placeholder</MudText>
+                    </div>
+                </MudCardContent>
+            </MudCard>
+        </div>
+        <div class="col-lg-6">
+            <MudCard Elevation="2">
+                <MudCardHeader>
+                    <MudText Typo="Typo.h6">Monthly Student Activity</MudText>
+                </MudCardHeader>
+                <MudCardContent>
+                    <!-- Placeholder for Doughnut Chart -->
+                    <div style="height: 300px; background-color: #f0f0f0; display: flex; align-items: center; justify-content: center;">
+                        <MudText Typo="Typo.h6" Class="text-muted">Doughnut Chart Placeholder</MudText>
+                    </div>
+                </MudCardContent>
+            </MudCard>
+        </div>
+    </div>
+
+    <div class="row g-4 mb-4">
+        <div class="col-12">
+            <MudCard Elevation="2">
+                <MudCardHeader>
+                    <MudText Typo="Typo.h6">Course Categories Performance Matrix</MudText>
+                </MudCardHeader>
+                <MudCardContent>
+                    <!-- Placeholder for Bar Chart -->
+                    <div style="height: 350px; background-color: #f0f0f0; display: flex; align-items: center; justify-content: center;">
+                        <MudText Typo="Typo.h6" Class="text-muted">Bar Chart Placeholder</MudText>
+                    </div>
+                </MudCardContent>
+            </MudCard>
+        </div>
+    </div>
+
+    <!-- Recent Activity Table -->
+    <div class="row g-4">
+        <div class="col-12">
+            <MudCard Elevation="2">
+                <MudCardHeader>
+                    <MudText Typo="Typo.h6">Recent Student Activity</MudText>
+                </MudCardHeader>
+                <MudCardContent>
+                    <MudTable T="StudentActivity" Items="@recentActivities" Hover="true" Breakpoint="Breakpoint.Sm">
+                        <HeaderContent>
+                            <MudTh>Student</MudTh>
+                            <MudTh>Course</MudTh>
+                            <MudTh>Activity</MudTh>
+                            <MudTh>Progress</MudTh>
+                            <MudTh>Last Active</MudTh>
+                            <MudTh>Status</MudTh>
+                        </HeaderContent>
+                        <RowTemplate>
+                            <MudTd DataLabel="Student">
+                                <div class="d-flex align-items-center">
+                                    <MudAvatar Color="Color.Primary" Variant="Variant.Filled" Class="me-2">
+                                        <MudText Typo="Typo.h6">@context.StudentName.Substring(0, 1)</MudText>
+                                    </MudAvatar>
+                                    @context.StudentName
+                                </div>
+                            </MudTd>
+                            <MudTd DataLabel="Course">@context.CourseName</MudTd>
+                            <MudTd DataLabel="Activity">@context.Activity</MudTd>
+                            <MudTd DataLabel="Progress">
+                                <MudProgressLinear Value="@((double)context.Progress)" Color="Color.Primary" Class="my-2" Style="height: 6px;" />
+                                <MudText Typo="Typo.caption" Class="text-muted">@context.Progress%</MudText>
+                            </MudTd>
+                            <MudTd DataLabel="Last Active">@context.LastActive.ToString("MMM dd, HH:mm")</MudTd>
+                            <MudTd DataLabel="Status">
+                                <MudChip T="string" Color="@GetStatusBadgeColor(context.Status)">@context.Status</MudChip>
+                            </MudTd>
+                        </RowTemplate>
+                    </MudTable>
+                </MudCardContent>
+            </MudCard>
+        </div>
+    </div>
+
+    <div class="row g-4 mt-2">
+        <div class="col-md-6">
+            <MudCard Elevation="2">
+                <MudCardHeader>
+                    <MudText Typo="Typo.h6">Quick Actions</MudText>
+                </MudCardHeader>
+                <MudCardContent>
+                    <MudList T="string" Clickable="true">
+                        <MudListItem T="string" Href="/admin/courses/create" Icon="@Icons.Material.Filled.AddCircle">Create New Course</MudListItem>
+                        <MudListItem T="string" Href="/admin/categories/create" Icon="@Icons.Material.Filled.AddCircle">Create New Category</MudListItem>
+                        <MudListItem T="string" Href="/admin/assessments/create" Icon="@Icons.Material.Filled.AddCircle">Create New Assessment</MudListItem>
+                        <MudListItem T="string" Href="/admin/achievements/create" Icon="@Icons.Material.Filled.AddCircle">Create New Achievement</MudListItem>
+                    </MudList>
+                </MudCardContent>
+            </MudCard>
+        </div>
+
+        <div class="col-md-6">
+            <MudCard Elevation="2">
+                <MudCardHeader>
+                    <MudText Typo="Typo.h6">Management Tools</MudText>
+                </MudCardHeader>
+                <MudCardContent>
+                    <MudList T="string" Clickable="true">
+                        <MudListItem T="string" Href="/admin/modules" Icon="@Icons.Material.Filled.Folder">Manage Modules</MudListItem>
+                        <MudListItem T="string" Href="/admin/lessons" Icon="@Icons.Material.Filled.PlayCircle">Manage Lessons</MudListItem>
+                        <MudListItem T="string" Href="/admin/forums" Icon="@Icons.Material.Filled.Forum">Manage Forums</MudListItem>
+                        <MudListItem T="string" Href="/admin/certificates" Icon="@Icons.Material.Filled.EmojiEvents">Manage Certificates</MudListItem>
+                    </MudList>
+                </MudCardContent>
+            </MudCard>
+        </div>
+    </div>
+}
+
+@code {
+    private bool isLoading = true;
+    private int totalCourses = 0;
+    private int totalCategories = 0;
+    private int totalAssessments = 0;
+    private int totalEnrollments = 0;
+    private List<StudentActivity> recentActivities = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Simulate loading
+        await Task.Delay(500);
+        // Mock data
+        totalCourses = 12;
+        totalCategories = 5;
+        totalAssessments = 34;
+        totalEnrollments = 120;
+        recentActivities = new List<StudentActivity>
+        {
+            new StudentActivity { StudentName = "Alice Johnson", CourseName = "Intro to Programming", Activity = "Completed Quiz", Progress = 85, LastActive = DateTime.Now.AddHours(-2), Status = "Completed" },
+            new StudentActivity { StudentName = "Bob Smith", CourseName = "Business 101", Activity = "Viewed Lesson", Progress = 40, LastActive = DateTime.Now.AddHours(-5), Status = "Active" },
+            new StudentActivity { StudentName = "Carol Lee", CourseName = "Design Basics", Activity = "Submitted Assignment", Progress = 100, LastActive = DateTime.Now.AddHours(-1), Status = "Completed" },
+            new StudentActivity { StudentName = "David Kim", CourseName = "Web Development", Activity = "Started Course", Progress = 10, LastActive = DateTime.Now.AddHours(-10), Status = "Active" }
+        };
+        isLoading = false;
+    }
+
+    public class StudentActivity
+    {
+        public string StudentName { get; set; } = string.Empty;
+        public string CourseName { get; set; } = string.Empty;
+        public string Activity { get; set; } = string.Empty;
+        public int Progress { get; set; }
+        public DateTime LastActive { get; set; }
+        public string Status { get; set; } = string.Empty;
+    }
+
+    private Color GetStatusBadgeColor(string status)
+    {
+        return status.ToLower() switch
+        {
+            "completed" => Color.Success,
+            "active" => Color.Primary,
+            "pending" => Color.Warning,
+            "failed" => Color.Error,
+            _ => Color.Secondary
+        };
+    }
+}

@@ -1,0 +1,196 @@
+
+
+@layout AdminLayout
+@inject IDropdownRepository DropdownRepository
+@inject IAssessmentRepository AssessmentRepository
+@inject ISnackbar Snackbar
+@inject NavigationManager NavigationManager
+@rendermode @(new InteractiveServerRenderMode())
+
+<PageTitle>Create Assessment - Admin</PageTitle>
+
+@if (isLoading)
+{
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <MudSkeleton SkeletonType="SkeletonType.Text" Width="200px" Height="40px" />
+        <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="180px" Height="40px" />
+    </div>
+
+    <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="700px" />
+}
+else
+{
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="mb-0">Create New Assessment</h1>
+        <MudButton Variant="Variant.Text" Color="Color.Secondary" Href="/admin/assessments">
+            <MudIcon Icon="@Icons.Material.Filled.ArrowBack" Class="me-2" />
+            Back to Assessments
+        </MudButton>
+    </div>
+
+    <MudCard Elevation="2">
+        <MudCardHeader>
+            <MudText Typo="Typo.h6">Assessment Information</MudText>
+        </MudCardHeader>
+        <MudCardContent>
+            <MudForm Model="Assessment" OnValidSubmit="AddAssessment" @ref="form">
+                <MudAlert Severity="Severity.Error" Class="mb-3" Visible="@(!form.IsValid)">
+                    <MudText>Please correct the errors below.</MudText>
+                </MudAlert>
+
+                <MudTextField @bind-Value="Assessment.Title" Label="Title" Variant="Variant.Text" Required="true"
+                    RequiredError="Title is required!" />
+
+                <MudTextField @bind-Value="Assessment.Description" Label="Description" Variant="Variant.Text" Lines="3"
+                    Placeholder="Enter assessment description" />
+
+                <MudSelect @bind-Value="Assessment.CourseId" Label="Course" Variant="Variant.Text" Required="true"
+                    RequiredError="Course is required!" Placeholder="Select a course...">
+                    @foreach (var course in courses)
+                    {
+                        <MudSelectItem Value="@course.Value">@course.Text</MudSelectItem>
+                    }
+                </MudSelect>
+
+                <MudGrid>
+                    <MudItem xs="12" md="6">
+                        <MudSelect @bind-Value="Assessment.ModuleId" Label="Module (Optional)" Variant="Variant.Text"
+                            Placeholder="Select a module (optional)...">
+                            @foreach (var module in modules)
+                            {
+                                <MudSelectItem Value="@module.Value">@module.Text</MudSelectItem>
+                            }
+                        </MudSelect>
+                    </MudItem>
+                    <MudItem xs="12" md="6">
+                        <MudSelect @bind-Value="Assessment.LessonId" Label="Lesson (Optional)" Variant="Variant.Text"
+                            Placeholder="Select a lesson (optional)...">
+                            @foreach (var lesson in lessons)
+                            {
+                                <MudSelectItem Value="@lesson.Value">@lesson.Text</MudSelectItem>
+                            }
+                        </MudSelect>
+                    </MudItem>
+                </MudGrid>
+
+                <MudGrid>
+                    <MudItem xs="12" md="6">
+                        <MudSelect @bind-Value="Assessment.Type" Label="Assessment Type" Variant="Variant.Text">
+                            @foreach (var enumValue in Enum.GetValues(typeof(AssessmentType)).Cast<AssessmentType>())
+                            {
+                                <MudSelectItem Value="@enumValue">@enumValue.ToString()</MudSelectItem>
+                            }
+                        </MudSelect>
+                    </MudItem>
+                    <MudItem xs="12" md="6">
+                        <MudNumericField  @bind-Value="Assessment.MaxAttempts" Label="Max Attempts"
+                            Variant="Variant.Text" />
+                    </MudItem>
+                </MudGrid>
+
+                <MudGrid>
+                    <MudItem xs="12" md="6">
+                        <MudNumericField  @bind-Value="TimeLimitMinutes" Label="Time Limit (minutes)"
+                            Variant="Variant.Text" />
+                    </MudItem>
+                    <MudItem xs="12" md="6">
+                        <MudNumericField  @bind-Value="Assessment.PassingScore" Label="Passing Score (%)"
+                            Variant="Variant.Text" Step="0.01" />
+                    </MudItem>
+                </MudGrid>
+
+                <MudGrid>
+                    <MudItem xs="12" md="6">
+                        <MudCheckBox T="bool" @bind-Checked="Assessment.IsRandomized" Label="Randomize Questions"
+                            Color="Color.Primary" />
+                    </MudItem>
+                    <MudItem xs="12" md="6">
+                        <MudCheckBox T="bool" @bind-Checked="Assessment.ShowCorrectAnswers" Label="Show Correct Answers"
+                            Color="Color.Primary" />
+                    </MudItem>
+                </MudGrid>
+
+                <MudGrid>
+                    <MudItem xs="12" md="6">
+                        <MudCheckBox T="bool" @bind-Checked="Assessment.ShowScoreImmediately" Label="Show Score Immediately"
+                            Color="Color.Primary" />
+                    </MudItem>
+                </MudGrid>
+
+                <MudGrid>
+                    <MudItem xs="12" md="6">
+                        <MudDatePicker @bind-Date="Assessment.AvailableFrom" Label="Available From"
+                            Variant="Variant.Text" />
+                    </MudItem>
+                    <MudItem xs="12" md="6">
+                        <MudDatePicker @bind-Date="Assessment.AvailableUntil" Label="Available Until"
+                            Variant="Variant.Text" />
+                    </MudItem>
+                </MudGrid>
+
+                <div class="d-flex gap-2">
+                    <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary"
+                        Disabled="@isSubmitting">
+                        <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Class="me-2" />
+                        Create Assessment
+                    </MudButton>
+                    <MudButton Variant="Variant.Filled" Color="Color.Secondary" Href="/admin/assessments">Cancel</MudButton>
+                </div>
+            </MudForm>
+        </MudCardContent>
+    </MudCard>
+}
+
+@code {
+    [SupplyParameterFromForm]
+    private CreateAssessmentRequest Assessment { get; set; } = new();
+    private bool isSubmitting = false;
+    private bool isLoading = true;
+    private MudForm form;
+    private List<DropdownOption<int>> courses = new();
+    private List<DropdownOption> modules = new();
+    private List<DropdownOption> lessons = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        courses = await DropdownRepository.GetCoursesAsync();
+        modules = await DropdownRepository.GetModulesAsync();
+        lessons = await DropdownRepository.GetLessonsAsync();
+        await Task.Delay(500); // Simulate data loading
+        isLoading = false;
+    }
+
+    private int? TimeLimitMinutes
+    {
+        get => Assessment.TimeLimit.TotalMinutes > 0 ? (int)Assessment.TimeLimit.TotalMinutes : null;
+        set => Assessment.TimeLimit = value.HasValue ? TimeSpan.FromMinutes(value.Value) : TimeSpan.Zero;
+    }
+
+    private async Task AddAssessment()
+    {
+        if (isSubmitting) return;
+
+        isSubmitting = true;
+        try
+        {
+            var result = await AssessmentRepository.CreateAssessmentAsync(Assessment);
+            if (result != null)
+            {
+                Snackbar.Add("Assessment created successfully!", Severity.Success);
+                NavigationManager.NavigateTo("/admin/assessments");
+            }
+            else
+            {
+                Snackbar.Add("Failed to create assessment. Please try again.", Severity.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error creating assessment: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            isSubmitting = false;
+        }
+    }
+}

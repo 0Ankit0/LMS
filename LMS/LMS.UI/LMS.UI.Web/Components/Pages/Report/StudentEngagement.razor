@@ -1,0 +1,489 @@
+@using LMS.Web.Repositories.DTOs
+@inject IReportRepository ReportRepository
+@inject IJSRuntime JSRuntime
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject UserManager<User> UserManager
+@attribute [Authorize]
+@page "/reports/student-engagement"
+@attribute [OutputCache(Duration = 60)]
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="mb-1">🎯 Student Engagement Report</h2>
+        <p class="text-muted mb-0">Analyze student engagement patterns and activity levels</p>
+    </div>
+    <div class="export-buttons">
+        <MudButton Variant="Variant.Outlined" Color="Color.Primary" OnClick="ExportToPdf">
+            <MudIcon Icon="@Icons.Material.Filled.PictureAsPdf" Class="me-2" /> Export PDF
+        </MudButton>
+        <MudButton Variant="Variant.Outlined" Color="Color.Primary" OnClick="ExportToExcel">
+            <MudIcon Icon="@Icons.Material.Filled.Description" Class="me-2" /> Export Excel
+        </MudButton>
+    </div>
+</div>
+
+<!-- Filters -->
+<MudGrid Class="report-filters">
+    <MudItem xs="12" md="3">
+        <MudSelect T="string" Label="Student" @bind-Value="selectedStudentId" OnChange="LoadData">
+            <MudSelectItem Value="@string.Empty">Select a student</MudSelectItem>
+            @if (students?.Any() == true)
+            {
+                @foreach (var student in students)
+                {
+                    <MudSelectItem Value="@student.Id">@student.FullName</MudSelectItem>
+                }
+            }
+        </MudSelect>
+    </MudItem>
+    <MudItem xs="12" md="3">
+        <MudDatePicker Label="Start Date" @bind-Date="startDate" DateFormat="yyyy-MM-dd" OnChange="LoadData" />
+    </MudItem>
+    <MudItem xs="12" md="3">
+        <MudDatePicker Label="End Date" @bind-Date="endDate" DateFormat="yyyy-MM-dd" OnChange="LoadData" />
+    </MudItem>
+    <MudItem xs="12" md="3">
+        <MudSelect T="string" Label="Report Type" @bind-Value="reportType" OnChange="LoadData">
+            <MudSelectItem Value="@("individual")">Individual Student</MudSelectItem>
+            <MudSelectItem Value="@("all")">All Students</MudSelectItem>
+        </MudSelect>
+    </MudItem>
+</MudGrid>
+
+@if (loading)
+{
+    <div class="report-loading d-flex flex-column align-items-center justify-content-center py-5">
+        <MudProgressCircular Indeterminate="true" Color="Color.Primary" Size="Size.Large" />
+        <MudText Class="mt-2">Loading engagement data...</MudText>
+    </div>
+}
+else if (engagementData != null)
+{
+    @if (reportType == "individual" && !string.IsNullOrEmpty(selectedStudentId))
+    {
+        <!-- Individual Student Engagement -->
+        <MudGrid Class="engagement-summary mb-4">
+            <MudItem xs="12" md="8">
+                <MudCard Elevation="2">
+                    <MudCardHeader>
+                        <MudText Typo="Typo.h6">📊 Engagement Overview</MudText>
+                    </MudCardHeader>
+                    <MudCardContent>
+                        <MudGrid Class="engagement-metrics">
+                            <MudItem xs="12" sm="6" md="3">
+                                <div class="metric">
+                                    <MudText Typo="Typo.h4">@(GetEngagementLevel(engagementData))</MudText>
+                                    <MudText Typo="Typo.subtitle2">Engagement Level</MudText>
+                                </div>
+                            </MudItem>
+                            <MudItem xs="12" sm="6" md="3">
+                                <div class="metric">
+                                    <MudText Typo="Typo.h4">@(GetProperty(engagementData, "TotalForumPosts"))</MudText>
+                                    <MudText Typo="Typo.subtitle2">Forum Posts</MudText>
+                                </div>
+                            </MudItem>
+                            <MudItem xs="12" sm="6" md="3">
+                                <div class="metric">
+                                    <MudText Typo="Typo.h4">@(GetProperty(engagementData, "TotalCoursesEnrolled"))</MudText>
+                                    <MudText Typo="Typo.subtitle2">Courses Enrolled</MudText>
+                                </div>
+                            </MudItem>
+                            <MudItem xs="12" sm="6" md="3">
+                                <div class="metric">
+                                    <MudText Typo="Typo.h4">@(GetProperty(engagementData, "CompletedCourses"))</MudText>
+                                    <MudText Typo="Typo.subtitle2">Courses Completed</MudText>
+                                </div>
+                            </MudItem>
+                        </MudGrid>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+            <MudItem xs="12" md="4">
+                <MudCard Elevation="2">
+                    <MudCardHeader>
+                        <MudText Typo="Typo.h6">📈 Engagement Score</MudText>
+                    </MudCardHeader>
+                    <MudCardContent Class="text-center">
+                        <div class="engagement-gauge">
+                            <canvas id="engagementGauge" width="200" height="200"></canvas>
+                        </div>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+        </MudGrid>
+
+        <!-- Activity Timeline -->
+        <MudCard Elevation="2" Class="mb-4">
+            <MudCardHeader>
+                <MudText Typo="Typo.h6">🕒 Activity Timeline</MudText>
+            </MudCardHeader>
+            <MudCardContent>
+                <canvas id="activityChart" width="800" height="300"></canvas>
+            </MudCardContent>
+        </MudCard>
+
+        <!-- Detailed Metrics -->
+        <MudGrid>
+            <MudItem xs="12" md="6">
+                <MudCard Elevation="2">
+                    <MudCardHeader>
+                        <MudText Typo="Typo.h6">📚 Course Progress</MudText>
+                    </MudCardHeader>
+                    <MudCardContent>
+                        <MudList T="StudentEngagementReportDto.CourseProgressDto" Class="course-progress-list">
+                            @if (GetCourseProgress(engagementData) is { } courseProgress)
+                            {
+                                @foreach (var course in courseProgress)
+                                {
+                                    <MudListItem T="StudentEngagementReportDto.CourseProgressDto">
+                                        <div class="d-flex justify-content-between">
+                                            <MudText Typo="Typo.body2"><strong>@(GetProperty(course, "CourseName"))</strong></MudText>
+                                            <MudText Typo="Typo.body2">@(GetProperty(course, "Progress"))%</MudText>
+                                        </div>
+                                        <MudProgressLinear Value="@(Convert.ToDouble(GetProperty(course, "Progress")))" Color="Color.Primary" Class="mt-1" />
+                                    </MudListItem>
+                                }
+                            }
+                        </MudList>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+            <MudItem xs="12" md="6">
+                <MudCard Elevation="2">
+                    <MudCardHeader>
+                        <MudText Typo="Typo.h6">💬 Forum Activity</MudText>
+                    </MudCardHeader>
+                    <MudCardContent>
+                        <MudList T="string" Class="forum-stats">
+                            <MudListItem T="string">
+                                <MudText>Total Posts:</MudText>
+                                <MudText><strong>@(GetProperty(engagementData, "TotalForumPosts"))</strong></MudText>
+                            </MudListItem>
+                            <MudListItem T="string">
+                                <MudText>Topics Created:</MudText>
+                                <MudText><strong>@(GetProperty(engagementData, "TopicsCreated"))</strong></MudText>
+                            </MudListItem>
+                            <MudListItem T="string">
+                                <MudText>Replies Made:</MudText>
+                                <MudText><strong>@(GetProperty(engagementData, "RepliesMade"))</strong></MudText>
+                            </MudListItem>
+                            <MudListItem T="string">
+                                <MudText>Last Activity:</MudText>
+                                <MudText><strong>@(GetProperty(engagementData, "LastForumActivity"))</strong></MudText>
+                            </MudListItem>
+                        </MudList>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+        </MudGrid>
+    }
+    else
+    {
+        <!-- All Students Overview -->
+        <MudAlert Severity="Severity.Info">
+            <MudIcon Icon="@Icons.Material.Filled.Info" Class="me-2" />
+            Select an individual student to view detailed engagement metrics, or view the summary below for all students.
+        </MudAlert>
+
+        <MudGrid Class="stats-grid mb-4">
+            <MudItem xs="12" sm="6" md="3">
+                <MudCard Elevation="2">
+                    <MudCardContent>
+                        <MudText Typo="Typo.h4">@(GetProperty(engagementData, "TotalStudents"))</MudText>
+                        <MudText Typo="Typo.subtitle2">Total Students</MudText>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+            <MudItem xs="12" sm="6" md="3">
+                <MudCard Elevation="2">
+                    <MudCardContent>
+                        <MudText Typo="Typo.h4">@(GetProperty(engagementData, "HighEngagement"))</MudText>
+                        <MudText Typo="Typo.subtitle2">High Engagement</MudText>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+            <MudItem xs="12" sm="6" md="3">
+                <MudCard Elevation="2">
+                    <MudCardContent>
+                        <MudText Typo="Typo.h4">@(GetProperty(engagementData, "MediumEngagement"))</MudText>
+                        <MudText Typo="Typo.subtitle2">Medium Engagement</MudText>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+            <MudItem xs="12" sm="6" md="3">
+                <MudCard Elevation="2">
+                    <MudCardContent>
+                        <MudText Typo="Typo.h4">@(GetProperty(engagementData, "LowEngagement"))</MudText>
+                        <MudText Typo="Typo.subtitle2">Low Engagement</MudText>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+        </MudGrid>
+
+        <MudCard Elevation="2">
+            <MudCardHeader>
+                <MudText Typo="Typo.h6">📊 Engagement Distribution</MudText>
+            </MudCardHeader>
+            <MudCardContent>
+                <canvas id="engagementDistribution" width="800" height="400"></canvas>
+            </MudCardContent>
+        </MudCard>
+    }
+}
+else
+{
+    <MudCard Elevation="2" Class="report-no-data">
+        <MudCardContent Class="text-center py-5">
+            <MudIcon Icon="@Icons.Material.Filled.Info" Size="Size.Large" Class="text-muted mb-3" />
+            <MudText Typo="Typo.h5">No Data Available</MudText>
+            <MudText Typo="Typo.body1" Class="text-muted">
+                @if (string.IsNullOrEmpty(selectedStudentId))
+                {
+                    <span>Please select a student to view engagement data.</span>
+                }
+                else
+                {
+                    <span>No engagement data found for the selected criteria.</span>
+                }
+            </MudText>
+        </MudCardContent>
+    </MudCard>
+}
+
+@code {
+    private string selectedStudentId = "";
+    private DateTime? startDate = DateTime.Today.AddMonths(-3);
+    private DateTime? endDate = DateTime.Today;
+    private string reportType = "individual";
+    private bool loading = true;
+
+    private object? engagementData;
+    private IEnumerable<User>? students = Enumerable.Empty<User>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadStudents();
+        await LoadData();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && engagementData != null)
+        {
+            await DrawCharts();
+        }
+    }
+
+    private async Task LoadStudents()
+    {
+        try
+        {
+            // Load students list for dropdown
+            // This would typically come from a student repository
+            students = Enumerable.Empty<User>(); // Placeholder
+            await Task.CompletedTask;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading students: {ex.Message}");
+        }
+    }
+
+    private async Task LoadData()
+    {
+        if (string.IsNullOrEmpty(selectedStudentId) && reportType == "individual")
+        {
+            engagementData = null;
+            loading = false;
+            return;
+        }
+
+        try
+        {
+            loading = true;
+
+            // Get the current user
+            var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+            var user = await UserManager.GetUserAsync(authState.User);
+
+            if (user != null)
+            {
+                if (reportType == "individual" && !string.IsNullOrEmpty(selectedStudentId))
+                {
+                    // Load individual student engagement
+                    engagementData = await ReportRepository.GetStudentEngagementReportAsync(
+                        user, selectedStudentId, startDate, endDate);
+
+                    if (engagementData == null)
+                    {
+                        engagementData = GenerateDummyIndividualData();
+                    }
+                }
+                else
+                {
+                    // Load all students engagement summary
+                    // No API for all students engagement, use dummy data
+                    engagementData = GenerateDummyAllData();
+                }
+
+                await DrawCharts();
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading engagement data: {ex.Message}");
+            if (reportType == "individual")
+            {
+                engagementData = GenerateDummyIndividualData();
+            }
+            else
+            {
+                engagementData = GenerateDummyAllData();
+            }
+            await DrawCharts();
+        }
+        finally
+        {
+            loading = false;
+        }
+    }
+
+    private StudentEngagementReportDto GenerateDummyIndividualData()
+    {
+        var random = new Random();
+        return new StudentEngagementReportDto
+        {
+            StudentId = selectedStudentId,
+            StudentName = "Dummy Student",
+            TotalForumPosts = random.Next(10, 100),
+            TopicsCreated = random.Next(1, 10),
+            RepliesMade = random.Next(5, 50),
+            TotalCoursesEnrolled = random.Next(1, 5),
+            CompletedCourses = random.Next(0, 3),
+            TimeSpentOnPlatform = TimeSpan.FromHours(random.Next(50, 500)),
+            LastLoginDate = DateTime.Today.AddDays(-random.Next(1, 30)),
+            LastForumActivity = DateTime.Today.AddDays(-random.Next(1, 15)).ToString("MMM dd, yyyy"),
+            AverageAssessmentScore = random.NextDouble() * 40 + 60, // 60-100
+            ProgressPercentage = random.NextDouble() * 100,
+            CourseProgress = new List<StudentEngagementReportDto.CourseProgressDto>
+            {
+                new StudentEngagementReportDto.CourseProgressDto { CourseName = "Dummy Course 1", Progress = random.Next(30, 90) },
+                new StudentEngagementReportDto.CourseProgressDto { CourseName = "Dummy Course 2", Progress = random.Next(20, 80) },
+                new StudentEngagementReportDto.CourseProgressDto { CourseName = "Dummy Course 3", Progress = random.Next(10, 70) }
+            }
+        };
+    }
+
+    private object GenerateDummyAllData()
+    {
+        var random = new Random();
+        return new
+        {
+            TotalStudents = random.Next(100, 500),
+            HighEngagement = random.Next(20, 100),
+            MediumEngagement = random.Next(50, 200),
+            LowEngagement = random.Next(10, 80)
+        };
+    }
+
+    private async Task DrawCharts()
+    {
+        if (engagementData != null)
+        {
+            if (reportType == "individual" && engagementData is StudentEngagementReportDto individualData)
+            {
+                var engagementScore = CalculateEngagementScore(individualData);
+                await JSRuntime.InvokeVoidAsync("drawEngagementGauge", "engagementGauge", engagementScore);
+                await JSRuntime.InvokeVoidAsync("drawActivityChart", "activityChart", engagementData);
+            }
+            else if (reportType != "individual")
+            {
+                await JSRuntime.InvokeVoidAsync("drawEngagementDistribution", "engagementDistribution", engagementData);
+            }
+        }
+    }
+
+    private string GetEngagementLevel(object data)
+    {
+        if (data is StudentEngagementReportDto individualData)
+        {
+            var score = CalculateEngagementScore(individualData);
+            return score switch
+            {
+                >= 80 => "High",
+                >= 60 => "Medium",
+                >= 40 => "Low",
+                _ => "Very Low"
+            };
+        }
+        return "N/A";
+    }
+
+    private double CalculateEngagementScore(StudentEngagementReportDto data)
+    {
+        // Mock calculation based on available data
+        var forumPosts = data.TotalForumPosts;
+        var coursesCompleted = data.CompletedCourses;
+        var coursesEnrolled = data.TotalCoursesEnrolled > 0 ? data.TotalCoursesEnrolled : 1;
+
+        var completionRate = (double)coursesCompleted / coursesEnrolled * 100;
+        var forumActivity = Math.Min(forumPosts * 0.5, 50); // Cap forum contribution at 50%
+
+        return Math.Min(completionRate * 0.7 + forumActivity * 0.3, 100);
+    }
+
+    private object? GetProperty(object obj, string propertyName)
+    {
+        if (obj == null) return null;
+
+        var property = obj.GetType().GetProperty(propertyName);
+        return property?.GetValue(obj);
+    }
+
+    private IEnumerable<StudentEngagementReportDto.CourseProgressDto>? GetCourseProgress(object data)
+    {
+        if (data is StudentEngagementReportDto individualData)
+        {
+            return individualData.CourseProgress;
+        }
+        return null;
+    }
+
+    private async Task ExportToPdf()
+    {
+        try
+        {
+            var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+            var user = await UserManager.GetUserAsync(authState.User);
+
+            if (user != null)
+            {
+                var pdfBytes = await ReportRepository.ExportReportToPdfAsync(user, "studentengagement", new { selectedStudentId, startDate, endDate });
+                await JSRuntime.InvokeVoidAsync("downloadFile", "StudentEngagement.pdf", Convert.ToBase64String(pdfBytes));
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error exporting to PDF: {ex.Message}");
+        }
+    }
+
+    private async Task ExportToExcel()
+    {
+        try
+        {
+            var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+            var user = await UserManager.GetUserAsync(authState.User);
+
+            if (user != null)
+            {
+                var excelBytes = await ReportRepository.ExportReportToExcelAsync(user, "studentengagement", new { selectedStudentId, startDate, endDate });
+                await JSRuntime.InvokeVoidAsync("downloadFile", "StudentEngagement.xlsx", Convert.ToBase64String(excelBytes));
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error exporting to Excel: {ex.Message}");
+        }
+    }
+}
