@@ -22,8 +22,8 @@
         <MudText Typo="Typo.h6">Forum Information</MudText>
     </MudCardHeader>
     <MudCardContent>
-        <MudForm Model="Forum" OnValidSubmit="AddForum" @ref="form">
-            <MudAlert Severity="Severity.Error" Class="mb-3" Visible="@(!form.IsValid)">
+        <EditForm Model="Forum" OnValidSubmit="AddForum">
+            <MudAlert Severity="Severity.Error" Class="mb-3" >
                 <MudText>Please correct the errors below.</MudText>
             </MudAlert>
 
@@ -47,12 +47,12 @@
                 </MudButton>
                 <MudButton Variant="Variant.Filled" Color="Color.Secondary" Href="/admin/forums">Cancel</MudButton>
             </div>
-        </MudForm>
+        </EditForm>
     </MudCardContent>
 </MudCard>
 
 @code {
-    private MudForm form;
+    
     private CreateForumRequest Forum { get; set; } = new();
     private bool isSubmitting = false;
     private List<DropdownOption<int>> Courses = new();

@@ -186,7 +186,7 @@
         </MudText>
     </TitleContent>
     <DialogContent>
-        <MudForm Model="@newMessage" OnValidSubmit="SendMessage">
+        <EditForm Model="@newMessage" OnValidSubmit="SendMessage">
             <MudAlert Severity="Severity.Error" Class="mb-3" Visible="@(!string.IsNullOrEmpty(statusMessage))">
                 <MudText>@statusMessage</MudText>
             </MudAlert>
@@ -229,7 +229,7 @@
                     Send Message
                 </MudButton>
             </MudDialogActions>
-        </MudForm>
+        </EditForm>
     </DialogContent>
 </MudDialog>
 

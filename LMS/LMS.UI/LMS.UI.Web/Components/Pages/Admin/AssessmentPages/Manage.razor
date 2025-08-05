@@ -34,8 +34,8 @@ else if (assessment != null)
                     <MudText Typo="Typo.h6">Add New Question</MudText>
                 </MudCardHeader>
                 <MudCardContent>
-                    <MudForm Model="newQuestion" ref="QuestionForm" OnValidSubmit="AddQuestion">
-                        <MudAlert Severity="Severity.Error" Class="mb-3" Visible="@(!QuestionForm.IsValid)">
+                    <EditForm Model="newQuestion" OnValidSubmit="AddQuestion">
+                        <MudAlert Severity="Severity.Error" Class="mb-3" >
                             <MudText>Please correct the errors below.</MudText>
                         </MudAlert>
                         <MudTextField @bind-Value="newQuestion.Text" Label="Question Text" Variant="Variant.Text" Lines="3" />
@@ -46,7 +46,7 @@ else if (assessment != null)
                             }
                         </MudSelect>
                         <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary">Add Question</MudButton>
-                    </MudForm>
+                    </EditForm>
                 </MudCardContent>
             </MudCard>
         </div>
@@ -88,7 +88,7 @@ else
     private CreateQuestionRequest newQuestion = new();
     private bool isLoading = true;
 
-    private MudForm QuestionForm;
+    
 
     protected override async Task OnInitializedAsync()
     {

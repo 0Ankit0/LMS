@@ -4,7 +4,7 @@
 @inject NavigationManager NavigationManager
 @inject LMS.UI.Shared.Abstractions.IAuthenticationService AuthenticationService
 @using LMS.Data.Entities
-
+@rendermode InteractiveServer
 <PageTitle>Home</PageTitle>
 
 @if (isLoading)
@@ -36,47 +36,53 @@ else
             <!-- Left: Navigation Cards -->
             <MudItem xs="12" md="2">
                 <MudPaper Elevation="2" Class="d-flex flex-column">
-                    <MudCard Elevation="2" Class="mb-3">
-                        <MudCardContent Class="d-flex align-items-center" OnClick="@(() => NavigateToServer("/admin"))"
-                            Style="cursor:pointer;">
-                            <MudIcon Icon="@Icons.Material.Filled.Speed" Class="me-2 fs-4 text-primary" />
-                            <MudText>Admin</MudText>
-                        </MudCardContent>
+                    <MudCard Elevation="2" Class="mb-3" >
+                        <MudLink Href="/admin" Style="text-decoration:none;">
+                            <MudCardContent Class="d-flex align-items-center" Style="cursor:pointer;">
+                                <MudIcon Icon="@Icons.Material.Filled.Speed" Class="me-2 fs-4 text-primary" />
+                                <MudText>Admin</MudText>
+                            </MudCardContent>
+                        </MudLink>
                     </MudCard>
                     <MudCard Elevation="2" Class="mb-3">
-                        <MudCardContent Class="d-flex align-items-center" OnClick="@(() => NavigateToServer("/reports"))"
-                            Style="cursor:pointer;">
-                            <MudIcon Icon="@Icons.Material.Filled.Assessment" Class="me-2 fs-4 text-primary" />
-                            <MudText>Reports</MudText>
-                        </MudCardContent>
+                        <MudLink Href="/reports" Style="text-decoration:none;">
+                            <MudCardContent Class="d-flex align-items-center" Style="cursor:pointer;">
+                                <MudIcon Icon="@Icons.Material.Filled.Assessment" Class="me-2 fs-4 text-primary" />
+                                <MudText>Reports</MudText>
+                            </MudCardContent>
+                        </MudLink>
                     </MudCard>
                     <MudCard Elevation="2" Class="mb-3">
-                        <MudCardContent Class="d-flex align-items-center" OnClick="@(() => NavigateTo("/user/lms/dashboard"))"
-                            Style="cursor:pointer;">
-                            <MudIcon Icon="@Icons.Material.Filled.Dashboard" Class="me-2 fs-4 text-primary" />
-                            <MudText>Dashboard</MudText>
-                        </MudCardContent>
+                        <MudLink Href="/user/lms/dashboard" Style="text-decoration:none;">
+                            <MudCardContent Class="d-flex align-items-center" Style="cursor:pointer;">
+                                <MudIcon Icon="@Icons.Material.Filled.Dashboard" Class="me-2 fs-4 text-primary" />
+                                <MudText>Dashboard</MudText>
+                            </MudCardContent>
+                        </MudLink>
                     </MudCard>
                     <MudCard Elevation="2" Class="mb-3">
-                        <MudCardContent Class="d-flex align-items-center" OnClick="@(() => NavigateTo("/user/lms/forums"))"
-                            Style="cursor:pointer;">
-                            <MudIcon Icon="@Icons.Material.Filled.Forum" Class="me-2 fs-4 text-success" />
-                            <MudText>Forums</MudText>
-                        </MudCardContent>
+                        <MudLink Href="/user/lms/forums" Style="text-decoration:none;">
+                            <MudCardContent Class="d-flex align-items-center" Style="cursor:pointer;">
+                                <MudIcon Icon="@Icons.Material.Filled.Forum" Class="me-2 fs-4 text-success" />
+                                <MudText>Forums</MudText>
+                            </MudCardContent>
+                        </MudLink>
                     </MudCard>
                     <MudCard Elevation="2" Class="mb-3">
-                        <MudCardContent Class="d-flex align-items-center" OnClick="@(() => NavigateTo("/user/lms/analytics"))"
-                            Style="cursor:pointer;">
-                            <MudIcon Icon="@Icons.Material.Filled.Analytics" Class="me-2 fs-4 text-info" />
-                            <MudText>Analytics</MudText>
-                        </MudCardContent>
+                        <MudLink Href="/user/lms/analytics" Style="text-decoration:none;">
+                            <MudCardContent Class="d-flex align-items-center" Style="cursor:pointer;">
+                                <MudIcon Icon="@Icons.Material.Filled.Analytics" Class="me-2 fs-4 text-info" />
+                                <MudText>Analytics</MudText>
+                            </MudCardContent>
+                        </MudLink>
                     </MudCard>
                     <MudCard Elevation="2" Class="mb-3">
-                        <MudCardContent Class="d-flex align-items-center" OnClick="@(() => NavigateTo("/user/lms/my-courses"))"
-                            Style="cursor:pointer;">
-                            <MudIcon Icon="@Icons.Material.Filled.School" Class="me-2 fs-4 text-warning" />
-                            <MudText>My Courses</MudText>
-                        </MudCardContent>
+                        <MudLink Href="/user/lms/my-courses" Style="text-decoration:none;">
+                            <MudCardContent Class="d-flex align-items-center" Style="cursor:pointer;">
+                                <MudIcon Icon="@Icons.Material.Filled.School" Class="me-2 fs-4 text-warning" />
+                                <MudText>My Courses</MudText>
+                            </MudCardContent>
+                        </MudLink>
                     </MudCard>
                 </MudPaper>
             </MudItem>

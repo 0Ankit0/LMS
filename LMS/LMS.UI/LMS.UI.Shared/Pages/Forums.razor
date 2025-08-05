@@ -422,7 +422,7 @@
         <MudText Typo="Typo.h6">Create New Topic</MudText>
     </TitleContent>
     <DialogContent>
-        <MudForm Model="@newTopic" OnValidSubmit="CreateTopic">
+        <EditForm Model="@newTopic" OnValidSubmit="CreateTopic">
             <MudAlert Severity="Severity.Error" Class="mb-3" Visible="@(!string.IsNullOrEmpty(statusMessage))">
                 <MudText>@statusMessage</MudText>
             </MudAlert>
@@ -443,7 +443,7 @@
                     <span>Create Topic</span>
                 </MudButton>
             </MudDialogActions>
-        </MudForm>
+        </EditForm>
     </DialogContent>
 </MudDialog>
 
@@ -453,7 +453,7 @@
         <MudText Typo="Typo.h6">@($"Reply to: {selectedTopic?.Title}")</MudText>
     </TitleContent>
     <DialogContent>
-        <MudForm Model="@newPost" OnValidSubmit="CreatePost">
+        <EditForm Model="@newPost" OnValidSubmit="CreatePost">
             <MudAlert Severity="Severity.Error" Class="mb-3" Visible="@(!string.IsNullOrEmpty(statusMessage))">
                 <MudText>@statusMessage</MudText>
             </MudAlert>
@@ -482,7 +482,7 @@
                     <span>Post Reply</span>
                 </MudButton>
             </MudDialogActions>
-        </MudForm>
+        </EditForm>
     </DialogContent>
 </MudDialog>
 
@@ -492,7 +492,7 @@
         <MudText Typo="Typo.h6">Create New Forum</MudText>
     </TitleContent>
     <DialogContent>
-        <MudForm Model="@newForum" OnValidSubmit="CreateForum">
+        <EditForm Model="@newForum" OnValidSubmit="CreateForum">
             <MudAlert Severity="Severity.Error" Class="mb-3" Visible="@(!string.IsNullOrEmpty(statusMessage))">
                 <MudText>@statusMessage</MudText>
             </MudAlert>
@@ -528,7 +528,7 @@
                     <span>Create Forum</span>
                 </MudButton>
             </MudDialogActions>
-        </MudForm>
+        </EditForm>
     </DialogContent>
 </MudDialog>
 

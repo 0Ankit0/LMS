@@ -1,7 +1,6 @@
 @using MudBlazor;
 @using MudBlazor.Utilities;
 @page "/user/lms/announcement-list"
-@using MudBlazor
 
 @inject HttpClient HttpClient
 @inject ISnackbar Snackbar
@@ -104,36 +103,34 @@
                 <div class="announcements-list">
                     @foreach (var announcement in filteredAnnouncements)
                     {
-                        <MudCard Class="@GetAnnouncementCardClass(announcement.Priority)">
+                        <MudCard Class="@GetFullAnnouncementCardClass(announcement.Priority)">
                             <MudCardContent Class="announcement-content">
-                                <div class="announcement-priority">
-                                    <MudIcon Icon="@GetPriorityIconEnum(announcement.Priority)" />
+                                <div class="d-flex align-items-center mb-2">
+                                    <MudIcon Icon="@GetPriorityIconEnum(announcement.Priority)" Class="me-2 fs-4" Color="@GetPriorityBadgeColor(announcement.Priority)" />
+                                    <MudText Typo="Typo.h5" Class="announcement-title fw-bold">@announcement.Title</MudText>
                                 </div>
-                                <div class="announcement-header">
-                                    <MudText Typo="Typo.h5" Class="announcement-title">@announcement.Title</MudText>
-                                    <div class="announcement-meta">
-                                        <span class="announcement-author">
-                                            <MudIcon Icon="@Icons.Material.Filled.Person" />
-                                            @announcement.AuthorName
-                                        </span>
-                                        <span class="announcement-date">
-                                            <MudIcon Icon="@Icons.Material.Filled.CalendarToday" />
-                                            @FormatDate(announcement.PublishedAt)
-                                        </span>
-                                        <MudChip T="string" Color="@GetPriorityBadgeColor(announcement.Priority)">
-                                            @announcement.Priority
-                                        </MudChip>
-                                    </div>
+                                <div class="announcement-header d-flex flex-wrap align-items-center mb-2 gap-3">
+                                    <span class="announcement-author d-flex align-items-center text-secondary">
+                                        <MudIcon Icon="@Icons.Material.Filled.Person" Class="me-1" />
+                                        @announcement.AuthorName
+                                    </span>
+                                    <span class="announcement-date d-flex align-items-center text-secondary">
+                                        <MudIcon Icon="@Icons.Material.Filled.CalendarToday" Class="me-1" />
+                                        @FormatDate(announcement.PublishedAt)
+                                    </span>
+                                    <MudChip T="string" Color="@GetPriorityBadgeColor(announcement.Priority)" Class="px-2">
+                                        @announcement.Priority
+                                    </MudChip>
                                 </div>
-                                <MudText Typo="Typo.body2" Class="announcement-excerpt">@GetExcerpt(announcement.Content)</MudText>
+                                <div class="d-flex align-items-center justify-content-between">
+                                    <MudText Typo="Typo.body2" Class="announcement-excerpt text-muted">@GetExcerpt(announcement.Content)</MudText>
+                                    <MudButton Variant="Variant.Text" Color="Color.Primary" Size="Size.Small"
+                                               OnClick="() => ShowAnnouncement(announcement)">
+                                        <MudIcon Icon="@Icons.Material.Filled.Visibility" Class="me-2" />
+                                        View
+                                    </MudButton>
+                                </div>
                             </MudCardContent>
-                            <MudCardActions>
-                                <MudButton Variant="Variant.Text" Color="Color.Primary" Size="Size.Small"
-                                           OnClick="() => ShowAnnouncement(announcement)">
-                                    <MudIcon Icon="@Icons.Material.Filled.Visibility" Class="me-2" />
-                                    View
-                                </MudButton>
-                            </MudCardActions>
                         </MudCard>
                     }
                 </div>
@@ -409,6 +406,11 @@
 
     // Helper methods for CSS classes
     private string GetAnnouncementCardClass(string priority) => $"announcement-card {GetPriorityClass(priority)}";
+
+    private string GetFullAnnouncementCardClass(string priority)
+    {
+        return $"{GetAnnouncementCardClass(priority)} mud-elevation-3 mud-rounded p-3 mb-4";
+    }
 
     private string GetPriorityClass(string priority)
     {
