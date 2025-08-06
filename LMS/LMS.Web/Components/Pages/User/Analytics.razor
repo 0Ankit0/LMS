@@ -3,7 +3,7 @@
 @using Microsoft.JSInterop
 @using System.Security.Claims
 @page "/user/lms/analytics"
-@inject IdentityUserAccessor UserAccessor
+@inject AuthenticationStateProvider AuthenticationStateProvider
 @inject IEnrollmentRepository EnrollmentRepository
 @inject ISnackbar Snackbar
 
@@ -295,8 +295,6 @@
 </div>
 
 @code {
-    [CascadingParameter]
-    private HttpContext HttpContext { get; set; } = default!;
     private MudDrawer drawer;
     private bool isDrawerOpen = false;
 
@@ -327,7 +325,23 @@
 
     protected override async Task OnInitializedAsync()
     {
-        await LoadAnalytics();
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var userId = authState.User?.FindFirstValue(ClaimTypes.NameIdentifier);
+
+        if (!string.IsNullOrEmpty(userId))
+        {
+            // Load user enrollments via repository
+            enrollments = await EnrollmentRepository.GetUserEnrollmentsAsync(userId);
+
+            // Calculate analytics
+            await CalculateAnalytics(userId);
+
+            // Load recent activities (mock data for now)
+            LoadRecentActivities();
+
+            // Load performance metrics (mock data for now)
+            LoadPerformanceMetrics();
+        }
     }
 
 
@@ -337,8 +351,9 @@
         try
         {
             isLoading = true;
-            var user = await UserAccessor.GetRequiredUserAsync(HttpContext);
-            var currentUserId = user?.Id;
+            var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+            var user = authState.User;
+            var currentUserId = user?.FindFirstValue(ClaimTypes.NameIdentifier);
             if (!string.IsNullOrEmpty(currentUserId))
             {
                 // Load user enrollments via repository

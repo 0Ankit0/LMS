@@ -1,4 +1,3 @@
-
 @using LMS.Web.Components.Account
 @using MudBlazor.Utilities
 @page "/user/lms/courses/{CourseId:int}"
@@ -6,6 +5,7 @@
 @inject IEnrollmentRepository EnrollmentRepository
 @inject ISnackbar Snackbar
 @inject UserManager<User> UserManager
+@inject AuthenticationStateProvider AuthenticationStateProvider
 @using System.Security.Claims
 
 <PageTitle>Course Details - LMS</PageTitle>
@@ -45,7 +45,7 @@
     </MudItem>
 </MudGrid>
 
-                        <MudGrid Spacing="4" Class="mt-4">
+<MudGrid Spacing="4" Class="mt-4">
     <MudItem xs="12" md="4">
         <MudCard Elevation="2">
             <MudCardContent class="d-flex">
@@ -138,8 +138,6 @@
 </div>
 
 @code {
-    [CascadingParameter] 
-    private HttpContext HttpContext { get; set; } = default!;
     [Parameter] public int CourseId { get; set; }
 
     // Data properties
@@ -172,9 +170,9 @@
         try
         {
             isLoading = true;
-
-            var user = await UserManager.GetUserAsync(HttpContext.User);
-            
+            var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+            var user = await UserManager.GetUserAsync(authState.User);
+            currentUserId = user?.Id;
 
             course = await CourseRepository.GetCourseByIdAsync(CourseId);
             modules = await CourseRepository.GetCourseModulesAsync(CourseId) ?? new();
@@ -185,7 +183,7 @@
 
             if (!string.IsNullOrEmpty(currentUserId))
             {
-                var enrollment = await EnrollmentRepository.GetEnrollmentByUserAndCourseAsync(user.Id, CourseId);
+                var enrollment = await EnrollmentRepository.GetEnrollmentByUserAndCourseAsync(currentUserId, CourseId);
                 isEnrolled = enrollment != null;
                 if (isEnrolled)
                 {

@@ -4,6 +4,7 @@
 @using System.Security.Claims;
 @page "/user/lms/my-courses"
 @inject UserManager<User> UserManager
+@inject AuthenticationStateProvider AuthenticationStateProvider
 @inject IEnrollmentRepository EnrollmentRepository
 @inject ISnackbar Snackbar
 
@@ -26,14 +27,13 @@
     @if (isLoading)
     {
         <MudGrid Spacing="3">
-    @if (isLoading)
-    {
-        @for (int i = 0; i < 6; i++)
-        {
-            <MudItem xs="12" md="6" lg="4">
-                <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="350px" />
-            </MudItem>
-        }
+            @for (int i = 0; i < 6; i++)
+            {
+                <MudItem xs="12" md="6" lg="4">
+                    <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="350px" />
+                </MudItem>
+            }
+        </MudGrid>
     }
     else if (filteredEnrollments?.Any() == true)
     {
@@ -109,8 +109,6 @@
             </div>
         </MudItem>
     }
-</MudGrid>
-    }
 </div>
 
 
@@ -139,8 +137,6 @@
 </MudDialog>
 
 @code {
-    [CascadingParameter]
-    private HttpContext HttpContext { get; set; } = default!;
     private bool isLoading = true;
     private string currentFilter = "all";
     private string? currentUserId;
@@ -162,7 +158,8 @@
         try
         {
             isLoading = true;
-            var user = await UserManager.GetUserAsync(HttpContext.User);
+            var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+            var user = await UserManager.GetUserAsync(authState.User);
             if (user is not null)
             {
                 currentUserId = user.Id;

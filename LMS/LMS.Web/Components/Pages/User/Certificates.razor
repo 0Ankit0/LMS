@@ -3,7 +3,7 @@
 @using MudBlazor.Utilities;
 @using System.Security.Claims
 @page "/user/lms/certificates"
-@inject IdentityUserAccessor UserAccessor
+@inject AuthenticationStateProvider AuthenticationStateProvider
 @inject ICertificateRepository CertificateRepository
 @inject ISnackbar Snackbar
 
@@ -192,8 +192,6 @@ else
 @code {
     private List<CertificateModel>? certificates;
     private bool isLoading = true;
-    [CascadingParameter]
-    private HttpContext HttpContext { get; set; } = default!;
 
     protected override async Task OnInitializedAsync()
     {
@@ -205,8 +203,9 @@ else
         try
         {
             isLoading = true;
-            var user = await UserAccessor.GetRequiredUserAsync(HttpContext);
-            var currentUserId = user?.Id;
+            var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+            var user = authState.User;
+            var currentUserId = user?.FindFirstValue(ClaimTypes.NameIdentifier);
 
             if (!string.IsNullOrEmpty(currentUserId))
             {
@@ -304,4 +303,4 @@ IsValid = true
         >= 70 => "Satisfactory",
         _ => "Pass"
     };
-}
+}}

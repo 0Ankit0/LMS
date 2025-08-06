@@ -4,6 +4,7 @@
 @using System.Security.Claims
 @page "/user/lms/messages"
 @inject UserManager<User> UserManager
+@inject AuthenticationStateProvider AuthenticationStateProvider
 @inject IMessageRepository MessageRepository
 @inject ISnackbar Snackbar
 
@@ -235,8 +236,6 @@
 </MudDialog>
 
 @code {
-    [CascadingParameter]
-    private HttpContext HttpContext { get; set; } = default!;
     private bool isLoadingMessages = true;
     private bool isSending = false;
     private string statusMessage = "";
@@ -288,7 +287,8 @@ new PriorityOption { Value = 4, DisplayName = "Urgent" }
         try
         {
             isLoadingMessages = true;
-            var user = await UserManager.GetUserAsync(HttpContext.User);
+            var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+            var user = await UserManager.GetUserAsync(authState.User);
             if (user is not null)
             {
                 currentUserId = user.Id;

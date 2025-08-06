@@ -113,10 +113,14 @@
         StateHasChanged();
         try
         {
+            // Ensure non-negative values
+            var pageNumber = state.Page < 0 ? 0 : state.Page;
+            var pageSize = state.PageSize < 1 ? 10 : state.PageSize;
+
             var paginationRequest = new PaginationRequest
             {
-                PageNumber = state.Page,
-                PageSize = state.PageSize,
+                PageNumber = pageNumber,
+                PageSize = pageSize,
                 // Sorting logic commented out
             };
             var result = await CertificateRepository.GetCertificatesPaginatedAsync(paginationRequest);

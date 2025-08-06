@@ -415,20 +415,22 @@
 
 
 @code {
-    private bool isLoading = true;
     private int currentTab = 0;
-    private string? currentUserId;
-    private List<UserAchievementModel>? earnedAchievements;
-    private List<AchievementModel>? availableAchievements;
-    private List<LeaderboardEntryModel>? leaderboardEntries;
-    
+    private List<UserAchievementModel> earnedAchievements = new();
+    private List<AchievementModel> availableAchievements = new();
+    private List<LeaderboardEntryModel> leaderboardEntries = new();
     private int earnedCount = 0;
     private int availableCount = 0;
     private int totalPoints = 0;
     private int userRank = 0;
+    private string? currentUserId;
+    private bool isLoading = true;
 
     protected override async Task OnInitializedAsync()
     {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        currentUserId = authState.User?.FindFirstValue(ClaimTypes.NameIdentifier);
+
         await LoadAchievementData();
     }
 
@@ -437,47 +439,37 @@
         try
         {
             isLoading = true;
-            var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
-            var user = authState.User;
-            if (user is not null)
+            if (!string.IsNullOrEmpty(currentUserId))
             {
-                currentUserId = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-                if (!string.IsNullOrEmpty(currentUserId))
+                try
                 {
-                    try
-                    {
-                        // Load user achievements via repository
-                        earnedAchievements = await AchievementRepository.GetUserAchievementsAsync(currentUserId);
-                        earnedCount = earnedAchievements?.Count ?? 0;
-                        totalPoints = earnedAchievements?.Sum(a => a.Points) ?? 0;
+                    // Load user achievements via repository
+                    var userAchievements = await AchievementRepository.GetUserAchievementsAsync(currentUserId);
+                    earnedAchievements = userAchievements ?? new List<UserAchievementModel>();
+                    earnedCount = earnedAchievements?.Count ?? 0;
+                    totalPoints = earnedAchievements?.Sum(a => a.Points) ?? 0;
 
-                        // Load all achievements to find available ones
-                        var allAchievements = await AchievementRepository.GetAllAchievementsAsync();
-                        var earnedIds = earnedAchievements?.Select(a => a.AchievementId).ToHashSet() ?? new HashSet<int>();
-                        availableAchievements = allAchievements?.Where(a => !earnedIds.Contains(a.Id)).ToList();
-                        availableCount = availableAchievements?.Count ?? 0;
+                    // Load all achievements to find available ones
+                    var allAchievements = await AchievementRepository.GetAllAchievementsAsync();
+                    var earnedIds = earnedAchievements?.Select(a => a.AchievementId).ToHashSet() ?? new HashSet<int>();
+                    availableAchievements = allAchievements?.Where(a => !earnedIds.Contains(a.Id)).ToList() ?? new List<AchievementModel>();
+                    availableCount = availableAchievements?.Count ?? 0;
 
-                        // Load leaderboard data via repository
-                        leaderboardEntries = await LeaderboardRepository.GetAchievementLeaderboardAsync();
+                    // Load leaderboard data via repository
+                    leaderboardEntries = await LeaderboardRepository.GetAchievementLeaderboardAsync();
 
-                        // Find user rank via repository
-                        userRank = await LeaderboardRepository.GetUserAchievementRankAsync(currentUserId);
-                    }
-                    catch
-                    {
-                        // If any repository calls fail, load dummy data
-                        LoadDummyData();
-                    }
+                    // Find user rank via repository
+                    userRank = await LeaderboardRepository.GetUserAchievementRankAsync(currentUserId);
                 }
-                else
+                catch
                 {
-                    // No user ID found, load dummy data
+                    // If any repository calls fail, load dummy data
                     LoadDummyData();
                 }
             }
             else
             {
-                // User not authenticated, load dummy data
+                // No user ID found, load dummy data
                 LoadDummyData();
             }
         }

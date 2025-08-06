@@ -3,6 +3,7 @@
 
 @inject NavigationManager NavigationManager
 @inject UserManager<User> UserManager
+@inject AuthenticationStateProvider AuthenticationStateProvider
 @using LMS.Data.Entities
 @using LMS.Web.Components.Account
 @rendermode InteractiveServer
@@ -114,14 +115,13 @@ else
 }
 
 @code {
-    [CascadingParameter]
-    private HttpContext HttpContext { get; set; } = default!;
     private bool isLoading = true;
     private UserModel? currentUser;
 
     protected override async Task OnInitializedAsync()
     {
-        var user = await UserManager.GetUserAsync(HttpContext.User);
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = await UserManager.GetUserAsync(authState.User);
         if (user is not null)
         {
             currentUser = new UserModel { UserName = user.UserName };

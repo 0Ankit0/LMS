@@ -1,10 +1,13 @@
 @page "/user/lms/assessments"
 @using LMS.Web.Components.Account
+@using MudBlazor.Utilities;
+@using MudBlazor.Components;
+@using System.Security.Claims;
+@inject AuthenticationStateProvider AuthenticationStateProvider
 @inject IdentityUserAccessor UserAccessor
 @inject IEnrollmentRepository EnrollmentRepository
 @inject IAssessmentRepository AssessmentRepository
 @inject ISnackbar Snackbar
-@using System.Security.Claims;
 
 <MudToolBar Class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
     <MudText Typo="Typo.h5" Class="h2"><MudIcon Icon="@Icons.Material.Filled.AssignmentTurnedIn" Class="text-success me-2" />Assessments & Quizzes</MudText>
@@ -289,18 +292,14 @@ else
 }
 
 @code {
-    [CascadingParameter]
-    private HttpContext HttpContext { get; set; } = default!;
+    private bool isLoading = true;
+    private string selectedFilter = "all";
+    private string searchTerm = "";
     private string? currentUserId;
     private List<AssessmentModel>? assessments;
     private List<AssessmentModel> filteredAssessments = new();
     private List<CourseModel> availableCourses = new();
     private List<AssessmentAttemptModel> userAttempts = new();
-    private bool isLoading = true;
-    private string searchTerm = string.Empty;
-    private string selectedFilter = "all";
-    private string selectedCourse = string.Empty;
-    private CourseModel? selectedCourseModel;
     private string sortBy = "newest";
 
     // Statistics
@@ -309,11 +308,12 @@ else
     private int pendingAssessments = 0;
     private double averageScore = 0;
     private bool IsAdmin = false; // Placeholder for admin role check
+    private CourseModel? selectedCourseModel = null;
 
     protected override async Task OnInitializedAsync()
     {
-        var user = await UserAccessor.GetRequiredUserAsync(HttpContext);
-        currentUserId = user?.Id;
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        currentUserId = authState.User?.FindFirstValue(ClaimTypes.NameIdentifier);
 
         await LoadAssessments();
     }
@@ -470,7 +470,7 @@ else
     {
         searchTerm = string.Empty;
         selectedFilter = "all";
-        selectedCourse = string.Empty;
+        selectedCourseModel = null;
         FilterAndSortAssessments();
     }
 
@@ -537,4 +537,4 @@ else
         public double Score { get; set; }
         public DateTime? CompletedAt { get; set; }
     }
-}
+}}
