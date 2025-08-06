@@ -1,0 +1,28 @@
+@inherits LMS.UI.Shared.Layout.MainLayout
+
+<MudLayout>
+    <MudAppBar Elevation="0" Color="Color.Primary" Class="mud-theme-provider">
+        <MudText Typo="Typo.h6" Class="ml-2">LMS</MudText>
+        <MudSpacer />
+        <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" OnClick="ToggleDrawer" />
+    </MudAppBar>
+    <MudDrawer Elevation="1" Variant="DrawerVariant.Mini" Open="@drawerOpen" Anchor="Anchor.Left" Class="mud-theme-provider">
+        <MudNavMenu>
+            <MudNavLink Href="/user/lms/dashboard" Icon="@Icons.Material.Filled.Dashboard">Dashboard</MudNavLink>
+            <MudNavLink Href="/user/lms/announcements" Icon="@Icons.Material.Filled.Campaign">Announcements</MudNavLink>
+            <MudNavLink Href="/user/lms/course-catalog" Icon="@Icons.Material.Filled.MenuBook">Course Catalog</MudNavLink>
+            <MudNavLink Href="/user/lms/achievements" Icon="@Icons.Material.Filled.EmojiEvents">Achievements</MudNavLink>
+            <MudNavLink Href="/user/lms/analytics" Icon="@Icons.Material.Filled.Analytics">Analytics</MudNavLink>
+            <MudNavLink Href="/user/lms/assessments" Icon="@Icons.Material.Filled.Assignment">Assessments</MudNavLink>
+            <MudNavLink Href="/user/lms/certificates" Icon="@Icons.Material.Filled.CardMembership">Certificates</MudNavLink>
+        </MudNavMenu>
+    </MudDrawer>
+    <MudMainContent>
+        @Body
+    </MudMainContent>
+</MudLayout>
+
+@code {
+    private bool drawerOpen = true;
+    private void ToggleDrawer() => drawerOpen = !drawerOpen;
+}

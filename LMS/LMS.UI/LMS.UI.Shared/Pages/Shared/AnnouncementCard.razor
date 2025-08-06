@@ -1,0 +1,94 @@
+@using LMS.Data.DTOs
+@using MudBlazor
+@inject IDialogService DialogService
+
+<MudCard Elevation="2" Class="mb-1" Style="cursor:pointer;" @onclick="ShowDialog">
+    <MudCardHeader>
+        <CardHeaderContent>
+            <MudText Typo="Typo.h5">@Announcement.Title</MudText>
+        </CardHeaderContent>
+        <CardHeaderActions>
+            <MudChip T="string" Icon="@GetPriorityIcon(Announcement.Priority)" Color="@GetPriorityBadgeColor(Announcement.Priority)">@Announcement.Priority Priority</MudChip>
+        </CardHeaderActions>
+    </MudCardHeader>
+    <MudCardContent>
+        <MudText Typo="Typo.body2">@GetExcerpt(Announcement.Content)</MudText>
+    </MudCardContent>
+    <MudCardActions>
+        <MudText Typo="Typo.caption" Class="text-muted mx-2">
+            <MudIcon Icon="@Icons.Material.Filled.Person" Class="me-1" />
+            @Announcement.AuthorName
+        </MudText>
+        <MudText Typo="Typo.caption" Class="text-muted">
+            <MudIcon Icon="@Icons.Material.Filled.CalendarToday" Class="me-1" />
+            @FormatDate(Announcement.PublishedAt)
+        </MudText>
+        <MudSpacer />
+        <MudButton Variant="Variant.Outlined" Color="Color.Primary" @onclick="ShowDialog" StartIcon="@Icons.Material.Filled.Visibility">View</MudButton>
+    </MudCardActions>
+</MudCard>
+
+@code {
+    [Parameter]
+    public AnnouncementModel Announcement { get; set; } = new();
+
+    private void ShowDialog()
+    {
+        var parameters = new DialogParameters { ["Announcement"] = Announcement };
+        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Medium, FullWidth = true };
+        DialogService.ShowAsync<AnnouncementDialog>("Announcement Details", parameters, options);
+    }
+
+    private string GetPriorityIcon(string priority)
+    {
+        return priority.ToLower() switch
+        {
+            "high" => Icons.Material.Filled.Warning,
+            "medium" => Icons.Material.Filled.Info,
+            "low" => Icons.Material.Filled.Notifications,
+            _ => Icons.Material.Filled.Info
+        };
+    }
+
+    private MudBlazor.Color GetPriorityBadgeColor(string? priority)
+    {
+        return (priority ?? "").ToLower() switch
+        {
+            "high" => MudBlazor.Color.Error,
+            "medium" => MudBlazor.Color.Warning,
+            "low" => MudBlazor.Color.Info,
+            _ => MudBlazor.Color.Secondary
+        };
+    }
+
+    private string FormatDate(DateTime date)
+    {
+        var timeSpan = DateTime.Now - date;
+        if (timeSpan.Days > 0)
+        {
+            return $"{timeSpan.Days} day{(timeSpan.Days > 1 ? "s" : "")} ago";
+        }
+        else if (timeSpan.Hours > 0)
+        {
+            return $"{timeSpan.Hours} hour{(timeSpan.Hours > 1 ? "s" : "")} ago";
+        }
+        else if (timeSpan.Minutes > 0)
+        {
+            return $"{timeSpan.Minutes} minute{(timeSpan.Minutes > 1 ? "s" : "")} ago";
+        }
+        else
+        {
+            return "Just now";
+        }
+    }
+
+    private string GetExcerpt(string content)
+    {
+        if (string.IsNullOrEmpty(content))
+            return "";
+        const int maxLength = 120;
+        if (content.Length <= maxLength)
+            return content;
+        return content.Substring(0, maxLength) + "...";
+    }
+}

@@ -1,6 +1,9 @@
 @using LMS.UI.Shared.Layout
 @inherits LayoutComponentBase
 @layout MainLayout
+@inject Blazored.LocalStorage.ILocalStorageService LocalStorage
+
+<TopNav />
 
 <MudText Typo="Typo.h3" GutterBottom="true">Admin Dashboard</MudText>
 

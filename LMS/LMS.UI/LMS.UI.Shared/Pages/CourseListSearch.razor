@@ -1,6 +1,7 @@
 @inject HttpClient HttpClient
 @inject NavigationManager NavigationManager
 @using MudBlazor
+@using LMS.UI.Shared.Pages.Shared
 @rendermode InteractiveServer
 
 
@@ -24,32 +25,7 @@
             <div class="p-2 d-flex flex-column gap-4 border-0">
                 @foreach (var course in filteredCourses)
                 {
-                    <div class="col-12 ">
-                        <MudCard Elevation="2" Class="mb-1" Style="cursor:pointer;"
-                                 OnClick="@(() => NavigationManager.NavigateTo($"/user/lms/course/{course.Id}"))">
-                            <MudCardContent Class="px-3 d-flex flex-column justify-content-between">
-                                <div>
-                                    <MudText Typo="Typo.h6" Class="mb-1 text-primary" Style="font-size: 1.05rem;">@course.Title</MudText>
-                                    <MudText Typo="Typo.body2" Class="mb-1 text-muted"><MudIcon Icon="@Icons.Material.Filled.Person" Size="Size.Small" Class="me-1" />@course.InstructorName</MudText>
-                                    <MudText Typo="Typo.body2" Class="mb-1 text-truncate" Style="max-width: 100%;">
-                                        @if (!string.IsNullOrWhiteSpace(course.Description))
-                                        {
-                                            @((course.Description.Length > 100) ? course.Description.Substring(0, 100) + "..." : course.Description)
-                                        }
-                                    </MudText>
-                                </div>
-                                <div class="mt-1 d-flex align-items-center">
-                                    <MudText Typo="Typo.subtitle2" Class="course-level">@course.Level</MudText>
-                                    <MudChip T="string" Color="Color.Primary" Size="Size.Small">@course.Categories.FirstOrDefault()</MudChip>
-                                    @if (course.StartDate != default)
-                                    {
-                                        <MudChip T="string" Color="Color.Dark" Variant="Variant.Outlined">@course.StartDate.ToString("MMM dd, yyyy")</MudChip>
-                                    }
-                                    <MudText Typo="Typo.caption">@FormatDuration(course.EstimatedDuration)</MudText>
-                                </div>
-                            </MudCardContent>
-                        </MudCard>
-                    </div>
+                    <CourseCard Course="course" OnClick="@(c => NavigationManager.NavigateTo($"/user/lms/course/{c.Id}"))" />
                 }
             </div>
         }

@@ -1,5 +1,6 @@
 @using MudBlazor;
 @using MudBlazor.Utilities;
+@using LMS.UI.Shared.Pages.Shared
 @page "/user/lms/announcement-list"
 
 @inject HttpClient HttpClient
@@ -103,35 +104,7 @@
                 <div class="announcements-list">
                     @foreach (var announcement in filteredAnnouncements)
                     {
-                        <MudCard Class="@GetFullAnnouncementCardClass(announcement.Priority)">
-                            <MudCardContent Class="announcement-content">
-                                <div class="d-flex align-items-center mb-2">
-                                    <MudIcon Icon="@GetPriorityIconEnum(announcement.Priority)" Class="me-2 fs-4" Color="@GetPriorityBadgeColor(announcement.Priority)" />
-                                    <MudText Typo="Typo.h5" Class="announcement-title fw-bold">@announcement.Title</MudText>
-                                </div>
-                                <div class="announcement-header d-flex flex-wrap align-items-center mb-2 gap-3">
-                                    <span class="announcement-author d-flex align-items-center text-secondary">
-                                        <MudIcon Icon="@Icons.Material.Filled.Person" Class="me-1" />
-                                        @announcement.AuthorName
-                                    </span>
-                                    <span class="announcement-date d-flex align-items-center text-secondary">
-                                        <MudIcon Icon="@Icons.Material.Filled.CalendarToday" Class="me-1" />
-                                        @FormatDate(announcement.PublishedAt)
-                                    </span>
-                                    <MudChip T="string" Color="@GetPriorityBadgeColor(announcement.Priority)" Class="px-2">
-                                        @announcement.Priority
-                                    </MudChip>
-                                </div>
-                                <div class="d-flex align-items-center justify-content-between">
-                                    <MudText Typo="Typo.body2" Class="announcement-excerpt text-muted">@GetExcerpt(announcement.Content)</MudText>
-                                    <MudButton Variant="Variant.Text" Color="Color.Primary" Size="Size.Small"
-                                               OnClick="() => ShowAnnouncement(announcement)">
-                                        <MudIcon Icon="@Icons.Material.Filled.Visibility" Class="me-2" />
-                                        View
-                                    </MudButton>
-                                </div>
-                            </MudCardContent>
-                        </MudCard>
+                        <AnnouncementCard Announcement="announcement" />
                     }
                 </div>
             }
@@ -150,42 +123,6 @@
     </div>
 </div>
 
-<MudDialog @bind-IsVisible="@isModalVisible" Options="@dialogOptions">
-    <TitleContent>
-        <MudText Typo="Typo.h6">Announcement Details</MudText>
-    </TitleContent>
-    <DialogContent>
-        @if (selectedAnnouncement is not null)
-        {
-            <div class="announcement-detail-meta mb-3">
-                <div class="meta-item">
-                    <MudIcon Icon="@Icons.Material.Filled.Person" Color="Color.Primary" />
-                    <span>@selectedAnnouncement.AuthorName</span>
-                </div>
-                <div class="meta-item">
-                    <MudIcon Icon="@Icons.Material.Filled.CalendarToday" Color="Color.Primary" />
-                    <span>@selectedAnnouncement.PublishedAt.ToString("MMM dd, yyyy HH:mm")</span>
-                </div>
-                <div class="meta-item">
-                    <MudChip T="string" Color="@GetPriorityBadgeColor(selectedAnnouncement.Priority)">
-                        <MudIcon Icon="@GetPriorityIconEnum(selectedAnnouncement.Priority)" Class="me-1" />
-                        @selectedAnnouncement.Priority Priority
-                    </MudChip>
-                </div>
-            </div>
-            <div class="announcement-detail-content">
-                @((MarkupString)(selectedAnnouncement.Content ?? ""))
-            </div>
-        }
-        else
-        {
-            <div>No announcement selected.</div>
-        }
-    </DialogContent>
-</MudDialog>
-
-<MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="OnShowModalClick">Launch static backdrop modal</MudButton>
-
 @code {
     private int selectedFilterIndex = 0;
     private int selectedDateFilterIndex = 3; // Default to All Time
@@ -195,12 +132,6 @@
     // Collections and selected items
     private List<AnnouncementModel> announcements = new();
     private List<AnnouncementModel> filteredAnnouncements = new();
-    private AnnouncementModel? selectedAnnouncement;
-
-    // Modal reference
-    private MudDialog? announcementDetailModal;
-    private bool isModalVisible = false;
-    private DialogOptions dialogOptions = new() { CloseButton = true, MaxWidth = MaxWidth.Medium, FullWidth = true };
 
     protected override async Task OnInitializedAsync()
     {
@@ -308,18 +239,6 @@
         StateHasChanged();
     }
 
-    private async void ShowAnnouncement(AnnouncementModel announcement)
-    {
-        selectedAnnouncement = announcement;
-        isModalVisible = true;
-    }
-
-    private void CloseModal()
-    {
-        isModalVisible = false;
-        selectedAnnouncement = null;
-    }
-
     private async Task RefreshAnnouncements()
     {
         await LoadAnnouncements();
@@ -344,93 +263,5 @@
             "recent" => selectedFilterIndex == 4 ? "mud-button-filled" : "mud-button-outlined",
             _ => "mud-button-outlined"
         };
-    }
-
-    // Returns the correct MudBlazor.Icons.Material.Filled icon for the given priority
-    private string GetPriorityIconEnum(string? priority)
-    {
-        return (priority ?? "").ToLower() switch
-        {
-            "high" => Icons.Material.Filled.Warning,
-            "medium" => Icons.Material.Filled.Info,
-            "low" => Icons.Material.Filled.Notifications,
-            _ => Icons.Material.Filled.Info
-        };
-    }
-
-    // Returns the correct MudBlazor.Color enum for the given priority
-    private MudBlazor.Color GetPriorityBadgeColor(string? priority)
-    {
-        return (priority ?? "").ToLower() switch
-        {
-            "high" => MudBlazor.Color.Error,
-            "medium" => MudBlazor.Color.Warning,
-            "low" => MudBlazor.Color.Info,
-            _ => MudBlazor.Color.Secondary
-        };
-    }
-
-    private string FormatDate(DateTime date)
-    {
-        var timeSpan = DateTime.Now - date;
-
-        if (timeSpan.Days > 0)
-        {
-            return $"{timeSpan.Days} day{(timeSpan.Days > 1 ? "s" : "")} ago";
-        }
-        else if (timeSpan.Hours > 0)
-        {
-            return $"{timeSpan.Hours} hour{(timeSpan.Hours > 1 ? "s" : "")} ago";
-        }
-        else if (timeSpan.Minutes > 0)
-        {
-            return $"{timeSpan.Minutes} minute{(timeSpan.Minutes > 1 ? "s" : "")} ago";
-        }
-        else
-        {
-            return "Just now";
-        }
-    }
-
-    private string GetExcerpt(string content)
-    {
-        if (string.IsNullOrEmpty(content))
-            return "";
-
-        const int maxLength = 150;
-        if (content.Length <= maxLength)
-            return content;
-
-        return content.Substring(0, maxLength) + "...";
-    }
-
-    // Helper methods for CSS classes
-    private string GetAnnouncementCardClass(string priority) => $"announcement-card {GetPriorityClass(priority)}";
-
-    private string GetFullAnnouncementCardClass(string priority)
-    {
-        return $"{GetAnnouncementCardClass(priority)} mud-elevation-3 mud-rounded p-3 mb-4";
-    }
-
-    private string GetPriorityClass(string priority)
-    {
-        return (priority ?? "").ToLower() switch
-        {
-            "high" => "priority-high",
-            "medium" => "priority-medium",
-            "low" => "priority-low",
-            _ => "priority-normal"
-        };
-    }
-
-    private async Task OnShowModalClick()
-    {
-        isModalVisible = true;
-    }
-
-    private async Task OnHideModalClick()
-    {
-        isModalVisible = false;
-        selectedAnnouncement = null;
     }
 }

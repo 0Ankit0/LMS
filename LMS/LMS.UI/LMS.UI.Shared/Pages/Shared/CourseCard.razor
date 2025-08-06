@@ -1,0 +1,55 @@
+@using LMS.Data.DTOs
+@using MudBlazor
+
+<div class="col-12">
+    <MudCard Elevation="2" Class="mb-1" Style="cursor:pointer;" @onclick="OnCardClick">
+        <MudCardContent Class="px-3 d-flex flex-column justify-content-between">
+            <div>
+                <MudText Typo="Typo.h6" Class="mb-1 text-primary" Style="font-size: 1.05rem;">@Course.Title</MudText>
+                <MudText Typo="Typo.body2" Class="mb-1 text-muted">
+                    <MudIcon Icon="@Icons.Material.Filled.Person" Size="Size.Small" Class="me-1" />@Course.InstructorName
+                </MudText>
+                <MudText Typo="Typo.body2" Class="mb-1 text-truncate" Style="max-width: 100%;">
+                    @if (!string.IsNullOrWhiteSpace(Course.Description))
+                    {
+                        @((Course.Description.Length > 100) ? Course.Description.Substring(0, 100) + "..." : Course.Description)
+                    }
+                </MudText>
+            </div>
+            <div class="mt-1 d-flex align-items-center">
+                <MudText Typo="Typo.subtitle2" Class="course-level">@Course.Level</MudText>
+                <MudChip T="string" Color="Color.Primary" Size="Size.Small">@Course.Categories.FirstOrDefault()</MudChip>
+                @if (Course.StartDate != default)
+                {
+                    <MudChip T="string" Color="Color.Dark" Variant="Variant.Outlined">@Course.StartDate.ToString("MMM dd, yyyy")</MudChip>
+                }
+                <MudText Typo="Typo.caption">@FormatDuration(Course.EstimatedDuration)</MudText>
+            </div>
+        </MudCardContent>
+    </MudCard>
+</div>
+
+@code {
+    [Parameter]
+    public CourseModel Course { get; set; } = new();
+    [Parameter]
+    public EventCallback<CourseModel> OnClick { get; set; }
+
+    private void OnCardClick()
+    {
+        if (OnClick.HasDelegate)
+            OnClick.InvokeAsync(Course);
+    }
+
+    private string FormatDuration(TimeSpan duration)
+    {
+        var hours = (int)duration.TotalHours;
+        var minutes = duration.Minutes;
+
+        if (hours > 0)
+        {
+            return minutes > 0 ? $"{hours}h {minutes}m" : $"{hours}h";
+        }
+        return $"{minutes}m";
+    }
+}

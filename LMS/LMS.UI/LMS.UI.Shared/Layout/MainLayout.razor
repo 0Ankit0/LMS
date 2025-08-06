@@ -2,24 +2,18 @@
 
 @inject ILocalStorageService LocalStorage
 @using Blazored.LocalStorage
+@using LMS.UI.Shared.Layout
 
-<MudThemeProvider @ref="_mudThemeProvider" Theme="@(IsDarkMode? CustomThemes.DarkTheme: CustomThemes.LightTheme)" />
+<MudThemeProvider Theme="@CurrentTheme" />
 <MudPopoverProvider />
 <MudDialogProvider />
 <MudSnackbarProvider />
 
-
 <MudLayout>
-    <MudAppBar Elevation="0" Color="Color.Primary" Class="mud-theme-provider">
-        <MudText Typo="Typo.h6" Class="ml-2">LMS</MudText>
-        <MudSpacer />
-        <MudIconButton Icon="@Icons.Material.Filled.Brightness4" OnClick="@ToggleTheme" Color="Color.Inherit" />
-    </MudAppBar>
     <MudMainContent Class="pt-16 pa-4">
         @Body
     </MudMainContent>
 </MudLayout>
-
 
 <div id="blazor-error-ui" data-nosnippet>
     An unhandled error has occurred.
@@ -27,24 +21,16 @@
     <span class="dismiss">🗙</span>
 </div>
 
-
 @code {
-    private MudThemeProvider? _mudThemeProvider;
-    private bool IsDarkMode { get; set; }
+    private MudTheme CurrentTheme { get; set; } = CustomThemes.LightTheme;
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender)
         {
-            IsDarkMode = await LocalStorage.GetItemAsync<bool>("IsDarkMode");
+            var isDarkMode = await LocalStorage.GetItemAsync<bool>("IsDarkMode");
+            CurrentTheme = isDarkMode ? CustomThemes.DarkTheme : CustomThemes.LightTheme;
             StateHasChanged();
         }
-    }
-
-    public async Task ToggleTheme()
-    {
-        IsDarkMode = !IsDarkMode;
-        await LocalStorage.SetItemAsync("IsDarkMode", IsDarkMode);
-        StateHasChanged();
     }
 }

@@ -1,7 +1,9 @@
 
+@using LMS.UI.Shared.Pages.Shared
 @using MudBlazor
 @page "/user/lms/courses/catalog"
 @inject HttpClient HttpClient
+@inject NavigationManager NavigationManager
 
 <MudGrid Spacing="3">
     <!-- Categories Sidebar -->
@@ -62,7 +64,7 @@
                         @foreach (var course in filteredCourses)
                         {
                             <MudItem xs="12" sm="6" md="4">
-                                <CourseCard Course="course" IsBookmarked="bookmarkedCourses.Contains(course.Id)" OnBookmark="ToggleBookmark" />
+                                 <CourseCard Course="course" OnClick="@(c => NavigationManager.NavigateTo($"/user/lms/course/{c.Id}"))" />
                             </MudItem>
                         }
                     }
