@@ -1,7 +1,7 @@
 @inject HttpClient HttpClient
 @inject NavigationManager NavigationManager
 @using MudBlazor
-
+@rendermode InteractiveServer
 
 
 <div class="card h-100 d-flex flex-column border-0">
@@ -9,7 +9,8 @@
         <MudTextField @bind-Value="searchTerm" Placeholder="Search courses..."
                       Variant="Variant.Filled" Clearable="true"
                       Adornment="Adornment.End" AdornmentIcon="@Icons.Material.Filled.Search"
-                      OnClearButtonClick="OnClearSearchButtonClick" />
+                      OnClearButtonClick="OnClearSearchButtonClick"
+                      Immediate="true" />
     </div>
     <div class="card-body border-0 p-0 flex-grow-1 overflow-auto">
         @if (isLoading)
@@ -68,7 +69,20 @@
     [Parameter]
     public UserModel? User { get; set; }
 
-    private string searchTerm = string.Empty;
+    private string _searchTerm = string.Empty;
+    private string searchTerm
+    {
+        get => _searchTerm;
+        set
+        {
+            if (_searchTerm != value)
+            {
+                _searchTerm = value;
+                FilterCourses();
+                StateHasChanged();
+            }
+        }
+    }
     private List<CourseModel>? courses;
     private List<CourseModel>? filteredCourses;
     private bool isLoading = true;
@@ -88,21 +102,9 @@
         StateHasChanged();
     }
 
-    private void ClearSearchAndFilter()
-    {
-        searchTerm = string.Empty;
-        FilterCourses();
-    }
-
     private void OnClearSearchButtonClick()
     {
         searchTerm = string.Empty;
-        FilterCourses();
-    }
-
-    private void OnSearchChanged(ChangeEventArgs e)
-    {
-        searchTerm = e.Value?.ToString() ?? string.Empty;
         FilterCourses();
     }
 

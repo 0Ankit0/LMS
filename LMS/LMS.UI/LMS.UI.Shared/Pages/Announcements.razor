@@ -64,7 +64,7 @@
     }
 </MudGrid>
 
-<MudDialog @bind-IsVisible="@isModalVisible" Options="@dialogOptions">
+<MudDialog @ref="announcementDialogRef" Options="@dialogOptions">
     <TitleContent>
         <MudText Typo="Typo.h6">@selectedAnnouncement?.Title</MudText>
     </TitleContent>
@@ -82,9 +82,9 @@
                 </div>
                 <div class="meta-item">
                     <MudChip T="string" Color="@GetPriorityBadgeColor(selectedAnnouncement.Priority)">
-                                        <MudIcon Icon="@GetPriorityIcon(selectedAnnouncement.Priority)" Class="me-1" />
-                                        @selectedAnnouncement.Priority Priority
-                                    </MudChip>
+                        <MudIcon Icon="@GetPriorityIcon(selectedAnnouncement.Priority)" Class="me-1" />
+                        @selectedAnnouncement.Priority Priority
+                    </MudChip>
                 </div>
             </div>
             <div class="announcement-detail-content">
@@ -98,12 +98,11 @@
 </MudDialog>
 
 @code {
-    // Properties
     private bool isLoading = true;
-
-    // Collections and selected items
     private List<AnnouncementModel> announcements = new();
     private AnnouncementModel? selectedAnnouncement;
+    private MudDialog announcementDialogRef;
+    private DialogOptions dialogOptions = new() { CloseButton = true, MaxWidth = MaxWidth.Medium, FullWidth = true };
 
     protected override async Task OnInitializedAsync()
     {
@@ -113,11 +112,10 @@
     private async Task LoadAnnouncements()
     {
         isLoading = true;
-        await InvokeAsync(StateHasChanged);
+        StateHasChanged();
 
         try
         {
-            // Load announcements from HTTP endpoint
             var response = await HttpClient.GetAsync("api/announcements/latest");
             if (response.IsSuccessStatusCode)
             {
@@ -126,28 +124,23 @@
         }
         catch (Exception ex)
         {
-            // Log error
             Console.WriteLine($"Error loading announcements: {ex.Message}");
         }
         finally
         {
             isLoading = false;
-        }
-    }
+            StateHasChanged();
+        }}
 
-    private MudDialog? announcementModal;
-    private bool isModalVisible = false;
-    private DialogOptions dialogOptions = new() { CloseButton = true, MaxWidth = MaxWidth.Medium, FullWidth = true };
-
-    private async Task ShowAnnouncement(AnnouncementModel announcement)
+    private void ShowAnnouncement(AnnouncementModel announcement)
     {
         selectedAnnouncement = announcement;
-        isModalVisible = true;
+        announcementDialogRef?.ShowAsync();
     }
 
     private void CloseModal()
     {
-        isModalVisible = false;
+        announcementDialogRef?.CloseAsync();
         selectedAnnouncement = null;
     }
 
