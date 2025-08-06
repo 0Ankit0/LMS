@@ -1,0 +1,39 @@
+@using LMS.Web.Components.Layout
+@using MudBlazor.StaticInput
+@inherits LayoutComponentBase
+@layout MainLayout
+@inject Blazored.LocalStorage.ILocalStorageService LocalStorage
+
+<MudAppBar Elevation="1">
+        <MudStaticNavDrawerToggle DrawerId="nav-drawer" Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" />
+        <MudText Typo="Typo.h5" Class="ml-3">Application</MudText>
+        <MudSpacer />
+        <MudIconButton Icon="@Icons.Material.Filled.MoreVert" Color="Color.Inherit" Edge="Edge.End" />
+    </MudAppBar>
+    <MudDrawer id="nav-drawer" @bind-Open="_drawerOpen" ClipMode="DrawerClipMode.Always" Elevation="2">
+    <MudGrid>
+        <MudItem md="3">
+            <MudNavMenu>
+                <MudNavLink Href="/admin/achievements" Icon="@Icons.Material.Filled.EmojiEvents">Achievements</MudNavLink>
+                <MudNavLink Href="/admin/assessments" Icon="@Icons.Material.Filled.Assignment">Assessments</MudNavLink>
+                <MudNavLink Href="/admin/categories" Icon="@Icons.Material.Filled.Category">Categories</MudNavLink>
+                <MudNavLink Href="/admin/certificates" Icon="@Icons.Material.Filled.WorkspacePremium">Certificates</MudNavLink>
+                <MudNavLink Href="/admin/courses" Icon="@Icons.Material.Filled.Book">Courses</MudNavLink>
+                <MudNavLink Href="/admin/enrollments" Icon="@Icons.Material.Filled.HowToReg">Enrollments</MudNavLink>
+                <MudNavLink Href="/admin/forums" Icon="@Icons.Material.Filled.Forum">Forums</MudNavLink>
+                <MudNavLink Href="/admin/lessons" Icon="@Icons.Material.Filled.School">Lessons</MudNavLink>
+                <MudNavLink Href="/admin/modules" Icon="@Icons.Material.Filled.Folder">Modules</MudNavLink>
+                <MudNavLink Href="/admin/questions" Icon="@Icons.Material.Filled.QuestionAnswer">Questions</MudNavLink>
+                <MudNavLink Href="/admin/tags" Icon="@Icons.Material.Filled.Tag">Tags</MudNavLink>
+            </MudNavMenu>
+        </MudItem>
+        <MudItem md="9">
+            @Body
+        </MudItem>
+    </MudGrid>
+
+    </MudDrawer>
+
+@code{
+    private bool _drawerOpen = true;
+ }

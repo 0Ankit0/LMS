@@ -1,0 +1,141 @@
+﻿@page "/home"
+@page "/"
+
+@inject NavigationManager NavigationManager
+@inject IdentityUserAccessor UserAccessor
+@using LMS.Data.Entities
+@using LMS.Web.Components.Account
+@rendermode InteractiveServer
+<PageTitle>Home</PageTitle>
+
+@if (isLoading)
+{
+    <div class="container-fluid px-0">
+        <div class="row g-0 g-3">
+            <!-- Left: Navigation Cards Skeleton -->
+            <div class="col-12 col-md-2 mb-4 mb-md-0 d-flex flex-column">
+                @for (int i = 0; i < 6; i++)
+                {
+                    <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="60px" Class="mb-3" />
+                }
+            </div>
+
+            <!-- Middle: Announcements Skeleton -->
+            <div class="col-12 col-md-6 mb-4 mb-md-0 d-flex flex-column">
+                <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="400px" Class="mb-4 flex-grow-1" />
+            </div>
+            <!-- Right: Course List Search Skeleton -->
+            <div class="col-12 col-md-4 mb-4 mb-md-0 d-flex flex-column">
+                <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="400px" Class="w-100" />
+            </div>
+        </div>
+    </div>
+}
+else
+{
+    <MudGrid Spacing="3">
+            <!-- Left: Navigation Cards -->
+            <MudItem xs="12" md="2">
+                <MudPaper Elevation="2" Class="d-flex flex-column">
+                    <MudCard Elevation="2" Class="mb-3" >
+                        <MudLink Href="/admin" Style="text-decoration:none;">
+                            <MudCardContent Class="d-flex align-items-center" Style="cursor:pointer;">
+                                <MudIcon Icon="@Icons.Material.Filled.Speed" Class="me-2 fs-4 text-primary" />
+                                <MudText>Admin</MudText>
+                            </MudCardContent>
+                        </MudLink>
+                    </MudCard>
+                    <MudCard Elevation="2" Class="mb-3">
+                        <MudLink Href="/reports" Style="text-decoration:none;">
+                            <MudCardContent Class="d-flex align-items-center" Style="cursor:pointer;">
+                                <MudIcon Icon="@Icons.Material.Filled.Assessment" Class="me-2 fs-4 text-primary" />
+                                <MudText>Reports</MudText>
+                            </MudCardContent>
+                        </MudLink>
+                    </MudCard>
+                    <MudCard Elevation="2" Class="mb-3">
+                        <MudLink Href="/user/lms/dashboard" Style="text-decoration:none;">
+                            <MudCardContent Class="d-flex align-items-center" Style="cursor:pointer;">
+                                <MudIcon Icon="@Icons.Material.Filled.Dashboard" Class="me-2 fs-4 text-primary" />
+                                <MudText>Dashboard</MudText>
+                            </MudCardContent>
+                        </MudLink>
+                    </MudCard>
+                    <MudCard Elevation="2" Class="mb-3">
+                        <MudLink Href="/user/lms/forums" Style="text-decoration:none;">
+                            <MudCardContent Class="d-flex align-items-center" Style="cursor:pointer;">
+                                <MudIcon Icon="@Icons.Material.Filled.Forum" Class="me-2 fs-4 text-success" />
+                                <MudText>Forums</MudText>
+                            </MudCardContent>
+                        </MudLink>
+                    </MudCard>
+                    <MudCard Elevation="2" Class="mb-3">
+                        <MudLink Href="/user/lms/analytics" Style="text-decoration:none;">
+                            <MudCardContent Class="d-flex align-items-center" Style="cursor:pointer;">
+                                <MudIcon Icon="@Icons.Material.Filled.Analytics" Class="me-2 fs-4 text-info" />
+                                <MudText>Analytics</MudText>
+                            </MudCardContent>
+                        </MudLink>
+                    </MudCard>
+                    <MudCard Elevation="2" Class="mb-3">
+                        <MudLink Href="/user/lms/my-courses" Style="text-decoration:none;">
+                            <MudCardContent Class="d-flex align-items-center" Style="cursor:pointer;">
+                                <MudIcon Icon="@Icons.Material.Filled.School" Class="me-2 fs-4 text-warning" />
+                                <MudText>My Courses</MudText>
+                            </MudCardContent>
+                        </MudLink>
+                    </MudCard>
+                </MudPaper>
+            </MudItem>
+
+            <!-- Middle: Announcements -->
+            <MudItem xs="12" md="6">
+                <MudPaper Elevation="2" Class="d-flex flex-column flex-grow-1">
+                    <MudCard Elevation="2" Class="flex-grow-1 d-flex flex-column">
+                        <MudCardHeader Class="mud-bg-primary mud-text-white">
+                            <MudText Typo="Typo.h6">
+                                <MudIcon Icon="@Icons.Material.Filled.Campaign" Class="me-2" /> Announcements
+                            </MudText>
+                            <MudSpacer />
+                            <MudButton Variant="Variant.Text" Color="Color.Inherit" Size="Size.Small" Href="/user/lms/announcement-list" Style="text-decoration: none;">View All</MudButton>
+                        </MudCardHeader>
+                        <MudCardContent Class="p-0 flex-grow-1 d-flex flex-column hide-scrollbar"
+                            Style="max-height: 80svh; overflow-y: auto;">
+                            <Announcements />
+                        </MudCardContent>
+                    </MudCard>
+                </MudPaper>
+            </MudItem>
+            <!-- Right: Course List Search -->
+            <MudItem xs="12" md="4">
+                <CourseListSearch User="currentUser" />
+            </MudItem>
+        </MudGrid>
+}
+
+@code {
+    [CascadingParameter]
+    private HttpContext HttpContext { get; set; } = default!;
+    private bool isLoading = true;
+    private UserModel? currentUser;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var user = await UserAccessor.GetRequiredUserAsync(HttpContext);
+        if (user is not null)
+        {
+            currentUser = new UserModel { UserName = user.FullName };
+        }
+        isLoading = false;
+    }
+
+    private void NavigateTo(string url)
+    {
+        NavigationManager.NavigateTo(url);
+    }
+
+    private void NavigateToServer(string url)
+    {
+        NavigationManager.NavigateTo(url, forceLoad: true);
+    }
+}

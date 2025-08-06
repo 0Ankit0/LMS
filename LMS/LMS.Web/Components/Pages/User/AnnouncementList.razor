@@ -1,0 +1,267 @@
+@using LMS.Web.Components.Pages.User.Shared
+@using MudBlazor;
+@using MudBlazor.Utilities;
+@page "/user/lms/announcement-list"
+
+@inject HttpClient HttpClient
+@inject ISnackbar Snackbar
+
+<PageTitle>Announcements - LMS</PageTitle>
+
+<div class="announcements-layout">
+    <!-- Announcements Sidebar as Tabs -->
+    <div class="announcements-sidebar">
+        <MudTabs @bind-ActivePanelIndex="@selectedFilterIndex" Elevation="2" Rounded="true" Class="mt-4" Orientation="Orientation.Vertical">
+            <MudTabPanel Text="All Announcements">
+                <MudButton Variant="Variant.Text" Color="Color.Primary" Class="@GetFilterClass("all")"
+                           OnClick='@(() => SelectFilter(0))'>
+                    <MudIcon Icon="@Icons.Material.Filled.Campaign" Class="me-2" />
+                    All Announcements
+                </MudButton>
+            </MudTabPanel>
+            <MudTabPanel Text="High Priority">
+                <MudButton Variant="Variant.Text" Color="Color.Primary" Class="@GetFilterClass("high")"
+                           OnClick='@(() => SelectFilter(1))'>
+                    <MudIcon Icon="@Icons.Material.Filled.Warning" Class="me-2" />
+                    High Priority
+                </MudButton>
+            </MudTabPanel>
+            <MudTabPanel Text="Medium Priority">
+                <MudButton Variant="Variant.Text" Color="Color.Primary" Class="@GetFilterClass("medium")"
+                           OnClick='@(() => SelectFilter(2))'>
+                    <MudIcon Icon="@Icons.Material.Filled.Info" Class="me-2" />
+                    Medium Priority
+                </MudButton>
+            </MudTabPanel>
+            <MudTabPanel Text="Low Priority">
+                <MudButton Variant="Variant.Text" Color="Color.Primary" Class="@GetFilterClass("low")"
+                           OnClick='@(() => SelectFilter(3))'>
+                    <MudIcon Icon="@Icons.Material.Filled.Notifications" Class="me-2" />
+                    Low Priority
+                </MudButton>
+            </MudTabPanel>
+            <MudTabPanel Text="Recent">
+                <MudButton Variant="Variant.Text" Color="Color.Primary" Class="@GetFilterClass("recent")"
+                           OnClick='@(() => SelectFilter(4))'>
+                    <MudIcon Icon="@Icons.Material.Filled.History" Class="me-2" />
+                    Recent
+                </MudButton>
+            </MudTabPanel>
+            <MudTabPanel Text="Date Range">
+                <div class="filters-section ms-3">
+                    <MudText Typo="Typo.subtitle1" Class="filter-title">Date Range</MudText>
+                    <MudButtonGroup Color="Color.Primary" Variant="Variant.Outlined">
+                        <MudButton OnClick='@(() => SelectDateFilter(0))' Variant="@(selectedDateFilterIndex == 0 ? Variant.Filled : Variant.Outlined)">
+                            Today
+                        </MudButton>
+                        <MudButton OnClick='@(() => SelectDateFilter(1))' Variant="@(selectedDateFilterIndex == 1 ? Variant.Filled : Variant.Outlined)">
+                            This Week
+                        </MudButton>
+                        <MudButton OnClick='@(() => SelectDateFilter(2))' Variant="@(selectedDateFilterIndex == 2 ? Variant.Filled : Variant.Outlined)">
+                            This Month
+                        </MudButton>
+                        <MudButton OnClick='@(() => SelectDateFilter(3))' Variant="@(selectedDateFilterIndex == 3 ? Variant.Filled : Variant.Outlined)">
+                            All Time
+                        </MudButton>
+                    </MudButtonGroup>
+                </div>
+            </MudTabPanel>
+        </MudTabs>
+    </div>
+
+    <!-- Main Announcements Area -->
+    <div class="announcements-main">
+        <!-- Header -->
+        <div class="announcements-header">
+            <div class="header-info">
+                <h3 class="page-title">Announcements</h3>
+                <p class="page-subtitle">Stay updated with the latest news and information</p>
+            </div>
+            <div class="header-actions">
+                <div class="search-container">
+                    <MudTextField @bind-Value="searchQuery" Placeholder="Search announcements..." Variant="Variant.Outlined" Clearable="true" />
+                </div>
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="RefreshAnnouncements">
+                    <MudIcon Icon="@Icons.Material.Filled.Refresh" Class="me-2" />
+                    Refresh
+                </MudButton>
+            </div>
+        </div>
+
+        <!-- Announcements Content -->
+        <div class="announcements-content">
+            @if (isLoading)
+            {
+                <div class="loading-container">
+                    <div class="spinner">
+                        <MudProgressCircular Indeterminate="true" Color="Color.Primary" />
+                    </div>
+                    <p class="loading-text">Loading announcements...</p>
+                </div>
+            }
+            else if (filteredAnnouncements?.Any() == true)
+            {
+                <div class="announcements-list">
+                    @foreach (var announcement in filteredAnnouncements)
+                    {
+                        <AnnouncementCard Announcement="announcement" />
+                    }
+                </div>
+            }
+            else
+            {
+                <MudCard Elevation="2" Class="empty-state text-center py-5">
+                    <MudCardContent>
+                        <MudIcon Icon="@Icons.Material.Filled.Campaign" Size="Size.Large" Class="text-muted mb-3" />
+                        <MudText Typo="Typo.h5">No announcements found</MudText>
+                        <MudText Typo="Typo.body1">There are no announcements matching your current filters.</MudText>
+                        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="ClearFilters">Clear Filters</MudButton>
+                    </MudCardContent>
+                </MudCard>
+            }
+        </div>
+    </div>
+</div>
+
+@code {
+    private int selectedFilterIndex = 0;
+    private int selectedDateFilterIndex = 3; // Default to All Time
+    private string searchQuery = "";
+    private bool isLoading = true;
+
+    // Collections and selected items
+    private List<AnnouncementModel> announcements = new();
+    private List<AnnouncementModel> filteredAnnouncements = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadAnnouncements();
+    }
+
+    private async Task LoadAnnouncements()
+    {
+        isLoading = true;
+
+        try
+        {
+            // Load announcements from service
+            announcements = await HttpClient.GetFromJsonAsync<List<AnnouncementModel>>("/api/announcements");
+            ApplyFilters();
+        }
+        catch (Exception ex)
+        {
+            // Log error and use mock data
+            Snackbar.Add($"Error loading announcements: {ex.Message}", Severity.Error);
+            ApplyFilters();
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+    private void SelectFilter(int index)
+    {
+        selectedFilterIndex = index;
+        ApplyFilters();
+    }
+
+    private void SelectDateFilter(int index)
+    {
+        selectedDateFilterIndex = index;
+        ApplyFilters();
+    }
+
+    private void ApplyFilters()
+    {
+        filteredAnnouncements = announcements.Where(a => a.IsActive).ToList();
+
+        // Apply priority filter
+        string filterString = selectedFilterIndex switch
+        {
+            0 => "all",
+            1 => "high",
+            2 => "medium",
+            3 => "low",
+            4 => "recent",
+            _ => "all"
+        };
+
+        if (filterString != "all")
+        {
+            if (filterString == "recent")
+            {
+                filteredAnnouncements = filteredAnnouncements
+                .Where(a => a.PublishedAt >= DateTime.Now.AddDays(-7))
+                .ToList();
+            }
+            else
+            {
+                filteredAnnouncements = filteredAnnouncements
+                .Where(a => a.Priority.Equals(filterString, StringComparison.OrdinalIgnoreCase))
+                .ToList();
+            }
+        }
+
+        // Apply date filter
+        if (selectedDateFilterIndex != 3) // 3 is All Time
+        {
+            var cutoffDate = selectedDateFilterIndex switch
+            {
+                0 => DateTime.Today,
+                1 => DateTime.Now.AddDays(-7),
+                2 => DateTime.Now.AddDays(-30),
+                _ => DateTime.MinValue
+            };
+
+            if (cutoffDate != DateTime.MinValue)
+            {
+                filteredAnnouncements = filteredAnnouncements
+                .Where(a => a.PublishedAt >= cutoffDate)
+                .ToList();
+            }
+        }
+
+        // Apply search filter
+        if (!string.IsNullOrWhiteSpace(searchQuery))
+        {
+            filteredAnnouncements = filteredAnnouncements
+            .Where(a => a.Title.Contains(searchQuery, StringComparison.OrdinalIgnoreCase) ||
+            a.Content.Contains(searchQuery, StringComparison.OrdinalIgnoreCase) ||
+            a.AuthorName.Contains(searchQuery, StringComparison.OrdinalIgnoreCase))
+            .ToList();
+        }
+
+        // Sort by date (newest first)
+        filteredAnnouncements = filteredAnnouncements
+        .OrderByDescending(a => a.PublishedAt)
+        .ToList();
+
+        StateHasChanged();
+    }
+
+    private async Task RefreshAnnouncements()
+    {
+        await LoadAnnouncements();
+    }
+
+    private void ClearFilters()
+    {
+        selectedFilterIndex = 0;
+        selectedDateFilterIndex = 3;
+        searchQuery = "";
+        ApplyFilters();
+    }
+
+    private string GetFilterClass(string filterName)
+    {
+        return filterName switch
+        {
+            "all" => selectedFilterIndex == 0 ? "mud-button-filled" : "mud-button-outlined",
+            "high" => selectedFilterIndex == 1 ? "mud-button-filled" : "mud-button-outlined",
+            "medium" => selectedFilterIndex == 2 ? "mud-button-filled" : "mud-button-outlined",
+            "low" => selectedFilterIndex == 3 ? "mud-button-filled" : "mud-button-outlined",
+            "recent" => selectedFilterIndex == 4 ? "mud-button-filled" : "mud-button-outlined",
+            _ => "mud-button-outlined"
+        };
+    }
+}

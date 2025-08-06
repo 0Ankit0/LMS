@@ -1,0 +1,115 @@
+@inject HttpClient HttpClient
+@inject NavigationManager NavigationManager
+@using LMS.Web.Components.Pages.User.Shared
+@using MudBlazor
+@rendermode InteractiveServer
+
+
+<div class="card h-100 d-flex flex-column border-0">
+    <div class="card-header bg-info p-0 border-0 rounded-top">
+        <MudTextField @bind-Value="searchTerm" Placeholder="Search courses..."
+                      Variant="Variant.Filled" Clearable="true"
+                      Adornment="Adornment.End" AdornmentIcon="@Icons.Material.Filled.Search"
+                      OnClearButtonClick="OnClearSearchButtonClick"
+                      Immediate="true" />
+    </div>
+    <div class="card-body border-0 p-0 flex-grow-1 overflow-auto">
+        @if (isLoading)
+        {
+            <div class="d-flex justify-content-center align-items-center h-100 py-5">
+                <MudProgressCircular Indeterminate="true" Color="Color.Info" />
+            </div>
+        }
+        else if (filteredCourses?.Any() == true)
+        {
+            <div class="p-2 d-flex flex-column gap-4 border-0">
+                @foreach (var course in filteredCourses)
+                {
+                    <CourseCard Course="course" OnClick="@(c => NavigationManager.NavigateTo($"/user/lms/course/{c.Id}"))" />
+                }
+            </div>
+        }
+        else
+        {
+            <MudCard Elevation="2" Class="m-3 shadow-sm d-flex align-items-center justify-content-center border-0 mud-background-paper" Style="min-height: 140px;">
+                <MudCardContent Class="text-center mud-text-secondary">
+                    <MudIcon Icon="@Icons.Material.Filled.SentimentDissatisfied" Size="Size.Large" Class="mb-2" />
+                    <MudText Typo="Typo.h6">No courses found.</MudText>
+                </MudCardContent>
+            </MudCard>
+        }
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public UserModel? User { get; set; }
+
+    private string _searchTerm = string.Empty;
+    private string searchTerm
+    {
+        get => _searchTerm;
+        set
+        {
+            if (_searchTerm != value)
+            {
+                _searchTerm = value;
+                FilterCourses();
+                StateHasChanged();
+            }
+        }
+    }
+    private List<CourseModel>? courses;
+    private List<CourseModel>? filteredCourses;
+    private bool isLoading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadCourses();
+    }
+
+    private async Task LoadCourses()
+    {
+        isLoading = true;
+        StateHasChanged();
+        courses = await HttpClient.GetFromJsonAsync<List<CourseModel>>("api/courses");
+        FilterCourses();
+        isLoading = false;
+        StateHasChanged();
+    }
+
+    private void OnClearSearchButtonClick()
+    {
+        searchTerm = string.Empty;
+        FilterCourses();
+    }
+
+    private void FilterCourses()
+    {
+        if (string.IsNullOrWhiteSpace(searchTerm))
+        {
+            filteredCourses = courses;
+        }
+        else
+        {
+            filteredCourses = courses?
+                .Where(c =>
+                    (!string.IsNullOrEmpty(c.Title) && c.Title.Contains(searchTerm, StringComparison.OrdinalIgnoreCase)) ||
+                    (!string.IsNullOrEmpty(c.Description) && c.Description.Contains(searchTerm, StringComparison.OrdinalIgnoreCase)) ||
+                    (!string.IsNullOrEmpty(c.InstructorName) && c.InstructorName.Contains(searchTerm, StringComparison.OrdinalIgnoreCase)))
+                .ToList();
+        }
+    }
+
+    private string FormatDuration(TimeSpan duration)
+    {
+        var hours = (int)duration.TotalHours;
+        var minutes = duration.Minutes;
+
+        if (hours > 0)
+        {
+            return minutes > 0 ? $"{hours}h {minutes}m" : $"{hours}h";
+        }
+        return $"{minutes}m";
+    }
+}

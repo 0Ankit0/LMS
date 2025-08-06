@@ -1,0 +1,35 @@
+﻿@using MudBlazor.StaticInput
+@inherits LayoutComponentBase
+@inject ILocalStorageService LocalStorage
+@using Blazored.LocalStorage
+
+<MudThemeProvider Theme="@CurrentTheme" />
+<MudPopoverProvider />
+<MudDialogProvider />
+<MudSnackbarProvider />
+
+<MudLayout>
+    <MudMainContent Class="pt-16 pa-4">
+        @Body
+    </MudMainContent>
+</MudLayout>
+
+<div id="blazor-error-ui" data-nosnippet>
+    An unhandled error has occurred.
+    <a href="." class="reload">Reload</a>
+    <span class="dismiss">🗙</span>
+</div>
+
+@code {
+    private MudTheme CurrentTheme { get; set; } = CustomThemes.LightTheme;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            var isDarkMode = await LocalStorage.GetItemAsync<bool>("IsDarkMode");
+            CurrentTheme = isDarkMode ? CustomThemes.DarkTheme : CustomThemes.LightTheme;
+            StateHasChanged();
+        }
+    }
+}

@@ -1,0 +1,214 @@
+
+@using LMS.Web.Components.Pages.User.Shared
+@using MudBlazor
+@page "/user/lms/courses/catalog"
+@inject HttpClient HttpClient
+@inject NavigationManager NavigationManager
+
+<MudGrid Spacing="3">
+    <!-- Categories Sidebar -->
+    <MudItem xs="12" md="3">
+        <MudPaper Elevation="2" Class="p-4">
+            <MudText Typo="Typo.h5" GutterBottom="true">Categories</MudText>
+            <MudNavMenu>
+                <MudNavLink Href="javascript:void(0)" OnClick='@(() => SelectCategory("all"))' Icon="@Icons.Material.Filled.AllInclusive">All Courses</MudNavLink>
+                <MudNavLink Href="javascript:void(0)" OnClick='@(() => SelectCategory("development"))' Icon="@Icons.Material.Filled.Code">Development</MudNavLink>
+                <MudNavLink Href="javascript:void(0)" OnClick='@(() => SelectCategory("business"))' Icon="@Icons.Material.Filled.BusinessCenter">Business</MudNavLink>
+                <MudNavLink Href="javascript:void(0)" OnClick='@(() => SelectCategory("design"))' Icon="@Icons.Material.Filled.Palette">Design</MudNavLink>
+                <MudNavLink Href="javascript:void(0)" OnClick='@(() => SelectCategory("security"))' Icon="@Icons.Material.Filled.Security">Security</MudNavLink>
+            </MudNavMenu>
+
+            <MudText Typo="Typo.h6" Class="mt-4">Filters</MudText>
+            <MudText Typo="Typo.subtitle1" Class="mt-2">Level</MudText>
+            <MudCheckBox T="bool" @bind-Checked="filters.Beginner" Label="Beginner" Color="Color.Primary" OnChange="ApplyFilters" />
+            <MudCheckBox T="bool" @bind-Checked="filters.Intermediate" Label="Intermediate" Color="Color.Primary" OnChange="ApplyFilters" />
+            <MudCheckBox T="bool" @bind-checked="filters.Advanced" Label="Advanced" Color="Color.Primary" OnChange="ApplyFilters" />
+        </MudPaper>
+    </MudItem>
+
+    <!-- Main Content Area -->
+    <MudItem xs="12" md="9">
+        <MudPaper Elevation="2" Class="p-4">
+            <MudGrid Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center">
+                <MudItem>
+                    <MudText Typo="Typo.h3">Course Catalog</MudText>
+                    <MudText Typo="Typo.subtitle1">Discover and learn new skills</MudText>
+                </MudItem>
+                <MudItem>
+                    <MudTextField @bind-Value="searchQuery" Placeholder="Search courses, instructors, topics..." Variant="Variant.Outlined" Clearable="true" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" />
+                </MudItem>
+                <MudItem>
+                    <MudSelect T="string" Label="Sort By" Variant="Variant.Outlined" @bind-Value="sortBy" TextChanged="SetSort">
+                        <MudSelectItem Value='@("popular")'>Most Popular</MudSelectItem>
+                        <MudSelectItem Value='@("newest")'>Newest</MudSelectItem>
+                        <MudSelectItem Value='@("alphabetical")'>A-Z</MudSelectItem>
+                        <MudSelectItem Value='@("level")'>By Level</MudSelectItem>
+                    </MudSelect>
+                </MudItem>
+            </MudGrid>
+
+            <MudGrid Class="mt-4">
+                @if (isLoading)
+                {
+                    @for (int i = 0; i < 6; i++)
+                    {
+                        <MudItem xs="12" sm="6" md="4">
+                            <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="250px" />
+                        </MudItem>
+                    }
+                }
+                else
+                {
+                    @if (filteredCourses.Any())
+                    {
+                        @foreach (var course in filteredCourses)
+                        {
+                            <MudItem xs="12" sm="6" md="4">
+                                 <CourseCard Course="course" OnClick="@(c => NavigationManager.NavigateTo($"/user/lms/course/{c.Id}"))" />
+                            </MudItem>
+                        }
+                    }
+                    else
+                    {
+                        <MudItem xs="12">
+                            <MudAlert Severity="Severity.Info" Icon="@Icons.Material.Filled.SearchOff">
+                                <MudText Typo="Typo.h5">No courses found</MudText>
+                                <MudText>Try adjusting your search criteria or filters.</MudText>
+                            </MudAlert>
+                        </MudItem>
+                    }
+                }
+            </MudGrid>
+        </MudPaper>
+    </MudItem>
+</MudGrid>
+
+
+@code {
+    // State variables
+    private string selectedCategory = "all";
+    private string searchQuery = "";
+    private string sortBy = "popular";
+    private FilterModel filters = new();
+    private HashSet<int> bookmarkedCourses = new();
+    private List<CourseModel> filteredCourses = new();
+    private List<CourseModel> allCourses = new();
+    private bool isLoading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadCourses();
+    }
+
+    private async Task LoadCourses()
+    {
+        try
+        {
+            isLoading = true;
+            var response = await HttpClient.GetAsync("/api/courses");
+            if (response.IsSuccessStatusCode)
+            {
+                allCourses = await response.Content.ReadFromJsonAsync<List<CourseModel>>() ?? new();
+                ApplyFilters();
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading courses: {ex.Message}");
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private void SelectCategory(string category)
+    {
+        selectedCategory = category;
+        ApplyFilters();
+    }
+
+    private void SetSort(string sortType)
+    {
+        sortBy = sortType;
+        ApplyFilters();
+    }
+
+    private void ApplyFilters()
+    {
+        var courses = allCourses.AsQueryable();
+
+        // Apply category filter
+        if (selectedCategory != "all")
+        {
+            courses = courses.Where(c => c.Categories != null && c.Categories.Contains(selectedCategory));
+        }
+
+        // Apply search filter
+        if (!string.IsNullOrWhiteSpace(searchQuery))
+        {
+            courses = courses.Where(c =>
+            c.Title.Contains(searchQuery, StringComparison.OrdinalIgnoreCase) ||
+            c.Description.Contains(searchQuery, StringComparison.OrdinalIgnoreCase) ||
+            c.InstructorName.Contains(searchQuery, StringComparison.OrdinalIgnoreCase));
+        }
+
+        // Apply level filters
+        if (filters.HasAnyLevelFilter())
+        {
+            courses = courses.Where(c =>
+            (filters.Beginner && c.Level == "Beginner") ||
+            (filters.Intermediate && c.Level == "Intermediate") ||
+            (filters.Advanced && c.Level == "Advanced"));
+        }
+
+        // Apply sorting
+        courses = sortBy switch
+        {
+            "popular" => courses.OrderByDescending(c => c.EnrollmentCount),
+            "newest" => courses.OrderByDescending(c => c.StartDate),
+            "alphabetical" => courses.OrderBy(c => c.Title),
+            "level" => courses.OrderBy(c => c.Level == "Beginner" ? 1 : c.Level == "Intermediate" ? 2 : 3),
+            _ => courses.OrderByDescending(c => c.EnrollmentCount)
+        };
+
+        filteredCourses = courses.ToList();
+        StateHasChanged();
+    }
+
+    private void ToggleBookmark(int courseId)
+    {
+        if (bookmarkedCourses.Contains(courseId))
+        {
+            bookmarkedCourses.Remove(courseId);
+        }
+        else
+        {
+            bookmarkedCourses.Add(courseId);
+        }
+    }
+
+    private string FormatDuration(TimeSpan duration)
+    {
+        var hours = (int)duration.TotalHours;
+        var minutes = duration.Minutes;
+
+        if (hours > 0)
+        {
+            return minutes > 0 ? $"{hours}h {minutes}m" : $"{hours}h";
+        }
+        return $"{minutes}m";
+    }
+
+    
+
+    // Helper classes
+    public class FilterModel
+    {
+        public bool Beginner { get; set; }
+        public bool Intermediate { get; set; }
+        public bool Advanced { get; set; }
+
+        public bool HasAnyLevelFilter() => Beginner || Intermediate || Advanced;
+    }
+}
