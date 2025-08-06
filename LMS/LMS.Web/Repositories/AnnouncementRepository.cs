@@ -17,6 +17,7 @@ namespace LMS.Repositories
 
         // Filtered announcements
         Task<List<AnnouncementModel>> GetFilteredAnnouncementsAsync(string? searchTerm, string? priority, string? sortBy);
+        Task<List<AnnouncementModel>> GetAllAnnouncementsAsync();
     }
 
     public class AnnouncementRepository : IAnnouncementRepository
@@ -324,6 +325,12 @@ namespace LMS.Repositories
                 _logger.LogError(ex, "Error getting filtered announcements");
                 throw;
             }
+        }
+
+        public async Task<List<AnnouncementModel>> GetAllAnnouncementsAsync()
+        {
+            // For compatibility, just call GetAnnouncementsAsync
+            return await GetAnnouncementsAsync();
         }
 
         private int GetPriorityWeight(string priority) => priority switch

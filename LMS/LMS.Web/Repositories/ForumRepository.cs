@@ -3,9 +3,16 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using LMS.Data.DTOs;
 using LMS.Web.Data;
+using LMS.Web.Components.Pages.User;
 
 namespace LMS.Repositories
 {
+    public class CourseGroup
+    {
+        public string CourseName { get; set; } = string.Empty;
+        public int ForumCount { get; set; }
+    }
+
     public interface IForumRepository
     {
         Task<List<ForumModel>> GetForumsAsync();
@@ -29,6 +36,10 @@ namespace LMS.Repositories
         Task<ForumPostModel?> GetPostByIdAsync(int id);
         Task<ForumPostModel> CreatePostAsync(CreateForumPostRequest request, string authorId);
         Task<bool> DeletePostAsync(int id);
+
+        // --- Add missing methods for Forums.razor ---
+        Task<List<ForumModel>> GetAllForumsAsync();
+        Task<List<CourseGroup>> GetCourseGroupsAsync();
     }
 
     public class ForumRepository : IForumRepository
@@ -461,6 +472,28 @@ namespace LMS.Repositories
                 _logger.LogError(ex, "Error deleting forum post: {Id}", id);
                 throw;
             }
+        }
+
+        public async Task<List<ForumModel>> GetAllForumsAsync()
+        {
+            // For now, just call GetForumsAsync
+            return await GetForumsAsync();
+        }
+
+        public async Task<List<CourseGroup>> GetCourseGroupsAsync()
+        {
+            // Dummy implementation: group forums by CourseName
+            var forums = await GetForumsAsync();
+            var groups = forums
+                .Where(f => !string.IsNullOrEmpty(f.CourseName))
+                .GroupBy(f => f.CourseName)
+                .Select(g => new CourseGroup
+                {
+                    CourseName = g.Key ?? "",
+                    ForumCount = g.Count()
+                })
+                .ToList();
+            return groups;
         }
 
         private static ForumModel MapToForumModel(Forum forum)

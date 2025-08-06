@@ -4,7 +4,7 @@
 @using System.Security.Claims
 @page "/user/lms/certificates"
 @inject IdentityUserAccessor UserAccessor
-@inject HttpClient HttpClient
+@inject ICertificateRepository CertificateRepository
 @inject ISnackbar Snackbar
 
 <MudToolBar Class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
@@ -210,7 +210,7 @@ else
 
             if (!string.IsNullOrEmpty(currentUserId))
             {
-                certificates = await HttpClient.GetFromJsonAsync<List<CertificateModel>>($"/api/certificates/user/{currentUserId}");
+                certificates = await CertificateRepository.GetUserCertificatesAsync(currentUserId);
             }
         }
         catch (Exception ex)

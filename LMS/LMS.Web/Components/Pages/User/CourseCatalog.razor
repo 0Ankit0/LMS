@@ -2,7 +2,7 @@
 @using LMS.Web.Components.Pages.User.Shared
 @using MudBlazor
 @page "/user/lms/courses/catalog"
-@inject HttpClient HttpClient
+@inject ICourseRepository CourseRepository
 @inject NavigationManager NavigationManager
 
 <MudGrid Spacing="3">
@@ -105,12 +105,8 @@
         try
         {
             isLoading = true;
-            var response = await HttpClient.GetAsync("/api/courses");
-            if (response.IsSuccessStatusCode)
-            {
-                allCourses = await response.Content.ReadFromJsonAsync<List<CourseModel>>() ?? new();
-                ApplyFilters();
-            }
+            allCourses = await CourseRepository.GetAllCoursesAsync() ?? new();
+            ApplyFilters();
         }
         catch (Exception ex)
         {

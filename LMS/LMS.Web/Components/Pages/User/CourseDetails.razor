@@ -2,9 +2,10 @@
 @using LMS.Web.Components.Account
 @using MudBlazor.Utilities
 @page "/user/lms/courses/{CourseId:int}"
-@inject HttpClient HttpClient
+@inject ICourseRepository CourseRepository
+@inject IEnrollmentRepository EnrollmentRepository
 @inject ISnackbar Snackbar
-@inject IdentityUserAccessor UserAccessor
+@inject UserManager<User> UserManager
 @using System.Security.Claims
 
 <PageTitle>Course Details - LMS</PageTitle>
@@ -172,40 +173,20 @@
         {
             isLoading = true;
 
-            var user = await UserAccessor.GetRequiredUserAsync(HttpContext);
+            var user = await UserManager.GetUserAsync(HttpContext.User);
             
 
-            // Load course details via HTTP endpoint
-            var courseResponse = await HttpClient.GetAsync($"/api/courses/{CourseId}");
-            if (courseResponse.IsSuccessStatusCode)
+            course = await CourseRepository.GetCourseByIdAsync(CourseId);
+            modules = await CourseRepository.GetCourseModulesAsync(CourseId) ?? new();
+            if (modules.Any())
             {
-                course = await courseResponse.Content.ReadFromJsonAsync<CourseModel>();
+                expandedModules.Add(modules.First().Id);
             }
 
-            // Load course modules via HTTP endpoint
-            var modulesResponse = await HttpClient.GetAsync($"/api/courses/{CourseId}/modules");
-            if (modulesResponse.IsSuccessStatusCode)
-            {
-                modules = await modulesResponse.Content.ReadFromJsonAsync<List<ModuleModel>>() ?? new();
-
-                // Expand first module by default
-                if (modules.Any())
-                {
-                    expandedModules.Add(modules.First().Id);
-                }
-            }
-
-            // Check if user is enrolled via HTTP endpoint
             if (!string.IsNullOrEmpty(currentUserId))
             {
-                var enrollmentResponse = await
-                HttpClient.GetAsync($"/api/enrollments/user/{user.Id}/course/{CourseId}/isenrolled");
-                if (enrollmentResponse.IsSuccessStatusCode)
-                {
-                    isEnrolled = await enrollmentResponse.Content.ReadFromJsonAsync<bool>();
-                }
-
-                // Get completion percentage if enrolled (mock for now)
+                var enrollment = await EnrollmentRepository.GetEnrollmentByUserAndCourseAsync(user.Id, CourseId);
+                isEnrolled = enrollment != null;
                 if (isEnrolled)
                 {
                     completionPercentage = 65; // Mock data - would come from progress endpoint
@@ -242,10 +223,8 @@
 
             if (!string.IsNullOrEmpty(currentUserId))
             {
-                var enrollmentRequest = new CreateEnrollmentRequest { CourseId = CourseId };
-                var response = await HttpClient.PostAsJsonAsync($"/api/enrollments/user/{currentUserId}", enrollmentRequest);
-
-                if (response.IsSuccessStatusCode)
+                var success = await EnrollmentRepository.EnrollUserAsync(currentUserId, CourseId);
+                if (success)
                 {
                     isEnrolled = true;
                     completionPercentage = 0;

@@ -2,9 +2,8 @@
 @using MudBlazor.Utilities
 @using System.Security.Claims
 @page "/user/lms/dashboard"
-@inject HttpClient HttpClient
 @inject ISnackbar Snackbar
-@inject IdentityUserAccessor UserAccessor
+@inject UserManager<User> UserManager
 @if (isLoading)
 {
     <div class="row g-4 mb-4">

@@ -21,6 +21,7 @@ namespace LMS.Repositories
         Task<bool> UnenrollUserAsync(string userId, int courseId); // Add this method
         Task<bool> IsUserEnrolledInCourseAsync(string userId, int courseId);
         Task<int> GetCourseEnrollmentCountAsync(int courseId);
+        Task<bool> EnrollUserAsync(string userId, int courseId);
     }
 
     public class EnrollmentRepository : IEnrollmentRepository
@@ -219,6 +220,40 @@ namespace LMS.Repositories
         {
             return await _context.Enrollments
                 .CountAsync(e => e.CourseId == courseId && e.Status == EnrollmentStatus.Active);
+        }
+
+        public async Task<bool> EnrollUserAsync(string userId, int courseId)
+        {
+            // Check if user is already enrolled
+            var alreadyEnrolled = await IsUserEnrolledInCourseAsync(userId, courseId);
+            if (alreadyEnrolled)
+                return false;
+
+            // Check course capacity
+            var course = await _context.Courses.FindAsync(courseId);
+            if (course == null)
+                return false;
+
+            if (course.MaxEnrollments > 0)
+            {
+                var currentEnrollments = await _context.Enrollments.CountAsync(e => e.CourseId == courseId && e.Status == EnrollmentStatus.Active);
+                if (currentEnrollments >= course.MaxEnrollments)
+                    return false;
+            }
+
+            var enrollment = new Enrollment
+            {
+                UserId = userId,
+                CourseId = courseId,
+                EnrolledAt = DateTime.UtcNow,
+                Status = EnrollmentStatus.Active,
+                ProgressPercentage = 0,
+                TimeSpent = TimeSpan.Zero
+            };
+
+            _context.Enrollments.Add(enrollment);
+            await _context.SaveChangesAsync();
+            return true;
         }
 
         private static EnrollmentModel MapToEnrollmentModel(Enrollment enrollment)

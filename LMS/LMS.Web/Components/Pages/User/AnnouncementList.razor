@@ -3,7 +3,7 @@
 @using MudBlazor.Utilities;
 @page "/user/lms/announcement-list"
 
-@inject HttpClient HttpClient
+@inject IAnnouncementRepository AnnouncementRepository
 @inject ISnackbar Snackbar
 
 <PageTitle>Announcements - LMS</PageTitle>
@@ -144,8 +144,8 @@
 
         try
         {
-            // Load announcements from service
-            announcements = await HttpClient.GetFromJsonAsync<List<AnnouncementModel>>("/api/announcements");
+            // Load announcements from repository
+            announcements = await AnnouncementRepository.GetAllAnnouncementsAsync();
             ApplyFilters();
         }
         catch (Exception ex)

@@ -1,10 +1,10 @@
 @using LMS.Web.Components.Account
 @using MudBlazor;
+@using MudBlazor.Components;
 @using System.Security.Claims;
 @page "/user/lms/my-courses"
-@inject IdentityUserAccessor UserAccessor
 @inject UserManager<User> UserManager
-@inject HttpClient HttpClient
+@inject IEnrollmentRepository EnrollmentRepository
 @inject ISnackbar Snackbar
 
 
@@ -15,7 +15,7 @@
         <MudText Typo="Typo.h5" Class="h2">
             <MudIcon Icon="@Icons.Material.Filled.Book" Class="me-2" />My Courses
         </MudText>
-        <MudBlazor.Components.MudToolBarSpacer />
+        <MudSpacer />
         <MudButtonGroup Color="Color.Primary" Variant="Variant.Outlined">
             <MudButton OnClick='() => FilterCourses("all")' Variant="@(currentFilter == "all" ? Variant.Filled : Variant.Outlined)">All</MudButton>
             <MudButton OnClick='() => FilterCourses("active")' Variant="@(currentFilter == "active" ? Variant.Filled : Variant.Outlined)">Active</MudButton>
@@ -145,9 +145,9 @@
     private string currentFilter = "all";
     private string? currentUserId;
 
-    private List<EnrollmentModel>? enrollments;
-    private List<EnrollmentModel>? filteredEnrollments;
-    private EnrollmentModel? selectedEnrollment;
+    private List<LMS.Data.DTOs.EnrollmentModel>? enrollments;
+    private List<LMS.Data.DTOs.EnrollmentModel>? filteredEnrollments;
+    private LMS.Data.DTOs.EnrollmentModel? selectedEnrollment;
     private bool isUnenrollModalVisible = false;
     private DialogOptions dialogOptions = new() { CloseButton = true, MaxWidth = MaxWidth.Small, FullWidth = true };
     private bool IsAdmin = false; // Placeholder for admin role check
@@ -162,7 +162,7 @@
         try
         {
             isLoading = true;
-            var user = await UserAccessor.GetRequiredUserAsync(HttpContext);
+            var user = await UserManager.GetUserAsync(HttpContext.User);
             if (user is not null)
             {
                 currentUserId = user.Id;
@@ -170,12 +170,8 @@
 
                 if (!string.IsNullOrEmpty(currentUserId))
                 {
-                    var response = await HttpClient.GetAsync($"/api/enrollments/user/{currentUserId}/enrollments");
-                    if (response.IsSuccessStatusCode)
-                    {
-                        enrollments = await response.Content.ReadFromJsonAsync<List<EnrollmentModel>>();
-                        FilterCourses(currentFilter);
-                    }
+                    enrollments = await EnrollmentRepository.GetUserEnrollmentsAsync(currentUserId);
+                    FilterCourses(currentFilter);
                 }
             }
         }
@@ -212,7 +208,7 @@
         };
     }
 
-    private void ShowUnenrollModal(EnrollmentModel enrollment)
+    private void ShowUnenrollModal(LMS.Data.DTOs.EnrollmentModel enrollment)
     {
         selectedEnrollment = enrollment;
         isUnenrollModalVisible = true;
@@ -230,10 +226,8 @@
 
         try
         {
-            var response = await
-            HttpClient.DeleteAsync($"/api/enrollments/user/{currentUserId}/course/{selectedEnrollment.CourseId}");
-
-            if (response.IsSuccessStatusCode)
+            var success = await EnrollmentRepository.UnenrollUserAsync(currentUserId, selectedEnrollment.CourseId);
+            if (success)
             {
                 Snackbar.Add("Successfully unenrolled from course", Severity.Success);
                 await LoadUserCourses();
@@ -253,19 +247,5 @@
     private void DownloadCertificate(int courseId)
     {
         Snackbar.Add("Certificate download functionality will be implemented soon", Severity.Info);
-    }
-
-    // Enrollment Model
-    public class EnrollmentModel
-    {
-        public int Id { get; set; }
-        public int CourseId { get; set; }
-        public string CourseTitle { get; set; } = string.Empty;
-        public string CourseDescription { get; set; } = string.Empty;
-        public string? CourseThumbnailUrl { get; set; }
-        public double ProgressPercentage { get; set; }
-        public DateTime EnrolledAt { get; set; }
-        public DateTime? LastAccessedAt { get; set; }
-        public DateTime? CompletedAt { get; set; }
     }
 }

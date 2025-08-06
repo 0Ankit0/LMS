@@ -4,7 +4,7 @@
 @using System.Net.Http.Json
 @using LMS.Data.DTOs
 @page "/user/lms/announcements"
-@inject HttpClient HttpClient
+@inject IAnnouncementRepository AnnouncementRepository
 @inject ISnackbar Snackbar
 @inject IDialogService DialogService
 
@@ -59,11 +59,7 @@
 
         try
         {
-            var response = await HttpClient.GetAsync("api/announcements/latest");
-            if (response.IsSuccessStatusCode)
-            {
-                announcements = await response.Content.ReadFromJsonAsync<List<AnnouncementModel>>() ?? new List<AnnouncementModel>();
-            }
+            announcements = await AnnouncementRepository.GetLatestAnnouncementsAsync();
         }
         catch (Exception ex)
         {

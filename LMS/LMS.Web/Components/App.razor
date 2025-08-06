@@ -10,14 +10,21 @@
     <link href="css/dist/app.css" rel="stylesheet" />
     @* <link rel="stylesheet" href="_content/LMS.UI.Shared/app.css" />
     <link rel="stylesheet" href="LMS.UI.Web.styles.css" /> *@
-    <HeadOutlet @rendermode="@(new InteractiveServerRenderMode(prerender: false))" />
+    <HeadOutlet @rendermode="PageRenderMode" />
 </head>
 
 <body>
-    <Routes @rendermode="@(new InteractiveServerRenderMode(prerender: false))" />
+    <Routes @rendermode="PageRenderMode" />
     <script src="_framework/blazor.web.js"></script>
     <script src=@Assets["_content/MudBlazor/MudBlazor.min.js"]></script>
     <script src=@Assets["_content/Extensions.MudBlazor.StaticInput/NavigationObserver.js"]></script>
 </body>
 
 </html>
+@code {
+    [CascadingParameter]
+    private HttpContext HttpContext { get; set; } = default!;
+
+    private IComponentRenderMode? PageRenderMode =>
+    HttpContext.AcceptsInteractiveRouting() ? InteractiveServer : null;
+}

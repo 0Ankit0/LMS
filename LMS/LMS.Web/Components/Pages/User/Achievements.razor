@@ -3,7 +3,8 @@
 @using System.Security.Claims
 @page "/user/lms/achievements"
 @inject AuthenticationStateProvider AuthenticationStateProvider
-@inject HttpClient HttpClient
+@inject IAchievementRepository AchievementRepository
+@inject ILeaderboardRepository LeaderboardRepository
 @inject ISnackbar Snackbar
 
 <div class="container-fluid">
@@ -441,64 +442,30 @@
             if (user is not null)
             {
                 currentUserId = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-                
                 if (!string.IsNullOrEmpty(currentUserId))
                 {
                     try
                     {
-                        // Load user achievements via HTTP endpoint
-                        var earnedResponse = await HttpClient.GetAsync($"/api/achievements/user/{currentUserId}");
-                        if (earnedResponse.IsSuccessStatusCode)
-                        {
-                            earnedAchievements = await earnedResponse.Content.ReadFromJsonAsync<List<UserAchievementModel>>();
-                            earnedCount = earnedAchievements?.Count ?? 0;
-                            totalPoints = earnedAchievements?.Sum(a => a.Points) ?? 0;
-                        }
-                        else
-                        {
-                            LoadDummyEarnedAchievements();
-                        }
-                        
+                        // Load user achievements via repository
+                        earnedAchievements = await AchievementRepository.GetUserAchievementsAsync(currentUserId);
+                        earnedCount = earnedAchievements?.Count ?? 0;
+                        totalPoints = earnedAchievements?.Sum(a => a.Points) ?? 0;
+
                         // Load all achievements to find available ones
-                        var allResponse = await HttpClient.GetAsync("/api/achievements/all");
-                        if (allResponse.IsSuccessStatusCode)
-                        {
-                            var allAchievements = await allResponse.Content.ReadFromJsonAsync<List<AchievementModel>>();
-                            var earnedIds = earnedAchievements?.Select(a => a.AchievementId).ToHashSet() ?? new HashSet<int>();
-                            availableAchievements = allAchievements?.Where(a => !earnedIds.Contains(a.Id)).ToList();
-                            availableCount = availableAchievements?.Count ?? 0;
-                        }
-                        else
-                        {
-                            LoadDummyAvailableAchievements();
-                        }
-                        
-                        // Load leaderboard data via HTTP endpoint
-                        var leaderboardResponse = await HttpClient.GetAsync("/api/leaderboards/overall");
-                        if (leaderboardResponse.IsSuccessStatusCode)
-                        {
-                            leaderboardEntries = await leaderboardResponse.Content.ReadFromJsonAsync<List<LeaderboardEntryModel>>();
-                        }
-                        else
-                        {
-                            LoadDummyLeaderboardEntries();
-                        }
-                        
-                        // Find user rank via HTTP endpoint
-                        var rankResponse = await HttpClient.GetAsync($"/api/leaderboards/user/{currentUserId}/rank");
-                        if (rankResponse.IsSuccessStatusCode)
-                        {
-                            var rankResult = await rankResponse.Content.ReadFromJsonAsync<int>();
-                            userRank = rankResult;
-                        }
-                        else
-                        {
-                            userRank = 3; // Default dummy rank
-                        }
+                        var allAchievements = await AchievementRepository.GetAllAchievementsAsync();
+                        var earnedIds = earnedAchievements?.Select(a => a.AchievementId).ToHashSet() ?? new HashSet<int>();
+                        availableAchievements = allAchievements?.Where(a => !earnedIds.Contains(a.Id)).ToList();
+                        availableCount = availableAchievements?.Count ?? 0;
+
+                        // Load leaderboard data via repository
+                        leaderboardEntries = await LeaderboardRepository.GetAchievementLeaderboardAsync();
+
+                        // Find user rank via repository
+                        userRank = await LeaderboardRepository.GetUserAchievementRankAsync(currentUserId);
                     }
                     catch
                     {
-                        // If any API calls fail, load dummy data
+                        // If any repository calls fail, load dummy data
                         LoadDummyData();
                     }
                 }

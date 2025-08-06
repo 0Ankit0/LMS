@@ -11,6 +11,7 @@ public interface IAssessmentRepository
     Task<IEnumerable<AssessmentModel>> GetAssessmentsAsync();
     Task<PaginatedResult<AssessmentModel>> GetAssessmentsPaginatedAsync(PaginationRequest request);
     Task<IEnumerable<AssessmentModel>> GetAssessmentsByCourseAsync(int courseId);
+    Task<IEnumerable<AssessmentModel>> GetAssessmentsByCourseIdAsync(int courseId);
     Task<AssessmentModel?> GetAssessmentAsync(int id);
     Task<AssessmentModel> CreateAssessmentAsync(CreateAssessmentRequest request);
     Task<AssessmentModel> UpdateAssessmentAsync(int id, CreateAssessmentRequest request);
@@ -70,6 +71,12 @@ public class AssessmentRepository : IAssessmentRepository
             _logger.LogError(ex, "Error getting assessments by course: {CourseId}", courseId);
             throw;
         }
+    }
+
+    public async Task<IEnumerable<AssessmentModel>> GetAssessmentsByCourseIdAsync(int courseId)
+    {
+        // For compatibility, just call GetAssessmentsByCourseAsync
+        return await GetAssessmentsByCourseAsync(courseId);
     }
 
     public async Task<AssessmentModel?> GetAssessmentAsync(int id)

@@ -1,8 +1,7 @@
-@inject HttpClient HttpClient
+@inject ICourseRepository CourseRepository
 @inject NavigationManager NavigationManager
 @using LMS.Web.Components.Pages.User.Shared
 @using MudBlazor
-@rendermode InteractiveServer
 
 
 <div class="card h-100 d-flex flex-column border-0">
@@ -72,7 +71,7 @@
     {
         isLoading = true;
         StateHasChanged();
-        courses = await HttpClient.GetFromJsonAsync<List<CourseModel>>("api/courses");
+        courses = await CourseRepository.GetAllCoursesAsync();
         FilterCourses();
         isLoading = false;
         StateHasChanged();

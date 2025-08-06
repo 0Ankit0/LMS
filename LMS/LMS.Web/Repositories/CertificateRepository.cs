@@ -12,6 +12,7 @@ namespace LMS.Repositories
         Task<PaginatedResult<CertificateModel>> GetCertificatesPaginatedAsync(PaginationRequest request);
         Task<CertificateModel?> GetCertificateByIdAsync(int id);
         Task<List<CertificateModel>> GetCertificatesByUserIdAsync(string userId);
+        Task<List<CertificateModel>> GetUserCertificatesAsync(string userId);
         Task<CertificateModel?> GetCertificateByCourseAndUserAsync(int courseId, string userId);
         Task<CertificateModel> IssueCertificateAsync(CreateCertificateRequest request);
         Task<bool> RevokeCertificateAsync(int certificateId);
@@ -121,6 +122,13 @@ namespace LMS.Repositories
                 _logger.LogError(ex, "Error getting certificates by user id: {UserId}", userId);
                 throw;
             }
+        }
+
+
+        public async Task<List<CertificateModel>> GetUserCertificatesAsync(string userId)
+        {
+            // For compatibility, just call GetCertificatesByUserIdAsync
+            return await GetCertificatesByUserIdAsync(userId);
         }
 
 

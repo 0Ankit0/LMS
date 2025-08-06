@@ -19,6 +19,8 @@ namespace LMS.Repositories
         Task<List<LeaderboardEntryModel>> GetOverallLeaderboardAsync(int limit = 50);
         Task UpdateUserScoreAsync(string userId, int courseId, double score);
         Task<int?> GetUserRankAsync(string userId, int? courseId = null);
+        Task<List<LeaderboardEntryModel>> GetAchievementLeaderboardAsync();
+        Task<int> GetUserAchievementRankAsync(string userId);
     }
 
     public class LeaderboardRepository : ILeaderboardRepository
@@ -376,6 +378,44 @@ namespace LMS.Repositories
                 _logger.LogError(ex, "Error fetching overall leaderboard");
                 throw;
             }
+        }
+
+        public async Task<List<LeaderboardEntryModel>> GetAchievementLeaderboardAsync()
+        {
+            // Use GetGlobalLeaderboardAsync and enrich with achievement count and total points
+            var userScores = await _context.UserAchievements
+                .Include(ua => ua.User)
+                .Include(ua => ua.Achievement)
+                .GroupBy(ua => ua.UserId)
+                .Select(g => new
+                {
+                    UserId = g.Key,
+                    User = g.First().User,
+                    TotalPoints = g.Sum(ua => ua.Achievement.Points),
+                    AchievementCount = g.Count(),
+                    LastUpdated = g.Max(ua => ua.EarnedAt)
+                })
+                .OrderByDescending(x => x.TotalPoints)
+                .Take(50)
+                .ToListAsync();
+
+            return userScores.Select((score, index) => new LeaderboardEntryModel
+            {
+                Rank = index + 1,
+                UserId = score.UserId,
+                UserName = score.User?.UserName ?? "",
+                ProfilePictureUrl = score.User?.ProfilePictureUrl,
+                TotalPoints = score.TotalPoints,
+                AchievementCount = score.AchievementCount,
+                LastUpdated = score.LastUpdated
+            }).ToList();
+        }
+
+        public async Task<int> GetUserAchievementRankAsync(string userId)
+        {
+            var leaderboard = await GetAchievementLeaderboardAsync();
+            var entry = leaderboard.FirstOrDefault(e => e.UserId == userId);
+            return entry?.Rank ?? 0;
         }
 
         private static LeaderboardModel MapToLeaderboardModel(Leaderboard leaderboard)

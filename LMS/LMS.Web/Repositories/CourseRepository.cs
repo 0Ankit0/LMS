@@ -17,6 +17,7 @@ namespace LMS.Repositories
         Task<ModuleModel> CreateModuleAsync(CreateModuleRequest request);
         Task<List<LessonModel>> GetModuleLessonsAsync(int moduleId);
         Task<LessonModel> CreateLessonAsync(CreateLessonRequest request);
+        Task<List<CourseModel>> GetAllCoursesAsync();
     }
 
     public class CourseRepository : ICourseRepository
@@ -387,6 +388,12 @@ namespace LMS.Repositories
                 _logger.LogError(ex, "Error creating lesson for module: {ModuleId}", request.ModuleId);
                 throw;
             }
+        }
+
+        public async Task<List<CourseModel>> GetAllCoursesAsync()
+        {
+            // For now, just call GetCoursesAsync
+            return await GetCoursesAsync();
         }
 
         private static CourseModel MapToCourseModel(Course course)

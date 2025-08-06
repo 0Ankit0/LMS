@@ -1,7 +1,8 @@
 @page "/user/lms/assessments"
 @using LMS.Web.Components.Account
 @inject IdentityUserAccessor UserAccessor
-@inject HttpClient HttpClient
+@inject IEnrollmentRepository EnrollmentRepository
+@inject IAssessmentRepository AssessmentRepository
 @inject ISnackbar Snackbar
 @using System.Security.Claims;
 
@@ -329,30 +330,24 @@ else
         try
         {
             isLoading = true;
-            string? currentUserId = null;
             if (!string.IsNullOrEmpty(currentUserId))
             {
                 // Get user enrollments to find available assessments
-                var enrollmentsResponse = await HttpClient.GetAsync($"/api/enrollments/user/{currentUserId}/enrollments");
-                if (enrollmentsResponse.IsSuccessStatusCode)
+                var enrollments = await EnrollmentRepository.GetUserEnrollmentsAsync(currentUserId);
+                var courseIds = enrollments?.Select(e => e.CourseId).ToList() ?? new List<int>();
+                // Load assessments for enrolled courses
+                var allAssessments = new List<AssessmentModel>();
+                foreach (var courseId in courseIds)
                 {
-                    var enrollments = await enrollmentsResponse.Content.ReadFromJsonAsync<List<EnrollmentModel>>();
-                    var courseIds = enrollments?.Select(e => e.CourseId).ToList() ?? new List<int>();
-                    // Load assessments for enrolled courses
-                    var allAssessments = new List<AssessmentModel>();
-                    foreach (var courseId in courseIds)
+                    var courseAssessments = await AssessmentRepository.GetAssessmentsByCourseIdAsync(courseId);
+                    if (courseAssessments != null)
                     {
-                        var assessmentsResponse = await HttpClient.GetAsync($"/api/assessments/course/{courseId}");
-                        if (assessmentsResponse.IsSuccessStatusCode)
-                        {
-                            var courseAssessments = await assessmentsResponse.Content.ReadFromJsonAsync<List<AssessmentModel>>() ?? new
-                            List<AssessmentModel>();
-                            allAssessments.AddRange(courseAssessments);
-                        }
+                        allAssessments.AddRange(courseAssessments);
                     }
-                    assessments = allAssessments.ToList();
-                    // Load available courses for filtering
-                    availableCourses = enrollments?
+                }
+                assessments = allAssessments.ToList();
+                // Load available courses for filtering
+                availableCourses = enrollments?
                     .Where(e => !string.IsNullOrEmpty(e.CourseTitle))
                     .Select(e => new CourseModel
                     {
@@ -362,7 +357,6 @@ else
                     })
                     .DistinctBy(c => c.Id)
                     .ToList() ?? new List<CourseModel>();
-                }
                 // Load user attempts (mock data for now)
                 LoadUserAttempts(currentUserId);
                 // Calculate statistics

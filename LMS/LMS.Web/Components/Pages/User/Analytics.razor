@@ -4,7 +4,7 @@
 @using System.Security.Claims
 @page "/user/lms/analytics"
 @inject IdentityUserAccessor UserAccessor
-@inject HttpClient HttpClient
+@inject IEnrollmentRepository EnrollmentRepository
 @inject ISnackbar Snackbar
 
 <div class="analytics-layout">
@@ -341,19 +341,15 @@
             var currentUserId = user?.Id;
             if (!string.IsNullOrEmpty(currentUserId))
             {
-                // Load user enrollments via HTTP endpoint
-                var enrollmentsResponse = await HttpClient.GetAsync($"/api/enrollments/user/{currentUserId}/enrollments");
-                if (enrollmentsResponse.IsSuccessStatusCode)
-                {
-                    enrollments = await enrollmentsResponse.Content.ReadFromJsonAsync<List<EnrollmentModel>>();
-                }
-                
+                // Load user enrollments via repository
+                enrollments = await EnrollmentRepository.GetUserEnrollmentsAsync(currentUserId);
+
                 // Calculate analytics
                 await CalculateAnalytics(currentUserId);
-                
+
                 // Load recent activities (mock data for now)
                 LoadRecentActivities();
-                
+
                 // Load performance metrics (mock data for now)
                 LoadPerformanceMetrics();
             }

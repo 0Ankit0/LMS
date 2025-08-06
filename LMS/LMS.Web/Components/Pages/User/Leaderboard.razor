@@ -2,8 +2,8 @@
 @using MudBlazor.Utilities;
 @using System.Security.Claims
 @page "/user/lms/leaderboard"
-@inject IdentityUserAccessor UserAccessor
-@inject HttpClient HttpClient
+@inject UserManager<User> UserManager
+@inject ILeaderboardRepository LeaderboardRepository
 @inject IJSRuntime JSRuntime
 @using MudBlazor.Components
 
@@ -279,7 +279,7 @@ else
 
     protected override async Task OnInitializedAsync()
     {
-        var user = await UserAccessor.GetRequiredUserAsync(HttpContext);
+        var user = await UserManager.GetUserAsync(HttpContext.User);
         if (user is not null)
         {
             currentUserId = user.Id;
@@ -295,17 +295,17 @@ else
             isLoading = true;
 
             // Load leaderboard data based on selected period via HTTP endpoints
-            var endpoint = selectedPeriod switch
+            if (selectedPeriod == "week")
             {
-                "week" => "/api/leaderboards/weekly",
-                "month" => "/api/leaderboards/monthly",
-                _ => "/api/leaderboards/overall"
-            };
-
-            var response = await HttpClient.GetAsync(endpoint);
-            if (response.IsSuccessStatusCode)
+                leaderboard = await LeaderboardRepository.GetWeeklyLeaderboardAsync();
+            }
+            else if (selectedPeriod == "month")
             {
-                leaderboard = await response.Content.ReadFromJsonAsync<List<LeaderboardEntryModel>>() ?? new List<LeaderboardEntryModel>();
+                leaderboard = await LeaderboardRepository.GetMonthlyLeaderboardAsync();
+            }
+            else
+            {
+                leaderboard = await LeaderboardRepository.GetOverallLeaderboardAsync();
             }
 
             topRanks = leaderboard?.Take(3).ToList() ?? new List<LeaderboardEntryModel>();
