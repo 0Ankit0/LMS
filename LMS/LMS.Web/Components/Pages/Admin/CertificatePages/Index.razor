@@ -28,7 +28,19 @@
     <MudCardContent>
         @if (_loading)
         {
-            <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="300px" />
+            int columnCount = 10; // Number of columns in the table
+            int rowCount = 3; // Number of skeleton rows
+            <div class="mb-3">
+                @for (int r = 0; r < rowCount; r++)
+                {
+                    <div class="row @(r > 0 ? "mt-2" : null)">
+                        @for (int c = 0; c < columnCount; c++)
+                        {
+                            <div class="col"> <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="32px" /> </div>
+                        }
+                    </div>
+                }
+            </div>
         }
         else
         {

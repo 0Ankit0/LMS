@@ -10,6 +10,7 @@
 @inject ISnackbar Snackbar
 
 <PageTitle>Forums - Admin</PageTitle>
+<title>Forums - Admin</title>
 
 <MudCard Elevation="2">
     <MudCardHeader>
@@ -23,7 +24,19 @@
     <MudCardContent>
         @if (_loading)
         {
-            <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="300px" />
+            int columnCount = 8; // Number of columns in the table
+            int rowCount = 3;
+            <div class="mb-3">
+                @for (int r = 0; r < rowCount; r++)
+                {
+                    <div class="row @(r > 0 ? "mt-2" : null)">
+                        @for (int c = 0; c < columnCount; c++)
+                        {
+                            <div class="col"> <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="32px" /> </div>
+                        }
+                    </div>
+                }
+            </div>
         }
         else
         {
@@ -106,13 +119,12 @@
         StateHasChanged();
         try
         {
+            var pageNumber = state.Page < 0 ? 0 : state.Page;
+            var pageSize = state.PageSize < 1 ? 10 : state.PageSize;
             var paginationRequest = new PaginationRequest
             {
-                PageNumber = state.Page,
-                PageSize = state.PageSize,
-                // Sorting logic commented out
-                // SortColumn = state.SortLabel,
-                // SortDirection = state.SortDirection == MudBlazor.SortDirection.Ascending ? "asc" : "desc"
+                PageNumber = pageNumber,
+                PageSize = pageSize
             };
             var result = await ForumRepository.GetForumsPaginatedAsync(paginationRequest);
             var data = result?.Items ?? new List<ForumModel>();

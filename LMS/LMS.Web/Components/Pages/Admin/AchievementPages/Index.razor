@@ -3,6 +3,7 @@
 @attribute [OutputCache(Duration = 60)]
 @inject IAchievementRepository AchievementRepository
 <PageTitle>Achievements - Admin</PageTitle>
+<title>Achievements - Admin</title>
 
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h1 class="mb-0">Achievements</h1>
@@ -14,8 +15,19 @@
 
 @if (_loading)
 {
-    <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="50px" Class="mb-3" />
-    <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="300px" />
+    int columnCount = 7; // Number of columns in the table
+    int rowCount = 3;
+    <div class="mb-3">
+        @for (int r = 0; r < rowCount; r++)
+        {
+            <div class="row @(r > 0 ? "mt-2" : null)">
+                @for (int c = 0; c < columnCount; c++)
+                {
+                    <div class="col"> <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="32px" /> </div>
+                }
+            </div>
+        }
+    </div>
 }
 else
 {
@@ -63,15 +75,15 @@ else
     {
         _loading = true;
         StateHasChanged();
-
         try
         {
+            var pageNumber = state.Page < 0 ? 0 : state.Page;
+            var pageSize = state.PageSize < 1 ? 10 : state.PageSize;
             var paginationRequest = new PaginationRequest
             {
-                PageNumber = state.Page,
-                PageSize = state.PageSize
+                PageNumber = pageNumber,
+                PageSize = pageSize
             };
-
             var result = await AchievementRepository.GetAllAchievementsPaginatedAsync(paginationRequest);
 
             // Fallback data if repository returns null or empty

@@ -5,6 +5,7 @@
 @inject ISnackbar Snackbar
 
 <PageTitle>Assessments - Admin</PageTitle>
+<title>Assessments - Admin</title>
 
 <MudCard Elevation="2">
     <MudCardHeader>
@@ -18,7 +19,19 @@
     <MudCardContent>
         @if (_loading)
         {
-            <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="300px" />
+            int columnCount = 9; // Number of columns in the table
+            int rowCount = 3;
+            <div class="mb-3">
+                @for (int r = 0; r < rowCount; r++)
+                {
+                    <div class="row @(r > 0 ? "mt-2" : null)">
+                        @for (int c = 0; c < columnCount; c++)
+                        {
+                            <div class="col"> <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="32px" /> </div>
+                        }
+                    </div>
+                }
+            </div>
         }
         else
         {
@@ -96,16 +109,15 @@
     {
         _loading = true;
         StateHasChanged();
-
         try
         {
+            var pageNumber = state.Page < 0 ? 0 : state.Page;
+            var pageSize = state.PageSize < 1 ? 10 : state.PageSize;
             var paginationRequest = new PaginationRequest
             {
-                PageNumber = state.Page,
-                PageSize = state.PageSize
-                // Removed SortBy assignment, property does not exist
+                PageNumber = pageNumber,
+                PageSize = pageSize
             };
-
             var result = await AssessmentRepository.GetAssessmentsPaginatedAsync(paginationRequest);
 
             // If no results return, use dummy data

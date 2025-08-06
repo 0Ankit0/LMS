@@ -15,17 +15,19 @@
         <MudDrawerContainer Class="mud-height-full">
             <MudDrawer @bind-Open="_drawerOpen" Fixed="false" Elevation="2" Variant="DrawerVariant.Mini" Breakpoint="Breakpoint.None">
                 <MudNavMenu>
-                    <MudNavLink Href="/admin/achievements" Icon="@Icons.Material.Filled.EmojiEvents" Title="Achievements">Achievements</MudNavLink>
-                    <MudNavLink Href="/admin/assessments" Icon="@Icons.Material.Filled.Assignment" Title="Assessments">Assessments</MudNavLink>
-                    <MudNavLink Href="/admin/categories" Icon="@Icons.Material.Filled.Category" Title="Categories">Categories</MudNavLink>
-                    <MudNavLink Href="/admin/certificates" Icon="@Icons.Material.Filled.WorkspacePremium" Title="Certificates">Certificates</MudNavLink>
-                    <MudNavLink Href="/admin/courses" Icon="@Icons.Material.Filled.Book" Title="Courses">Courses</MudNavLink>
-                    <MudNavLink Href="/admin/enrollments" Icon="@Icons.Material.Filled.HowToReg" Title="Enrollments">Enrollments</MudNavLink>
-                    <MudNavLink Href="/admin/forums" Icon="@Icons.Material.Filled.Forum" Title="Forums">Forums</MudNavLink>
-                    <MudNavLink Href="/admin/lessons" Icon="@Icons.Material.Filled.School" Title="Lessons">Lessons</MudNavLink>
-                    <MudNavLink Href="/admin/modules" Icon="@Icons.Material.Filled.Folder" Title="Modules">Modules</MudNavLink>
-                    <MudNavLink Href="/admin/questions" Icon="@Icons.Material.Filled.QuestionAnswer" Title="Questions">Questions</MudNavLink>
-                    <MudNavLink Href="/admin/tags" Icon="@Icons.Material.Filled.Tag" Title="Tags">Tags</MudNavLink>
+                    @foreach (var nav in NavLinks)
+                    {
+                        if (!_drawerOpen)
+                        {
+                            <MudTooltip Text="@nav.Title">
+                                <MudNavLink Href="@nav.Href" Icon="@nav.Icon" />
+                            </MudTooltip>
+                        }
+                        else
+                        {
+                            <MudNavLink Href="@nav.Href" Icon="@nav.Icon">@nav.Title</MudNavLink>
+                        }
+                    }
                 </MudNavMenu>
             </MudDrawer>
             <MudMainContent Class="mud-height-full p-4">
@@ -38,4 +40,25 @@
 @code{
     private bool _drawerOpen = false;
     private void ToggleDrawer() => _drawerOpen = !_drawerOpen;
+
+    private record NavLink(string Href, string Icon, string Title);
+    private List<NavLink> NavLinks;
+
+    protected override void OnInitialized()
+    {
+        NavLinks = new List<NavLink>
+        {
+            new("/admin/achievements", Icons.Material.Filled.EmojiEvents, "Achievements"),
+            new("/admin/assessments", Icons.Material.Filled.Assignment, "Assessments"),
+            new("/admin/categories", Icons.Material.Filled.Category, "Categories"),
+            new("/admin/certificates", Icons.Material.Filled.WorkspacePremium, "Certificates"),
+            new("/admin/courses", Icons.Material.Filled.Book, "Courses"),
+            new("/admin/enrollments", Icons.Material.Filled.HowToReg, "Enrollments"),
+            new("/admin/forums", Icons.Material.Filled.Forum, "Forums"),
+            new("/admin/lessons", Icons.Material.Filled.School, "Lessons"),
+            new("/admin/modules", Icons.Material.Filled.Folder, "Modules"),
+            new("/admin/questions", Icons.Material.Filled.QuestionAnswer, "Questions"),
+            new("/admin/tags", Icons.Material.Filled.Tag, "Tags")
+        };
+    }
 }

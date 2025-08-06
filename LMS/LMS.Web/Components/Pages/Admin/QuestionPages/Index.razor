@@ -5,6 +5,7 @@
 @attribute [OutputCache(Duration = 60)]
 
 <PageTitle>Questions - Admin</PageTitle>
+<title>Questions - Admin</title>
 
 <MudCard Elevation="2">
     <MudCardHeader>
@@ -18,7 +19,19 @@
     <MudCardContent>
         @if (_loading)
         {
-            <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="300px" />
+            int columnCount = 8; // Number of columns in the table
+            int rowCount = 3;
+            <div class="mb-3">
+                @for (int r = 0; r < rowCount; r++)
+                {
+                    <div class="row @(r > 0 ? "mt-2" : null)">
+                        @for (int c = 0; c < columnCount; c++)
+                        {
+                            <div class="col"> <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="32px" /> </div>
+                        }
+                    </div>
+                }
+            </div>
         }
         else
         {
@@ -97,29 +110,19 @@
     // MudBlazor Table Data Provider
     private async Task<TableData<QuestionModel>> ServerData(TableState state, CancellationToken cancellationToken)
     {
-        try
+        var pageNumber = state.Page < 0 ? 0 : state.Page;
+        var pageSize = state.PageSize < 1 ? 10 : state.PageSize;
+        var result = await AssessmentRepository.GetAllQuestionsPaginatedAsync(new PaginationRequest
         {
-            var result = await AssessmentRepository.GetAllQuestionsPaginatedAsync(new PaginationRequest
-            {
-                PageNumber = state.Page + 1,
-                PageSize = state.PageSize
-            });
+            PageNumber = pageNumber,
+            PageSize = pageSize
+        });
 
-            return new TableData<QuestionModel>
-            {
-                Items = result.Items,
-                TotalItems = result.TotalCount
-            };
-        }
-        catch (Exception ex)
+        return new TableData<QuestionModel>
         {
-            Snackbar.Add($"Error loading questions: {ex.Message}", Severity.Error);
-            return new TableData<QuestionModel>
-            {
-                Items = Enumerable.Empty<QuestionModel>(),
-                TotalItems = 0
-            };
-        }
+            Items = result.Items,
+            TotalItems = result.TotalCount
+        };
     }
 
     private async Task ConfirmDelete(QuestionModel question)

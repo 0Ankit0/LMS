@@ -4,6 +4,7 @@
 @inject IForumRepository ForumRepository
 
 <PageTitle>Forum Posts - Admin</PageTitle>
+<title>Forum Posts - Admin</title>
 
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h1 class="mb-0">Forum Posts</h1>
@@ -47,6 +48,23 @@
     </PagerContent>
 </MudTable>
 
+@if (_loading)
+{
+    int columnCount = 6; // Number of columns in the table
+    int rowCount = 3;
+    <div class="mb-3">
+        @for (int r = 0; r < rowCount; r++)
+        {
+            <div class="row @(r > 0 ? "mt-2" : null)">
+                @for (int c = 0; c < columnCount; c++)
+                {
+                    <div class="col"> <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="32px" /> </div>
+                }
+            </div>
+        }
+    </div>
+}
+
 @code {
     private bool _loading = false;
 
@@ -56,10 +74,12 @@
         StateHasChanged();
         try
         {
+            var pageNumber = state.Page < 0 ? 0 : state.Page;
+            var pageSize = state.PageSize < 1 ? 10 : state.PageSize;
             var request = new PaginationRequest
             {
-                PageNumber = state.Page + 1,
-                PageSize = state.PageSize
+                PageNumber = pageNumber,
+                PageSize = pageSize
             };
             var paginatedResult = await ForumRepository.GetAllForumPostsPaginatedAsync(request);
             var items = paginatedResult?.Items ?? GetMockForumPosts();
