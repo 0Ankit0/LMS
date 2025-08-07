@@ -18,6 +18,7 @@ namespace LMS.Repositories
         Task<bool> RevokeCertificateAsync(int certificateId);
         Task<bool> ValidateCertificateAsync(string certificateNumber);
         Task<CertificateModel?> GetCertificateByNumberAsync(string certificateNumber);
+        Task<bool> UpdateCertificateAsync(int certificateId, CreateCertificateRequest request);
     }
 
     public class CertificateRepository : ICertificateRepository
@@ -324,6 +325,29 @@ namespace LMS.Repositories
                 CertificateUrl = certificate.CertificateUrl,
                 IsValid = certificate.IsValid
             };
+        }
+
+        public async Task<bool> UpdateCertificateAsync(int certificateId, CreateCertificateRequest request)
+        {
+            try
+            {
+                var certificate = await _context.Certificates.FindAsync(certificateId);
+                if (certificate == null)
+                    return false;
+
+                certificate.UserId = request.UserId;
+                certificate.CourseId = request.CourseId;
+                certificate.FinalGrade = request.FinalGrade;
+                certificate.ExpiresAt = request.ExpiresAt;
+
+                await _context.SaveChangesAsync();
+                return true;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error updating certificate: {CertificateId}", certificateId);
+                throw;
+            }
         }
     }
 }

@@ -35,6 +35,7 @@ namespace LMS.Repositories
         Task<PaginatedResult<ForumPostModel>> GetAllForumPostsPaginatedAsync(PaginationRequest request);
         Task<ForumPostModel?> GetPostByIdAsync(int id);
         Task<ForumPostModel> CreatePostAsync(CreateForumPostRequest request, string authorId);
+        Task<ForumPostModel?> UpdatePostAsync(int id, CreateForumPostRequest request, string authorId);
         Task<bool> DeletePostAsync(int id);
 
         // --- Add missing methods for Forums.razor ---
@@ -450,6 +451,28 @@ namespace LMS.Repositories
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error creating forum post for topic: {TopicId}", request.TopicId);
+                throw;
+            }
+        }
+
+        public async Task<ForumPostModel?> UpdatePostAsync(int id, CreateForumPostRequest request, string authorId)
+        {
+            try
+            {
+                var post = await _context.ForumPosts.FindAsync(id);
+                if (post == null)
+                    return null;
+                post.Content = request.Content;
+                post.TopicId = request.TopicId;
+                post.ParentPostId = request.ParentPostId;
+                post.UpdatedAt = DateTime.UtcNow;
+                // Optionally update author if needed: post.AuthorId = authorId;
+                await _context.SaveChangesAsync();
+                return await GetPostByIdAsync(id);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error updating forum post: {Id}", id);
                 throw;
             }
         }

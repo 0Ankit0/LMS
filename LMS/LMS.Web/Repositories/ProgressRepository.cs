@@ -99,14 +99,16 @@ public class ProgressRepository : IProgressRepository
     {
         try
         {
-            var progress = await GetModuleProgressAsync(request.EnrollmentId, request.ModuleId ?? 0);
+            if (!request.ModuleId.HasValue)
+                throw new ArgumentException("ModuleId is required for updating module progress.");
+            var progress = await GetModuleProgressAsync(request.EnrollmentId, request.ModuleId.Value);
 
             if (progress == null)
             {
                 progress = new ModuleProgress
                 {
                     EnrollmentId = request.EnrollmentId,
-                    ModuleId = request.ModuleId ?? 0,
+                    ModuleId = request.ModuleId.Value,
                     StartedAt = DateTime.UtcNow,
                     ProgressPercentage = request.ProgressPercentage,
                     TimeSpent = TimeSpan.FromMinutes(request.TimeSpentMinutes ?? 0)
@@ -144,8 +146,12 @@ public class ProgressRepository : IProgressRepository
     {
         try
         {
+            if (!request.ModuleId.HasValue)
+                throw new ArgumentException("ModuleId is required for updating lesson progress.");
+            if (!request.LessonId.HasValue)
+                throw new ArgumentException("LessonId is required for updating lesson progress.");
             // First, ensure module progress exists
-            var moduleProgress = await GetModuleProgressAsync(request.EnrollmentId, request.ModuleId ?? 0);
+            var moduleProgress = await GetModuleProgressAsync(request.EnrollmentId, request.ModuleId.Value);
             if (moduleProgress == null)
             {
                 // Create module progress if it doesn't exist
@@ -161,14 +167,14 @@ public class ProgressRepository : IProgressRepository
             }
 
             var progress = await _context.LessonProgresses
-                .FirstOrDefaultAsync(lp => lp.ModuleProgressId == moduleProgress.Id && lp.LessonId == request.LessonId);
+                .FirstOrDefaultAsync(lp => lp.ModuleProgressId == moduleProgress.Id && lp.LessonId == request.LessonId.Value);
 
             if (progress == null)
             {
                 progress = new LessonProgress
                 {
                     ModuleProgressId = moduleProgress.Id,
-                    LessonId = request.LessonId ?? 0,
+                    LessonId = request.LessonId.Value,
                     StartedAt = DateTime.UtcNow,
                     TimeSpent = TimeSpan.FromMinutes(request.TimeSpentMinutes ?? 0),
                     ProgressPercentage = request.IsCompleted ? 100 : request.ProgressPercentage

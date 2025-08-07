@@ -15,8 +15,14 @@ namespace LMS.Repositories
         Task<bool> DeleteCourseAsync(int id);
         Task<List<ModuleModel>> GetCourseModulesAsync(int courseId);
         Task<ModuleModel> CreateModuleAsync(CreateModuleRequest request);
+        Task<ModuleModel?> GetModuleByIdAsync(int id);
+        Task<ModuleModel> UpdateModuleAsync(int id, CreateModuleRequest request);
+        Task<bool> DeleteModuleAsync(int id);
         Task<List<LessonModel>> GetModuleLessonsAsync(int moduleId);
         Task<LessonModel> CreateLessonAsync(CreateLessonRequest request);
+        Task<LessonModel?> GetLessonByIdAsync(int id);
+        Task<LessonModel> UpdateLessonAsync(int id, CreateLessonRequest request);
+        Task<bool> DeleteLessonAsync(int id);
         Task<List<CourseModel>> GetAllCoursesAsync();
     }
 
@@ -337,6 +343,67 @@ namespace LMS.Repositories
             }
         }
 
+        public async Task<ModuleModel?> GetModuleByIdAsync(int id)
+        {
+            try
+            {
+                var module = await _context.Modules
+                    .Include(m => m.Lessons)
+                    .FirstOrDefaultAsync(m => m.Id == id);
+
+                return module != null ? MapToModuleModel(module) : null;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting module by id: {ModuleId}", id);
+                throw;
+            }
+        }
+
+        public async Task<ModuleModel> UpdateModuleAsync(int id, CreateModuleRequest request)
+        {
+            try
+            {
+                var module = await _context.Modules.FindAsync(id);
+                if (module == null)
+                    throw new ArgumentException("Module not found");
+
+                module.Title = request.Title;
+                module.Description = request.Description;
+                module.OrderIndex = request.OrderIndex;
+                module.IsRequired = request.IsRequired;
+                module.UpdatedAt = DateTime.UtcNow;
+
+                await _context.SaveChangesAsync();
+
+                return await GetModuleByIdAsync(id) ?? throw new InvalidOperationException("Module not found after update");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error updating module: {ModuleId}", id);
+                throw;
+            }
+        }
+
+        public async Task<bool> DeleteModuleAsync(int id)
+        {
+            try
+            {
+                var module = await _context.Modules.FindAsync(id);
+                if (module == null)
+                    return false;
+
+                _context.Modules.Remove(module);
+                await _context.SaveChangesAsync();
+                return true;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error deleting module: {ModuleId}", id);
+                throw;
+            }
+        }
+
         public async Task<List<LessonModel>> GetModuleLessonsAsync(int moduleId)
         {
             try
@@ -386,6 +453,72 @@ namespace LMS.Repositories
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error creating lesson for module: {ModuleId}", request.ModuleId);
+                throw;
+            }
+        }
+
+        public async Task<LessonModel?> GetLessonByIdAsync(int id)
+        {
+            try
+            {
+                var lesson = await _context.Lessons
+                    .Include(l => l.Resources)
+                    .FirstOrDefaultAsync(l => l.Id == id);
+
+                return lesson != null ? MapToLessonModel(lesson) : null;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting lesson by id: {LessonId}", id);
+                throw;
+            }
+        }
+
+        public async Task<LessonModel> UpdateLessonAsync(int id, CreateLessonRequest request)
+        {
+            try
+            {
+                var lesson = await _context.Lessons.FindAsync(id);
+                if (lesson == null)
+                    throw new ArgumentException("Lesson not found");
+
+                lesson.Title = request.Title;
+                lesson.Description = request.Description;
+                lesson.Content = request.Content;
+                lesson.VideoUrl = request.VideoUrl;
+                lesson.DocumentUrl = request.DocumentUrl;
+                lesson.ExternalUrl = request.ExternalUrl;
+                lesson.EstimatedDuration = request.EstimatedDuration;
+                lesson.OrderIndex = request.OrderIndex;
+                lesson.IsRequired = request.IsRequired;
+                lesson.UpdatedAt = DateTime.UtcNow;
+
+                await _context.SaveChangesAsync();
+
+                return await GetLessonByIdAsync(id) ?? throw new InvalidOperationException("Lesson not found after update");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error updating lesson: {LessonId}", id);
+                throw;
+            }
+        }
+
+        public async Task<bool> DeleteLessonAsync(int id)
+        {
+            try
+            {
+                var lesson = await _context.Lessons.FindAsync(id);
+                if (lesson == null)
+                    return false;
+
+                _context.Lessons.Remove(lesson);
+                await _context.SaveChangesAsync();
+                return true;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error deleting lesson: {LessonId}", id);
                 throw;
             }
         }

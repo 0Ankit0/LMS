@@ -1,4 +1,3 @@
-
 using LMS.Repositories;
 using LMS.Web.Infrastructure;
 using LMS.Data.DTOs;
@@ -20,7 +19,7 @@ public class AssessmentEndpoints : IEndpoint
             .WithName("GetAssessmentsPaginated").WithSummary("Get assessments with pagination");
         group.MapGet("/course/{courseId}", async (int courseId, IAssessmentRepository repo) => await repo.GetAssessmentsByCourseAsync(courseId))
             .WithName("GetAssessmentsByCourse").WithSummary("Get assessments by course ID");
-        group.MapGet("/{id}", async (int id, IAssessmentRepository repo) => await repo.GetAssessmentAsync(id))
+        group.MapGet("/{id}", async (int id, IAssessmentRepository repo) => await repo.GetAssessmentByIdAsync(id))
             .WithName("GetAssessmentById").WithSummary("Get assessment by ID");
         group.MapPost("/", async (CreateAssessmentRequest req, IAssessmentRepository repo) => await repo.CreateAssessmentAsync(req))
             .WithName("CreateAssessment").WithSummary("Create a new assessment");

@@ -1,3 +1,4 @@
+using LMS.Data.Entities;
 using System.ComponentModel.DataAnnotations;
 
 namespace LMS.Data.DTOs
@@ -17,7 +18,7 @@ namespace LMS.Data.DTOs
 
         public int? LessonId { get; set; }
 
-        public int Type { get; set; } = 1;
+        public AssessmentType Type { get; set; } 
 
         public int MaxAttempts { get; set; } = 1;
 
