@@ -3,14 +3,113 @@
 @layout AdminLayout
 @using LMS.Repositories
 
-
-
 @inject IAchievementRepository AchievementRepository
 @inject NavigationManager NavigationManager
 @inject ISnackbar Snackbar
 @rendermode @(new InteractiveServerRenderMode())
 
-<PageTitle>Create Achievement - Admin</PageTitle>
+@code {
+    [Parameter]
+    public int? id { get; set; }
+    [SupplyParameterFromForm]
+    private CreateAchievementRequest Achievement { get; set; } = new();
+    private bool isSubmitting = false;
+    private bool isLoading = true;
+    private bool IsEdit => id.HasValue && id.Value > 0;
+    private AchievementType SelectedType { get; set; }
+    private bool hasSubmitAttempted = false;
+    private EditContext? editContext;
+
+    protected override async Task OnInitializedAsync()
+    {
+        editContext = new EditContext(Achievement);
+        if (IsEdit)
+        {
+            var achievement = await AchievementRepository.GetAchievementByIdAsync(id.Value);
+            if (achievement != null)
+            {
+                Achievement = new CreateAchievementRequest
+                {
+                    Name = achievement.Name,
+                    Description = achievement.Description,
+                    IconUrl = achievement.IconUrl,
+                    Points = achievement.Points,
+                    BadgeColor = achievement.BadgeColor,
+                    Type = achievement.Type,
+                    Criteria = achievement.Criteria
+                };
+                if (Enum.TryParse<AchievementType>(achievement.Type, out var parsedType))
+                    SelectedType = parsedType;
+                else
+                    SelectedType = AchievementType.Course; // fallback to first enum value
+                editContext = new EditContext(Achievement);
+            }
+            else
+            {
+                Snackbar.Add("Achievement not found.", Severity.Error);
+                NavigationManager.NavigateTo("/admin/achievements");
+                return;
+            }
+        }
+        else
+        {
+            SelectedType = AchievementType.Course;
+        }
+        isLoading = false;
+    }
+
+    private async Task SaveAchievement()
+    {
+        hasSubmitAttempted = true;
+        if (editContext != null && !editContext.Validate())
+        {
+            isSubmitting = false;
+            return;
+        }
+        if (isSubmitting) return;
+        isSubmitting = true;
+        try
+        {
+            Achievement.Type = SelectedType.ToString();
+            if (IsEdit)
+            {
+                var result = await AchievementRepository.UpdateAchievementAsync(id.Value, Achievement);
+                if (result != null)
+                {
+                    Snackbar.Add("Achievement updated successfully!", Severity.Success);
+                    NavigationManager.NavigateTo("/admin/achievements");
+                }
+                else
+                {
+                    Snackbar.Add("Failed to update achievement. Please try again.", Severity.Error);
+                }
+            }
+            else
+            {
+                var result = await AchievementRepository.CreateAchievementAsync(Achievement);
+                if (result != null)
+                {
+                    Snackbar.Add("Achievement created successfully!", Severity.Success);
+                    NavigationManager.NavigateTo("/admin/achievements");
+                }
+                else
+                {
+                    Snackbar.Add("Failed to create achievement. Please try again.", Severity.Error);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error saving achievement: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            isSubmitting = false;
+        }
+    }
+}
+
+<PageTitle>@(IsEdit ? "Edit Achievement - Admin" : "Create Achievement - Admin")</PageTitle>
 
 @if (isLoading)
 {
@@ -18,7 +117,6 @@
         <MudSkeleton SkeletonType="SkeletonType.Text" Width="200px" Height="40px" />
         <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="180px" Height="40px" />
     </div>
-
     <div class="row">
         <div class="col-lg-8">
             <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="500px" />
@@ -28,13 +126,12 @@
 else
 {
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1 class="mb-0">Create New Achievement</h1>
+        <h1 class="mb-0">@(IsEdit ? "Edit Achievement" : "Create New Achievement")</h1>
         <MudButton Variant="Variant.Text" Color="Color.Secondary" Href="/admin/achievements">
             <MudIcon Icon="@Icons.Material.Filled.ArrowBack" Class="me-2" />
             Back to Achievements
         </MudButton>
     </div>
-
     <div class="row">
         <div class="col-lg-8">
             <MudCard Elevation="2">
@@ -42,33 +139,29 @@ else
                     <MudText Typo="Typo.h6">Achievement Information</MudText>
                 </MudCardHeader>
                 <MudCardContent>
-                    <EditForm Model="Achievement" OnValidSubmit="AddAchievement">
-                        <MudAlert Severity="Severity.Error" Class="mb-3" >
+                    <EditForm EditContext="@editContext" Model="Achievement" OnValidSubmit="SaveAchievement">
+                        <MudAlert Severity="Severity.Error" Class="mb-3" Visible="@(hasSubmitAttempted && editContext != null && !editContext.Validate())">
                             <MudText>Please correct the errors below.</MudText>
                         </MudAlert>
-
                         <MudTextField @bind-Value="Achievement.Name" Label="Name" Variant="Variant.Text" Required="true" RequiredError="Name is required!" />
-
                         <MudTextField @bind-Value="Achievement.Description" Label="Description" Variant="Variant.Text" Lines="3"
                                       Placeholder="Enter achievement description" />
-
                         <MudGrid>
                             <MudItem T="string" xs="12" md="6">
                                 <MudTextField @bind-Value="Achievement.IconUrl" Label="Icon URL" Variant="Variant.Text"
                                               Placeholder="https://example.com/icon.png" />
                             </MudItem>
                             <MudItem T="string" xs="12" md="6">
-                                <MudNumericField @bind-Value="Achievement.Points" Label="Points" Variant="Variant.Text" // Fixed RZ9991 by using 'bind-Value'
+                                <MudNumericField @bind-Value="Achievement.Points" Label="Points" Variant="Variant.Text"
                                                  Placeholder="100" />
                             </MudItem>
                         </MudGrid>
-
                         <MudGrid>
                             <MudItem T="string" xs="12" md="6">
                                 <MudTextField @bind-Value="Achievement.BadgeColor" Label="Badge Color" Variant="Variant.Text" InputType="InputType.Color" />
                             </MudItem>
                             <MudItem T="string" xs="12" md="6">
-                                <MudSelect @bind-Value="Achievement.Type" Label="Achievement Type" Variant="Variant.Text">
+                                <MudSelect @bind-Value="SelectedType" Label="Achievement Type" Variant="Variant.Text">
                                     @foreach (var enumValue in Enum.GetValues(typeof(AchievementType)).Cast<AchievementType>())
                                     {
                                         <MudSelectItem Value="@enumValue">@enumValue.ToString()</MudSelectItem>
@@ -76,11 +169,10 @@ else
                                 </MudSelect>
                             </MudItem>
                         </MudGrid>
-
                         <div class="d-flex gap-2">
                             <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Disabled="@isSubmitting">
                                 <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Class="me-2" />
-                                Create Achievement
+                                @(IsEdit ? "Update Achievement" : "Create Achievement")
                             </MudButton>
                             <MudButton Variant="Variant.Filled" Color="Color.Secondary" Href="/admin/achievements">Cancel</MudButton>
                         </div>
@@ -89,49 +181,4 @@ else
             </MudCard>
         </div>
     </div>
-}
-
-@code {
-    [SupplyParameterFromForm]
-    private CreateAchievementRequest Achievement { get; set; } = new();
-    private bool isSubmitting = false;
-    private bool isLoading = true;
-    
-
-    protected override void OnAfterRender(bool firstRender)
-    {
-        if (firstRender)
-        {
-            isLoading = false;
-            StateHasChanged();
-        }
-    }
-
-    private async Task AddAchievement()
-    {
-        if (isSubmitting) return;
-        
-        isSubmitting = true;
-        try
-        {
-            var result = await AchievementRepository.CreateAchievementAsync(Achievement);
-            if (result != null)
-            {
-                Snackbar.Add("Achievement created successfully!", Severity.Success);
-                NavigationManager.NavigateTo("/admin/achievements");
-            }
-            else
-            {
-                Snackbar.Add("Failed to create achievement. Please try again.", Severity.Error);
-            }
-        }
-        catch (Exception ex)
-        {
-            Snackbar.Add($"Error creating achievement: {ex.Message}", Severity.Error);
-        }
-        finally
-        {
-            isSubmitting = false;
-        }
-    }
 }

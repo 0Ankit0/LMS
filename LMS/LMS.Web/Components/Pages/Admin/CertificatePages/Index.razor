@@ -36,7 +36,7 @@
                     <div class="row @(r > 0 ? "mt-2" : null)">
                         @for (int c = 0; c < columnCount; c++)
                         {
-                            <div class="col"> <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="32px" /> </div>
+                            <div class="col"> <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="32px"  Width="20px"/> </div>
                         }
                     </div>
                 }
@@ -126,7 +126,7 @@
         try
         {
             // Ensure non-negative values
-            var pageNumber = state.Page < 0 ? 0 : state.Page;
+            var pageNumber = state.Page < 1 ? 1 : state.Page;
             var pageSize = state.PageSize < 1 ? 10 : state.PageSize;
 
             var paginationRequest = new PaginationRequest

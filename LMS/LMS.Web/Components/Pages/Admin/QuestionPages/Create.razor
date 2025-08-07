@@ -1,5 +1,5 @@
 @page "/admin/questions/create"
-@page "/admin/questions/edit"
+@page "/admin/questions/edit/{id:int}"
 
 @layout AdminLayout
 
@@ -74,18 +74,40 @@
 @code {
     [Parameter]
     [SupplyParameterFromQuery] public int? id { get; set; }
-    
     private CreateQuestionRequest Question { get; set; } = new();
     private bool isSubmitting = false;
-    private bool IsEdit => ( id) > 0;
+    private bool IsEdit => id.HasValue && id.Value > 0;
 
     protected override async Task OnInitializedAsync()
     {
         if (IsEdit)
         {
-            Snackbar.Add("Edit functionality not yet implemented for questions.", Severity.Warning);
-            NavigationManager.NavigateTo("/admin/questions");
-            return;
+            var question = await AssessmentRepository.GetQuestionByIdAsync(id.Value);
+            if (question != null)
+            {
+                Question = new CreateQuestionRequest
+                {
+                    Text = question.Text,
+                    AssessmentId = question.AssessmentId,
+                    Type = (int)question.Type,
+                    Points = question.Points,
+                    OrderIndex = question.OrderIndex,
+                    Explanation = question.Explanation,
+                    IsRequired = question.IsRequired,
+                    Options = question.Options?.Select(o => new CreateQuestionOptionRequest
+                    {
+                        Text = o.Text,
+                        IsCorrect = o.IsCorrect,
+                        OrderIndex = o.OrderIndex
+                    }).ToList() ?? new List<CreateQuestionOptionRequest>()
+                };
+            }
+            else
+            {
+                Snackbar.Add("Question not found.", Severity.Error);
+                NavigationManager.NavigateTo("/admin/questions");
+                return;
+            }
         }
     }
 
@@ -97,7 +119,16 @@
         {
             if (IsEdit)
             {
-                Snackbar.Add("Edit functionality not yet implemented for questions.", Severity.Warning);
+                var result = await AssessmentRepository.UpdateQuestionAsync(id.Value, Question);
+                if (result != null)
+                {
+                    Snackbar.Add("Question updated successfully!", Severity.Success);
+                    NavigationManager.NavigateTo("/admin/questions");
+                }
+                else
+                {
+                    Snackbar.Add("Failed to update question. Please try again.", Severity.Error);
+                }
             }
             else
             {
@@ -105,6 +136,7 @@
                 if (result != null)
                 {
                     Snackbar.Add("Question created successfully!", Severity.Success);
+                    NavigationManager.NavigateTo("/admin/questions");
                 }
                 else
                 {
@@ -112,7 +144,6 @@
                     return;
                 }
             }
-            NavigationManager.NavigateTo("/admin/questions");
         }
         catch (Exception ex)
         {

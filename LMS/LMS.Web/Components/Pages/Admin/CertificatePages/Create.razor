@@ -1,6 +1,5 @@
 ﻿@page "/admin/certificates/create"
 @page "/admin/certificates/edit/{id:int}"
-@rendermode @(new InteractiveServerRenderMode())
 
 @using LMS.Repositories
 @using LMS.Data.DTOs
@@ -42,31 +41,33 @@ else
                     <MudText Typo="Typo.h6">Certificate Information</MudText>
                 </MudCardHeader>
                 <MudCardContent>
-                    <EditForm Model="Certificate" OnValidSubmit="SaveCertificate">
-                        <MudAlert Severity="Severity.Error" Class="mb-3" Visible="@(!form.IsValid)">
-                            <MudText>Please correct the errors below.</MudText>
-                        </MudAlert>
+                    <MudForm @ref="form">
+                        <EditForm Model="Certificate" OnValidSubmit="SaveCertificate">
+                            <MudAlert Severity="Severity.Error" Class="mb-3" Visible="@(form != null && !form.IsValid)">
+                                <MudText>Please correct the errors below.</MudText>
+                            </MudAlert>
 
-                        <MudAutocomplete T="string" @bind-Value="Certificate.UserId" Label="User" Variant="Variant.Text" Required="true" RequiredError="User is required!" Placeholder="Search user..."
-                                        ToStringFunc="@(id => Users.FirstOrDefault(u => u.Value == id)?.Text ?? string.Empty)"
-                                        SearchFunc="SearchUsers" />
+                            <MudAutocomplete T="string" @bind-Value="Certificate.UserId" Label="User" Variant="Variant.Text" Required="true" RequiredError="User is required!" Placeholder="Search user..."
+                                            ToStringFunc="@(id => Users.FirstOrDefault(u => u.Value == id)?.Text ?? string.Empty)"
+                                            SearchFunc="SearchUsers" />
 
-                        <MudAutocomplete T="int?" Value="Certificate.CourseId" ValueChanged="@(v => Certificate.CourseId = v ?? 0)" Label="Course" Variant="Variant.Text" Required="true" RequiredError="Course is required!" Placeholder="Search course..."
-                                        ToStringFunc="@(id => Courses.FirstOrDefault(c => c.Value == id)?.Text ?? string.Empty)"
-                                        SearchFunc="SearchCourses" />
+                            <MudAutocomplete T="int?" Value="Certificate.CourseId" ValueChanged="@(v => Certificate.CourseId = v ?? 0)" Label="Course" Variant="Variant.Text" Required="true" RequiredError="Course is required!" Placeholder="Search course..."
+                                            ToStringFunc="@(id => Courses.FirstOrDefault(c => c.Value == id)?.Text ?? string.Empty)"
+                                            SearchFunc="SearchCourses" />
 
-                        <MudNumericField @bind-Value="Certificate.FinalGrade" Label="Final Grade" Variant="Variant.Text" Step="0.01" />
+                            <MudNumericField @bind-Value="Certificate.FinalGrade" Label="Final Grade" Variant="Variant.Text" Step="0.01" />
 
-                        <MudDatePicker @bind-Date="Certificate.ExpiresAt" Label="Expires At" Variant="Variant.Text" />
+                            <MudDatePicker @bind-Date="Certificate.ExpiresAt" Label="Expires At" Variant="Variant.Text" />
 
-                        <div class="d-flex gap-2">
-                            <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Disabled="@isSubmitting">
-                                <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Class="me-2" />
-                                @(IsEdit ? "Update Certificate" : "Create Certificate")
-                            </MudButton>
-                            <MudButton Variant="Variant.Filled" Color="Color.Secondary" Href="/admin/certificates">Cancel</MudButton>
-                        </div>
-                    </EditForm>
+                            <div class="d-flex gap-2">
+                                <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Disabled="@isSubmitting">
+                                    <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Class="me-2" />
+                                    @(IsEdit ? "Update Certificate" : "Create Certificate")
+                                </MudButton>
+                                <MudButton Variant="Variant.Filled" Color="Color.Secondary" Href="/admin/certificates">Cancel</MudButton>
+                            </div>
+                        </EditForm>
+                    </MudForm>
                 </MudCardContent>
             </MudCard>
         </div>

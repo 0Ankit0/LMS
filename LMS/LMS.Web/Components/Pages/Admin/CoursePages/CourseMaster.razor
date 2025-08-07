@@ -1,4 +1,4 @@
-@page "/admin/course-master"
+@page "/admin/course-master/{id:int}"
 @using LMS.Repositories
 @using MudBlazor
 @inject NavigationManager NavigationManager
@@ -205,7 +205,7 @@ else
     private List<LessonResourceModel> courseResources = new();
     private List<AssessmentModel> assessments = new();
 
-    [SupplyParameterFromQuery]
+    [SupplyParameterFromQuery(Name ="id")]
     private int Id { get; set; }
 
     protected override async Task OnInitializedAsync()

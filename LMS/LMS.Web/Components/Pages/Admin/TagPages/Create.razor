@@ -1,5 +1,5 @@
 @page "/admin/tags/create"
-@page "/admin/tags/edit"
+@page "/admin/tags/edit/{id:int}"
 
 @layout AdminLayout
 
@@ -55,7 +55,7 @@
     
     private CreateTagRequest Tag { get; set; } = new();
     private bool isSubmitting = false;
-    private bool IsEdit => ( id) > 0;
+    private bool IsEdit => id.HasValue && id > 0;
 
     protected override async Task OnInitializedAsync()
     {

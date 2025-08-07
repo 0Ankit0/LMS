@@ -16,7 +16,6 @@
         <MudSkeleton SkeletonType="SkeletonType.Text" Width="200px" Height="40px" />
         <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="180px" Height="40px" />
     </div>
-
     <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="400px" />
 }
 else
@@ -28,7 +27,6 @@ else
             Back to Enrollments
         </MudButton>
     </div>
-
     <MudCard Elevation="2">
         <MudCardHeader>
             <MudText Typo="Typo.h6">Enrollment Information</MudText>
@@ -38,15 +36,21 @@ else
                 <MudAlert Severity="Severity.Error" Class="mb-3" >
                     <MudText>Please correct the errors below.</MudText>
                 </MudAlert>
-
                 <MudAutocomplete T="string" @bind-Value="Enrollment.UserId" Label="User" Variant="Variant.Text" Required="true" RequiredError="User is required!" Placeholder="Search user..."
                     ToStringFunc="@(id => Users.FirstOrDefault(u => u.Value == id)?.Text ?? string.Empty)"
-                    SearchFunc="SearchUsers" />
-
+                    SearchFunc="SearchUsers" Disabled="@IsEdit" />
                 <MudAutocomplete T="int?" Value="Enrollment.CourseId" ValueChanged="@(v => Enrollment.CourseId = v ?? 0)" Label="Course" Variant="Variant.Text" Required="true" RequiredError="Course is required!" Placeholder="Search course..."
                     ToStringFunc="@(id => Courses.FirstOrDefault(c => c.Value == id)?.Text ?? string.Empty)"
-                    SearchFunc="SearchCourses" />
-
+                    SearchFunc="SearchCourses" Disabled="@IsEdit" />
+                @if (IsEdit)
+                {
+                    <MudSelect @bind-Value="EnrollmentStatusValue" Label="Status" Variant="Variant.Text">
+                        @foreach (var status in Enum.GetNames(typeof(EnrollmentStatusEnum)))
+                        {
+                            <MudSelectItem Value="@status">@status</MudSelectItem>
+                        }
+                    </MudSelect>
+                }
                 <div class="d-flex gap-2">
                     <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Disabled="@isSubmitting">
                         <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Class="me-2" />
@@ -62,27 +66,37 @@ else
 @code {
     [Parameter]
     [SupplyParameterFromQuery] public int? id { get; set; }
-    
     private CreateEnrollmentRequest Enrollment { get; set; } = new();
     private bool isSubmitting = false;
     private bool isLoading = true;
     private bool IsEdit => ( id) > 0;
     private List<DropdownOption<string>> Users = new();
     private List<DropdownOption<int>> Courses = new();
+    private string EnrollmentStatusValue { get; set; } = "Active";
 
     protected override async Task OnInitializedAsync()
     {
         Users = await DropdownRepository.GetUsersAsync();
         Courses = await DropdownRepository.GetCoursesAsync();
-
         if (IsEdit)
         {
-            // TODO: Implement GetEnrollmentByIdAsync in IEnrollmentRepository
-            Snackbar.Add("Edit functionality not yet implemented for enrollments.", Severity.Warning);
-            NavigationManager.NavigateTo("/admin/enrollments");
-            return;
+            var enrollment = await EnrollmentRepository.GetEnrollmentByIdAsync(id.Value);
+            if (enrollment != null)
+            {
+                Enrollment = new CreateEnrollmentRequest
+                {
+                    UserId = enrollment.UserId,
+                    CourseId = enrollment.CourseId
+                };
+                EnrollmentStatusValue = enrollment.Status;
+            }
+            else
+            {
+                Snackbar.Add("Enrollment not found.", Severity.Error);
+                NavigationManager.NavigateTo("/admin/enrollments");
+                return;
+            }
         }
-
         await Task.Delay(500); // Simulate data loading
         isLoading = false;
     }
@@ -95,8 +109,8 @@ else
         {
             if (IsEdit)
             {
-                // TODO: Implement UpdateEnrollmentAsync in IEnrollmentRepository
-                Snackbar.Add("Edit functionality not yet implemented for enrollments.", Severity.Warning);
+                await EnrollmentRepository.UpdateEnrollmentStatusAsync(id.Value, EnrollmentStatusValue);
+                Snackbar.Add("Enrollment updated successfully!", Severity.Success);
             }
             else
             {
@@ -137,4 +151,5 @@ else
             : Users.Where(u => u.Text.Contains(value, StringComparison.OrdinalIgnoreCase)).Select(u => u.Value);
         return Task.FromResult(result);
     }
+    public enum EnrollmentStatusEnum { Active, Completed, Dropped }
 }
