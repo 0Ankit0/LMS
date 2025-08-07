@@ -32,12 +32,9 @@
 
             <MudTextField @bind-Value="Lesson.Description" Label="Description" Variant="Variant.Text" Lines="3" Placeholder="Enter lesson description" />
 
-            <MudSelect @bind-Value="Lesson.ModuleId" Label="Module" Variant="Variant.Text" Required="true" RequiredError="Module is required!" Placeholder="Select a module...">
-                @foreach (var module in modules)
-                {
-                    <MudSelectItem Value="@module.Value">@module.Text</MudSelectItem>
-                }
-            </MudSelect>
+            <MudAutocomplete T="int?" Value="Lesson.ModuleId" ValueChanged="@(v => Lesson.ModuleId = v ?? 0)" Label="Module" Variant="Variant.Text" Required="true" RequiredError="Module is required!" Placeholder="Search module..."
+                ToStringFunc="@(id => modules.FirstOrDefault(m => m.Value == id)?.Text ?? string.Empty)"
+                SearchFunc="SearchModules" />
 
             <div class="row">
                 <MudItem xs="12" md="6">
@@ -91,7 +88,7 @@
     private CreateLessonRequest Lesson { get; set; } = new();
     private bool isSubmitting = false;
     
-    private List<DropdownOption> modules = new();
+    private List<DropdownOption<int>> modules = new();
 
     // Helper property for binding EstimatedDuration as minutes
     private int EstimatedDurationMinutes
@@ -102,7 +99,13 @@
 
     protected override async Task OnInitializedAsync()
     {
-        modules = (await DropdownRepository.GetModulesAsync()).ToList();
+        modules = (await DropdownRepository.GetModulesAsync()).Select(m => new DropdownOption<int>
+        {
+            Value = m.Value,
+            Text = m.Text,
+            Description = m.Description,
+            IsDisabled = m.IsDisabled
+        }).ToList();
     }
 
     private async Task AddLesson()
@@ -130,5 +133,13 @@
         {
             isSubmitting = false;
         }
+    }
+
+    private Task<IEnumerable<int?>> SearchModules(string value, CancellationToken token)
+    {
+        IEnumerable<int?> result = string.IsNullOrWhiteSpace(value)
+            ? modules.Select(m => (int?)m.Value)
+            : modules.Where(m => m.Text.Contains(value, StringComparison.OrdinalIgnoreCase)).Select(m => (int?)m.Value);
+        return Task.FromResult(result);
     }
 }

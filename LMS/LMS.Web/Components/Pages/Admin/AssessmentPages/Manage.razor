@@ -88,13 +88,11 @@ else
     private CreateQuestionRequest newQuestion = new();
     private bool isLoading = true;
 
-    
-
     protected override async Task OnInitializedAsync()
     {
         try
         {
-            assessment = await AssessmentRepository.GetAssessmentAsync(Id);
+            assessment = await AssessmentRepository.GetAssessmentByIdAsync(Id);
         }
         finally
         {
@@ -109,7 +107,7 @@ else
         if (result != null)
         {
             // Refresh the assessment after adding a question
-            assessment = await AssessmentRepository.GetAssessmentAsync(Id);
+            assessment = await AssessmentRepository.GetAssessmentByIdAsync(Id);
             newQuestion = new();
             Snackbar.Add("Question created successfully!", Severity.Success);
         }

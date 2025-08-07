@@ -304,7 +304,7 @@ else
         {
             var date = DateTime.Today.AddDays(-random.Next(1, 30));
             var studentName = studentNames[random.Next(studentNames.Length)];
-            var studentId = $"STU{random.Next(1000, 9999)}";
+            var studentIdValue = $"STU{random.Next(1000, 9999)}";
             var status = statuses[random.Next(statuses.Length)];
             var checkIn = date.AddHours(8).AddMinutes(random.Next(0, 60));
             var checkOut = checkIn.AddHours(random.Next(1, 4)).AddMinutes(random.Next(0, 60));
@@ -313,11 +313,11 @@ else
 
             dummyData.Add(new AttendanceReportDto
             {
-                ClassId = classId ?? random.Next(1, 10),
+                ClassId = random.Next(1, 10),
                 ClassName = classNames[random.Next(classNames.Length)],
                 Date = date,
                 StudentName = studentName,
-                StudentId = studentId,
+                StudentId = studentIdValue,
                 AttendanceStatus = status,
                 CheckInTime = checkIn.TimeOfDay,
                 CheckOutTime = checkOut.TimeOfDay,

@@ -110,7 +110,7 @@
     // MudBlazor Table Data Provider
     private async Task<TableData<QuestionModel>> ServerData(TableState state, CancellationToken cancellationToken)
     {
-        var pageNumber = state.Page < 0 ? 0 : state.Page;
+        var pageNumber = state.Page + 1; // Convert from 0-based to 1-based indexing
         var pageSize = state.PageSize < 1 ? 10 : state.PageSize;
         var result = await AssessmentRepository.GetAllQuestionsPaginatedAsync(new PaginationRequest
         {

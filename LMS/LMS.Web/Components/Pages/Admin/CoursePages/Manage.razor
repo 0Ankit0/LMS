@@ -1,3 +1,4 @@
+@page "/admin/courses/manage/{id:int}"
 @layout AdminLayout
 @inject ICourseRepository CourseRepository
 @inject IModuleRepository ModuleRepository
@@ -106,7 +107,7 @@ else
 
 @code {
     [Parameter]
-    [SupplyParameterFromQuery]
+    [SupplyParameterFromQuery(Name ="id")]
     public int Id { get; set; }
 
     private CourseModel course;

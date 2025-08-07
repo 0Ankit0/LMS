@@ -1,4 +1,6 @@
-﻿@rendermode @(new InteractiveServerRenderMode())
+﻿@page "/admin/certificates/create"
+@page "/admin/certificates/edit/{id:int}"
+@rendermode @(new InteractiveServerRenderMode())
 
 @using LMS.Repositories
 @using LMS.Data.DTOs
@@ -8,7 +10,7 @@
 @inject ISnackbar Snackbar
 @inject NavigationManager NavigationManager
 
-<PageTitle>Create Certificate - Admin</PageTitle>
+<PageTitle>@(IsEdit ? "Edit Certificate" : "Create Certificate") - Admin</PageTitle>
 
 @if (isLoading)
 {
@@ -26,7 +28,7 @@
 else
 {
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1 class="mb-0">Create New Certificate</h1>
+        <h1 class="mb-0">@(IsEdit ? "Edit Certificate" : "Create New Certificate")</h1>
         <MudButton Variant="Variant.Text" Color="Color.Secondary" Href="/admin/certificates">
             <MudIcon Icon="@Icons.Material.Filled.ArrowBack" Class="me-2" />
             Back to Certificates
@@ -40,24 +42,18 @@ else
                     <MudText Typo="Typo.h6">Certificate Information</MudText>
                 </MudCardHeader>
                 <MudCardContent>
-                    <EditForm Model="Certificate" OnValidSubmit="AddCertificate">
+                    <EditForm Model="Certificate" OnValidSubmit="SaveCertificate">
                         <MudAlert Severity="Severity.Error" Class="mb-3" Visible="@(!form.IsValid)">
                             <MudText>Please correct the errors below.</MudText>
                         </MudAlert>
 
-                        <MudSelect @bind-Value="Certificate.UserId" Label="User" Variant="Variant.Text" Required="true" RequiredError="User is required!" Placeholder="Select a user...">
-                            @foreach (var user in Users)
-                            {
-                                <MudSelectItem Value="@user.Value">@user.Text</MudSelectItem>
-                            }
-                        </MudSelect>
+                        <MudAutocomplete T="string" @bind-Value="Certificate.UserId" Label="User" Variant="Variant.Text" Required="true" RequiredError="User is required!" Placeholder="Search user..."
+                                        ToStringFunc="@(id => Users.FirstOrDefault(u => u.Value == id)?.Text ?? string.Empty)"
+                                        SearchFunc="SearchUsers" />
 
-                        <MudSelect @bind-Value="Certificate.CourseId" Label="Course" Variant="Variant.Text" Required="true" RequiredError="Course is required!" Placeholder="Select a course...">
-                            @foreach (var course in Courses)
-                            {
-                                <MudSelectItem Value="@course.Value">@course.Text</MudSelectItem>
-                            }
-                        </MudSelect>
+                        <MudAutocomplete T="int?" Value="Certificate.CourseId" ValueChanged="@(v => Certificate.CourseId = v ?? 0)" Label="Course" Variant="Variant.Text" Required="true" RequiredError="Course is required!" Placeholder="Search course..."
+                                        ToStringFunc="@(id => Courses.FirstOrDefault(c => c.Value == id)?.Text ?? string.Empty)"
+                                        SearchFunc="SearchCourses" />
 
                         <MudNumericField @bind-Value="Certificate.FinalGrade" Label="Final Grade" Variant="Variant.Text" Step="0.01" />
 
@@ -66,7 +62,7 @@ else
                         <div class="d-flex gap-2">
                             <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Disabled="@isSubmitting">
                                 <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Class="me-2" />
-                                Create Certificate
+                                @(IsEdit ? "Update Certificate" : "Create Certificate")
                             </MudButton>
                             <MudButton Variant="Variant.Filled" Color="Color.Secondary" Href="/admin/certificates">Cancel</MudButton>
                         </div>
@@ -78,9 +74,13 @@ else
 }
 
 @code {
+    [Parameter]
+    [SupplyParameterFromQuery] public int? id { get; set; }
+    
     private CreateCertificateRequest Certificate { get; set; } = new();
     private bool isSubmitting = false;
     private bool isLoading = true;
+    private bool IsEdit => ( id) > 0;
     private MudForm form;
     private List<DropdownOption<string>> Users = new();
     private List<DropdownOption<int>> Courses = new();
@@ -89,34 +89,85 @@ else
     {
         Users = await DropdownRepository.GetUsersAsync();
         Courses = await DropdownRepository.GetCoursesAsync();
+
+        if (IsEdit)
+        {
+            var certificateId =  id ?? 0;
+            try
+            {
+                var existingCertificate = await CertificateRepository.GetCertificateByIdAsync(certificateId);
+                if (existingCertificate != null)
+                {
+                    Certificate = new CreateCertificateRequest
+                    {
+                        UserId = existingCertificate.UserId,
+                        CourseId = existingCertificate.CourseId,
+                        FinalGrade = existingCertificate.FinalGrade,
+                        ExpiresAt = existingCertificate.ExpiresAt
+                    };
+                }
+            }
+            catch (Exception ex)
+            {
+                Snackbar.Add($"Error loading certificate: {ex.Message}", Severity.Error);
+                NavigationManager.NavigateTo("/admin/certificates");
+                return;
+            }
+        }
+
         await Task.Delay(500); // Simulate data loading
         isLoading = false;
     }
 
-    private async Task AddCertificate()
+    private async Task SaveCertificate()
     {
         if (isSubmitting) return;
         isSubmitting = true;
         try
         {
-            var result = await CertificateRepository.IssueCertificateAsync(Certificate);
-            if (result != null)
+            if (IsEdit)
             {
-                Snackbar.Add("Certificate created successfully!", Severity.Success);
-                NavigationManager.NavigateTo("/admin/certificates");
+                var certificateId =  id ?? 0;
+                await CertificateRepository.UpdateCertificateAsync(certificateId, Certificate);
+                Snackbar.Add("Certificate updated successfully!", Severity.Success);
             }
             else
             {
-                Snackbar.Add("Failed to create certificate. Please try again.", Severity.Error);
+                var result = await CertificateRepository.IssueCertificateAsync(Certificate);
+                if (result != null)
+                {
+                    Snackbar.Add("Certificate created successfully!", Severity.Success);
+                }
+                else
+                {
+                    Snackbar.Add("Failed to create certificate. Please try again.", Severity.Error);
+                    return;
+                }
             }
+            NavigationManager.NavigateTo("/admin/certificates");
         }
         catch (Exception ex)
         {
-            Snackbar.Add($"Error creating certificate: {ex.Message}", Severity.Error);
+            Snackbar.Add($"Error saving certificate: {ex.Message}", Severity.Error);
         }
         finally
         {
             isSubmitting = false;
         }
+    }
+
+    private Task<IEnumerable<int?>> SearchCourses(string value, CancellationToken token)
+    {
+        IEnumerable<int?> result = string.IsNullOrWhiteSpace(value)
+            ? Courses.Select(c => (int?)c.Value)
+            : Courses.Where(c => c.Text.Contains(value, StringComparison.OrdinalIgnoreCase)).Select(c => (int?)c.Value);
+        return Task.FromResult(result);
+    }
+    private Task<IEnumerable<string>> SearchUsers(string value, CancellationToken token)
+    {
+        IEnumerable<string> result = string.IsNullOrWhiteSpace(value)
+            ? Users.Select(u => u.Value)
+            : Users.Where(u => u.Text.Contains(value, StringComparison.OrdinalIgnoreCase)).Select(u => u.Value);
+        return Task.FromResult(result);
     }
 }

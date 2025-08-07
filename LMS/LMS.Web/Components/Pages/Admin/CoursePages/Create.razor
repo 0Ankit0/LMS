@@ -1,4 +1,6 @@
-﻿@rendermode @(new InteractiveServerRenderMode())
+﻿@page "/admin/courses/create"
+@page "/admin/courses/edit/{id:int}"
+@rendermode @(new InteractiveServerRenderMode())
 @using LMS.Repositories
 @inject IDropdownRepository DropdownRepository
 @inject ICourseRepository CourseRepository
@@ -57,12 +59,9 @@ else
                         <MudTextField @bind-Value="Course.ThumbnailUrl" Label="Thumbnail URL" Variant="Variant.Text" Placeholder="https://example.com/image.jpg" />
                     </MudItem>
                     <MudItem xs="12" md="6">
-                        <MudSelect @bind-Value="Course.InstructorId" Label="Instructor" Variant="Variant.Text" Required="true" RequiredError="Instructor is required!" Placeholder="Search and select instructor...">
-                            @foreach (var instructor in instructors)
-                            {
-                                <MudSelectItem Value="@instructor.Value">@instructor.Text</MudSelectItem>
-                            }
-                        </MudSelect>
+                        <MudAutocomplete T="string" @bind-Value="Course.InstructorId" Label="Instructor" Variant="Variant.Text" Required="true" RequiredError="Instructor is required!" Placeholder="Search instructor..."
+                                        ToStringFunc="@(id => instructors.FirstOrDefault(i => i.Value == id)?.Text ?? string.Empty)"
+                                        SearchFunc="SearchInstructors" />
                     </MudItem>
                 </MudGrid>
 
@@ -145,6 +144,14 @@ else
             Console.WriteLine($"Error loading instructors: {ex.Message}");
             return Enumerable.Empty<DropdownOption<string>>();
         }
+    }
+
+    private Task<IEnumerable<string>> SearchInstructors(string value, CancellationToken token)
+    {
+        IEnumerable<string> result = string.IsNullOrWhiteSpace(value)
+            ? instructors.Select(i => i.Value)
+            : instructors.Where(i => i.Text.Contains(value, StringComparison.OrdinalIgnoreCase)).Select(i => i.Value);
+        return Task.FromResult(result);
     }
 
     private async Task AddCourse()

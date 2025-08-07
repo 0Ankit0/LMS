@@ -105,7 +105,7 @@
         StateHasChanged();
         try
         {
-            var pageNumber = state.Page < 0 ? 0 : state.Page;
+            var pageNumber = state.Page + 1; // Convert from 0-based to 1-based indexing
             var pageSize = state.PageSize < 1 ? 10 : state.PageSize;
             var result = await TagRepository.GetTagsPaginatedAsync(new PaginationRequest
             {

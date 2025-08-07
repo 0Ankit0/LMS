@@ -1,4 +1,5 @@
 @page "/admin/modules/create"
+@page "/admin/modules/edit"
 
 @using LMS.Repositories
 
@@ -9,10 +10,10 @@
 @inject ISnackbar Snackbar
 @rendermode @(new InteractiveServerRenderMode())
 
-<PageTitle>Create Module - Admin</PageTitle>
+<PageTitle>@(IsEdit ? "Edit Module" : "Create Module") - Admin</PageTitle>
 
 <div class="d-flex justify-content-between align-items-center mb-4">
-    <h1 class="mb-0">Create New Module</h1>
+    <h1 class="mb-0">@(IsEdit ? "Edit Module" : "Create New Module")</h1>
     <MudButton Variant="Variant.Text" Color="Color.Secondary" Href="/admin/modules">
         <MudIcon Icon="@Icons.Material.Filled.ArrowBack" Class="me-2" />
         Back to Modules
@@ -24,7 +25,7 @@
         <MudText Typo="Typo.h6">Module Information</MudText>
     </MudCardHeader>
     <MudCardContent>
-        <EditForm Model="Module" OnValidSubmit="AddModule">
+        <EditForm Model="Module" OnValidSubmit="SaveModule">
             <AntiforgeryToken />
             <DataAnnotationsValidator />
             <ValidationSummary />
@@ -38,12 +39,9 @@
 
             <div class="row">
                 <MudItem xs="12" md="6">
-                    <MudSelect @bind-Value="Module.CourseId" Label="Course" Variant="Variant.Text" Required="true" RequiredError="Course is required!" Placeholder="Select a course...">
-                        @foreach (var course in courses)
-                        {
-                            <MudSelectItem Value="@course.Value">@course.Text</MudSelectItem>
-                        }
-                    </MudSelect>
+                    <MudAutocomplete T="int?" Value="Module.CourseId" ValueChanged="@(v => Module.CourseId = v ?? 0)" Label="Course" Variant="Variant.Text" Required="true" RequiredError="Course is required!" Placeholder="Search course..."
+                ToStringFunc="@(id => courses.FirstOrDefault(c => c.Value == id)?.Text ?? string.Empty)"
+                SearchFunc="SearchCourses" />
                 </MudItem>
                 <MudItem xs="12" md="6">
                     <MudNumericField @bind-Value="Module.OrderIndex" Label="Order Index" Variant="Variant.Text" Placeholder="1" />
@@ -55,7 +53,7 @@
             <div class="d-flex gap-2">
                 <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Disabled="@isSubmitting">
                     <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Class="me-2" />
-                    Create Module
+                    @(IsEdit ? "Update Module" : "Create Module")
                 </MudButton>
                 <MudButton Variant="Variant.Filled" Color="Color.Secondary" Href="/admin/modules">Cancel</MudButton>
             </div>
@@ -64,42 +62,70 @@
 </MudCard>
 
 @code {
+    [Parameter]
+    [SupplyParameterFromQuery] public int? id { get; set; }
     [SupplyParameterFromForm]
     private CreateModuleRequest Module { get; set; } = new();
     private bool isSubmitting = false;
     private EditContext? editContext;
     private List<DropdownOption<int>> courses = new();
+    private bool IsEdit => ( id) > 0;
 
     protected override async Task OnInitializedAsync()
     {
         courses = await DropdownRepository.GetCoursesAsync();
         editContext = new EditContext(Module);
+
+        if (IsEdit)
+        {
+            // TODO: Implement GetModuleByIdAsync in ICourseRepository
+            Snackbar.Add("Edit functionality not yet implemented for modules.", Severity.Warning);
+            NavigationManager.NavigateTo("/admin/modules");
+            return;
+        }
     }
 
-    private async Task AddModule()
+    private async Task SaveModule()
     {
         if (isSubmitting) return;
         isSubmitting = true;
         try
         {
-            var result = await CourseRepository.CreateModuleAsync(Module);
-            if (result != null)
+            if (IsEdit)
             {
-                Snackbar.Add("Module created successfully!", Severity.Success);
-                NavigationManager.NavigateTo("/admin/modules");
+                // TODO: Implement UpdateModuleAsync in ICourseRepository
+                Snackbar.Add("Edit functionality not yet implemented for modules.", Severity.Warning);
             }
             else
             {
-                Snackbar.Add("Failed to create module. Please try again.", Severity.Error);
+                var result = await CourseRepository.CreateModuleAsync(Module);
+                if (result != null)
+                {
+                    Snackbar.Add("Module created successfully!", Severity.Success);
+                }
+                else
+                {
+                    Snackbar.Add("Failed to create module. Please try again.", Severity.Error);
+                    return;
+                }
             }
+            NavigationManager.NavigateTo("/admin/modules");
         }
         catch (Exception ex)
         {
-            Snackbar.Add($"Error creating module: {ex.Message}", Severity.Error);
+            Snackbar.Add($"Error saving module: {ex.Message}", Severity.Error);
         }
         finally
         {
             isSubmitting = false;
         }
+    }
+
+    private Task<IEnumerable<int?>> SearchCourses(string value, CancellationToken token)
+    {
+        IEnumerable<int?> result = string.IsNullOrWhiteSpace(value)
+            ? courses.Select(c => (int?)c.Value)
+            : courses.Where(c => c.Text.Contains(value, StringComparison.OrdinalIgnoreCase)).Select(c => (int?)c.Value);
+        return Task.FromResult(result);
     }
 }

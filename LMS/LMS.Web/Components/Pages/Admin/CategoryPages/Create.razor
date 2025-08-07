@@ -1,11 +1,13 @@
-﻿@using LMS.Repositories
+﻿@page "/admin/categories/create"
+@page "/admin/categories/edit/{id:int}"
+@using LMS.Repositories
 @rendermode @(new InteractiveServerRenderMode())
 @inject ICategoryRepository CategoryRepository
 @inject IDropdownRepository DropdownRepository
 @inject NavigationManager NavigationManager
 @inject ISnackbar Snackbar
 
-<PageTitle>Create Category - Admin</PageTitle>
+<PageTitle>@(IsEdit ? "Edit Category" : "Create Category") - Admin</PageTitle>
 
 @if (isLoading)
 {
@@ -19,7 +21,7 @@
 else
 {
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1 class="mb-0">Create New Category</h1>
+        <h1 class="mb-0">@(IsEdit ? "Edit Category" : "Create New Category")</h1>
         <MudButton Variant="Variant.Text" Color="Color.Secondary" Href="/admin/categories">
             <MudIcon Icon="@Icons.Material.Filled.ArrowBack" Class="me-2" />
             Back to Categories
@@ -31,7 +33,7 @@ else
             <MudText Typo="Typo.h6">Category Information</MudText>
         </MudCardHeader>
         <MudCardContent>
-            <EditForm Model="Category" OnValidSubmit="AddCategory">
+            <EditForm Model="Category" OnValidSubmit="SaveCategory">
                 <MudAlert Severity="Severity.Error" Class="mb-3" >
                     <MudText>Please correct the errors below.</MudText>
                 </MudAlert>
@@ -52,12 +54,9 @@ else
                         <MudTextField @bind-Value="Category.IconUrl" Label="Icon URL" Variant="Variant.Text" Placeholder="https://example.com/icon.png" />
                     </MudItem>
                     <MudItem xs="12" md="6">
-                        <MudSelect @bind-Value="Category.ParentCategoryId" Label="Parent Category" Variant="Variant.Text" Placeholder="Select parent category (optional)...">
-                            @foreach (var category in parentCategories)
-                            {
-                                <MudSelectItem Value="@category.Value">@category.Text</MudSelectItem>
-                            }
-                        </MudSelect>
+                        <MudAutocomplete T="int?" Value="Category.ParentCategoryId" ValueChanged="@(v => Category.ParentCategoryId = v)" Label="Parent Category" Variant="Variant.Text" Placeholder="Search parent category..."
+                                        ToStringFunc="@(id => parentCategories.FirstOrDefault(c => c.Value == id)?.Text ?? string.Empty)"
+                                        SearchFunc="SearchParentCategories" />
                     </MudItem>
                 </MudGrid>
 
@@ -66,7 +65,7 @@ else
                 <div class="d-flex gap-2">
                     <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Disabled="@isSubmitting">
                         <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Class="me-2" />
-                        Create Category
+                        @(IsEdit ? "Update Category" : "Create Category")
                     </MudButton>
                     <MudButton Variant="Variant.Filled" Color="Color.Secondary" Href="/admin/categories">Cancel</MudButton>
                 </div>
@@ -76,44 +75,100 @@ else
 }
 
 @code {
+    [Parameter] 
+    [SupplyParameterFromQuery] public int? id { get; set; }
+    
     private CreateCategoryRequest Category { get; set; } = new();
     private bool isSubmitting = false;
     private bool isLoading = true;
+    private bool IsEdit => ( id) > 0;
     
     private List<DropdownOption<int>> parentCategories = new();
 
     protected override async Task OnInitializedAsync()
     {
-        // Simulate data loading
-        await Task.Delay(500);
-        parentCategories = (await DropdownRepository.GetCategoriesAsync()).ToList();
+        if (IsEdit)
+        {
+            var categoryId =  id ?? 0;
+            // Load existing category for edit
+            try
+            {
+                var existingCategory = await CategoryRepository.GetCategoryByIdAsync(categoryId);
+                if (existingCategory != null)
+                {
+                    Category = new CreateCategoryRequest
+                    {
+                        Name = existingCategory.Name,
+                        Description = existingCategory.Description,
+                        Color = existingCategory.Color,
+                        IconUrl = existingCategory.IconUrl,
+                        ParentCategoryId = existingCategory.ParentCategoryId,
+                        IsActive = existingCategory.IsActive
+                    };
+                }
+            }
+            catch (Exception ex)
+            {
+                Snackbar.Add($"Error loading category: {ex.Message}", Severity.Error);
+                NavigationManager.NavigateTo("/admin/categories");
+                return;
+            }
+        }
+
+        // Load parent categories
+        parentCategories = (await DropdownRepository.GetCategoriesAsync()).Select(c => new DropdownOption<int>
+        {
+            Value = c.Value,
+            Text = c.Text,
+            Description = c.Description,
+            IsDisabled = c.IsDisabled
+        }).ToList();
+        
         isLoading = false;
     }
 
-    private async Task AddCategory()
+    private async Task SaveCategory()
     {
         if (isSubmitting) return;
         isSubmitting = true;
         try
         {
-            var result = await CategoryRepository.CreateCategoryAsync(Category);
-            if (result != null)
+            if (IsEdit)
             {
-                Snackbar.Add("Category created successfully!", Severity.Success);
-                NavigationManager.NavigateTo("/admin/categories");
+                var categoryId =  id ?? 0;
+                await CategoryRepository.UpdateCategoryAsync(categoryId, Category);
+                Snackbar.Add("Category updated successfully!", Severity.Success);
             }
             else
             {
-                Snackbar.Add("Failed to create category. Please try again.", Severity.Error);
+                var result = await CategoryRepository.CreateCategoryAsync(Category);
+                if (result != null)
+                {
+                    Snackbar.Add("Category created successfully!", Severity.Success);
+                }
+                else
+                {
+                    Snackbar.Add("Failed to create category. Please try again.", Severity.Error);
+                    return;
+                }
             }
+            NavigationManager.NavigateTo("/admin/categories");
         }
         catch (Exception ex)
         {
-            Snackbar.Add($"Error creating category: {ex.Message}", Severity.Error);
+            Snackbar.Add($"Error saving category: {ex.Message}", Severity.Error);
         }
         finally
         {
             isSubmitting = false;
         }
+    }
+
+    private Task<IEnumerable<int?>> SearchParentCategories(string value, CancellationToken token)
+    {
+        IEnumerable<int?> result = string.IsNullOrWhiteSpace(value)
+            ? parentCategories.Select(c => (int?)c.Value)
+            : parentCategories.Where(c => c.Text.Contains(value, StringComparison.OrdinalIgnoreCase)).Select(c => (int?)c.Value);
+        return Task.FromResult(result);
     }
 }

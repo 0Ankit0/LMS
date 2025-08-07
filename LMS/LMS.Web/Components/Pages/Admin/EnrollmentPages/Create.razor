@@ -1,3 +1,5 @@
+@page "/admin/enrollments/create"
+@page "/admin/enrollments/edit/{id:int}"
 @rendermode @(new InteractiveServerRenderMode())
 @using MudBlazor
 @using LMS.Repositories
@@ -6,7 +8,7 @@
 @inject ISnackbar Snackbar
 @inject NavigationManager NavigationManager
 
-<PageTitle>Create Enrollment - Admin</PageTitle>
+<PageTitle>@(IsEdit ? "Edit Enrollment" : "Create Enrollment") - Admin</PageTitle>
 
 @if (isLoading)
 {
@@ -20,7 +22,7 @@
 else
 {
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1 class="mb-0">Create New Enrollment</h1>
+        <h1 class="mb-0">@(IsEdit ? "Edit Enrollment" : "Create New Enrollment")</h1>
         <MudButton Variant="Variant.Text" Color="Color.Secondary" Href="/admin/enrollments">
             <MudIcon Icon="@Icons.Material.Filled.ArrowBack" Class="me-2" />
             Back to Enrollments
@@ -32,29 +34,23 @@ else
             <MudText Typo="Typo.h6">Enrollment Information</MudText>
         </MudCardHeader>
         <MudCardContent>
-            <EditForm Model="Enrollment" OnValidSubmit="AddEnrollment">
+            <EditForm Model="Enrollment" OnValidSubmit="SaveEnrollment">
                 <MudAlert Severity="Severity.Error" Class="mb-3" >
                     <MudText>Please correct the errors below.</MudText>
                 </MudAlert>
 
-                <MudSelect @bind-Value="Enrollment.UserId" Label="User" Variant="Variant.Text" Required="true" RequiredError="User is required!" Placeholder="Select a user...">
-                    @foreach (var user in Users)
-                    {
-                        <MudSelectItem Value="@user.Value">@user.Text</MudSelectItem>
-                    }
-                </MudSelect>
+                <MudAutocomplete T="string" @bind-Value="Enrollment.UserId" Label="User" Variant="Variant.Text" Required="true" RequiredError="User is required!" Placeholder="Search user..."
+                    ToStringFunc="@(id => Users.FirstOrDefault(u => u.Value == id)?.Text ?? string.Empty)"
+                    SearchFunc="SearchUsers" />
 
-                <MudSelect @bind-Value="Enrollment.CourseId" Label="Course" Variant="Variant.Text" Required="true" RequiredError="Course is required!" Placeholder="Select a course...">
-                    @foreach (var course in Courses)
-                    {
-                        <MudSelectItem Value="@course.Value">@course.Text</MudSelectItem>
-                    }
-                </MudSelect>
+                <MudAutocomplete T="int?" Value="Enrollment.CourseId" ValueChanged="@(v => Enrollment.CourseId = v ?? 0)" Label="Course" Variant="Variant.Text" Required="true" RequiredError="Course is required!" Placeholder="Search course..."
+                    ToStringFunc="@(id => Courses.FirstOrDefault(c => c.Value == id)?.Text ?? string.Empty)"
+                    SearchFunc="SearchCourses" />
 
                 <div class="d-flex gap-2">
                     <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Disabled="@isSubmitting">
                         <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Class="me-2" />
-                        Create Enrollment
+                        @(IsEdit ? "Update Enrollment" : "Create Enrollment")
                     </MudButton>
                     <MudButton Variant="Variant.Filled" Color="Color.Secondary" Href="/admin/enrollments">Cancel</MudButton>
                 </div>
@@ -64,10 +60,13 @@ else
 }
 
 @code {
+    [Parameter]
+    [SupplyParameterFromQuery] public int? id { get; set; }
     
     private CreateEnrollmentRequest Enrollment { get; set; } = new();
     private bool isSubmitting = false;
     private bool isLoading = true;
+    private bool IsEdit => ( id) > 0;
     private List<DropdownOption<string>> Users = new();
     private List<DropdownOption<int>> Courses = new();
 
@@ -75,34 +74,67 @@ else
     {
         Users = await DropdownRepository.GetUsersAsync();
         Courses = await DropdownRepository.GetCoursesAsync();
+
+        if (IsEdit)
+        {
+            // TODO: Implement GetEnrollmentByIdAsync in IEnrollmentRepository
+            Snackbar.Add("Edit functionality not yet implemented for enrollments.", Severity.Warning);
+            NavigationManager.NavigateTo("/admin/enrollments");
+            return;
+        }
+
         await Task.Delay(500); // Simulate data loading
         isLoading = false;
     }
 
-    private async Task AddEnrollment()
+    private async Task SaveEnrollment()
     {
         if (isSubmitting) return;
         isSubmitting = true;
         try
         {
-            var result = await EnrollmentRepository.CreateEnrollmentAsync(Enrollment.UserId, Enrollment);
-            if (result != null)
+            if (IsEdit)
             {
-                Snackbar.Add("Enrollment created successfully!", Severity.Success);
-                NavigationManager.NavigateTo("/admin/enrollments");
+                // TODO: Implement UpdateEnrollmentAsync in IEnrollmentRepository
+                Snackbar.Add("Edit functionality not yet implemented for enrollments.", Severity.Warning);
             }
             else
             {
-                Snackbar.Add("Failed to create enrollment. Please try again.", Severity.Error);
+                var result = await EnrollmentRepository.CreateEnrollmentAsync(Enrollment.UserId, Enrollment);
+                if (result != null)
+                {
+                    Snackbar.Add("Enrollment created successfully!", Severity.Success);
+                }
+                else
+                {
+                    Snackbar.Add("Failed to create enrollment. Please try again.", Severity.Error);
+                    return;
+                }
             }
+            NavigationManager.NavigateTo("/admin/enrollments");
         }
         catch (Exception ex)
         {
-            Snackbar.Add($"Error creating enrollment: {ex.Message}", Severity.Error);
+            Snackbar.Add($"Error saving enrollment: {ex.Message}", Severity.Error);
         }
         finally
         {
             isSubmitting = false;
         }
+    }
+
+    private Task<IEnumerable<int?>> SearchCourses(string value, CancellationToken token)
+    {
+        IEnumerable<int?> result = string.IsNullOrWhiteSpace(value)
+            ? Courses.Select(c => (int?)c.Value)
+            : Courses.Where(c => c.Text.Contains(value, StringComparison.OrdinalIgnoreCase)).Select(c => (int?)c.Value);
+        return Task.FromResult(result);
+    }
+    private Task<IEnumerable<string>> SearchUsers(string value, CancellationToken token)
+    {
+        IEnumerable<string> result = string.IsNullOrWhiteSpace(value)
+            ? Users.Select(u => u.Value)
+            : Users.Where(u => u.Text.Contains(value, StringComparison.OrdinalIgnoreCase)).Select(u => u.Value);
+        return Task.FromResult(result);
     }
 }

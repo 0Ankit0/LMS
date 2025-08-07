@@ -747,32 +747,37 @@
 
     private async Task SendTopicReply()
     {
-        if (string.IsNullOrWhiteSpace(newTopicReply) || !selectedTopicId.HasValue) return;
+        if (string.IsNullOrWhiteSpace(newTopicReply) || !selectedTopicId.HasValue || string.IsNullOrEmpty(currentUserId)) return;
 
         try
         {
-            await Task.Delay(500);
-
-            var reply = new ForumPostModel
+            isCreatingPost = true;
+            var postRequest = new CreateForumPostRequest
             {
-                Id = (selectedTopicPosts?.Count ?? 0) + 1,
                 TopicId = selectedTopicId.Value,
-                Content = !string.IsNullOrEmpty(quotedText) ? $"[Quote from {quotedAuthor}]: {newTopicReply}" :
-            newTopicReply,
-                AuthorId = currentUserId ?? "",
-                AuthorName = "Current User",
-                CreatedAt = DateTime.Now
+                Content = !string.IsNullOrEmpty(quotedText) ? $"[Quote from {quotedAuthor}]: {newTopicReply}" : newTopicReply
             };
-
-            selectedTopicPosts?.Add(reply);
-            newTopicReply = "";
-            ClearQuote();
-
-            await JSRuntime.InvokeVoidAsync("scrollToBottom", "messagesArea");
+            var result = await ForumRepository.CreatePostAsync(postRequest, currentUserId);
+            if (result != null)
+            {
+                Snackbar.Add("Reply posted successfully!", Severity.Success);
+                await LoadPostsForTopic(selectedTopicId.Value);
+                newTopicReply = "";
+                ClearQuote();
+                await JSRuntime.InvokeVoidAsync("scrollToBottom", "messagesArea");
+            }
+            else
+            {
+                Snackbar.Add("Error posting reply.", Severity.Error);
+            }
         }
         catch (Exception ex)
         {
             Snackbar.Add($"Error sending reply: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            isCreatingPost = false;
         }
     }
 

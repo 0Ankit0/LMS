@@ -178,11 +178,11 @@ else if (singleReport != null || multipleReports?.Any() == true)
                         <MudProgressLinear Value="@passRate" Color="Color.Success" Class="mb-1" />
                         <MudText Typo="Typo.caption" Class="text-muted">@($"{passRate:F1}%")</MudText>
 
-                        <MudText Typo="Typo.subtitle1" Class="mt-3">Excellence Rate (B or above)</MudText>
+                        <MudText Typo="Typo.subtitle1" class="mt-3">Excellence Rate (B or above)</MudText>
                         <MudProgressLinear Value="@excellentRate" Color="Color.Info" Class="mb-1" />
                         <MudText Typo="Typo.caption" Class="text-muted">@($"{excellentRate:F1}%")</MudText>
 
-                        <MudText Typo="Typo.subtitle1" Class="mt-3"><strong>Class Performance:</strong></MudText>
+                        <MudText Typo="Typo.subtitle1" class="mt-3"><strong>Class Performance:</strong></MudText>
                         <MudChip T="double" Color="@GetPerformanceBadgeColor(singleReport.AverageGrade)">
                             @GetPerformanceLevel(singleReport.AverageGrade)
                         </MudChip>
@@ -443,7 +443,7 @@ else if (!loading)
 
         return new GradeDistributionReportDto
         {
-            ClassId = classId ?? 1,
+            ClassId = 1, // Fixed typo here
             ClassName = "Dummy Class Name",
             InstructorName = "Dummy Instructor",
             TotalStudents = totalStudents,

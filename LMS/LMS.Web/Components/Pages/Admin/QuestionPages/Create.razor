@@ -1,4 +1,5 @@
 @page "/admin/questions/create"
+@page "/admin/questions/edit"
 
 @layout AdminLayout
 
@@ -6,10 +7,10 @@
 @inject NavigationManager NavigationManager
 @inject ISnackbar Snackbar
 
-<PageTitle>Create Question - Admin</PageTitle>
+<PageTitle>@(IsEdit ? "Edit Question" : "Create Question") - Admin</PageTitle>
 
 <div class="d-flex justify-content-between align-items-center mb-4">
-    <h1 class="mb-0">Create New Question</h1>
+    <h1 class="mb-0">@(IsEdit ? "Edit Question" : "Create New Question")</h1>
     <MudButton Variant="Variant.Text" Color="Color.Secondary" Href="/admin/questions">
         <MudIcon Icon="@Icons.Material.Filled.ArrowBack" Class="me-2" />
         Back to Questions
@@ -23,7 +24,7 @@
                 <MudText Typo="Typo.h6">Question Information</MudText>
             </MudCardHeader>
             <MudCardContent>
-                <EditForm Model="Question" OnValidSubmit="AddQuestion">
+                <EditForm Model="Question" OnValidSubmit="SaveQuestion">
                     <MudAlert Severity="Severity.Error" Class="my-3" >
                         <MudText>Please correct the errors below.</MudText>
                     </MudAlert>
@@ -59,10 +60,10 @@
 
                     <div class="d-flex gap-2">
                         <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Disabled="@isSubmitting">
-                        <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Class="me-2" />
-                        Create Question
-                    </MudButton>
-                    <MudButton Variant="Variant.Filled" Color="Color.Secondary" Href="/admin/questions">Cancel</MudButton>
+                            <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Class="me-2" />
+                            @(IsEdit ? "Update Question" : "Create Question")
+                        </MudButton>
+                        <MudButton Variant="Variant.Filled" Color="Color.Secondary" Href="/admin/questions">Cancel</MudButton>
                     </div>
                 </EditForm>
             </MudCardContent>
@@ -71,32 +72,51 @@
 </div>
 
 @code {
-    [SupplyParameterFromForm]
+    [Parameter]
+    [SupplyParameterFromQuery] public int? id { get; set; }
+    
     private CreateQuestionRequest Question { get; set; } = new();
     private bool isSubmitting = false;
-    
+    private bool IsEdit => ( id) > 0;
 
-    private async Task AddQuestion()
+    protected override async Task OnInitializedAsync()
+    {
+        if (IsEdit)
+        {
+            Snackbar.Add("Edit functionality not yet implemented for questions.", Severity.Warning);
+            NavigationManager.NavigateTo("/admin/questions");
+            return;
+        }
+    }
+
+    private async Task SaveQuestion()
     {
         if (isSubmitting) return;
-        
         isSubmitting = true;
         try
         {
-            var result = await AssessmentRepository.CreateQuestionAsync(Question);
-            if (result != null)
+            if (IsEdit)
             {
-                Snackbar.Add("Question created successfully!", Severity.Success);
-                NavigationManager.NavigateTo("/admin/questions");
+                Snackbar.Add("Edit functionality not yet implemented for questions.", Severity.Warning);
             }
             else
             {
-                Snackbar.Add("Failed to create question. Please try again.", Severity.Error);
+                var result = await AssessmentRepository.CreateQuestionAsync(Question);
+                if (result != null)
+                {
+                    Snackbar.Add("Question created successfully!", Severity.Success);
+                }
+                else
+                {
+                    Snackbar.Add("Failed to create question. Please try again.", Severity.Error);
+                    return;
+                }
             }
+            NavigationManager.NavigateTo("/admin/questions");
         }
         catch (Exception ex)
         {
-            Snackbar.Add($"Error creating question: {ex.Message}", Severity.Error);
+            Snackbar.Add($"Error saving question: {ex.Message}", Severity.Error);
         }
         finally
         {

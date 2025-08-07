@@ -1,14 +1,19 @@
 @page "/admin/forumposts/create"
+@page "/admin/forumposts/edit/{id:int}"
 @layout AdminLayout
 @inject IForumRepository ForumRepository
 @inject IDropdownRepository DropdownRepository
 @inject NavigationManager NavigationManager
 @inject ISnackbar Snackbar
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject UserManager<User> UserManager
+@using System.Security.Claims
+@using Microsoft.AspNetCore.Identity
 
-<PageTitle>Create Forum Post - Admin</PageTitle>
+<PageTitle>@(IsEdit ? "Edit Forum Post - Admin" : "Create Forum Post - Admin")</PageTitle>
 
 <div class="d-flex justify-content-between align-items-center mb-4">
-    <h1 class="mb-0">Create New Forum Post</h1>
+    <h1 class="mb-0">@(IsEdit ? "Edit Forum Post" : "Create New Forum Post")</h1>
     <MudButton Variant="Variant.Text" Color="Color.Secondary" Href="/admin/forumposts">
         <MudIcon Icon="@Icons.Material.Filled.ArrowBack" Class="me-2" />
         Back to Forum Posts
@@ -22,19 +27,16 @@
                 <MudText Typo="Typo.h6">Forum Post Information</MudText>
             </MudCardHeader>
             <MudCardContent>
-                <EditForm Model="ForumPost" OnValidSubmit="AddForumPost">
+                <EditForm Model="ForumPost" OnValidSubmit="SaveForumPost">
                     <MudAlert Severity="Severity.Error" Class="mb-3" >
                         <MudText>Please correct the errors below.</MudText>
                     </MudAlert>
 
                     <MudTextField @bind-Value="ForumPost.Content" Label="Content" Variant="Variant.Text" Lines="6" Required="true" RequiredError="Content is required!" Placeholder="Enter post content" />
 
-                    <MudSelect @bind-Value="ForumPost.TopicId" Label="Topic" Variant="Variant.Text" Required="true" RequiredError="Topic is required!" Placeholder="Select a topic...">
-                        @foreach (var forum in Forums)
-                        {
-                            <MudSelectItem Value="@(Convert.ToInt32(forum.Value))">@forum.Text</MudSelectItem>
-                        }
-                    </MudSelect>
+                    <MudAutocomplete T="int?" Value="ForumPost.TopicId" ValueChanged="@(v => ForumPost.TopicId = v ?? 0)" Label="Topic" Variant="Variant.Text" Required="true" RequiredError="Topic is required!" Placeholder="Search topic..."
+    ToStringFunc="@(id => Forums.FirstOrDefault(f => f.Value == id)?.Text ?? string.Empty)"
+    SearchFunc="SearchTopics" />
 
                     <div class="mb-3">
                         <label for="parentpostid" class="form-label">Parent Post ID (Optional)</label>
@@ -47,7 +49,7 @@
                     <div class="d-flex gap-2">
                         <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Disabled="@isSubmitting">
                             <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Class="me-2" />
-                            Create Forum Post
+                            @(IsEdit ? "Update Forum Post" : "Create Forum Post")
                         </MudButton>
                         <MudButton Variant="Variant.Text" Color="Color.Secondary" Href="/admin/forumposts">Cancel</MudButton>
                     </div>
@@ -58,44 +60,108 @@
 </div>
 
 @code {
-    
+    [Parameter]
+    public int? id { get; set; }
+
     private CreateForumPostRequest ForumPost { get; set; } = new();
     private bool isSubmitting = false;
-    private List<DropdownOption> Forums = new();
+    private bool isLoading = true;
+    private List<DropdownOption<int>> Forums = new();
+    private bool IsEdit => id.HasValue && id.Value > 0;
 
     protected override async Task OnInitializedAsync()
     {
-        Forums = await DropdownRepository.GetForumsAsync();
+        Forums = (await DropdownRepository.GetForumsAsync()).Select(f => new DropdownOption<int>
+        {
+            Value = f.Value,
+            Text = f.Text,
+            Description = f.Description,
+            IsDisabled = f.IsDisabled
+        }).ToList();
+
+        if (IsEdit)
+        {
+            var post = await ForumRepository.GetPostByIdAsync(id.Value);
+            if (post != null)
+            {
+                ForumPost = new CreateForumPostRequest
+                {
+                    Content = post.Content,
+                    TopicId = post.TopicId,
+                    ParentPostId = post.ParentPostId
+                };
+            }
+            else
+            {
+                Snackbar.Add("Forum post not found.", Severity.Error);
+                NavigationManager.NavigateTo("/admin/forumposts");
+                return;
+            }
+        }
+        isLoading = false;
     }
 
-    private async Task AddForumPost()
+    private async Task<string?> GetCurrentUserIdAsync()
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = await UserManager.GetUserAsync(authState.User);
+        return user?.Id;
+    }
+
+    private async Task SaveForumPost()
     {
         if (isSubmitting) return;
         isSubmitting = true;
         try
         {
-            // For admin pages, we'll use a placeholder admin user ID
-            // In a real application, you'd get this from the authentication context
-            var adminUserId = "admin-user-id"; // This should come from authentication
-
-            var result = await ForumRepository.CreatePostAsync(ForumPost, adminUserId);
-            if (result != null)
+            var adminUserId = await GetCurrentUserIdAsync();
+            if (string.IsNullOrEmpty(adminUserId))
             {
-                Snackbar.Add("Forum post created successfully!", Severity.Success);
-                NavigationManager.NavigateTo("/admin/forumposts");
+                Snackbar.Add("Unable to determine current user. Please log in again.", Severity.Error);
+                return;
+            }
+            if (IsEdit)
+            {
+                var updated = await ForumRepository.UpdatePostAsync(id.Value, ForumPost, adminUserId);
+                if (updated != null)
+                {
+                    Snackbar.Add("Forum post updated successfully!", Severity.Success);
+                    NavigationManager.NavigateTo("/admin/forumposts");
+                }
+                else
+                {
+                    Snackbar.Add("Failed to update forum post. Please try again.", Severity.Error);
+                }
             }
             else
             {
-                Snackbar.Add("Failed to create forum post. Please try again.", Severity.Error);
+                var result = await ForumRepository.CreatePostAsync(ForumPost, adminUserId);
+                if (result != null)
+                {
+                    Snackbar.Add("Forum post created successfully!", Severity.Success);
+                    NavigationManager.NavigateTo("/admin/forumposts");
+                }
+                else
+                {
+                    Snackbar.Add("Failed to create forum post. Please try again.", Severity.Error);
+                }
             }
         }
         catch (Exception ex)
         {
-            Snackbar.Add($"Error creating forum post: {ex.Message}", Severity.Error);
+            Snackbar.Add($"Error saving forum post: {ex.Message}", Severity.Error);
         }
         finally
         {
             isSubmitting = false;
         }
+    }
+
+    private Task<IEnumerable<int?>> SearchTopics(string value, CancellationToken token)
+    {
+        IEnumerable<int?> result = string.IsNullOrWhiteSpace(value)
+            ? Forums.Select(f => (int?)f.Value)
+            : Forums.Where(f => f.Text.Contains(value, StringComparison.OrdinalIgnoreCase)).Select(f => (int?)f.Value);
+        return Task.FromResult(result);
     }
 }

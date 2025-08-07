@@ -1,4 +1,5 @@
 @page "/admin/forums/create"
+@page "/admin/forums/edit/{id}"
 
 @using LMS.Repositories
 @inject IForumRepository ForumRepository
@@ -7,10 +8,10 @@
 @inject ISnackbar Snackbar
 @rendermode @(new InteractiveServerRenderMode())
 
-<PageTitle>Create Forum - Admin</PageTitle>
+<PageTitle>@(IsEdit ? "Edit Forum" : "Create Forum") - Admin</PageTitle>
 
 <div class="d-flex justify-content-between align-items-center mb-4">
-    <h1 class="mb-0">Create New Forum</h1>
+    <h1 class="mb-0">@(IsEdit ? "Edit Forum" : "Create New Forum")</h1>
     <MudButton Variant="Variant.Text" Color="Color.Secondary" Href="/admin/forums">
         <MudIcon Icon="@Icons.Material.Filled.ArrowBack" Class="me-2" />
         Back to Forums
@@ -22,28 +23,29 @@
         <MudText Typo="Typo.h6">Forum Information</MudText>
     </MudCardHeader>
     <MudCardContent>
-        <EditForm Model="Forum" OnValidSubmit="AddForum">
-            <MudAlert Severity="Severity.Error" Class="mb-3" >
+        <EditForm Model="Forum" OnValidSubmit="SaveForum">
+            <MudAlert Severity="Severity.Error" Class="mb-3">
                 <MudText>Please correct the errors below.</MudText>
             </MudAlert>
 
-            <MudTextField @bind-Value="Forum.Title" Label="Title" Variant="Variant.Text" Required="true" RequiredError="Title is required!" Placeholder="Enter forum title" />
+            <MudTextField @bind-Value="Forum.Title" Label="Title" Variant="Variant.Text" Required="true"
+                RequiredError="Title is required!" Placeholder="Enter forum title" />
 
-            <MudTextField @bind-Value="Forum.Description" Label="Description" Variant="Variant.Text" Lines="3" Placeholder="Enter forum description" />
+            <MudTextField @bind-Value="Forum.Description" Label="Description" Variant="Variant.Text" Lines="3"
+                Placeholder="Enter forum description" />
 
-            <MudSelect @bind-Value="Forum.CourseId" Label="Course" Variant="Variant.Text" Placeholder="Select a course (optional)...">
-                @foreach (var course in Courses)
-                {
-                    <MudSelectItem Value="@course.Value">@course.Text</MudSelectItem>
-                }
-            </MudSelect>
+            <MudAutocomplete T="int?" Value="Forum.CourseId" ValueChanged="@(v => Forum.CourseId = v)" Label="Course"
+                Variant="Variant.Text" Placeholder="Search course (optional)..."
+                ToStringFunc="@(id => Courses.FirstOrDefault(c => c.Value == id)?.Text ?? string.Empty)"
+                SearchFunc="SearchCourses" />
 
             <MudCheckBox T="bool" @bind-Checked="Forum.IsGeneral" Label="Is General Forum" Color="Color.Primary" />
 
             <div class="d-flex gap-2">
-                <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Disabled="@isSubmitting">
+                <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary"
+                    Disabled="@isSubmitting">
                     <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Class="me-2" />
-                    Create Forum
+                    @(IsEdit ? "Update Forum" : "Create Forum")
                 </MudButton>
                 <MudButton Variant="Variant.Filled" Color="Color.Secondary" Href="/admin/forums">Cancel</MudButton>
             </div>
@@ -52,40 +54,92 @@
 </MudCard>
 
 @code {
-    
+    [Parameter]
+    [SupplyParameterFromQuery] public int? id { get; set; }
+
     private CreateForumRequest Forum { get; set; } = new();
     private bool isSubmitting = false;
+    private bool IsEdit => ( id) > 0;
     private List<DropdownOption<int>> Courses = new();
 
     protected override async Task OnInitializedAsync()
     {
-        Courses = await DropdownRepository.GetCoursesAsync();
+        Courses = (await DropdownRepository.GetCoursesAsync()).Select(c => new DropdownOption<int>
+        {
+            Value = c.Value,
+            Text = c.Text,
+            Description = c.Description,
+            IsDisabled = c.IsDisabled
+        }).ToList();
+
+        if (IsEdit)
+        {
+            var forumId =  id ?? 0;
+            try
+            {
+                var existingForum = await ForumRepository.GetForumByIdAsync(forumId);
+                if (existingForum != null)
+                {
+                    Forum = new CreateForumRequest
+                    {
+                        Title = existingForum.Title,
+                        Description = existingForum.Description,
+                        CourseId = existingForum.CourseId,
+                        IsGeneral = existingForum.IsGeneral
+                    };
+                }
+            }
+            catch (Exception ex)
+            {
+                Snackbar.Add($"Error loading forum: {ex.Message}", Severity.Error);
+                NavigationManager.NavigateTo("/admin/forums");
+                return;
+            }
+        }
     }
 
-    private async Task AddForum()
+    private async Task SaveForum()
     {
         if (isSubmitting) return;
         isSubmitting = true;
         try
         {
-            var result = await ForumRepository.CreateForumAsync(Forum);
-            if (result != null)
+            if (IsEdit)
             {
-                Snackbar.Add("Forum created successfully!", Severity.Success);
-                NavigationManager.NavigateTo("/admin/forums");
+                var forumId =  id ?? 0;
+                await ForumRepository.UpdateForumAsync(forumId, Forum);
+                Snackbar.Add("Forum updated successfully!", Severity.Success);
             }
             else
             {
-                Snackbar.Add("Failed to create forum. Please try again.", Severity.Error);
+                var result = await ForumRepository.CreateForumAsync(Forum);
+                if (result != null)
+                {
+                    Snackbar.Add("Forum created successfully!", Severity.Success);
+                }
+                else
+                {
+                    Snackbar.Add("Failed to create forum. Please try again.", Severity.Error);
+                    return;
+                }
             }
+            NavigationManager.NavigateTo("/admin/forums");
         }
         catch (Exception ex)
         {
-            Snackbar.Add($"Error creating forum: {ex.Message}", Severity.Error);
+            Snackbar.Add($"Error saving forum: {ex.Message}", Severity.Error);
         }
         finally
         {
             isSubmitting = false;
         }
+    }
+
+    private Task<IEnumerable<int?>> SearchCourses(string value, CancellationToken token)
+    {
+        IEnumerable<int?> result = string.IsNullOrWhiteSpace(value)
+        ? Courses.Select(c => (int?)c.Value)
+        : Courses.Where(c => c.Text.Contains(value, StringComparison.OrdinalIgnoreCase)).Select(c => (int?)c.Value);
+        return Task.FromResult(result);
     }
 }

@@ -1,5 +1,5 @@
-
-
+@page "/admin/assessments/create"
+@page "/admin/assessments/edit/{id:int}"
 @layout AdminLayout
 @inject IDropdownRepository DropdownRepository
 @inject IAssessmentRepository AssessmentRepository
@@ -7,7 +7,7 @@
 @inject NavigationManager NavigationManager
 @rendermode @(new InteractiveServerRenderMode())
 
-<PageTitle>Create Assessment - Admin</PageTitle>
+<PageTitle>@(IsEdit ? "Edit Assessment" : "Create Assessment") - Admin</PageTitle>
 
 @if (isLoading)
 {
@@ -21,7 +21,7 @@
 else
 {
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1 class="mb-0">Create New Assessment</h1>
+        <h1 class="mb-0">@(IsEdit ? "Edit Assessment" : "Create New Assessment")</h1>
         <MudButton Variant="Variant.Text" Color="Color.Secondary" Href="/admin/assessments">
             <MudIcon Icon="@Icons.Material.Filled.ArrowBack" Class="me-2" />
             Back to Assessments
@@ -33,7 +33,7 @@ else
             <MudText Typo="Typo.h6">Assessment Information</MudText>
         </MudCardHeader>
         <MudCardContent>
-            <EditForm Model="Assessment" OnValidSubmit="AddAssessment">
+            <EditForm Model="Assessment" OnValidSubmit="SaveAssessment">
                 <MudAlert Severity="Severity.Error" Class="mb-3" >
                     <MudText>Please correct the errors below.</MudText>
                 </MudAlert>
@@ -44,42 +44,31 @@ else
                 <MudTextField @bind-Value="Assessment.Description" Label="Description" Variant="Variant.Text" Lines="3"
                     Placeholder="Enter assessment description" />
 
-                <MudSelect @bind-Value="Assessment.CourseId" Label="Course" Variant="Variant.Text" Required="true"
-                    RequiredError="Course is required!" Placeholder="Select a course...">
-                    @foreach (var course in courses)
-                    {
-                        <MudSelectItem Value="@course.Value">@course.Text</MudSelectItem>
-                    }
-                </MudSelect>
+                <MudAutocomplete T="int?" Value="Assessment.CourseId" ValueChanged="@(v => Assessment.CourseId = v ?? 0)" Label="Course" Variant="Variant.Text" Required="true" RequiredError="Course is required!" Placeholder="Search course..."
+                    ToStringFunc="@(id => courses.FirstOrDefault(c => c.Value == id)?.Text ?? string.Empty)"
+                    SearchFunc="SearchCourses" />
 
                 <MudGrid>
                     <MudItem xs="12" md="6">
-                        <MudSelect @bind-Value="Assessment.ModuleId" Label="Module (Optional)" Variant="Variant.Text"
-                            Placeholder="Select a module (optional)...">
-                            @foreach (var module in modules)
-                            {
-                                <MudSelectItem Value="@module.Value">@module.Text</MudSelectItem>
-                            }
-                        </MudSelect>
+                        <MudAutocomplete T="int?" @bind-Value="Assessment.ModuleId" Label="Module (Optional)" Variant="Variant.Text" Placeholder="Search module (optional)..."
+                            ToStringFunc="@(id => modules.FirstOrDefault(m => m.Value == id)?.Text ?? string.Empty)"
+                            SearchFunc="SearchModules" />
                     </MudItem>
                     <MudItem xs="12" md="6">
-                        <MudSelect @bind-Value="Assessment.LessonId" Label="Lesson (Optional)" Variant="Variant.Text"
-                            Placeholder="Select a lesson (optional)...">
-                            @foreach (var lesson in lessons)
-                            {
-                                <MudSelectItem Value="@lesson.Value">@lesson.Text</MudSelectItem>
-                            }
-                        </MudSelect>
+                        <MudAutocomplete T="int?" @bind-Value="Assessment.LessonId" Label="Lesson (Optional)" Variant="Variant.Text" Placeholder="Search lesson (optional)..."
+                            ToStringFunc="@(id => lessons.FirstOrDefault(l => l.Value == id)?.Text ?? string.Empty)"
+                            SearchFunc="SearchLessons" />
                     </MudItem>
                 </MudGrid>
 
                 <MudGrid>
                     <MudItem xs="12" md="6">
                         <MudSelect @bind-Value="Assessment.Type" Label="Assessment Type" Variant="Variant.Text">
-                            @foreach (var enumValue in Enum.GetValues(typeof(AssessmentType)).Cast<AssessmentType>())
-                            {
-                                <MudSelectItem Value="@enumValue">@enumValue.ToString()</MudSelectItem>
-                            }
+                            <MudSelectItem Value="@AssessmentType.Quiz">Quiz</MudSelectItem>
+                            <MudSelectItem Value="@AssessmentType.Exam">Exam</MudSelectItem>
+                            <MudSelectItem Value="@AssessmentType.Assignment">Assignment</MudSelectItem>
+                            <MudSelectItem Value="@AssessmentType.Survey">Survey</MudSelectItem>
+                            <MudSelectItem Value="@AssessmentType.SelfAssessment">Self Assessment</MudSelectItem>
                         </MudSelect>
                     </MudItem>
                     <MudItem xs="12" md="6">
@@ -132,7 +121,7 @@ else
                     <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary"
                         Disabled="@isSubmitting">
                         <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Class="me-2" />
-                        Create Assessment
+                        @(IsEdit ? "Update Assessment" : "Create Assessment")
                     </MudButton>
                     <MudButton Variant="Variant.Filled" Color="Color.Secondary" Href="/admin/assessments">Cancel</MudButton>
                 </div>
@@ -142,10 +131,13 @@ else
 }
 
 @code {
+    [Parameter]
+    [SupplyParameterFromQuery] public int? id { get; set; }
     [SupplyParameterFromForm]
     private CreateAssessmentRequest Assessment { get; set; } = new();
     private bool isSubmitting = false;
     private bool isLoading = true;
+    private bool IsEdit => ( id) > 0;
     
     private List<DropdownOption<int>> courses = new();
     private List<DropdownOption> modules = new();
@@ -156,6 +148,42 @@ else
         courses = await DropdownRepository.GetCoursesAsync();
         modules = await DropdownRepository.GetModulesAsync();
         lessons = await DropdownRepository.GetLessonsAsync();
+
+        if (IsEdit)
+        {
+            var assessmentId =  id ?? 0;
+            try
+            {
+                var existingAssessment = await AssessmentRepository.GetAssessmentByIdAsync(assessmentId);
+                if (existingAssessment != null)
+                {
+                    Assessment = new CreateAssessmentRequest
+                    {
+                        Title = existingAssessment.Title,
+                        Description = existingAssessment.Description,
+                        CourseId = existingAssessment.CourseId,
+                        ModuleId = existingAssessment.ModuleId,
+                        LessonId = existingAssessment.LessonId,
+                        Type = Enum.TryParse<AssessmentType>(existingAssessment.Type, out var parsedType) ? parsedType : AssessmentType.Quiz,
+                        MaxAttempts = existingAssessment.MaxAttempts,
+                        TimeLimit = existingAssessment.TimeLimit,
+                        PassingScore = existingAssessment.PassingScore,
+                        IsRandomized = existingAssessment.IsRandomized,
+                        ShowCorrectAnswers = existingAssessment.ShowCorrectAnswers,
+                        ShowScoreImmediately = existingAssessment.ShowScoreImmediately,
+                        AvailableFrom = existingAssessment.AvailableFrom,
+                        AvailableUntil = existingAssessment.AvailableUntil
+                    };
+                }
+            }
+            catch (Exception ex)
+            {
+                Snackbar.Add($"Error loading assessment: {ex.Message}", Severity.Error);
+                NavigationManager.NavigateTo("/admin/assessments");
+                return;
+            }
+        }
+
         await Task.Delay(500); // Simulate data loading
         isLoading = false;
     }
@@ -166,31 +194,63 @@ else
         set => Assessment.TimeLimit = value.HasValue ? TimeSpan.FromMinutes(value.Value) : TimeSpan.Zero;
     }
 
-    private async Task AddAssessment()
+    private async Task SaveAssessment()
     {
         if (isSubmitting) return;
 
         isSubmitting = true;
         try
         {
-            var result = await AssessmentRepository.CreateAssessmentAsync(Assessment);
-            if (result != null)
+            if (IsEdit)
             {
-                Snackbar.Add("Assessment created successfully!", Severity.Success);
-                NavigationManager.NavigateTo("/admin/assessments");
+                var assessmentId =  id ?? 0;
+                await AssessmentRepository.UpdateAssessmentAsync(assessmentId, Assessment);
+                Snackbar.Add("Assessment updated successfully!", Severity.Success);
             }
             else
             {
-                Snackbar.Add("Failed to create assessment. Please try again.", Severity.Error);
+                var result = await AssessmentRepository.CreateAssessmentAsync(Assessment);
+                if (result != null)
+                {
+                    Snackbar.Add("Assessment created successfully!", Severity.Success);
+                }
+                else
+                {
+                    Snackbar.Add("Failed to create assessment. Please try again.", Severity.Error);
+                    return;
+                }
             }
+            NavigationManager.NavigateTo("/admin/assessments");
         }
         catch (Exception ex)
         {
-            Snackbar.Add($"Error creating assessment: {ex.Message}", Severity.Error);
+            Snackbar.Add($"Error saving assessment: {ex.Message}", Severity.Error);
         }
         finally
         {
             isSubmitting = false;
         }
+    }
+
+    private Task<IEnumerable<int?>> SearchCourses(string value, CancellationToken token)
+    {
+        IEnumerable<int?> result = string.IsNullOrWhiteSpace(value)
+            ? courses.Select(c => (int?)c.Value)
+            : courses.Where(c => c.Text.Contains(value, StringComparison.OrdinalIgnoreCase)).Select(c => (int?)c.Value);
+        return Task.FromResult(result);
+    }
+    private Task<IEnumerable<int?>> SearchModules(string value, CancellationToken token)
+    {
+        IEnumerable<int?> result = string.IsNullOrWhiteSpace(value)
+            ? modules.Select(m => (int?)m.Value)
+            : modules.Where(m => m.Text.Contains(value, StringComparison.OrdinalIgnoreCase)).Select(m => (int?)m.Value);
+        return Task.FromResult(result);
+    }
+    private Task<IEnumerable<int?>> SearchLessons(string value, CancellationToken token)
+    {
+        IEnumerable<int?> result = string.IsNullOrWhiteSpace(value)
+            ? lessons.Select(l => (int?)l.Value)
+            : lessons.Where(l => l.Text.Contains(value, StringComparison.OrdinalIgnoreCase)).Select(l => (int?)l.Value);
+        return Task.FromResult(result);
     }
 }
