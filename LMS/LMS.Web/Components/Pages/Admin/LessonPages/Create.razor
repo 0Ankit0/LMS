@@ -10,78 +10,137 @@
 
 <PageTitle>@(IsEdit ? "Edit Lesson - Admin" : "Create Lesson - Admin")</PageTitle>
 
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h1 class="mb-0">@(IsEdit ? "Edit Lesson" : "Create New Lesson")</h1>
-    <MudButton Variant="Variant.Text" Color="Color.Secondary" Href="/admin/lessons">
-        <MudIcon Icon="@Icons.Material.Filled.ArrowBack" Class="me-2" />
-        Back to Lessons
-    </MudButton>
-</div>
-
-<MudCard Elevation="2">
-    <MudCardHeader>
-        <MudText Typo="Typo.h6">Lesson Information</MudText>
-    </MudCardHeader>
-    <MudCardContent>
-        <EditForm Model="Lesson" OnValidSubmit="SaveLesson">
-            <MudAlert Severity="Severity.Error" Class="my-3" >
-                <MudText>Please correct the errors below.</MudText>
-            </MudAlert>
-
-            <MudTextField @bind-Value="Lesson.Title" Label="Title" Variant="Variant.Text" Required="true" RequiredError="Title is required!" />
-
-            <MudTextField @bind-Value="Lesson.Description" Label="Description" Variant="Variant.Text" Lines="3" Placeholder="Enter lesson description" />
-
-            <MudAutocomplete T="int?" Value="Lesson.ModuleId" ValueChanged="@(v => Lesson.ModuleId = v ?? 0)" Label="Module" Variant="Variant.Text" Required="true" RequiredError="Module is required!" Placeholder="Search module..."
-                ToStringFunc="@(id => modules.FirstOrDefault(m => m.Value == id)?.Text ?? string.Empty)"
-                SearchFunc="SearchModules" />
-
+@if (isLoading)
+{
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <MudSkeleton SkeletonType="SkeletonType.Text" Width="200px" Height="40px" />
+        <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="180px" Height="40px" />
+    </div>
+    <MudCard Elevation="2">
+        <MudCardHeader>
+            <MudSkeleton SkeletonType="SkeletonType.Text" Width="180px" Height="32px" />
+        </MudCardHeader>
+        <MudCardContent>
+            <!-- Title -->
+            <MudSkeleton SkeletonType="SkeletonType.Text" Width="100%" Height="56px" />
+            <!-- Description -->
+            <MudSkeleton SkeletonType="SkeletonType.Text" Width="100%" Height="56px" />
+            <!-- Module Autocomplete -->
+            <MudSkeleton SkeletonType="SkeletonType.Text" Width="100%" Height="40px" />
+            <!-- Lesson Type & Duration -->
             <div class="row">
                 <MudItem xs="12" md="6">
-                    <MudSelect @bind-Value="Lesson.Type" Label="Lesson Type" Variant="Variant.Text">
-                        @foreach (var enumValue in Enum.GetValues(typeof(LessonType)))
-                        {
-                            <MudSelectItem Value="@enumValue">@enumValue.ToString()</MudSelectItem>
-                        }
-                    </MudSelect>
+                    <MudSkeleton SkeletonType="SkeletonType.Text" Width="100%" Height="40px" />
                 </MudItem>
                 <MudItem xs="12" md="6">
-                    <MudNumericField @bind-Value="EstimatedDurationMinutes" Label="Duration (minutes)" Variant="Variant.Text" Placeholder="30" />
+                    <MudSkeleton SkeletonType="SkeletonType.Text" Width="100%" Height="40px" />
                 </MudItem>
             </div>
-
-            <MudTextField @bind-Value="Lesson.Content" Label="Content" Variant="Variant.Text" Lines="5" Placeholder="Enter lesson content..." />
-
+            <!-- Content -->
+            <MudSkeleton SkeletonType="SkeletonType.Text" Width="100%" Height="80px" />
+            <!-- Video & Document URL -->
             <div class="row">
                 <MudItem xs="12" md="6">
-                    <MudTextField @bind-Value="Lesson.VideoUrl" Label="Video URL" Variant="Variant.Text" Placeholder="https://example.com/video.mp4" />
+                    <MudSkeleton SkeletonType="SkeletonType.Text" Width="100%" Height="40px" />
                 </MudItem>
                 <MudItem xs="12" md="6">
-                    <MudTextField @bind-Value="Lesson.DocumentUrl" Label="Document URL" Variant="Variant.Text" Placeholder="https://example.com/document.pdf" />
+                    <MudSkeleton SkeletonType="SkeletonType.Text" Width="100%" Height="40px" />
                 </MudItem>
             </div>
-
+            <!-- External URL & Order Index -->
             <div class="row">
                 <MudItem xs="12" md="6">
-                    <MudTextField @bind-Value="Lesson.ExternalUrl" Label="External URL" Variant="Variant.Text" Placeholder="https://external-resource.com" />
+                    <MudSkeleton SkeletonType="SkeletonType.Text" Width="100%" Height="40px" />
                 </MudItem>
                 <MudItem xs="12" md="6">
-                    <MudNumericField @bind-Value="Lesson.OrderIndex" Label="Order Index" Variant="Variant.Text" Placeholder="1" />
+                    <MudSkeleton SkeletonType="SkeletonType.Text" Width="100%" Height="40px" />
                 </MudItem>
             </div>
-
-            <MudCheckBox T="bool" @bind-Checked="Lesson.IsRequired" Label="Is Required" Color="Color.Primary" />
-
-            <div class="d-flex gap-2">
-                <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Disabled="@isSubmitting">
-                    <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Class="me-2" />
-                    @(IsEdit ? "Update Lesson" : "Create Lesson")
-                </MudButton>
-                <MudButton Variant="Variant.Filled" Color="Color.Secondary" Href="/admin/lessons">Cancel</MudButton>
+            <!-- IsRequired Checkbox -->
+            <MudSkeleton SkeletonType="SkeletonType.Text" Width="120px" Height="32px" />
+            <!-- Buttons -->
+            <div class="d-flex gap-2 mt-3">
+                <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="180px" Height="40px" />
+                <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="120px" Height="40px" />
             </div>
-        </EditForm>
-    </MudCardContent>
-</MudCard>
+        </MudCardContent>
+    </MudCard>
+}
+else
+{
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="mb-0">@(IsEdit ? "Edit Lesson" : "Create New Lesson")</h1>
+        <MudButton Variant="Variant.Text" Color="Color.Secondary" Href="/admin/lessons">
+            <MudIcon Icon="@Icons.Material.Filled.ArrowBack" Class="me-2" />
+            Back to Lessons
+        </MudButton>
+    </div>
+
+    <MudCard Elevation="2">
+        <MudCardHeader>
+            <MudText Typo="Typo.h6">Lesson Information</MudText>
+        </MudCardHeader>
+        <MudCardContent>
+            <EditForm EditContext="@editContext" OnValidSubmit="SaveLesson">
+                <MudAlert Severity="Severity.Error" Class="my-3" Visible="@(hasSubmitAttempted && editContext != null && !editContext.Validate())">
+                    <MudText>Please correct the errors below.</MudText>
+                </MudAlert>
+
+                <MudTextField @bind-Value="Lesson.Title" Label="Title" Variant="Variant.Text" Required="true" RequiredError="Title is required!" />
+
+                <MudTextField @bind-Value="Lesson.Description" Label="Description" Variant="Variant.Text" Lines="3" Placeholder="Enter lesson description" />
+
+                <MudAutocomplete T="int?" Value="Lesson.ModuleId" ValueChanged="@(v => Lesson.ModuleId = v ?? 0)" Label="Module" Variant="Variant.Text" Required="true" RequiredError="Module is required!" Placeholder="Search module..."
+                    ToStringFunc="@(id => modules.FirstOrDefault(m => m.Value == id)?.Text ?? string.Empty)"
+                    SearchFunc="SearchModules" />
+
+                <div class="row">
+                    <MudItem xs="12" md="6">
+                        <MudSelect T="int" @bind-Value="Lesson.Type" Label="Lesson Type" Variant="Variant.Text">
+                            @foreach (var enumValue in Enum.GetValues(typeof(LessonType)).Cast<int>())
+                            {
+                                <MudSelectItem T="int" Value="@enumValue">@((LessonType)enumValue)</MudSelectItem>
+                            }
+                        </MudSelect>
+                    </MudItem>
+                    <MudItem xs="12" md="6">
+                        <MudNumericField @bind-Value="EstimatedDurationMinutes" Label="Duration (minutes)" Variant="Variant.Text" Placeholder="30" />
+                    </MudItem>
+                </div>
+
+                <MudTextField @bind-Value="Lesson.Content" Label="Content" Variant="Variant.Text" Lines="5" Placeholder="Enter lesson content..." />
+
+                <div class="row">
+                    <MudItem xs="12" md="6">
+                        <MudTextField @bind-Value="Lesson.VideoUrl" Label="Video URL" Variant="Variant.Text" Placeholder="https://example.com/video.mp4" />
+                    </MudItem>
+                    <MudItem xs="12" md="6">
+                        <MudTextField @bind-Value="Lesson.DocumentUrl" Label="Document URL" Variant="Variant.Text" Placeholder="https://example.com/document.pdf" />
+                    </MudItem>
+                </div>
+
+                <div class="row">
+                    <MudItem xs="12" md="6">
+                        <MudTextField @bind-Value="Lesson.ExternalUrl" Label="External URL" Variant="Variant.Text" Placeholder="https://external-resource.com" />
+                    </MudItem>
+                    <MudItem xs="12" md="6">
+                        <MudNumericField @bind-Value="Lesson.OrderIndex" Label="Order Index" Variant="Variant.Text" Placeholder="1" />
+                    </MudItem>
+                </div>
+
+                <MudCheckBox T="bool" @bind-Checked="Lesson.IsRequired" Label="Is Required" Color="Color.Primary" />
+
+                <div class="d-flex gap-2">
+                    <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Disabled="@isSubmitting">
+                        <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Class="me-2" />
+                        @(IsEdit ? "Update Lesson" : "Create Lesson")
+                    </MudButton>
+                    <MudButton Variant="Variant.Filled" Color="Color.Secondary" Href="/admin/lessons">Cancel</MudButton>
+                </div>
+            </EditForm>
+        </MudCardContent>
+    </MudCard>
+}
 
 @code {
     [Parameter]
@@ -89,8 +148,11 @@
     [SupplyParameterFromForm]
     private CreateLessonRequest Lesson { get; set; } = new();
     private bool isSubmitting = false;
+    private bool hasSubmitAttempted = false;
+    private EditContext? editContext;
     private bool IsEdit => id.HasValue && id.Value > 0;
     private List<DropdownOption<int>> modules = new();
+    private bool isLoading = true;
 
     // Helper property for binding EstimatedDuration as minutes
     private int EstimatedDurationMinutes
@@ -135,10 +197,18 @@
                 return;
             }
         }
+        editContext = new EditContext(Lesson);
+        isLoading = false;
     }
 
     private async Task SaveLesson()
     {
+        hasSubmitAttempted = true;
+        if (editContext != null && !editContext.Validate())
+        {
+            isSubmitting = false;
+            return;
+        }
         if (isSubmitting) return;
         isSubmitting = true;
         try

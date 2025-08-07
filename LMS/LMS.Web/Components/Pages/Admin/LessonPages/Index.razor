@@ -19,16 +19,30 @@
     <MudCardContent>
         @if (_loading)
         {
-            int columnCount = 8; // Number of columns in the table
-            int rowCount = 3;
             <div class="mb-3">
-                @for (int r = 0; r < rowCount; r++)
+                <!-- Table header skeleton -->
+                <div class="row">
+                    <div class="col"><MudSkeleton SkeletonType="SkeletonType.Text" Height="32px" Width="120px" /></div>
+                    <div class="col"><MudSkeleton SkeletonType="SkeletonType.Text" Height="32px" Width="200px" /></div>
+                    <div class="col"><MudSkeleton SkeletonType="SkeletonType.Text" Height="32px" Width="80px" /></div>
+                    <div class="col"><MudSkeleton SkeletonType="SkeletonType.Text" Height="32px" Width="80px" /></div>
+                    <div class="col"><MudSkeleton SkeletonType="SkeletonType.Text" Height="32px" Width="80px" /></div>
+                    <div class="col"><MudSkeleton SkeletonType="SkeletonType.Text" Height="32px" Width="80px" /></div>
+                    <div class="col"><MudSkeleton SkeletonType="SkeletonType.Text" Height="32px" Width="80px" /></div>
+                    <div class="col"><MudSkeleton SkeletonType="SkeletonType.Text" Height="32px" Width="80px" /></div>
+                </div>
+                <!-- Table row skeletons -->
+                @for (int r = 0; r < 10; r++)
                 {
-                    <div class="row @(r > 0 ? "mt-2" : null)">
-                        @for (int c = 0; c < columnCount; c++)
-                        {
-                            <div class="col"> <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="32px"  Width="20px"/> </div>
-                        }
+                    <div class="row mt-2">
+                        <div class="col"><MudSkeleton SkeletonType="SkeletonType.Text" Height="32px" Width="120px" /></div>
+                        <div class="col"><MudSkeleton SkeletonType="SkeletonType.Text" Height="32px" Width="200px" /></div>
+                        <div class="col"><MudSkeleton SkeletonType="SkeletonType.Text" Height="32px" Width="80px" /></div>
+                        <div class="col"><MudSkeleton SkeletonType="SkeletonType.Text" Height="32px" Width="80px" /></div>
+                        <div class="col"><MudSkeleton SkeletonType="SkeletonType.Text" Height="32px" Width="80px" /></div>
+                        <div class="col"><MudSkeleton SkeletonType="SkeletonType.Text" Height="32px" Width="80px" /></div>
+                        <div class="col"><MudSkeleton SkeletonType="SkeletonType.Text" Height="32px" Width="80px" /></div>
+                        <div class="col"><MudSkeleton SkeletonType="SkeletonType.Text" Height="32px" Width="80px" /></div>
                     </div>
                 }
             </div>

@@ -119,7 +119,40 @@
     </div>
     <div class="row">
         <div class="col-lg-8">
-            <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="500px" />
+            <MudCard Elevation="2">
+                <MudCardHeader>
+                    <MudSkeleton SkeletonType="SkeletonType.Text" Width="180px" Height="32px" />
+                </MudCardHeader>
+                <MudCardContent>
+                    <!-- Name -->
+                    <MudSkeleton SkeletonType="SkeletonType.Text" Width="100%" Height="56px" />
+                    <!-- Description -->
+                    <MudSkeleton SkeletonType="SkeletonType.Text" Width="100%" Height="56px" />
+                    <!-- IconUrl & Points -->
+                    <MudGrid>
+                        <MudItem xs="12" md="6">
+                            <MudSkeleton SkeletonType="SkeletonType.Text" Width="100%" Height="40px" />
+                        </MudItem>
+                        <MudItem xs="12" md="6">
+                            <MudSkeleton SkeletonType="SkeletonType.Text" Width="100%" Height="40px" />
+                        </MudItem>
+                    </MudGrid>
+                    <!-- BadgeColor & Type -->
+                    <MudGrid>
+                        <MudItem xs="12" md="6">
+                            <MudSkeleton SkeletonType="SkeletonType.Text" Width="100%" Height="40px" />
+                        </MudItem>
+                        <MudItem xs="12" md="6">
+                            <MudSkeleton SkeletonType="SkeletonType.Text" Width="100%" Height="40px" />
+                        </MudItem>
+                    </MudGrid>
+                    <!-- Buttons -->
+                    <div class="d-flex gap-2 mt-3">
+                        <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="180px" Height="40px" />
+                        <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="120px" Height="40px" />
+                    </div>
+                </MudCardContent>
+            </MudCard>
         </div>
     </div>
 }
@@ -147,24 +180,24 @@ else
                         <MudTextField @bind-Value="Achievement.Description" Label="Description" Variant="Variant.Text" Lines="3"
                                       Placeholder="Enter achievement description" />
                         <MudGrid>
-                            <MudItem T="string" xs="12" md="6">
+                            <MudItem xs="12" md="6">
                                 <MudTextField @bind-Value="Achievement.IconUrl" Label="Icon URL" Variant="Variant.Text"
                                               Placeholder="https://example.com/icon.png" />
                             </MudItem>
-                            <MudItem T="string" xs="12" md="6">
+                            <MudItem xs="12" md="6">
                                 <MudNumericField @bind-Value="Achievement.Points" Label="Points" Variant="Variant.Text"
                                                  Placeholder="100" />
                             </MudItem>
                         </MudGrid>
                         <MudGrid>
-                            <MudItem T="string" xs="12" md="6">
+                            <MudItem xs="12" md="6">
                                 <MudTextField @bind-Value="Achievement.BadgeColor" Label="Badge Color" Variant="Variant.Text" InputType="InputType.Color" />
                             </MudItem>
-                            <MudItem T="string" xs="12" md="6">
-                                <MudSelect @bind-Value="SelectedType" Label="Achievement Type" Variant="Variant.Text">
+                            <MudItem xs="12" md="6">
+                                <MudSelect T="AchievementType" @bind-Value="SelectedType" Label="Achievement Type" Variant="Variant.Text">
                                     @foreach (var enumValue in Enum.GetValues(typeof(AchievementType)).Cast<AchievementType>())
                                     {
-                                        <MudSelectItem Value="@enumValue">@enumValue.ToString()</MudSelectItem>
+                                        <MudSelectItem T="AchievementType" Value="@enumValue">@enumValue.ToString()</MudSelectItem>
                                     }
                                 </MudSelect>
                             </MudItem>
