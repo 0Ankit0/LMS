@@ -49,20 +49,11 @@ else
                     </MudItem>
                 </MudGrid>
                 <MudTextField @bind-Value="Category.Description" Label="Description" Variant="Variant.Text" Lines="3" Placeholder="Enter category description" />
+                <MudStack Direction="Row" Spacing="2" Class="my-2">
+                    <MudText Typo="Typo.subtitle2">Category Icon Image</MudText>
+                    <FileUpload ImageUrl="@Category.IconUrl" ImageUrlChanged="@(url => Category.IconUrl = url)" ButtonText="Upload Icon Image" />
+                </MudStack>
                 <MudGrid>
-                    <MudItem xs="12" md="6">
-                        <MudStack Direction="Row" Spacing="2" Class="my-2">
-                            <MudText Typo="Typo.subtitle2">Category Icon Image</MudText>
-                            <MudButton Variant="Variant.Outlined" Color="Color.Primary" OnClick="@(()=>TriggerFileInput())">
-                                <MudIcon Icon="@Icons.Material.Filled.Upload" class="me-2" />Upload Icon Image
-                            </MudButton>
-                            <input type="file" style="display:none" @ref="fileInputRef" @onchange="OnImageSelected" accept="image/*" />
-                            @if (!string.IsNullOrEmpty(Category.IconUrl))
-                            {
-                                <img src="@Category.IconUrl" alt="Category Icon" style="max-height:60px;max-width:120px;" />
-                            }
-                        </MudStack>
-                    </MudItem>
                     <MudItem xs="12" md="6">
                         <MudAutocomplete T="int?" Value="Category.ParentCategoryId" ValueChanged="@(v => Category.ParentCategoryId = v)" Label="Parent Category" Variant="Variant.Text" Placeholder="Search parent category..."
                                         ToStringFunc="@(id => parentCategories.FirstOrDefault(c => c.Value == id)?.Text ?? string.Empty)"
@@ -149,26 +140,6 @@ else
         isLoading = false;
     }
 
-    private async Task OnImageSelected(ChangeEventArgs e)
-    {
-        var files = (e.Value as Microsoft.AspNetCore.Components.Forms.IBrowserFile[])
-            ?? new[] { e.Value as Microsoft.AspNetCore.Components.Forms.IBrowserFile };
-        var file = files?.FirstOrDefault();
-        if (file != null)
-        {
-            var result = await ImageRepository.SaveImageAsync(file);
-            if (result != null)
-            {
-                Category.IconUrl = result.Url;
-                Snackbar.Add("Icon image uploaded successfully!", Severity.Success);
-            }
-            else
-            {
-                Snackbar.Add("Failed to upload icon image.", Severity.Error);
-            }
-        }
-    }
-
     private Task<IEnumerable<string>> SearchIcons(string value, CancellationToken token)
     {
         IEnumerable<string> result = string.IsNullOrWhiteSpace(value)
@@ -220,10 +191,5 @@ else
             ? parentCategories.Select(c => (int?)c.Value)
             : parentCategories.Where(c => c.Text.Contains(value, StringComparison.OrdinalIgnoreCase)).Select(c => (int?)c.Value);
         return Task.FromResult(result);
-    }
-
-    private void TriggerFileInput()
-    {
-        _ = JSRuntime.InvokeVoidAsync("eval", "document.getElementById('" + fileInputRef.Id + "').click();");
     }
 }
