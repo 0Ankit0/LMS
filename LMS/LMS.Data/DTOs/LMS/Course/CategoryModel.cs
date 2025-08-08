@@ -14,6 +14,7 @@ namespace LMS.Data.DTOs
         public string? ParentCategoryName { get; set; }
         public List<CategoryModel> SubCategories { get; set; } = new();
         public int CourseCount { get; set; }
+        public string? IconName { get; set; } // Add for icon support
     }
 
     public class CreateCategoryRequest
@@ -28,6 +29,7 @@ namespace LMS.Data.DTOs
         public string Color { get; set; } = "#007bff";
         public int? ParentCategoryId { get; set; }
         public bool IsActive { get; set; } = true;
+        public string? IconName { get; set; } // Add for icon support
     }
 
 

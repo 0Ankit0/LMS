@@ -52,5 +52,6 @@ namespace LMS.Data.DTOs
         public List<CourseCategory> CourseCategories { get; set; } = new();
         public List<CourseTags> CourseTags { get; set; } = new();
 
+        public string? IconName { get; set; } // Add for icon support
     }
 }

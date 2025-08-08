@@ -38,5 +38,8 @@ namespace LMS.Data.DTOs
         public List<int> CategoryIds { get; set; } = new();
 
         public List<int> TagIds { get; set; } = new();
+
+        // Add for icon support
+        public string? IconName { get; set; }
     }
 }
