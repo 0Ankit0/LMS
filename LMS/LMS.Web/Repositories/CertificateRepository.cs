@@ -170,7 +170,6 @@ namespace LMS.Repositories
                     .FirstOrDefaultAsync(c => c.UserId == request.UserId && c.CourseId == request.CourseId);
                 if (existingCertificate != null)
                     throw new InvalidOperationException("Certificate already issued for this user and course");
-
                 // Verify enrollment and completion
                 var enrollment = await _context.Enrollments
                     .FirstOrDefaultAsync(e => e.UserId == request.UserId && e.CourseId == request.CourseId);
@@ -178,10 +177,8 @@ namespace LMS.Repositories
                     throw new InvalidOperationException("User is not enrolled in this course");
                 if (enrollment.Status != EnrollmentStatus.Completed)
                     throw new InvalidOperationException("Course must be completed before issuing certificate");
-
                 // Generate certificate number
                 var certificateNumber = await GenerateCertificateNumberAsync();
-
                 var certificate = new Certificate
                 {
                     UserId = request.UserId,
@@ -192,15 +189,11 @@ namespace LMS.Repositories
                     FinalGrade = request.FinalGrade,
                     IsValid = true
                 };
-
                 _context.Certificates.Add(certificate);
-
                 // Update enrollment certificate status
                 enrollment.IsCertificateIssued = true;
                 enrollment.CertificateIssuedAt = DateTime.UtcNow;
-
                 await _context.SaveChangesAsync();
-
                 return await GetCertificateByIdAsync(certificate.Id) ?? throw new InvalidOperationException("Failed to retrieve issued certificate");
             }
             catch (Exception ex)

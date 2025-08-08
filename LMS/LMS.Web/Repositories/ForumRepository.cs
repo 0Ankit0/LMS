@@ -162,10 +162,8 @@ namespace LMS.Repositories
                     IsActive = true,
                     CreatedAt = DateTime.UtcNow
                 };
-
                 _context.Forums.Add(forum);
                 await _context.SaveChangesAsync();
-
                 return await GetForumByIdAsync(forum.Id) ?? throw new InvalidOperationException("Failed to retrieve created forum");
             }
             catch (Exception ex)

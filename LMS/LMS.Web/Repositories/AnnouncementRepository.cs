@@ -22,12 +22,12 @@ namespace LMS.Repositories
 
     public class AnnouncementRepository : IAnnouncementRepository
     {
-        private readonly ApplicationDbContext _context;
+        private readonly IDbContextFactory<ApplicationDbContext> _contextFactory;
         private readonly ILogger<AnnouncementRepository> _logger;
 
-        public AnnouncementRepository(ApplicationDbContext context, ILogger<AnnouncementRepository> logger)
+        public AnnouncementRepository(IDbContextFactory<ApplicationDbContext> contextFactory, ILogger<AnnouncementRepository> logger)
         {
-            _context = context;
+            _contextFactory = contextFactory;
             _logger = logger;
         }
 
@@ -35,8 +35,9 @@ namespace LMS.Repositories
         {
             try
             {
+                using var context = _contextFactory.CreateDbContext();
                 // Only get active announcements from the database
-                var dbAnnouncements = await _context.Announcements
+                var dbAnnouncements = await context.Announcements
                     .Where(a => a.IsActive && (a.ExpiresAt == null || a.ExpiresAt > DateTime.UtcNow))
                     .OrderByDescending(a => a.Id)
                     .Select(a => new AnnouncementModel
@@ -54,57 +55,6 @@ namespace LMS.Repositories
                     })
                     .ToListAsync();
 
-                // Add dummy data
-                dbAnnouncements.AddRange(new List<AnnouncementModel>
-                {
-                    new()
-                    {
-                        Id = -1,
-                        Title = "Welcome to the LMS Platform",
-                        Content = "We're excited to have you join our learning management system. Explore the courses, complete assignments, and track your progress.",
-                        AuthorId = "admin",
-                        AuthorName = "System Administrator",
-                        Priority = "Critical",
-                        PublishedAt = DateTime.Now.AddDays(-1),
-                        IsActive = true
-                    },
-                    new()
-                    {
-                        Id = -2,
-                        Title = "New Course Available: Machine Learning Basics",
-                        Content = "A new course on Machine Learning fundamentals is now available. Enroll today to get started with AI and data science.",
-                        AuthorId = "instructor1",
-                        AuthorName = "Dr. Sarah Johnson",
-                        CourseId = 1,
-                        CourseName = "Machine Learning Basics",
-                        Priority = "High",
-                        PublishedAt = DateTime.Now.AddDays(-3),
-                        IsActive = true
-                    },
-                    new()
-                    {
-                        Id = -3,
-                        Title = "System Maintenance Scheduled",
-                        Content = "The system will undergo scheduled maintenance this weekend from 2 AM to 6 AM EST. Some features may be temporarily unavailable.",
-                        AuthorId = "admin",
-                        AuthorName = "System Administrator",
-                        Priority = "Medium",
-                        PublishedAt = DateTime.Now.AddDays(-5),
-                        IsActive = true
-                    },
-                    new()
-                    {
-                        Id = -4,
-                        Title = "Tips for Effective Online Learning",
-                        Content = "Here are some proven strategies to maximize your learning experience: 1) Set a regular study schedule, 2) Take notes actively, 3) Participate in discussions, 4) Seek help when needed.",
-                        AuthorId = "instructor2",
-                        AuthorName = "Prof. Michael Chen",
-                        Priority = "Low",
-                        PublishedAt = DateTime.Now.AddDays(-7),
-                        IsActive = true
-                    }
-                });
-
                 return dbAnnouncements;
             }
             catch (Exception ex)
@@ -117,8 +67,9 @@ namespace LMS.Repositories
         {
             try
             {
+                using var context = _contextFactory.CreateDbContext();
                 // Only get active announcements from the database
-                var dbAnnouncements = await _context.Announcements
+                var dbAnnouncements = await context.Announcements
                     .Where(a => a.IsActive && (a.ExpiresAt == null || a.ExpiresAt > DateTime.UtcNow))
                     .OrderByDescending(a => a.Id)
                     .Select(a => new AnnouncementModel
@@ -136,57 +87,6 @@ namespace LMS.Repositories
                     })
                     .Take(5)
                     .ToListAsync();
-
-                // Add dummy data
-                dbAnnouncements.AddRange(new List<AnnouncementModel>
-                {
-                    new()
-                    {
-                        Id = -1,
-                        Title = "Welcome to the LMS Platform",
-                        Content = "We're excited to have you join our learning management system. Explore the courses, complete assignments, and track your progress.",
-                        AuthorId = "admin",
-                        AuthorName = "System Administrator",
-                        Priority = "Critical",
-                        PublishedAt = DateTime.Now.AddDays(-1),
-                        IsActive = true
-                    },
-                    new()
-                    {
-                        Id = -2,
-                        Title = "New Course Available: Machine Learning Basics",
-                        Content = "A new course on Machine Learning fundamentals is now available. Enroll today to get started with AI and data science.",
-                        AuthorId = "instructor1",
-                        AuthorName = "Dr. Sarah Johnson",
-                        CourseId = 1,
-                        CourseName = "Machine Learning Basics",
-                        Priority = "High",
-                        PublishedAt = DateTime.Now.AddDays(-3),
-                        IsActive = true
-                    },
-                    new()
-                    {
-                        Id = -3,
-                        Title = "System Maintenance Scheduled",
-                        Content = "The system will undergo scheduled maintenance this weekend from 2 AM to 6 AM EST. Some features may be temporarily unavailable.",
-                        AuthorId = "admin",
-                        AuthorName = "System Administrator",
-                        Priority = "Medium",
-                        PublishedAt = DateTime.Now.AddDays(-5),
-                        IsActive = true
-                    },
-                    new()
-                    {
-                        Id = -4,
-                        Title = "Tips for Effective Online Learning",
-                        Content = "Here are some proven strategies to maximize your learning experience: 1) Set a regular study schedule, 2) Take notes actively, 3) Participate in discussions, 4) Seek help when needed.",
-                        AuthorId = "instructor2",
-                        AuthorName = "Prof. Michael Chen",
-                        Priority = "Low",
-                        PublishedAt = DateTime.Now.AddDays(-7),
-                        IsActive = true
-                    }
-                });
 
                 return dbAnnouncements;
             }
@@ -229,19 +129,33 @@ namespace LMS.Repositories
         {
             try
             {
-                await Task.Delay(100); // Simulate async operation
-                return new AnnouncementModel
+                using var context = _contextFactory.CreateDbContext();
+                var announcement = new Announcement
                 {
-                    Id = new Random().Next(1000, 9999),
                     Title = request.Title,
                     Content = request.Content,
-                    Priority = request.Priority.ToString(),
-                    PublishedAt = DateTime.Now,
+                    Priority = request.Priority,
+                    PublishedAt = DateTime.UtcNow,
                     IsActive = true,
                     SendEmail = request.SendEmail,
                     SendSms = request.SendSms,
                     CourseId = request.CourseId,
-                    AuthorName = "Current User" // Replace with actual user
+                    AuthorId = request.AuthorId // Should be set from context
+                };
+                context.Announcements.Add(announcement);
+                await context.SaveChangesAsync();
+                return new AnnouncementModel
+                {
+                    Id = announcement.Id,
+                    Title = announcement.Title,
+                    Content = announcement.Content,
+                    Priority = announcement.Priority.ToString(),
+                    PublishedAt = announcement.PublishedAt,
+                    IsActive = announcement.IsActive,
+                    SendEmail = announcement.SendEmail,
+                    SendSms = announcement.SendSms,
+                    CourseId = announcement.CourseId,
+                    AuthorName = announcement.AuthorId // Replace with actual user name if needed
                 };
             }
             catch (Exception ex)
@@ -255,16 +169,27 @@ namespace LMS.Repositories
         {
             try
             {
-                await Task.Delay(100); // Simulate async operation
-                var announcement = await GetAnnouncementByIdAsync(id);
+                using var context = _contextFactory.CreateDbContext();
+                var announcement = await context.Announcements.FindAsync(id);
                 if (announcement == null)
                     throw new ArgumentException("Announcement not found");
-
                 announcement.Title = request.Title;
                 announcement.Content = request.Content;
-                announcement.Priority = request.Priority.ToString();
-
-                return announcement;
+                announcement.Priority = request.Priority;
+                await context.SaveChangesAsync();
+                return new AnnouncementModel
+                {
+                    Id = announcement.Id,
+                    Title = announcement.Title,
+                    Content = announcement.Content,
+                    Priority = announcement.Priority.ToString(),
+                    PublishedAt = announcement.PublishedAt,
+                    IsActive = announcement.IsActive,
+                    SendEmail = announcement.SendEmail,
+                    SendSms = announcement.SendSms,
+                    CourseId = announcement.CourseId,
+                    AuthorName = announcement.AuthorId // Replace with actual user name if needed
+                };
             }
             catch (Exception ex)
             {
@@ -277,8 +202,13 @@ namespace LMS.Repositories
         {
             try
             {
-                await Task.Delay(100); // Simulate async operation
-                return true; // Always success for mock
+                using var context = _contextFactory.CreateDbContext();
+                var announcement = await context.Announcements.FindAsync(id);
+                if (announcement == null)
+                    return false;
+                context.Announcements.Remove(announcement);
+                await context.SaveChangesAsync();
+                return true;
             }
             catch (Exception ex)
             {

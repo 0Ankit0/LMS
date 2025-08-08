@@ -23,20 +23,21 @@ namespace LMS.Repositories
 
     public class AchievementRepository : IAchievementRepository
     {
-        private readonly ApplicationDbContext _context;
+        private readonly IDbContextFactory<ApplicationDbContext> _contextFactory;
         private readonly ILogger<AchievementRepository> _logger;
 
-        public AchievementRepository(ApplicationDbContext context, ILogger<AchievementRepository> logger)
+        public AchievementRepository(IDbContextFactory<ApplicationDbContext> contextFactory, ILogger<AchievementRepository> logger)
         {
+            _contextFactory = contextFactory;
             _logger = logger;
-            _context = context;
         }
 
         public async Task<List<AchievementModel>> GetAchievementsAsync()
         {
             try
             {
-                var achievements = await _context.Achievements
+                using var context = _contextFactory.CreateDbContext();
+                var achievements = await context.Achievements
                     .Include(a => a.UserAchievements)
                     .Where(a => a.IsActive)
                     .OrderBy(a => a.Name)
@@ -55,7 +56,8 @@ namespace LMS.Repositories
         {
             try
             {
-                var achievements = await _context.Achievements
+                using var context = _contextFactory.CreateDbContext();
+                var achievements = await context.Achievements
                     .Include(a => a.UserAchievements)
                     .OrderBy(a => a.Name)
                     .ToListAsync();
@@ -73,7 +75,8 @@ namespace LMS.Repositories
         {
             try
             {
-                var query = _context.Achievements
+                using var context = _contextFactory.CreateDbContext();
+                var query = context.Achievements
                     .Include(a => a.UserAchievements)
                     .OrderBy(a => a.Name);
 
@@ -103,7 +106,8 @@ namespace LMS.Repositories
         {
             try
             {
-                var achievement = await _context.Achievements
+                using var context = _contextFactory.CreateDbContext();
+                var achievement = await context.Achievements
                     .Include(a => a.UserAchievements)
                     .FirstOrDefaultAsync(a => a.Id == id && a.IsActive);
 
@@ -120,6 +124,7 @@ namespace LMS.Repositories
         {
             try
             {
+                using var context = _contextFactory.CreateDbContext();
                 var achievement = new Achievement
                 {
                     Name = request.Name,
@@ -133,8 +138,8 @@ namespace LMS.Repositories
                     CreatedAt = DateTime.UtcNow
                 };
 
-                _context.Achievements.Add(achievement);
-                await _context.SaveChangesAsync();
+                context.Achievements.Add(achievement);
+                await context.SaveChangesAsync();
 
                 return await GetAchievementByIdAsync(achievement.Id) ?? throw new InvalidOperationException("Failed to retrieve created achievement");
             }
@@ -149,7 +154,8 @@ namespace LMS.Repositories
         {
             try
             {
-                var achievement = await _context.Achievements.FindAsync(id);
+                using var context = _contextFactory.CreateDbContext();
+                var achievement = await context.Achievements.FindAsync(id);
                 if (achievement == null)
                     throw new ArgumentException("Achievement not found", nameof(id));
 
@@ -161,7 +167,7 @@ namespace LMS.Repositories
                 achievement.Type = Enum.Parse<AchievementType>(request.Type);
                 achievement.Criteria = request.Criteria;
 
-                await _context.SaveChangesAsync();
+                await context.SaveChangesAsync();
 
                 return await GetAchievementByIdAsync(id) ?? throw new InvalidOperationException("Failed to retrieve updated achievement");
             }
@@ -176,12 +182,13 @@ namespace LMS.Repositories
         {
             try
             {
-                var achievement = await _context.Achievements.FindAsync(id);
+                using var context = _contextFactory.CreateDbContext();
+                var achievement = await context.Achievements.FindAsync(id);
                 if (achievement == null)
                     return false;
 
                 achievement.IsActive = false;
-                await _context.SaveChangesAsync();
+                await context.SaveChangesAsync();
                 return true;
             }
             catch (Exception ex)
@@ -195,7 +202,8 @@ namespace LMS.Repositories
         {
             try
             {
-                var userAchievements = await _context.UserAchievements
+                using var context = _contextFactory.CreateDbContext();
+                var userAchievements = await context.UserAchievements
                     .Include(ua => ua.User)
                     .Include(ua => ua.Achievement)
                     .Include(ua => ua.Course)
@@ -216,7 +224,8 @@ namespace LMS.Repositories
         {
             try
             {
-                var existingAchievement = await _context.UserAchievements
+                using var context = _contextFactory.CreateDbContext();
+                var existingAchievement = await context.UserAchievements
                     .FirstOrDefaultAsync(ua => ua.UserId == userId && ua.AchievementId == achievementId);
 
                 if (existingAchievement != null)
@@ -230,10 +239,10 @@ namespace LMS.Repositories
                     EarnedAt = DateTime.UtcNow
                 };
 
-                _context.UserAchievements.Add(userAchievement);
-                await _context.SaveChangesAsync();
+                context.UserAchievements.Add(userAchievement);
+                await context.SaveChangesAsync();
 
-                var result = await _context.UserAchievements
+                var result = await context.UserAchievements
                     .Include(ua => ua.User)
                     .Include(ua => ua.Achievement)
                     .Include(ua => ua.Course)
@@ -252,12 +261,13 @@ namespace LMS.Repositories
         {
             try
             {
-                var userAchievement = await _context.UserAchievements.FindAsync(userAchievementId);
+                using var context = _contextFactory.CreateDbContext();
+                var userAchievement = await context.UserAchievements.FindAsync(userAchievementId);
                 if (userAchievement == null)
                     return false;
 
-                _context.UserAchievements.Remove(userAchievement);
-                await _context.SaveChangesAsync();
+                context.UserAchievements.Remove(userAchievement);
+                await context.SaveChangesAsync();
                 return true;
             }
             catch (Exception ex)
@@ -271,7 +281,8 @@ namespace LMS.Repositories
         {
             try
             {
-                return await _context.UserAchievements
+                using var context = _contextFactory.CreateDbContext();
+                return await context.UserAchievements
                     .Include(ua => ua.Achievement)
                     .Where(ua => ua.UserId == userId)
                     .SumAsync(ua => ua.Achievement.Points);

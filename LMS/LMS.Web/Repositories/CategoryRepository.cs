@@ -119,10 +119,8 @@ namespace LMS.Repositories
                 ParentCategoryId = request.ParentCategoryId,
                 IsActive = true
             };
-
             _context.Categories.Add(category);
             await _context.SaveChangesAsync();
-
             return await GetCategoryByIdAsync(category.Id) ?? throw new InvalidOperationException("Failed to retrieve created category");
         }
 
@@ -131,15 +129,12 @@ namespace LMS.Repositories
             var category = await _context.Categories.FindAsync(id);
             if (category == null)
                 throw new ArgumentException("Category not found", nameof(id));
-
             category.Name = request.Name;
             category.Description = request.Description;
             category.IconUrl = request.IconUrl;
             category.Color = request.Color;
             category.ParentCategoryId = request.ParentCategoryId;
-
             await _context.SaveChangesAsync();
-
             return await GetCategoryByIdAsync(id) ?? throw new InvalidOperationException("Failed to retrieve updated category");
         }
 

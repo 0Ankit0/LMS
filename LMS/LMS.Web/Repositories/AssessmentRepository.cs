@@ -25,12 +25,12 @@ public interface IAssessmentRepository
 }
 public class AssessmentRepository : IAssessmentRepository
 {
-    private readonly ApplicationDbContext _context;
+    private readonly IDbContextFactory<ApplicationDbContext> _contextFactory;
     private readonly ILogger<AssessmentRepository> _logger;
 
-    public AssessmentRepository(ApplicationDbContext context, ILogger<AssessmentRepository> logger)
+    public AssessmentRepository(IDbContextFactory<ApplicationDbContext> contextFactory, ILogger<AssessmentRepository> logger)
     {
-        _context = context;
+        _contextFactory = contextFactory;
         _logger = logger;
     }
 
@@ -38,7 +38,8 @@ public class AssessmentRepository : IAssessmentRepository
     {
         try
         {
-            var assessments = await _context.Assessments
+            using var context = _contextFactory.CreateDbContext();
+            var assessments = await context.Assessments
                 .Include(a => a.Questions)
                     .ThenInclude(q => q.Options)
                 .Include(a => a.Course)
@@ -59,7 +60,8 @@ public class AssessmentRepository : IAssessmentRepository
     {
         try
         {
-            var assessments = await _context.Assessments
+            using var context = _contextFactory.CreateDbContext();
+            var assessments = await context.Assessments
                 .Where(a => a.CourseId == courseId)
                 .Include(a => a.Questions)
                     .ThenInclude(q => q.Options)
@@ -86,7 +88,8 @@ public class AssessmentRepository : IAssessmentRepository
     {
         try
         {
-            var assessment = await _context.Assessments
+            using var context = _contextFactory.CreateDbContext();
+            var assessment = await context.Assessments
                 .Include(a => a.Questions)
                     .ThenInclude(q => q.Options)
                 .Include(a => a.Course)
@@ -108,7 +111,8 @@ public class AssessmentRepository : IAssessmentRepository
         try
         {
             request.Validate();
-            var query = _context.Assessments
+            using var context = _contextFactory.CreateDbContext();
+            var query = context.Assessments
                 .Include(a => a.Questions)
                     .ThenInclude(q => q.Options)
                 .Include(a => a.Course)
@@ -139,6 +143,7 @@ public class AssessmentRepository : IAssessmentRepository
     {
         try
         {
+            using var context = _contextFactory.CreateDbContext();
             var assessment = new Assessment
             {
                 Title = request.Title,
@@ -156,10 +161,8 @@ public class AssessmentRepository : IAssessmentRepository
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow
             };
-
-            _context.Assessments.Add(assessment);
-            await _context.SaveChangesAsync();
-
+            context.Assessments.Add(assessment);
+            await context.SaveChangesAsync();
             return await GetAssessmentByIdAsync(assessment.Id) ?? throw new InvalidOperationException("Assessment not found after creation");
         }
         catch (Exception ex)
@@ -173,10 +176,10 @@ public class AssessmentRepository : IAssessmentRepository
     {
         try
         {
-            var assessment = await _context.Assessments.FindAsync(id);
+            using var context = _contextFactory.CreateDbContext();
+            var assessment = await context.Assessments.FindAsync(id);
             if (assessment == null)
                 throw new ArgumentException($"Assessment with ID {id} not found");
-
             assessment.Title = request.Title;
             assessment.Description = request.Description;
             assessment.Type = (AssessmentType)request.Type;
@@ -190,9 +193,7 @@ public class AssessmentRepository : IAssessmentRepository
             assessment.ShowCorrectAnswers = request.ShowCorrectAnswers;
             assessment.ShowScoreImmediately = request.ShowScoreImmediately;
             assessment.UpdatedAt = DateTime.UtcNow;
-
-            await _context.SaveChangesAsync();
-
+            await context.SaveChangesAsync();
             return await GetAssessmentByIdAsync(id) ?? throw new InvalidOperationException("Assessment not found after update");
         }
         catch (Exception ex)
@@ -206,12 +207,13 @@ public class AssessmentRepository : IAssessmentRepository
     {
         try
         {
-            var assessment = await _context.Assessments.FindAsync(id);
+            using var context = _contextFactory.CreateDbContext();
+            var assessment = await context.Assessments.FindAsync(id);
             if (assessment == null)
                 return false;
 
-            _context.Assessments.Remove(assessment);
-            await _context.SaveChangesAsync();
+            context.Assessments.Remove(assessment);
+            await context.SaveChangesAsync();
             return true;
         }
         catch (Exception ex)
@@ -225,6 +227,7 @@ public class AssessmentRepository : IAssessmentRepository
     {
         try
         {
+            using var context = _contextFactory.CreateDbContext();
             var question = new Question
             {
                 Text = request.Text,
@@ -237,8 +240,8 @@ public class AssessmentRepository : IAssessmentRepository
                 CreatedAt = DateTime.UtcNow
             };
 
-            _context.Questions.Add(question);
-            await _context.SaveChangesAsync();
+            context.Questions.Add(question);
+            await context.SaveChangesAsync();
 
             // Add options if provided
             if (request.Options.Any())
@@ -251,12 +254,12 @@ public class AssessmentRepository : IAssessmentRepository
                     OrderIndex = o.OrderIndex
                 }).ToList();
 
-                _context.QuestionOptions.AddRange(options);
-                await _context.SaveChangesAsync();
+                context.QuestionOptions.AddRange(options);
+                await context.SaveChangesAsync();
             }
 
             // Return the created question as a model
-            var createdQuestion = await _context.Questions
+            var createdQuestion = await context.Questions
                 .Include(q => q.Options)
                 .FirstAsync(q => q.Id == question.Id);
 
@@ -273,7 +276,8 @@ public class AssessmentRepository : IAssessmentRepository
     {
         try
         {
-            var question = await _context.Questions
+            using var context = _contextFactory.CreateDbContext();
+            var question = await context.Questions
                 .Include(q => q.Options)
                 .Include(q => q.Assessment)
                 .FirstOrDefaultAsync(q => q.Id == id);
@@ -291,7 +295,8 @@ public class AssessmentRepository : IAssessmentRepository
     {
         try
         {
-            var question = await _context.Questions
+            using var context = _contextFactory.CreateDbContext();
+            var question = await context.Questions
                 .Include(q => q.Options)
                 .FirstOrDefaultAsync(q => q.Id == id);
             
@@ -310,7 +315,7 @@ public class AssessmentRepository : IAssessmentRepository
             if (request.Options.Any())
             {
                 // Remove existing options
-                _context.QuestionOptions.RemoveRange(question.Options);
+                context.QuestionOptions.RemoveRange(question.Options);
 
                 // Add new options
                 var options = request.Options.Select(o => new QuestionOption
@@ -321,10 +326,10 @@ public class AssessmentRepository : IAssessmentRepository
                     OrderIndex = o.OrderIndex
                 }).ToList();
 
-                _context.QuestionOptions.AddRange(options);
+                context.QuestionOptions.AddRange(options);
             }
 
-            await _context.SaveChangesAsync();
+            await context.SaveChangesAsync();
 
             return await GetQuestionByIdAsync(id) ?? throw new InvalidOperationException("Question not found after update");
         }
@@ -339,12 +344,13 @@ public class AssessmentRepository : IAssessmentRepository
     {
         try
         {
-            var question = await _context.Questions.FindAsync(id);
+            using var context = _contextFactory.CreateDbContext();
+            var question = await context.Questions.FindAsync(id);
             if (question == null)
                 return false;
 
-            _context.Questions.Remove(question);
-            await _context.SaveChangesAsync();
+            context.Questions.Remove(question);
+            await context.SaveChangesAsync();
             return true;
         }
         catch (Exception ex)
@@ -358,7 +364,8 @@ public class AssessmentRepository : IAssessmentRepository
     {
         try
         {
-            var questions = await _context.Questions
+            using var context = _contextFactory.CreateDbContext();
+            var questions = await context.Questions
                 .Include(q => q.Options)
                 .ToListAsync();
             return questions.Select(MapToQuestionModel);
@@ -375,7 +382,8 @@ public class AssessmentRepository : IAssessmentRepository
         try
         {
             request.Validate();
-            var query = _context.Questions
+            using var context = _contextFactory.CreateDbContext();
+            var query = context.Questions
                 .Include(q => q.Options)
                 .Include(q => q.Assessment)
                 .OrderBy(q => q.Assessment.Title)

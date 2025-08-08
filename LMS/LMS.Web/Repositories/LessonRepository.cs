@@ -102,7 +102,6 @@ namespace LMS.Repositories
             var maxOrder = await _context.Lessons
                 .Where(l => l.ModuleId == request.ModuleId)
                 .MaxAsync(l => (int?)l.OrderIndex) ?? 0;
-
             var lesson = new Lesson
             {
                 Title = request.Title,
@@ -120,10 +119,8 @@ namespace LMS.Repositories
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow
             };
-
             _context.Lessons.Add(lesson);
             await _context.SaveChangesAsync();
-
             return await GetLessonByIdAsync(lesson.Id) ?? throw new InvalidOperationException("Failed to retrieve created lesson");
         }
 

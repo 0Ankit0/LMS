@@ -99,19 +99,16 @@ namespace LMS.Repositories
                     IsActive = true,
                     EmailConfirmed = true
                 };
-
                 var result = await _userManager.CreateAsync(user, "TempPassword123!");
                 if (!result.Succeeded)
                 {
                     throw new InvalidOperationException($"Failed to create user: {string.Join(", ", result.Errors.Select(e => e.Description))}");
                 }
-
                 // Add role
                 if (!string.IsNullOrEmpty(request.Role))
                 {
                     await _userManager.AddToRoleAsync(user, request.Role);
                 }
-
                 return await MapToUserModelAsync(user);
             }
             catch (Exception ex)

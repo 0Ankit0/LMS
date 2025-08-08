@@ -20,12 +20,12 @@ namespace LMS.Repositories
 
     public class MessageRepository : IMessageRepository
     {
-        private readonly ApplicationDbContext _context;
+        private readonly IDbContextFactory<ApplicationDbContext> _contextFactory;
         private readonly ILogger<MessageRepository> _logger;
 
-        public MessageRepository(ApplicationDbContext context, ILogger<MessageRepository> logger)
+        public MessageRepository(IDbContextFactory<ApplicationDbContext> contextFactory, ILogger<MessageRepository> logger)
         {
-            _context = context;
+            _contextFactory = contextFactory;
             _logger = logger;
         }
 
@@ -33,7 +33,8 @@ namespace LMS.Repositories
         {
             try
             {
-                var messages = await _context.Messages
+                using var context = _contextFactory.CreateDbContext();
+                var messages = await context.Messages
                     .Include(m => m.FromUser)
                     .Include(m => m.ToUser)
                     .Include(m => m.Attachments)
@@ -54,7 +55,8 @@ namespace LMS.Repositories
         {
             try
             {
-                var messages = await _context.Messages
+                using var context = _contextFactory.CreateDbContext();
+                var messages = await context.Messages
                     .Include(m => m.FromUser)
                     .Include(m => m.ToUser)
                     .Include(m => m.Attachments)
@@ -75,7 +77,8 @@ namespace LMS.Repositories
         {
             try
             {
-                var messages = await _context.Messages
+                using var context = _contextFactory.CreateDbContext();
+                var messages = await context.Messages
                     .Include(m => m.FromUser)
                     .Include(m => m.ToUser)
                     .Include(m => m.Attachments)
@@ -96,7 +99,8 @@ namespace LMS.Repositories
         {
             try
             {
-                var message = await _context.Messages
+                using var context = _contextFactory.CreateDbContext();
+                var message = await context.Messages
                     .Include(m => m.FromUser)
                     .Include(m => m.ToUser)
                     .Include(m => m.ParentMessage)
@@ -117,6 +121,7 @@ namespace LMS.Repositories
         {
             try
             {
+                using var context = _contextFactory.CreateDbContext();
                 var message = new Message
                 {
                     Subject = request.Subject,
@@ -128,10 +133,8 @@ namespace LMS.Repositories
                     SentAt = DateTime.UtcNow,
                     IsDeleted = false
                 };
-
-                _context.Messages.Add(message);
-                await _context.SaveChangesAsync();
-
+                context.Messages.Add(message);
+                await context.SaveChangesAsync();
                 return await GetMessageByIdAsync(message.Id) ?? throw new InvalidOperationException("Failed to retrieve sent message");
             }
             catch (Exception ex)
@@ -145,7 +148,8 @@ namespace LMS.Repositories
         {
             try
             {
-                var message = await _context.Messages
+                using var context = _contextFactory.CreateDbContext();
+                var message = await context.Messages
                     .FirstOrDefaultAsync(m => m.Id == messageId && m.ToUserId == userId);
 
                 if (message == null)
@@ -154,7 +158,7 @@ namespace LMS.Repositories
                 if (message.ReadAt == null)
                 {
                     message.ReadAt = DateTime.UtcNow;
-                    await _context.SaveChangesAsync();
+                    await context.SaveChangesAsync();
                 }
 
                 return true;
@@ -170,14 +174,15 @@ namespace LMS.Repositories
         {
             try
             {
-                var message = await _context.Messages
+                using var context = _contextFactory.CreateDbContext();
+                var message = await context.Messages
                     .FirstOrDefaultAsync(m => m.Id == messageId && (m.FromUserId == userId || m.ToUserId == userId));
 
                 if (message == null)
                     return false;
 
                 message.IsDeleted = true;
-                await _context.SaveChangesAsync();
+                await context.SaveChangesAsync();
                 return true;
             }
             catch (Exception ex)
@@ -191,7 +196,8 @@ namespace LMS.Repositories
         {
             try
             {
-                return await _context.Messages
+                using var context = _contextFactory.CreateDbContext();
+                return await context.Messages
                     .CountAsync(m => m.ToUserId == userId && m.ReadAt == null && !m.IsDeleted);
             }
             catch (Exception ex)

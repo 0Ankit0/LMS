@@ -136,7 +136,6 @@ namespace LMS.Repositories
                         .MaxAsync(m => (int?)m.OrderIndex) ?? 0;
                     orderIndex = maxOrder + 1;
                 }
-
                 var module = new Module
                 {
                     Title = request.Title,
@@ -148,10 +147,8 @@ namespace LMS.Repositories
                     CreatedAt = DateTime.UtcNow,
                     UpdatedAt = DateTime.UtcNow
                 };
-
                 _context.Modules.Add(module);
                 await _context.SaveChangesAsync();
-
                 return await GetModuleByIdAsync(module.Id) ?? throw new InvalidOperationException("Failed to retrieve created module");
             }
             catch (Exception ex)

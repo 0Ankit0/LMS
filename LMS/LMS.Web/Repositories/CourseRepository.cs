@@ -24,16 +24,17 @@ namespace LMS.Repositories
         Task<LessonModel> UpdateLessonAsync(int id, CreateLessonRequest request);
         Task<bool> DeleteLessonAsync(int id);
         Task<List<CourseModel>> GetAllCoursesAsync();
+        Task<PaginatedResult<ModuleModel>> GetModulesPaginatedAsync(PaginationRequest request);
     }
 
     public class CourseRepository : ICourseRepository
     {
-        private readonly ApplicationDbContext _context;
+        private readonly IDbContextFactory<ApplicationDbContext> _contextFactory;
         private readonly ILogger<CourseRepository> _logger;
 
-        public CourseRepository(ApplicationDbContext context, ILogger<CourseRepository> logger)
+        public CourseRepository(IDbContextFactory<ApplicationDbContext> contextFactory, ILogger<CourseRepository> logger)
         {
-            _context = context;
+            _contextFactory = contextFactory;
             _logger = logger;
         }
 
@@ -41,7 +42,8 @@ namespace LMS.Repositories
         {
             try
             {
-                var courses = await _context.Courses
+                using var context = _contextFactory.CreateDbContext();
+                var courses = await context.Courses
                     .Include(c => c.Instructor)
                     .Include(c => c.Modules)
                     .Include(c => c.Enrollments)
@@ -50,53 +52,7 @@ namespace LMS.Repositories
                     .Include(c => c.CourseTags)
                         .ThenInclude(ct => ct.Tag)
                     .ToListAsync();
-
-                var courseModels = courses.Select(MapToCourseModel).ToList();
-                // Add dummy data for demo purposes
-                courseModels.AddRange(new[]
-                {
-                    new CourseModel
-                    {
-                        Id = 1,
-                        Title = "Introduction to Quantum Computing",
-                        Description = "A beginner-friendly course on the basics of quantum computing and its applications.",
-                        InstructorId = "dummy1",
-                        InstructorName = "Dr. Alice Quantum",
-                        Level = "Advanced",
-                        Status = "Published",
-                        MaxEnrollments = 100,
-                        StartDate = DateTime.Today.AddDays(10),
-                        EndDate = DateTime.Today.AddDays(40),
-                        EstimatedDuration = TimeSpan.FromHours(20),
-                        Prerequisites = "Linear Algebra, Classical Computing",
-                        LearningObjectives = "Understand quantum bits, gates, and algorithms.",
-                        EnrollmentCount = 0,
-                        AverageRating = 0.0,
-                        Categories = new List<string> { "Computer Science", "Physics" },
-                        Tags = new List<string> { "Quantum", "Computing", "Advanced" }
-                    },
-                    new CourseModel
-                    {
-                        Id = 2,
-                        Title = "Creative Writing Workshop",
-                        Description = "Unlock your creativity and learn the art of storytelling in this interactive workshop.",
-                        InstructorId = "dummy2",
-                        InstructorName = "Prof. John Storyteller",
-                        Level = "Beginner",
-                        Status = "Draft",
-                        MaxEnrollments = 50,
-                        StartDate = DateTime.Today.AddDays(5),
-                        EndDate = DateTime.Today.AddDays(25),
-                        EstimatedDuration = TimeSpan.FromHours(10),
-                        Prerequisites = null,
-                        LearningObjectives = "Write compelling stories and improve narrative skills.",
-                        EnrollmentCount = 0,
-                        AverageRating = 0.0,
-                        Categories = new List<string> { "Arts", "Writing" },
-                        Tags = new List<string> { "Writing", "Creativity" }
-                    }
-                });
-                return courseModels;
+                return courses.Select(MapToCourseModel).ToList();
             }
             catch (Exception ex)
             {
@@ -110,7 +66,8 @@ namespace LMS.Repositories
             try
             {
                 request.Validate();
-                var query = _context.Courses
+                using var context = _contextFactory.CreateDbContext();
+                var query = context.Courses
                     .Include(c => c.Instructor)
                     .Include(c => c.Modules)
                     .Include(c => c.Enrollments)
@@ -143,7 +100,8 @@ namespace LMS.Repositories
         {
             try
             {
-                var course = await _context.Courses
+                using var context = _contextFactory.CreateDbContext();
+                var course = await context.Courses
                     .Include(c => c.Instructor)
                     .Include(c => c.Modules)
                         .ThenInclude(m => m.Lessons)
@@ -167,6 +125,7 @@ namespace LMS.Repositories
         {
             try
             {
+                using var context = _contextFactory.CreateDbContext();
                 var course = new Course
                 {
                     Title = request.Title,
@@ -185,12 +144,12 @@ namespace LMS.Repositories
                     UpdatedAt = DateTime.UtcNow
                 };
 
-                _context.Courses.Add(course);
-                await _context.SaveChangesAsync();
+                context.Courses.Add(course);
+                await context.SaveChangesAsync();
 
                 foreach (var categoryId in request.CategoryIds)
                 {
-                    _context.CourseCategories.Add(new CourseCategory
+                    context.CourseCategories.Add(new CourseCategory
                     {
                         CourseId = course.Id,
                         CategoryId = categoryId
@@ -199,14 +158,14 @@ namespace LMS.Repositories
 
                 foreach (var tagId in request.TagIds)
                 {
-                    _context.CourseTags.Add(new CourseTags
+                    context.CourseTags.Add(new CourseTags
                     {
                         CourseId = course.Id,
                         TagId = tagId
                     });
                 }
 
-                await _context.SaveChangesAsync();
+                await context.SaveChangesAsync();
 
                 // Use a new context to fetch the course with all includes
                 return await GetCourseByIdAsync(course.Id) ?? throw new InvalidOperationException("Course not found after creation");
@@ -222,7 +181,8 @@ namespace LMS.Repositories
         {
             try
             {
-                var course = await _context.Courses.FindAsync(id);
+                using var context = _contextFactory.CreateDbContext();
+                var course = await context.Courses.FindAsync(id);
                 if (course == null)
                     throw new ArgumentException("Course not found");
 
@@ -238,35 +198,35 @@ namespace LMS.Repositories
                 course.LearningObjectives = request.LearningObjectives;
                 course.UpdatedAt = DateTime.UtcNow;
 
-                var existingCategories = await _context.CourseCategories
+                var existingCategories = await context.CourseCategories
                     .Where(cc => cc.CourseId == id)
                     .ToListAsync();
-                _context.CourseCategories.RemoveRange(existingCategories);
+                context.CourseCategories.RemoveRange(existingCategories);
 
                 foreach (var categoryId in request.CategoryIds)
                 {
-                    _context.CourseCategories.Add(new CourseCategory
+                    context.CourseCategories.Add(new CourseCategory
                     {
                         CourseId = id,
                         CategoryId = categoryId
                     });
                 }
 
-                var existingTags = await _context.CourseTags
+                var existingTags = await context.CourseTags
                     .Where(ct => ct.CourseId == id)
                     .ToListAsync();
-                _context.CourseTags.RemoveRange(existingTags);
+                context.CourseTags.RemoveRange(existingTags);
 
                 foreach (var tagId in request.TagIds)
                 {
-                    _context.CourseTags.Add(new CourseTags
+                    context.CourseTags.Add(new CourseTags
                     {
                         CourseId = id,
                         TagId = tagId
                     });
                 }
 
-                await _context.SaveChangesAsync();
+                await context.SaveChangesAsync();
 
                 return await GetCourseByIdAsync(id) ?? throw new InvalidOperationException("Course not found after update");
             }
@@ -281,12 +241,13 @@ namespace LMS.Repositories
         {
             try
             {
-                var course = await _context.Courses.FindAsync(id);
+                using var context = _contextFactory.CreateDbContext();
+                var course = await context.Courses.FindAsync(id);
                 if (course == null)
                     return false;
 
-                _context.Courses.Remove(course);
-                await _context.SaveChangesAsync();
+                context.Courses.Remove(course);
+                await context.SaveChangesAsync();
                 return true;
             }
             catch (Exception ex)
@@ -300,7 +261,8 @@ namespace LMS.Repositories
         {
             try
             {
-                var modules = await _context.Modules
+                using var context = _contextFactory.CreateDbContext();
+                var modules = await context.Modules
                     .Where(m => m.CourseId == courseId)
                     .Include(m => m.Lessons)
                     .OrderBy(m => m.OrderIndex)
@@ -319,6 +281,7 @@ namespace LMS.Repositories
         {
             try
             {
+                using var context = _contextFactory.CreateDbContext();
                 var module = new Module
                 {
                     Title = request.Title,
@@ -331,8 +294,8 @@ namespace LMS.Repositories
                     UpdatedAt = DateTime.UtcNow
                 };
 
-                _context.Modules.Add(module);
-                await _context.SaveChangesAsync();
+                context.Modules.Add(module);
+                await context.SaveChangesAsync();
 
                 return MapToModuleModel(module);
             }
@@ -347,7 +310,8 @@ namespace LMS.Repositories
         {
             try
             {
-                var module = await _context.Modules
+                using var context = _contextFactory.CreateDbContext();
+                var module = await context.Modules
                     .Include(m => m.Lessons)
                     .FirstOrDefaultAsync(m => m.Id == id);
 
@@ -364,7 +328,8 @@ namespace LMS.Repositories
         {
             try
             {
-                var module = await _context.Modules.FindAsync(id);
+                using var context = _contextFactory.CreateDbContext();
+                var module = await context.Modules.FindAsync(id);
                 if (module == null)
                     throw new ArgumentException("Module not found");
 
@@ -374,7 +339,7 @@ namespace LMS.Repositories
                 module.IsRequired = request.IsRequired;
                 module.UpdatedAt = DateTime.UtcNow;
 
-                await _context.SaveChangesAsync();
+                await context.SaveChangesAsync();
 
                 return await GetModuleByIdAsync(id) ?? throw new InvalidOperationException("Module not found after update");
             }
@@ -389,12 +354,13 @@ namespace LMS.Repositories
         {
             try
             {
-                var module = await _context.Modules.FindAsync(id);
+                using var context = _contextFactory.CreateDbContext();
+                var module = await context.Modules.FindAsync(id);
                 if (module == null)
                     return false;
 
-                _context.Modules.Remove(module);
-                await _context.SaveChangesAsync();
+                context.Modules.Remove(module);
+                await context.SaveChangesAsync();
                 return true;
             }
             catch (Exception ex)
@@ -408,7 +374,8 @@ namespace LMS.Repositories
         {
             try
             {
-                var lessons = await _context.Lessons
+                using var context = _contextFactory.CreateDbContext();
+                var lessons = await context.Lessons
                     .Where(l => l.ModuleId == moduleId)
                     .Include(l => l.Resources)
                     .OrderBy(l => l.OrderIndex)
@@ -427,6 +394,7 @@ namespace LMS.Repositories
         {
             try
             {
+                using var context = _contextFactory.CreateDbContext();
                 var lesson = new Lesson
                 {
                     Title = request.Title,
@@ -445,8 +413,8 @@ namespace LMS.Repositories
                     UpdatedAt = DateTime.UtcNow
                 };
 
-                _context.Lessons.Add(lesson);
-                await _context.SaveChangesAsync();
+                context.Lessons.Add(lesson);
+                await context.SaveChangesAsync();
 
                 return MapToLessonModel(lesson);
             }
@@ -461,7 +429,8 @@ namespace LMS.Repositories
         {
             try
             {
-                var lesson = await _context.Lessons
+                using var context = _contextFactory.CreateDbContext();
+                var lesson = await context.Lessons
                     .Include(l => l.Resources)
                     .FirstOrDefaultAsync(l => l.Id == id);
 
@@ -478,7 +447,8 @@ namespace LMS.Repositories
         {
             try
             {
-                var lesson = await _context.Lessons.FindAsync(id);
+                using var context = _contextFactory.CreateDbContext();
+                var lesson = await context.Lessons.FindAsync(id);
                 if (lesson == null)
                     throw new ArgumentException("Lesson not found");
 
@@ -493,7 +463,7 @@ namespace LMS.Repositories
                 lesson.IsRequired = request.IsRequired;
                 lesson.UpdatedAt = DateTime.UtcNow;
 
-                await _context.SaveChangesAsync();
+                await context.SaveChangesAsync();
 
                 return await GetLessonByIdAsync(id) ?? throw new InvalidOperationException("Lesson not found after update");
             }
@@ -508,12 +478,13 @@ namespace LMS.Repositories
         {
             try
             {
-                var lesson = await _context.Lessons.FindAsync(id);
+                using var context = _contextFactory.CreateDbContext();
+                var lesson = await context.Lessons.FindAsync(id);
                 if (lesson == null)
                     return false;
 
-                _context.Lessons.Remove(lesson);
-                await _context.SaveChangesAsync();
+                context.Lessons.Remove(lesson);
+                await context.SaveChangesAsync();
                 return true;
             }
             catch (Exception ex)
@@ -527,6 +498,36 @@ namespace LMS.Repositories
         {
             // For now, just call GetCoursesAsync
             return await GetCoursesAsync();
+        }
+
+        public async Task<PaginatedResult<ModuleModel>> GetModulesPaginatedAsync(PaginationRequest request)
+        {
+            try
+            {
+                request.Validate();
+                using var context = _contextFactory.CreateDbContext();
+                var query = context.Modules
+                    .Include(m => m.Lessons)
+                    .OrderBy(m => m.CourseId)
+                    .ThenBy(m => m.OrderIndex);
+
+                var totalCount = await query.CountAsync();
+                var skip = (request.PageNumber - 1) * request.PageSize;
+                var modules = await query.Skip(skip).Take(request.PageSize).ToListAsync();
+
+                return new PaginatedResult<ModuleModel>
+                {
+                    Items = modules.Select(MapToModuleModel).ToList(),
+                    TotalCount = totalCount,
+                    PageSize = request.PageSize,
+                    PageNumber = request.PageNumber
+                };
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting paginated modules");
+                throw;
+            }
         }
 
         private static CourseModel MapToCourseModel(Course course)

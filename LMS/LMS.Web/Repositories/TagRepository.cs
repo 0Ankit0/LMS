@@ -94,10 +94,8 @@ namespace LMS.Repositories
                     Name = request.Name,
                     Color = request.Color
                 };
-
                 _context.Tags.Add(tag);
                 await _context.SaveChangesAsync();
-
                 return MapToTagModel(tag);
             }
             catch (Exception ex)

@@ -132,24 +132,19 @@ namespace LMS.Repositories
             // Check if user is already enrolled
             var existingEnrollment = await _context.Enrollments
                 .FirstOrDefaultAsync(e => e.UserId == userId && e.CourseId == request.CourseId);
-
             if (existingEnrollment != null)
                 throw new InvalidOperationException("User is already enrolled in this course");
-
             // Check course capacity
             var course = await _context.Courses.FindAsync(request.CourseId);
             if (course == null)
                 throw new ArgumentException("Course not found", nameof(request.CourseId));
-
             if (course.MaxEnrollments > 0)
             {
                 var currentEnrollments = await _context.Enrollments
                     .CountAsync(e => e.CourseId == request.CourseId && e.Status == EnrollmentStatus.Active);
-
                 if (currentEnrollments >= course.MaxEnrollments)
                     throw new InvalidOperationException("Course has reached maximum enrollment capacity");
             }
-
             var enrollment = new Enrollment
             {
                 UserId = userId,
@@ -159,10 +154,8 @@ namespace LMS.Repositories
                 ProgressPercentage = 0,
                 TimeSpent = TimeSpan.Zero
             };
-
             _context.Enrollments.Add(enrollment);
             await _context.SaveChangesAsync();
-
             return await GetEnrollmentByIdAsync(enrollment.Id) ?? throw new InvalidOperationException("Failed to retrieve created enrollment");
         }
 
