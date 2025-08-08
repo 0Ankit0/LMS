@@ -1,7 +1,7 @@
+@page "/user/lms/dashboard"
 @using LMS.Web.Components.Account
 @using MudBlazor.Utilities
 @using System.Security.Claims
-@page "/user/lms/dashboard"
 @inject ISnackbar Snackbar
 @inject UserManager<User> UserManager
 @if (isLoading)
@@ -70,7 +70,7 @@ else
                     </CardHeaderContent>
                 </MudCardHeader>
                 <MudCardContent>
-                    <MudSelect T="int" Label="Select Course" Variant="Variant.Outlined" @bind-Value="selectedProgressCourseId">
+                    <MudSelect T="int" Label="Select Course" Variant="Variant.Outlined" @bind-Value="selectedProgressCourseId" @onchange="HandleProgressCourseChanged">
                         @foreach (var item in ProgressCourses)
                         {
                             <MudSelectItem T="int" Value="@item.Course.Id">@item.Course.Title</MudSelectItem>
@@ -244,44 +244,17 @@ else
 
     protected override async Task OnInitializedAsync()
     {
-        // Simulate loading data
-        await Task.Delay(1000);
-
-        // Mock Data for demonstration
-        ContinueCourse = new CourseModel { Id = 1, Title = "Introduction to Blazor", Description = "Learn the basics of Blazor development.", ThumbnailUrl = "https://via.placeholder.com/140x90" };
-        NewCourses = new List<CourseModel>
-        {
-            new CourseModel { Id = 2, Title = "Advanced C#", Description = "Deep dive into C# features.", ThumbnailUrl = "https://via.placeholder.com/140x90" },
-            new CourseModel { Id = 3, Title = "Azure Fundamentals", Description = "Explore cloud computing with Azure.", ThumbnailUrl = "https://via.placeholder.com/140x90" }
-        };
-        YourCourses = new List<CourseModel>
-        {
-            new CourseModel { Id = 4, Title = "Web Development Basics", Description = "HTML, CSS, JavaScript essentials.", ThumbnailUrl = "https://via.placeholder.com/140x90" },
-            new CourseModel { Id = 5, Title = "Database Design", Description = "Relational database concepts.", ThumbnailUrl = "https://via.placeholder.com/140x90" }
-        };
-        UpcomingCourses = new List<CourseModel>
-        {
-            new CourseModel { Id = 6, Title = "Machine Learning with Python", Description = "Introduction to ML algorithms.", ThumbnailUrl = "https://via.placeholder.com/140x90" }
-        };
-        UserNotes = new List<NoteModel>
-        {
-            new NoteModel { Title = "Blazor Components", Content = "Remember to use MudBlazor components for UI." },
-            new NoteModel { Title = "API Endpoints", Content = "Need to integrate with /api/courses and /api/enrollments." }
-        };
-
-        ProgressCourses = new List<ProgressCourseModel>
-        {
-            new ProgressCourseModel { Course = new CourseModel { Id = 1, Title = "Introduction to Blazor", Description = "Learn the basics of Blazor development." }, Progress = 75 },
-            new ProgressCourseModel { Course = new CourseModel { Id = 4, Title = "Web Development Basics", Description = "HTML, CSS, JavaScript essentials." }, Progress = 50 }
-        };
-
-        if (ProgressCourses.Any())
-        {
-            selectedProgressCourseId = ProgressCourses.First().Course.Id;
-            OnProgressCourseChanged(selectedProgressCourseId);
-        }
-
+        // TODO: Replace with actual data loading from repository for the logged-in user
+        // For now, set isLoading to false to show the UI
         isLoading = false;
+    }
+
+    private async Task HandleProgressCourseChanged(ChangeEventArgs e)
+    {
+        if (int.TryParse(e.Value?.ToString(), out var courseId))
+        {
+            OnProgressCourseChanged(courseId);
+        }
     }
 
     private void OnProgressCourseChanged(int courseId)

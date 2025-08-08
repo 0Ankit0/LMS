@@ -135,7 +135,15 @@
         {
             try
             {
-                Snackbar.Add("Delete operation is not implemented. Please add DeleteQuestionAsync to IAssessmentRepository.", Severity.Error);
+                var result = await AssessmentRepository.DeleteQuestionAsync(questionToDelete.Id);
+                if (result)
+                {
+                    Snackbar.Add("Question deleted successfully!", Severity.Success);
+                }
+                else
+                {
+                    Snackbar.Add("Failed to delete question.", Severity.Error);
+                }
                 await RefreshGridDataAsync();
             }
             catch (Exception ex)

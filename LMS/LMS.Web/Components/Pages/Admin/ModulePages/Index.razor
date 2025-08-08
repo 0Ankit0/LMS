@@ -123,27 +123,28 @@
     {
         _loading = true;
         StateHasChanged();
-        
         try
         {
-            // For now, just use sample data since the repository method might not exist
-            // TODO: Implement proper repository method GetModulesPaginatedAsync
-            var sample = GetSampleModules();
-            
+            // Use real repository method for paginated modules
+            var request = new PaginationRequest
+            {
+                PageNumber = state.Page + 1,
+                PageSize = state.PageSize > 0 ? state.PageSize : 10
+            };
+            var result = await CourseRepository.GetModulesPaginatedAsync(request);
             return new TableData<ModuleModel>
             {
-                Items = sample,
-                TotalItems = sample.Count()
+                Items = result.Items,
+                TotalItems = result.TotalCount
             };
         }
         catch (Exception ex)
         {
             Snackbar.Add($"Error loading modules: {ex.Message}", Severity.Error);
-            var sample = GetSampleModules();
             return new TableData<ModuleModel>
             {
-                Items = sample,
-                TotalItems = sample.Count()
+                Items = new List<ModuleModel>(),
+                TotalItems = 0
             };
         }
         finally
@@ -151,75 +152,6 @@
             _loading = false;
             StateHasChanged();
         }
-    }
-
-    private List<ModuleModel> GetSampleModules()
-    {
-        return new List<ModuleModel>
-        {
-            new ModuleModel
-            {
-                Id = 1,
-                Title = "Introduction to Programming Fundamentals",
-                Description = "Basic programming concepts including variables, loops, and functions",
-                CourseId = 1,
-                OrderIndex = 1,
-                IsRequired = true,
-                IsActive = true,
-                Lessons = new List<LessonModel>
-                {
-                    new LessonModel { Id = 1, Title = "Variables and Data Types" },
-                    new LessonModel { Id = 2, Title = "Control Structures" }
-                },
-                IconName = Icons.Material.Filled.Code
-            },
-            new ModuleModel
-            {
-                Id = 2,
-                Title = "Data Structures and Algorithms",
-                Description = "Learn about arrays, lists, stacks, queues and basic algorithms",
-                CourseId = 1,
-                OrderIndex = 2,
-                IsRequired = true,
-                IsActive = true,
-                Lessons = new List<LessonModel>
-                {
-                    new LessonModel { Id = 3, Title = "Arrays and Lists" },
-                    new LessonModel { Id = 4, Title = "Searching Algorithms" },
-                    new LessonModel { Id = 5, Title = "Sorting Algorithms" }
-                },
-                IconName = Icons.Material.Filled.AccountTree
-            },
-            new ModuleModel
-            {
-                Id = 3,
-                Title = "Web Development Basics",
-                Description = "HTML, CSS, and JavaScript fundamentals for modern web development",
-                CourseId = 2,
-                OrderIndex = 1,
-                IsRequired = false,
-                IsActive = true,
-                Lessons = new List<LessonModel>
-                {
-                    new LessonModel { Id = 6, Title = "HTML Structure" },
-                    new LessonModel { Id = 7, Title = "CSS Styling" },
-                    new LessonModel { Id = 8, Title = "JavaScript Basics" }
-                },
-                IconName = Icons.Material.Filled.Web
-            },
-            new ModuleModel
-            {
-                Id = 4,
-                Title = "Database Design",
-                Description = "Relational database concepts and SQL fundamentals",
-                CourseId = 3,
-                OrderIndex = 2,
-                IsRequired = true,
-                IsActive = false,
-                Lessons = new List<LessonModel>(),
-                IconName = Icons.Material.Filled.Storage
-            }
-        };
     }
 
     private void ConfirmDelete(ModuleModel module)
@@ -244,7 +176,6 @@
                 Snackbar.Add($"Module '{moduleToDelete.Title}' deleted successfully.", Severity.Success);
                 showDeleteConfirm = false;
                 moduleToDelete = null;
-                // Refresh the table
                 StateHasChanged();
             }
             catch (Exception ex)

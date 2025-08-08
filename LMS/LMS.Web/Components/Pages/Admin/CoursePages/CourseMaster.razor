@@ -216,19 +216,20 @@ else
 
     protected override async Task OnInitializedAsync()
     {
-        // Simulate data loading
-        await Task.Delay(1000);
-
-        var course = await CourseRepository.GetCourseByIdAsync(Id);
-
+        // Load course data from repository
+        course = await CourseRepository.GetCourseByIdAsync(Id);
         if (course is null)
         {
-            InitializeMockData();
-            // NavigationManager.NavigateTo("notfound");
+            // Optionally, navigate to not found or show error
+            isLoading = false;
             return;
         }
-
-        isLoading = false; // Set isLoading to false after data is loaded
+        // TODO: Load forum posts, resources, and assessments from their respective repositories if needed
+        // For now, keep the lists empty or with mock data if required
+        forumPosts = new List<ForumPostModel>();
+        courseResources = new List<LessonResourceModel>();
+        assessments = new List<AssessmentModel>();
+        isLoading = false;
     }
 
     private void SetActiveTab(string tab)
@@ -239,38 +240,7 @@ else
     private void SelectForumChannel(string channel)
     {
         selectedForumChannel = channel;
-        LoadForumPosts();
-    }
-
-    private void InitializeMockData()
-    {
-        forumPosts = new List<ForumPostModel>
-        {
-            new ForumPostModel { Id = 1, AuthorName = "John Doe", Content = "Welcome to the course! Looking forward to learning with everyone.", CreatedAt = DateTime.Now.AddDays(-2) },
-            new ForumPostModel { Id = 2, AuthorName = "Jane Smith", Content = "Has anyone started the first assignment yet? I'm having trouble with the setup.", CreatedAt = DateTime.Now.AddDays(-1) }
-        };
-
-        courseResources = new List<LessonResourceModel>
-        {
-            new LessonResourceModel { Id = 1, Name = "Course Syllabus", Type = "PDF", Description = "Complete course outline and schedule", ExternalUrl = "#" },
-            new LessonResourceModel { Id = 2, Name = "Getting Started Guide", Type = "PDF", Description = "Setup instructions and prerequisites", ExternalUrl = "#" },
-            new LessonResourceModel { Id = 3, Name = "Sample Code", Type = "ZIP", Description = "Code examples and templates", ExternalUrl = "#" }
-        };
-
-        assessments = new List<AssessmentModel>
-        {
-            new AssessmentModel { Id = 1, Title = "Quiz 1: Fundamentals", Type = "Quiz", Description = "Basic concepts and terminology", AvailableUntil = DateTime.Now.AddDays(7) },
-            new AssessmentModel { Id = 2, Title = "Assignment 1: Hello World", Type = "Assignment", Description = "Create your first application", AvailableUntil = DateTime.Now.AddDays(14) }
-        };
-    }
-
-    private void LoadForumPosts()
-    {
-        // Mock implementation - replace with actual data loading based on selectedForumChannel
-        forumPosts = new List<ForumPostModel>
-        {
-            new ForumPostModel { Id = 1, AuthorName = "John Doe", Content = $"This is a post in {selectedForumChannel} channel", CreatedAt = DateTime.Now.AddDays(-1) }
-        };
+        // Optionally, filter forumPosts by channel if needed
     }
 }
 

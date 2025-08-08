@@ -139,8 +139,7 @@ namespace LMS.Repositories
                     IsActive = true,
                     SendEmail = request.SendEmail,
                     SendSms = request.SendSms,
-                    CourseId = request.CourseId,
-                    AuthorId = request.AuthorId // Should be set from context
+                    CourseId = request.CourseId
                 };
                 context.Announcements.Add(announcement);
                 await context.SaveChangesAsync();
