@@ -12,14 +12,14 @@ public static class EndpointExtensions
         this IServiceCollection services,
         Assembly assembly)
     {
-        ServiceDescriptor[] serviceDescriptors = assembly
-            .DefinedTypes
-            .Where(type => type is { IsAbstract: false, IsInterface: false } &&
-                           type.IsAssignableTo(typeof(IEndpoint)))
-            .Select(type => ServiceDescriptor.Transient(typeof(IEndpoint), type))
-            .ToArray();
+        // ServiceDescriptor[] serviceDescriptors = assembly
+        //     .DefinedTypes
+        //     .Where(type => type is { IsAbstract: false, IsInterface: false } &&
+        //                    type.IsAssignableTo(typeof(IEndpoint)))
+        //     .Select(type => ServiceDescriptor.Transient(typeof(IEndpoint), type))
+        //     .ToArray();
 
-        services.TryAddEnumerable(serviceDescriptors);
+        // services.TryAddEnumerable(serviceDescriptors);
 
         // Register all repository interfaces and their implementations
         var repoTypes = assembly.DefinedTypes
