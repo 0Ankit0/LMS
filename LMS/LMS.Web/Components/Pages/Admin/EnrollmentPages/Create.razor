@@ -12,53 +12,56 @@
 
 @if (isLoading)
 {
-    <div class="d-flex justify-content-between align-items-center mb-4">
+    <MudStack Direction="Row" Spacing="2" Class="mb-4">
         <MudSkeleton SkeletonType="SkeletonType.Text" Width="200px" Height="40px" />
         <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="180px" Height="40px" />
-    </div>
+    </MudStack>
     <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="400px" />
 }
 else
 {
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1 class="mb-0">@(IsEdit ? "Edit Enrollment" : "Create New Enrollment")</h1>
+    <MudStack Direction="Row" Spacing="2" Class="mb-4">
+        <MudText Typo="Typo.h4">@(IsEdit ? "Edit Enrollment" : "Create New Enrollment")</MudText>
         <MudButton Variant="Variant.Text" Color="Color.Secondary" Href="/admin/enrollments">
             <MudIcon Icon="@Icons.Material.Filled.ArrowBack" Class="me-2" />
             Back to Enrollments
         </MudButton>
-    </div>
+    </MudStack>
     <MudCard Elevation="2">
         <MudCardHeader>
             <MudText Typo="Typo.h6">Enrollment Information</MudText>
         </MudCardHeader>
         <MudCardContent>
-            <EditForm Model="Enrollment" OnValidSubmit="SaveEnrollment">
-                <MudAlert Severity="Severity.Error" Class="mb-3" >
-                    <MudText>Please correct the errors below.</MudText>
-                </MudAlert>
-                <MudAutocomplete T="string" @bind-Value="Enrollment.UserId" Label="User" Variant="Variant.Text" Required="true" RequiredError="User is required!" Placeholder="Search user..."
-                    ToStringFunc="@(id => Users.FirstOrDefault(u => u.Value == id)?.Text ?? string.Empty)"
-                    SearchFunc="SearchUsers" Disabled="@IsEdit" />
-                <MudAutocomplete T="int?" Value="Enrollment.CourseId" ValueChanged="@(v => Enrollment.CourseId = v ?? 0)" Label="Course" Variant="Variant.Text" Required="true" RequiredError="Course is required!" Placeholder="Search course..."
-                    ToStringFunc="@(id => Courses.FirstOrDefault(c => c.Value == id)?.Text ?? string.Empty)"
-                    SearchFunc="SearchCourses" Disabled="@IsEdit" />
-                @if (IsEdit)
-                {
-                    <MudSelect @bind-Value="EnrollmentStatusValue" Label="Status" Variant="Variant.Text">
-                        @foreach (var status in Enum.GetNames(typeof(EnrollmentStatusEnum)))
-                        {
-                            <MudSelectItem Value="@status">@status</MudSelectItem>
-                        }
-                    </MudSelect>
-                }
-                <div class="d-flex gap-2">
-                    <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Disabled="@isSubmitting">
-                        <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Class="me-2" />
-                        @(IsEdit ? "Update Enrollment" : "Create Enrollment")
-                    </MudButton>
-                    <MudButton Variant="Variant.Filled" Color="Color.Secondary" Href="/admin/enrollments">Cancel</MudButton>
-                </div>
-            </EditForm>
+            @if (editContext != null)
+            {
+                <EditForm EditContext="@editContext" OnValidSubmit="SaveEnrollment">
+                    <MudAlert Severity="Severity.Error" Class="mb-3" >
+                        <MudText>Please correct the errors below.</MudText>
+                    </MudAlert>
+                    <MudAutocomplete T="string" @bind-Value="Enrollment.UserId" Label="User" Variant="Variant.Text" Required="true" RequiredError="User is required!" Placeholder="Search user..."
+                        ToStringFunc="@(id => Users.FirstOrDefault(u => u.Value == id)?.Text ?? string.Empty)"
+                        SearchFunc="SearchUsers" Disabled="@IsEdit" />
+                    <MudAutocomplete T="int?" Value="Enrollment.CourseId" ValueChanged="@(v => Enrollment.CourseId = v ?? 0)" Label="Course" Variant="Variant.Text" Required="true" RequiredError="Course is required!" Placeholder="Search course..."
+                        ToStringFunc="@(id => Courses.FirstOrDefault(c => c.Value == id)?.Text ?? string.Empty)"
+                        SearchFunc="SearchCourses" Disabled="@IsEdit" />
+                    @if (IsEdit)
+                    {
+                        <MudSelect @bind-Value="EnrollmentStatusValue" Label="Status" Variant="Variant.Text">
+                            @foreach (var status in Enum.GetNames(typeof(EnrollmentStatusEnum)))
+                            {
+                                <MudSelectItem Value="@status">@status</MudSelectItem>
+                            }
+                        </MudSelect>
+                    }
+                    <div class="d-flex gap-2">
+                        <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Disabled="@isSubmitting">
+                            <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Class="me-2" />
+                            @(IsEdit ? "Update Enrollment" : "Create Enrollment")
+                        </MudButton>
+                        <MudButton Variant="Variant.Filled" Color="Color.Secondary" Href="/admin/enrollments">Cancel</MudButton>
+                    </div>
+                </EditForm>
+            }
         </MudCardContent>
     </MudCard>
 }
@@ -73,11 +76,13 @@ else
     private List<DropdownOption<string>> Users = new();
     private List<DropdownOption<int>> Courses = new();
     private string EnrollmentStatusValue { get; set; } = "Active";
+    private EditContext? editContext;
 
     protected override async Task OnInitializedAsync()
     {
         Users = await DropdownRepository.GetUsersAsync();
         Courses = await DropdownRepository.GetCoursesAsync();
+        editContext = new EditContext(Enrollment);
         if (IsEdit)
         {
             var enrollment = await EnrollmentRepository.GetEnrollmentByIdAsync(id.Value);
@@ -89,6 +94,7 @@ else
                     CourseId = enrollment.CourseId
                 };
                 EnrollmentStatusValue = enrollment.Status;
+                editContext = new EditContext(Enrollment);
             }
             else
             {

@@ -17,82 +17,49 @@
         </MudButton>
     </MudCardHeader>
     <MudCardContent>
-        @if (_loading)
-        {
-            <div class="mb-3">
-                <!-- Table header skeleton -->
-                <div class="row">
-                    <div class="col"><MudSkeleton SkeletonType="SkeletonType.Text" Height="32px" Width="120px" /></div>
-                    <div class="col"><MudSkeleton SkeletonType="SkeletonType.Text" Height="32px" Width="200px" /></div>
-                    <div class="col"><MudSkeleton SkeletonType="SkeletonType.Text" Height="32px" Width="80px" /></div>
-                    <div class="col"><MudSkeleton SkeletonType="SkeletonType.Text" Height="32px" Width="80px" /></div>
-                    <div class="col"><MudSkeleton SkeletonType="SkeletonType.Text" Height="32px" Width="80px" /></div>
-                    <div class="col"><MudSkeleton SkeletonType="SkeletonType.Text" Height="32px" Width="80px" /></div>
-                    <div class="col"><MudSkeleton SkeletonType="SkeletonType.Text" Height="32px" Width="80px" /></div>
-                    <div class="col"><MudSkeleton SkeletonType="SkeletonType.Text" Height="32px" Width="80px" /></div>
-                </div>
-                <!-- Table row skeletons -->
-                @for (int r = 0; r < 10; r++)
-                {
-                    <div class="row mt-2">
-                        <div class="col"><MudSkeleton SkeletonType="SkeletonType.Text" Height="32px" Width="120px" /></div>
-                        <div class="col"><MudSkeleton SkeletonType="SkeletonType.Text" Height="32px" Width="200px" /></div>
-                        <div class="col"><MudSkeleton SkeletonType="SkeletonType.Text" Height="32px" Width="80px" /></div>
-                        <div class="col"><MudSkeleton SkeletonType="SkeletonType.Text" Height="32px" Width="80px" /></div>
-                        <div class="col"><MudSkeleton SkeletonType="SkeletonType.Text" Height="32px" Width="80px" /></div>
-                        <div class="col"><MudSkeleton SkeletonType="SkeletonType.Text" Height="32px" Width="80px" /></div>
-                        <div class="col"><MudSkeleton SkeletonType="SkeletonType.Text" Height="32px" Width="80px" /></div>
-                        <div class="col"><MudSkeleton SkeletonType="SkeletonType.Text" Height="32px" Width="80px" /></div>
-                    </div>
-                }
-            </div>
-        }
-        else
-        {
-            <MudTable T="LessonModel" ServerData="@LessonsDataProvider" Hover="true" Breakpoint="Breakpoint.Sm" Loading="@_loading">
-                <HeaderContent>
-                    <MudTh><MudTableSortLabel T="LessonModel" SortBy="new Func<LessonModel, object>(x => x.Title)">Title</MudTableSortLabel></MudTh>
-                    <MudTh><MudTableSortLabel T="LessonModel" SortBy="new Func<LessonModel, object>(x => x.Description)">Description</MudTableSortLabel></MudTh>
-                    <MudTh><MudTableSortLabel T="LessonModel" SortBy="new Func<LessonModel, object>(x => x.ModuleId)">Module ID</MudTableSortLabel></MudTh>
-                    <MudTh><MudTableSortLabel T="LessonModel" SortBy="new Func<LessonModel, object>(x => x.Type)">Type</MudTableSortLabel></MudTh>
-                    <MudTh><MudTableSortLabel T="LessonModel" SortBy="new Func<LessonModel, object>(x => x.EstimatedDuration)">Duration</MudTableSortLabel></MudTh>
-                    <MudTh><MudTableSortLabel T="LessonModel" SortBy="new Func<LessonModel, object>(x => x.OrderIndex)">Order</MudTableSortLabel></MudTh>
-                    <MudTh><MudTableSortLabel T="LessonModel" SortBy="new Func<LessonModel, object>(x => x.IsRequired)">Required</MudTableSortLabel></MudTh>
-                    <MudTh>Actions</MudTh>
-                </HeaderContent>
-                <RowTemplate>
-                    <MudTd DataLabel="Title">@context.Title</MudTd>
-                    <MudTd DataLabel="Description">@context.Description</MudTd>
-                    <MudTd DataLabel="Module ID">@context.ModuleId</MudTd>
-                    <MudTd DataLabel="Type">
-                        <MudChip T="string" Color="@GetTypeBadgeColor(context.Type)">@context.Type</MudChip>
-                    </MudTd>
-                    <MudTd DataLabel="Duration">@context.EstimatedDuration.TotalMinutes minutes</MudTd>
-                    <MudTd DataLabel="Order">@context.OrderIndex</MudTd>
-                    <MudTd DataLabel="Required">
-                        <MudChip T="bool" Color="@(context.IsRequired? Color.Primary: Color.Secondary)">
-                            @(context.IsRequired ? "Yes" : "No")
-                        </MudChip>
-                    </MudTd>
-                    <MudTd DataLabel="Actions">
-                        <MudButtonGroup>
-                            <MudButton Variant="Variant.Outlined" Color="Color.Primary" Href='@($"/admin/lessons/edit?id={context.Id}")'>
-                                <MudIcon Icon="@Icons.Material.Filled.Edit" Class="me-1" /> Edit
-                            </MudButton>
-                            <MudButton Variant="Variant.Outlined" Color="Color.Info" Href='@($"/admin/lessons/details?id={context.Id}")'>
-                                <MudIcon Icon="@Icons.Material.Filled.Info" Class="me-1" /> Details
-                            </MudButton>
-                            <MudButton Variant="Variant.Outlined" Color="Color.Error" OnClick="() => ConfirmDelete(context)">
-                                <MudIcon Icon="@Icons.Material.Filled.Delete" Class="me-1" /> Delete
-                            </MudButton>
-                        </MudButtonGroup>
-                    </MudTd>
-                </RowTemplate>
-                <PagerContent>
-                    <MudTablePager PageSizeOptions="@(new int[]{10, 25, 50})" />
-                </PagerContent>
-            </MudTable>
-        }
+        <MudTable T="LessonModel" ServerData="@LessonsDataProvider" Hover="true" Breakpoint="Breakpoint.Sm" Loading="@_loading">
+            <HeaderContent>
+                <MudTh><MudTableSortLabel T="LessonModel" SortBy="new Func<LessonModel, object>(x => x.Title)">Title</MudTableSortLabel></MudTh>
+                <MudTh><MudTableSortLabel T="LessonModel" SortBy="new Func<LessonModel, object>(x => x.Description)">Description</MudTableSortLabel></MudTh>
+                <MudTh><MudTableSortLabel T="LessonModel" SortBy="new Func<LessonModel, object>(x => x.ModuleId)">Module ID</MudTableSortLabel></MudTh>
+                <MudTh><MudTableSortLabel T="LessonModel" SortBy="new Func<LessonModel, object>(x => x.Type)">Type</MudTableSortLabel></MudTh>
+                <MudTh><MudTableSortLabel T="LessonModel" SortBy="new Func<LessonModel, object>(x => x.EstimatedDuration)">Duration</MudTableSortLabel></MudTh>
+                <MudTh><MudTableSortLabel T="LessonModel" SortBy="new Func<LessonModel, object>(x => x.OrderIndex)">Order</MudTableSortLabel></MudTh>
+                <MudTh><MudTableSortLabel T="LessonModel" SortBy="new Func<LessonModel, object>(x => x.IsRequired)">Required</MudTableSortLabel></MudTh>
+                <MudTh>Actions</MudTh>
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd DataLabel="Title">@context.Title</MudTd>
+                <MudTd DataLabel="Description">@context.Description</MudTd>
+                <MudTd DataLabel="Module ID">@context.ModuleId</MudTd>
+                <MudTd DataLabel="Type">
+                    <MudChip T="string" Color="@GetTypeBadgeColor(context.Type)">@context.Type</MudChip>
+                </MudTd>
+                <MudTd DataLabel="Duration">@context.EstimatedDuration.TotalMinutes minutes</MudTd>
+                <MudTd DataLabel="Order">@context.OrderIndex</MudTd>
+                <MudTd DataLabel="Required">
+                    <MudChip T="bool" Color="@(context.IsRequired? Color.Primary: Color.Secondary)">
+                        @(context.IsRequired ? "Yes" : "No")
+                    </MudChip>
+                </MudTd>
+                <MudTd DataLabel="Actions">
+                    <MudButtonGroup>
+                        <MudButton Variant="Variant.Outlined" Color="Color.Primary" Href='@($"/admin/lessons/edit?id={context.Id}")'>
+                            <MudIcon Icon="@Icons.Material.Filled.Edit" Class="me-1" /> Edit
+                        </MudButton>
+                        <MudButton Variant="Variant.Outlined" Color="Color.Info" Href='@($"/admin/lessons/details?id={context.Id}")'>
+                            <MudIcon Icon="@Icons.Material.Filled.Info" Class="me-1" /> Details
+                        </MudButton>
+                        <MudButton Variant="Variant.Outlined" Color="Color.Error" OnClick="() => ConfirmDelete(context)">
+                            <MudIcon Icon="@Icons.Material.Filled.Delete" Class="me-1" /> Delete
+                        </MudButton>
+                    </MudButtonGroup>
+                </MudTd>
+            </RowTemplate>
+            <PagerContent>
+                <MudTablePager PageSizeOptions="@(new int[]{10, 25, 50})" />
+            </PagerContent>
+        </MudTable>
     </MudCardContent>
 </MudCard>
 
@@ -124,6 +91,7 @@
     {
         _loading = true;
         StateHasChanged();
+        
         try
         {
             var pageNumber = state.Page < 1 ? 1 : state.Page;
@@ -135,7 +103,7 @@
             });
             var data = (result.Items == null || !result.Items.Any()) ? AddDummyLessons() : result.Items;
             var totalCount = (result.Items == null || !result.Items.Any()) ? data.Count() : result.TotalCount;
-            _loading = false;
+            
             return new MudBlazor.TableData<LessonModel>
             {
                 Items = data,
@@ -145,12 +113,16 @@
         catch (Exception ex)
         {
             Snackbar.Add($"Error loading lessons: {ex.Message}", Severity.Error);
-            _loading = false;
             return new MudBlazor.TableData<LessonModel>
             {
                 Items = Enumerable.Empty<LessonModel>(),
                 TotalItems = 0
             };
+        }
+        finally
+        {
+            _loading = false;
+            StateHasChanged();
         }
     }
 
@@ -235,6 +207,7 @@ IsRequired = false
             finally
             {
                 lessonToDelete = null;
+                showDeleteConfirm = false;
             }
         }
     }

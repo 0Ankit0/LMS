@@ -19,59 +19,40 @@
         </MudButton>
     </MudCardHeader>
     <MudCardContent>
-        @if (_loading)
-        {
-            int columnCount = 3; // Number of columns in the table
-            int rowCount = 3;
-            <div class="mb-3">
-                @for (int r = 0; r < rowCount; r++)
-                {
-                    <div class="row @(r > 0 ? "mt-2" : null)">
-                        @for (int c = 0; c < columnCount; c++)
-                        {
-                            <div class="col"> <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="32px"  Width="20px"/> </div>
-                        }
-                    </div>
-                }
-            </div>
-        }
-        else
-        {
-            <MudTable T="TagModel" ServerData="@TagsDataProvider" Hover="true" Breakpoint="Breakpoint.Sm" Loading="@_loading">
-                <HeaderContent>
-                    <MudTh><MudTableSortLabel T="TagModel" SortBy="new Func<TagModel, object>(x => x.Name)">Name</MudTableSortLabel></MudTh>
-                    <MudTh><MudTableSortLabel T="TagModel" SortBy="new Func<TagModel, object>(x => x.Color)">Color</MudTableSortLabel></MudTh>
-                    <MudTh>Actions</MudTh>
-                </HeaderContent>
-                <RowTemplate>
-                    <MudTd DataLabel="Name">@context.Name</MudTd>
-                    <MudTd DataLabel="Color">
-                        <div class="d-flex align-items-center">
-                            <div class="me-2"
-                                style="width: 20px; height: 20px; background-color: @context.Color; border: 1px solid #ccc; border-radius: 4px;">
-                            </div>
-                            @context.Color
+        <MudTable T="TagModel" ServerData="@TagsDataProvider" Hover="true" Breakpoint="Breakpoint.Sm" Loading="@_loading">
+            <HeaderContent>
+                <MudTh><MudTableSortLabel T="TagModel" SortBy="new Func<TagModel, object>(x => x.Name)">Name</MudTableSortLabel></MudTh>
+                <MudTh><MudTableSortLabel T="TagModel" SortBy="new Func<TagModel, object>(x => x.Color)">Color</MudTableSortLabel></MudTh>
+                <MudTh>Actions</MudTh>
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd DataLabel="Name">@context.Name</MudTd>
+                <MudTd DataLabel="Color">
+                    <div class="d-flex align-items-center">
+                        <div class="me-2"
+                            style="width: 20px; height: 20px; background-color: @context.Color; border: 1px solid #ccc; border-radius: 4px;">
                         </div>
-                    </MudTd>
-                    <MudTd DataLabel="Actions">
-                        <MudButtonGroup>
-                            <MudButton Variant="Variant.Outlined" Color="Color.Primary" Href='@($"/admin/tags/edit?id={context.Id}")'>
-                                <MudIcon Icon="@Icons.Material.Filled.Edit" Class="me-1" /> Edit
-                            </MudButton>
-                            <MudButton Variant="Variant.Outlined" Color="Color.Info" Href='@($"/admin/tags/details?id={context.Id}")'>
-                                <MudIcon Icon="@Icons.Material.Filled.Info" Class="me-1" /> Details
-                            </MudButton>
-                            <MudButton Variant="Variant.Outlined" Color="Color.Error" OnClick="() => ConfirmDelete(context)">
-                                <MudIcon Icon="@Icons.Material.Filled.Delete" Class="me-1" /> Delete
-                            </MudButton>
-                        </MudButtonGroup>
-                    </MudTd>
-                </RowTemplate>
-                <PagerContent>
-                    <MudTablePager PageSizeOptions="@(new int[]{10, 25, 50})" />
-                </PagerContent>
-            </MudTable>
-        }
+                        @context.Color
+                    </div>
+                </MudTd>
+                <MudTd DataLabel="Actions">
+                    <MudButtonGroup>
+                        <MudButton Variant="Variant.Outlined" Color="Color.Primary" Href='@($"/admin/tags/edit?id={context.Id}")'>
+                            <MudIcon Icon="@Icons.Material.Filled.Edit" Class="me-1" /> Edit
+                        </MudButton>
+                        <MudButton Variant="Variant.Outlined" Color="Color.Info" Href='@($"/admin/tags/details?id={context.Id}")'>
+                            <MudIcon Icon="@Icons.Material.Filled.Info" Class="me-1" /> Details
+                        </MudButton>
+                        <MudButton Variant="Variant.Outlined" Color="Color.Error" OnClick="() => ConfirmDelete(context)">
+                            <MudIcon Icon="@Icons.Material.Filled.Delete" Class="me-1" /> Delete
+                        </MudButton>
+                    </MudButtonGroup>
+                </MudTd>
+            </RowTemplate>
+            <PagerContent>
+                <MudTablePager PageSizeOptions="@(new int[]{10, 25, 50})" />
+            </PagerContent>
+        </MudTable>
     </MudCardContent>
 </MudCard>
 
@@ -103,6 +84,7 @@
     {
         _loading = true;
         StateHasChanged();
+        
         try
         {
             var pageNumber = state.Page + 1; // Convert from 0-based to 1-based indexing
@@ -114,7 +96,7 @@
             });
             var data = (result.Items == null || !result.Items.Any()) ? AddDummyTags() : result.Items;
             var totalCount = (result.Items == null || !result.Items.Any()) ? data.Count() : result.TotalCount;
-            _loading = false;
+            
             return new MudBlazor.TableData<TagModel>
             {
                 Items = data,
@@ -124,12 +106,16 @@
         catch (Exception ex)
         {
             Snackbar.Add($"Error loading tags: {ex.Message}", Severity.Error);
-            _loading = false;
             return new MudBlazor.TableData<TagModel>
             {
                 Items = Enumerable.Empty<TagModel>(),
                 TotalItems = 0
             };
+        }
+        finally
+        {
+            _loading = false;
+            StateHasChanged();
         }
     }
 
@@ -174,6 +160,7 @@ new TagModel { Id = 5, Name = "Advanced", Color = "#6f42c1" }
             finally
             {
                 tagToDelete = null;
+                showDeleteConfirm = false;
             }
         }
     }

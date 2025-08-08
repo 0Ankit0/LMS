@@ -11,43 +11,37 @@
 
 @if (isLoading)
 {
-    <div class="d-flex justify-content-between align-items-center mb-4">
+    <MudStack Direction="Row" Spacing="2" Class="mb-4">
         <MudSkeleton SkeletonType="SkeletonType.Text" Width="200px" Height="40px" />
         <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="180px" Height="40px" />
-    </div>
-
+    </MudStack>
     <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="700px" />
 }
 else
 {
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1 class="mb-0">@(IsEdit ? "Edit Assessment" : "Create New Assessment")</h1>
+    <MudStack Direction="Row" Spacing="2" Class="mb-4">
+        <MudText Typo="Typo.h4">@(IsEdit ? "Edit Assessment" : "Create New Assessment")</MudText>
         <MudButton Variant="Variant.Text" Color="Color.Secondary" Href="/admin/assessments">
             <MudIcon Icon="@Icons.Material.Filled.ArrowBack" Class="me-2" />
             Back to Assessments
         </MudButton>
-    </div>
-
+    </MudStack>
     <MudCard Elevation="2">
         <MudCardHeader>
             <MudText Typo="Typo.h6">Assessment Information</MudText>
         </MudCardHeader>
         <MudCardContent>
-            <EditForm Model="Assessment" OnValidSubmit="SaveAssessment">
+            <EditForm EditContext="@editContext" OnValidSubmit="SaveAssessment">
                 <MudAlert Severity="Severity.Error" Class="mb-3" >
                     <MudText>Please correct the errors below.</MudText>
                 </MudAlert>
-
                 <MudTextField @bind-Value="Assessment.Title" Label="Title" Variant="Variant.Text" Required="true"
                     RequiredError="Title is required!" />
-
                 <MudTextField @bind-Value="Assessment.Description" Label="Description" Variant="Variant.Text" Lines="3"
                     Placeholder="Enter assessment description" />
-
                 <MudAutocomplete T="int?" Value="Assessment.CourseId" ValueChanged="@(v => Assessment.CourseId = v ?? 0)" Label="Course" Variant="Variant.Text" Required="true" RequiredError="Course is required!" Placeholder="Search course..."
                     ToStringFunc="@(id => courses.FirstOrDefault(c => c.Value == id)?.Text ?? string.Empty)"
                     SearchFunc="SearchCourses" />
-
                 <MudGrid>
                     <MudItem xs="12" md="6">
                         <MudAutocomplete T="int?" @bind-Value="Assessment.ModuleId" Label="Module (Optional)" Variant="Variant.Text" Placeholder="Search module (optional)..."
@@ -60,7 +54,6 @@ else
                             SearchFunc="SearchLessons" />
                     </MudItem>
                 </MudGrid>
-
                 <MudGrid>
                     <MudItem xs="12" md="6">
                         <MudSelect @bind-Value="Assessment.Type" Label="Assessment Type" Variant="Variant.Text">
@@ -76,7 +69,6 @@ else
                             Variant="Variant.Text" />
                     </MudItem>
                 </MudGrid>
-
                 <MudGrid>
                     <MudItem xs="12" md="6">
                         <MudNumericField  @bind-Value="TimeLimitMinutes" Label="Time Limit (minutes)"
@@ -87,7 +79,6 @@ else
                             Variant="Variant.Text" Step="0.01" />
                     </MudItem>
                 </MudGrid>
-
                 <MudGrid>
                     <MudItem xs="12" md="6">
                         <MudCheckBox T="bool" @bind-Checked="Assessment.IsRandomized" Label="Randomize Questions"
@@ -98,14 +89,12 @@ else
                             Color="Color.Primary" />
                     </MudItem>
                 </MudGrid>
-
                 <MudGrid>
                     <MudItem xs="12" md="6">
                         <MudCheckBox T="bool" @bind-Checked="Assessment.ShowScoreImmediately" Label="Show Score Immediately"
                             Color="Color.Primary" />
                     </MudItem>
                 </MudGrid>
-
                 <MudGrid>
                     <MudItem xs="12" md="6">
                         <MudDatePicker @bind-Date="Assessment.AvailableFrom" Label="Available From"
@@ -116,7 +105,6 @@ else
                             Variant="Variant.Text" />
                     </MudItem>
                 </MudGrid>
-
                 <div class="d-flex gap-2">
                     <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary"
                         Disabled="@isSubmitting">
@@ -138,17 +126,17 @@ else
     private bool isSubmitting = false;
     private bool isLoading = true;
     private bool IsEdit => ( id) > 0;
-    
     private List<DropdownOption<int>> courses = new();
     private List<DropdownOption> modules = new();
     private List<DropdownOption> lessons = new();
+    private EditContext editContext;
 
     protected override async Task OnInitializedAsync()
     {
         courses = await DropdownRepository.GetCoursesAsync();
         modules = await DropdownRepository.GetModulesAsync();
         lessons = await DropdownRepository.GetLessonsAsync();
-
+        editContext = new EditContext(Assessment);
         if (IsEdit)
         {
             var assessmentId =  id ?? 0;
@@ -174,6 +162,7 @@ else
                         AvailableFrom = existingAssessment.AvailableFrom,
                         AvailableUntil = existingAssessment.AvailableUntil
                     };
+                    editContext = new EditContext(Assessment);
                 }
             }
             catch (Exception ex)
@@ -183,7 +172,6 @@ else
                 return;
             }
         }
-
         await Task.Delay(500); // Simulate data loading
         isLoading = false;
     }

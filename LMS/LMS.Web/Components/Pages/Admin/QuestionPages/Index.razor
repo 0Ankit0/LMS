@@ -17,82 +17,49 @@
         </MudButton>
     </MudCardHeader>
     <MudCardContent>
-        @if (_loading)
-        {
-            <div class="mb-3">
-                <!-- Table header skeleton -->
-                <div class="row">
-                    <div class="col"><MudSkeleton SkeletonType="SkeletonType.Text" Height="32px" Width="120px" /></div>
-                    <div class="col"><MudSkeleton SkeletonType="SkeletonType.Text" Height="32px" Width="200px" /></div>
-                    <div class="col"><MudSkeleton SkeletonType="SkeletonType.Text" Height="32px" Width="80px" /></div>
-                    <div class="col"><MudSkeleton SkeletonType="SkeletonType.Text" Height="32px" Width="80px" /></div>
-                    <div class="col"><MudSkeleton SkeletonType="SkeletonType.Text" Height="32px" Width="60px" /></div>
-                    <div class="col"><MudSkeleton SkeletonType="SkeletonType.Text" Height="32px" Width="60px" /></div>
-                    <div class="col"><MudSkeleton SkeletonType="SkeletonType.Text" Height="32px" Width="120px" /></div>
-                    <div class="col"><MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="32px" Width="120px" /></div>
-                </div>
-                <!-- Table row skeletons -->
-                @for (int r = 0; r < 10; r++)
-                {
-                    <div class="row mt-2">
-                        <div class="col"><MudSkeleton SkeletonType="SkeletonType.Text" Height="32px" Width="120px" /></div>
-                        <div class="col"><MudSkeleton SkeletonType="SkeletonType.Text" Height="32px" Width="200px" /></div>
-                        <div class="col"><MudSkeleton SkeletonType="SkeletonType.Text" Height="32px" Width="80px" /></div>
-                        <div class="col"><MudSkeleton SkeletonType="SkeletonType.Text" Height="32px" Width="80px" /></div>
-                        <div class="col"><MudSkeleton SkeletonType="SkeletonType.Text" Height="32px" Width="60px" /></div>
-                        <div class="col"><MudSkeleton SkeletonType="SkeletonType.Text" Height="32px" Width="60px" /></div>
-                        <div class="col"><MudSkeleton SkeletonType="SkeletonType.Text" Height="32px" Width="120px" /></div>
-                        <div class="col"><MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="32px" Width="120px" /></div>
-                    </div>
-                }
-            </div>
-        }
-        else
-        {
-            <MudTable T="QuestionModel" ServerData="@ServerData" Hover="true" Breakpoint="Breakpoint.Sm" Loading="@_loading">
-                <HeaderContent>
-                    <MudTh><MudTableSortLabel T="QuestionModel" SortBy="new Func<QuestionModel, object>(x => x.Text)">Question Text</MudTableSortLabel></MudTh>
-                    <MudTh><MudTableSortLabel T="QuestionModel" SortBy="new Func<QuestionModel, object>(x => x.AssessmentId)">Assessment ID</MudTableSortLabel></MudTh>
-                    <MudTh><MudTableSortLabel T="QuestionModel" SortBy="new Func<QuestionModel, object>(x => x.Type)">Type</MudTableSortLabel></MudTh>
-                    <MudTh><MudTableSortLabel T="QuestionModel" SortBy="new Func<QuestionModel, object>(x => x.Points)">Points</MudTableSortLabel></MudTh>
-                    <MudTh><MudTableSortLabel T="QuestionModel" SortBy="new Func<QuestionModel, object>(x => x.OrderIndex)">Order</MudTableSortLabel></MudTh>
-                    <MudTh><MudTableSortLabel T="QuestionModel" SortBy="new Func<QuestionModel, object>(x => x.IsRequired)">Required</MudTableSortLabel></MudTh>
-                    <MudTh><MudTableSortLabel T="QuestionModel" SortBy="new Func<QuestionModel, object>(x => x.CreatedAt)">Created</MudTableSortLabel></MudTh>
-                    <MudTh>Actions</MudTh>
-                </HeaderContent>
-                <RowTemplate>
-                    <MudTd DataLabel="Question Text">@context.Text</MudTd>
-                    <MudTd DataLabel="Assessment ID">@context.AssessmentId</MudTd>
-                    <MudTd DataLabel="Type">
-                        <MudChip T="QuestionType" Color="@GetQuestionTypeBadgeColor(context.Type)">@context.Type</MudChip>
-                    </MudTd>
-                    <MudTd DataLabel="Points">@context.Points</MudTd>
-                    <MudTd DataLabel="Order">@context.OrderIndex</MudTd>
-                    <MudTd DataLabel="Required">
-                        <MudChip T="bool" Color="@(context.IsRequired ? Color.Primary : Color.Secondary)">
-                            @(context.IsRequired ? "Yes" : "No")
-                        </MudChip>
-                    </MudTd>
-                    <MudTd DataLabel="Created">@context.CreatedAt.ToString("yyyy-MM-dd HH:mm")</MudTd>
-                    <MudTd DataLabel="Actions">
-                        <MudButtonGroup>
-                            <MudButton Variant="Variant.Outlined" Color="Color.Primary" Href='@($"/admin/questions/edit?id={context.Id}")'>
-                                <MudIcon Icon="@Icons.Material.Filled.Edit" Class="me-1" /> Edit
-                            </MudButton>
-                            <MudButton Variant="Variant.Outlined" Color="Color.Info" Href='@($"/admin/questions/details?id={context.Id}")'>
-                                <MudIcon Icon="@Icons.Material.Filled.Info" Class="me-1" /> Details
-                            </MudButton>
-                            <MudButton Variant="Variant.Outlined" Color="Color.Error" OnClick="() => ConfirmDelete(context)">
-                                <MudIcon Icon="@Icons.Material.Filled.Delete" Class="me-1" /> Delete
-                            </MudButton>
-                        </MudButtonGroup>
-                    </MudTd>
-                </RowTemplate>
-                <PagerContent>
-    <MudTablePager PageSizeOptions="@(new int[]{10, 25, 50})" />
-                </PagerContent>
-            </MudTable>
-        }
+        <MudTable T="QuestionModel" ServerData="@ServerData" Hover="true" Breakpoint="Breakpoint.Sm" Loading="@_loading">
+            <HeaderContent>
+                <MudTh><MudTableSortLabel T="QuestionModel" SortBy="new Func<QuestionModel, object>(x => x.Text)">Question Text</MudTableSortLabel></MudTh>
+                <MudTh><MudTableSortLabel T="QuestionModel" SortBy="new Func<QuestionModel, object>(x => x.AssessmentId)">Assessment ID</MudTableSortLabel></MudTh>
+                <MudTh><MudTableSortLabel T="QuestionModel" SortBy="new Func<QuestionModel, object>(x => x.Type)">Type</MudTableSortLabel></MudTh>
+                <MudTh><MudTableSortLabel T="QuestionModel" SortBy="new Func<QuestionModel, object>(x => x.Points)">Points</MudTableSortLabel></MudTh>
+                <MudTh><MudTableSortLabel T="QuestionModel" SortBy="new Func<QuestionModel, object>(x => x.OrderIndex)">Order</MudTableSortLabel></MudTh>
+                <MudTh><MudTableSortLabel T="QuestionModel" SortBy="new Func<QuestionModel, object>(x => x.IsRequired)">Required</MudTableSortLabel></MudTh>
+                <MudTh><MudTableSortLabel T="QuestionModel" SortBy="new Func<QuestionModel, object>(x => x.CreatedAt)">Created</MudTableSortLabel></MudTh>
+                <MudTh>Actions</MudTh>
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd DataLabel="Question Text">@context.Text</MudTd>
+                <MudTd DataLabel="Assessment ID">@context.AssessmentId</MudTd>
+                <MudTd DataLabel="Type">
+                    <MudChip T="QuestionType" Color="@GetQuestionTypeBadgeColor(context.Type)">@context.Type</MudChip>
+                </MudTd>
+                <MudTd DataLabel="Points">@context.Points</MudTd>
+                <MudTd DataLabel="Order">@context.OrderIndex</MudTd>
+                <MudTd DataLabel="Required">
+                    <MudChip T="bool" Color="@(context.IsRequired ? Color.Primary : Color.Secondary)">
+                        @(context.IsRequired ? "Yes" : "No")
+                    </MudChip>
+                </MudTd>
+                <MudTd DataLabel="Created">@context.CreatedAt.ToString("yyyy-MM-dd HH:mm")</MudTd>
+                <MudTd DataLabel="Actions">
+                    <MudButtonGroup>
+                        <MudButton Variant="Variant.Outlined" Color="Color.Primary" Href='@($"/admin/questions/edit?id={context.Id}")'>
+                            <MudIcon Icon="@Icons.Material.Filled.Edit" Class="me-1" /> Edit
+                        </MudButton>
+                        <MudButton Variant="Variant.Outlined" Color="Color.Info" Href='@($"/admin/questions/details?id={context.Id}")'>
+                            <MudIcon Icon="@Icons.Material.Filled.Info" Class="me-1" /> Details
+                        </MudButton>
+                        <MudButton Variant="Variant.Outlined" Color="Color.Error" OnClick="() => ConfirmDelete(context)">
+                            <MudIcon Icon="@Icons.Material.Filled.Delete" Class="me-1" /> Delete
+                        </MudButton>
+                    </MudButtonGroup>
+                </MudTd>
+            </RowTemplate>
+            <PagerContent>
+<MudTablePager PageSizeOptions="@(new int[]{10, 25, 50})" />
+            </PagerContent>
+        </MudTable>
     </MudCardContent>
 </MudCard>
 
@@ -124,19 +91,30 @@
     // MudBlazor Table Data Provider
     private async Task<TableData<QuestionModel>> ServerData(TableState state, CancellationToken cancellationToken)
     {
-        var pageNumber = state.Page + 1; // Convert from 0-based to 1-based indexing
-        var pageSize = state.PageSize < 1 ? 10 : state.PageSize;
-        var result = await AssessmentRepository.GetAllQuestionsPaginatedAsync(new PaginationRequest
+        _loading = true;
+        StateHasChanged();
+        
+        try
         {
-            PageNumber = pageNumber,
-            PageSize = pageSize
-        });
+            var pageNumber = state.Page + 1; // Convert from 0-based to 1-based indexing
+            var pageSize = state.PageSize < 1 ? 10 : state.PageSize;
+            var result = await AssessmentRepository.GetAllQuestionsPaginatedAsync(new PaginationRequest
+            {
+                PageNumber = pageNumber,
+                PageSize = pageSize
+            });
 
-        return new TableData<QuestionModel>
+            return new TableData<QuestionModel>
+            {
+                Items = result.Items,
+                TotalItems = result.TotalCount
+            };
+        }
+        finally
         {
-            Items = result.Items,
-            TotalItems = result.TotalCount
-        };
+            _loading = false;
+            StateHasChanged();
+        }
     }
 
     private async Task ConfirmDelete(QuestionModel question)
@@ -167,6 +145,7 @@
             finally
             {
                 questionToDelete = null;
+                showDeleteConfirm = false;
             }
         }
     }

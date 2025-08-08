@@ -11,10 +11,10 @@
 
 @if (isLoading)
 {
-    <div class="d-flex justify-content-between align-items-center mb-4">
+    <MudStack Direction="Row" Spacing="2" Class="mb-4">
         <MudSkeleton SkeletonType="SkeletonType.Text" Width="200px" Height="40px" />
         <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="180px" Height="40px" />
-    </div>
+    </MudStack>
     <MudCard Elevation="2">
         <MudCardHeader>
             <MudSkeleton SkeletonType="SkeletonType.Text" Width="180px" Height="32px" />
@@ -23,192 +23,185 @@
             <!-- Question Text -->
             <MudSkeleton SkeletonType="SkeletonType.Text" Width="100%" Height="56px" />
             <!-- AssessmentId & Type -->
-            <div class="row">
+            <MudStack Direction="Row" Spacing="2">
                 <MudItem xs="12" md="6">
                     <MudSkeleton SkeletonType="SkeletonType.Text" Width="100%" Height="40px" />
                 </MudItem>
                 <MudItem xs="12" md="6">
                     <MudSkeleton SkeletonType="SkeletonType.Text" Width="100%" Height="40px" />
                 </MudItem>
-            </div>
+            </MudStack>
             <!-- Points & OrderIndex -->
-            <div class="row">
+            <MudStack Direction="Row" Spacing="2">
                 <MudItem xs="12" md="6">
                     <MudSkeleton SkeletonType="SkeletonType.Text" Width="100%" Height="40px" />
                 </MudItem>
                 <MudItem xs="12" md="6">
                     <MudSkeleton SkeletonType="SkeletonType.Text" Width="100%" Height="40px" />
                 </MudItem>
-            </div>
+            </MudStack>
             <!-- Explanation -->
             <MudSkeleton SkeletonType="SkeletonType.Text" Width="100%" Height="56px" />
             <!-- IsRequired Checkbox -->
             <MudSkeleton SkeletonType="SkeletonType.Text" Width="120px" Height="32px" />
             <!-- Buttons -->
-            <div class="d-flex gap-2 mt-3">
+            <MudStack Direction="Row" Spacing="2" Class="mt-3">
                 <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="180px" Height="40px" />
                 <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="120px" Height="40px" />
-            </div>
+            </MudStack>
         </MudCardContent>
     </MudCard>
 }
 else
 {
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1 class="mb-0">@(IsEdit ? "Edit Question" : "Create New Question")</h1>
+    <MudStack Direction="Row" Spacing="2" Class="mb-4">
+        <MudText Typo="Typo.h4">@(IsEdit ? "Edit Question" : "Create New Question")</MudText>
         <MudButton Variant="Variant.Text" Color="Color.Secondary" Href="/admin/questions">
             <MudIcon Icon="@Icons.Material.Filled.ArrowBack" Class="me-2" />
             Back to Questions
         </MudButton>
-    </div>
+    </MudStack>
+    <MudCard Elevation="2">
+        <MudCardHeader>
+            <MudText Typo="Typo.h6">Question Information</MudText>
+        </MudCardHeader>
+        <MudCardContent>
+            @if (editContext != null)
+            {
+                <EditForm EditContext="@editContext" OnValidSubmit="SaveQuestion">
+                    <MudAlert Severity="Severity.Error" Class="my-3" Visible="@(hasSubmitAttempted && editContext != null && !editContext.Validate())">
+                        <MudText>Please correct the errors below.</MudText>
+                    </MudAlert>
+                    <MudTextField @bind-Value="Question.Text" Label="Question Text" Variant="Variant.Text" Lines="3" Required="true" RequiredError="Question Text is required!" Placeholder="Enter the question text" />
+                    <MudStack Direction="Row" Spacing="2">
+                        <MudItem xs="12" md="6">
+                            <MudNumericField @bind-Value="Question.AssessmentId" Label="Assessment ID" Variant="Variant.Text" Required="true" RequiredError="Assessment ID is required!" Placeholder="Enter assessment ID" />
+                        </MudItem>
+                        <MudItem xs="12" md="6">
+                            <MudSelect T="int" @bind-Value="Question.Type" Label="Question Type" Variant="Variant.Text">
+                                @foreach (var enumValue in Enum.GetValues(typeof(QuestionType)).Cast<int>())
+                                {
+                                    <MudSelectItem T="int" Value="@enumValue">@((QuestionType)enumValue)</MudSelectItem>
+                                }
+                            </MudSelect>
+                        </MudItem>
+                    </MudStack>
+                    <MudStack Direction="Row" Spacing="2">
+                        <MudItem xs="12" md="6">
+                            <MudNumericField @bind-Value="Question.Points" Label="Points" Variant="Variant.Text" Placeholder="1" />
+                        </MudItem>
+                        <MudItem xs="12" md="6">
+                            <MudNumericField @bind-Value="Question.OrderIndex" Label="Order Index" Variant="Variant.Text" Placeholder="1" />
+                        </MudItem>
+                    </MudStack>
+                    <MudTextField @bind-Value="Question.Explanation" Label="Explanation" Variant="Variant.Text" Lines="3" Placeholder="Provide an explanation for the correct answer (optional)" />
+                    <MudCheckBox T="bool" @bind-Checked="Question.IsRequired" Label="Is Required" Color="Color.Primary" />
+                    <MudStack Direction="Row" Spacing="2" Class="mt-3">
+                        <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Disabled="@isSubmitting">
+                            <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Class="me-2" />
+                            @(IsEdit ? "Update Question" : "Create Question")
+                        </MudButton>
+                        <MudButton Variant="Variant.Filled" Color="Color.Secondary" Href="/admin/questions">Cancel</MudButton>
+                    </MudStack>
+                </EditForm>
+            }
+        </MudCardContent>
+    </MudCard>
+}
 
-    <div class="row">
-        <div class="col-lg-8">
-            <MudCard Elevation="2">
-                <MudCardHeader>
-                    <MudText Typo="Typo.h6">Question Information</MudText>
-                </MudCardHeader>
-                <MudCardContent>
-                    <EditForm EditContext="@editContext" OnValidSubmit="SaveQuestion">
-                        <MudAlert Severity="Severity.Error" Class="my-3" Visible="@(hasSubmitAttempted && editContext != null && !editContext.Validate())">
-                            <MudText>Please correct the errors below.</MudText>
-                        </MudAlert>
+@code {
+    [Parameter]
+    [SupplyParameterFromQuery] public int? id { get; set; }
+    private CreateQuestionRequest Question { get; set; } = new();
+    private bool isSubmitting = false;
+    private bool hasSubmitAttempted = false;
+    private EditContext? editContext;
+    private bool IsEdit => id.HasValue && id.Value > 0;
+    private bool isLoading = true;
 
-                        <MudTextField @bind-Value="Question.Text" Label="Question Text" Variant="Variant.Text" Lines="3" Required="true" RequiredError="Question Text is required!" Placeholder="Enter the question text" />
+    protected override async Task OnInitializedAsync()
+    {
+        editContext = new EditContext(Question);
+        if (IsEdit)
+        {
+            var question = await AssessmentRepository.GetQuestionByIdAsync(id.Value);
+            if (question != null)
+            {
+                Question = new CreateQuestionRequest
+                {
+                    Text = question.Text,
+                    AssessmentId = question.AssessmentId,
+                    Type = (int)question.Type,
+                    Points = question.Points,
+                    OrderIndex = question.OrderIndex,
+                    Explanation = question.Explanation,
+                    IsRequired = question.IsRequired,
+                    Options = question.Options?.Select(o => new CreateQuestionOptionRequest
+                    {
+                        Text = o.Text,
+                        IsCorrect = o.IsCorrect,
+                        OrderIndex = o.OrderIndex
+                    }).ToList() ?? new List<CreateQuestionOptionRequest>()
+                };
+                editContext = new EditContext(Question);
+            }
+            else
+            {
+                Snackbar.Add("Question not found.", Severity.Error);
+                NavigationManager.NavigateTo("/admin/questions");
+                return;
+            }
+        }
+        isLoading = false;
+    }
 
-                        <div class="row">
-                            <MudItem xs="12" md="6">
-                                <MudNumericField @bind-Value="Question.AssessmentId" Label="Assessment ID" Variant="Variant.Text" Required="true" RequiredError="Assessment ID is required!" Placeholder="Enter assessment ID" />
-                            </MudItem>
-                            <MudItem xs="12" md="6">
-                                <MudSelect T="int" @bind-Value="Question.Type" Label="Question Type" Variant="Variant.Text">
-                                    @foreach (var enumValue in Enum.GetValues(typeof(QuestionType)).Cast<int>())
-                                    {
-                                        <MudSelectItem T="int" Value="@enumValue">@((QuestionType)enumValue)</MudSelectItem>
-                                    }
-                                </MudSelect>
-                            </MudItem>
-                        </div>
-
-                        <div class="row">
-                            <MudItem xs="12" md="6">
-                                <MudNumericField @bind-Value="Question.Points" Label="Points" Variant="Variant.Text" Placeholder="1" />
-                            </MudItem>
-                            <MudItem xs="12" md="6">
-                                <MudNumericField @bind-Value="Question.OrderIndex" Label="Order Index" Variant="Variant.Text" Placeholder="1" />
-                            </MudItem>
-                        </div>
-
-                        <MudTextField @bind-Value="Question.Explanation" Label="Explanation" Variant="Variant.Text" Lines="3" Placeholder="Provide an explanation for the correct answer (optional)" />
-
-                        <MudCheckBox T="bool" @bind-Checked="Question.IsRequired" Label="Is Required" Color="Color.Primary" />
-
-                        <div class="d-flex gap-2">
-                            <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Disabled="@isSubmitting">
-                                <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Class="me-2" />
-                                @(IsEdit ? "Update Question" : "Create Question")
-                            </MudButton>
-                            <MudButton Variant="Variant.Filled" Color="Color.Secondary" Href="/admin/questions">Cancel</MudButton>
-                        </div>
-                    </EditForm>
-                </MudCardContent>
-            </MudCard>
-        </div>
-    </div>
-
-    @code {
-        [Parameter]
-        [SupplyParameterFromQuery] public int? id { get; set; }
-        private CreateQuestionRequest Question { get; set; } = new();
-        private bool isSubmitting = false;
-        private bool hasSubmitAttempted = false;
-        private EditContext? editContext;
-        private bool IsEdit => id.HasValue && id.Value > 0;
-        private bool isLoading = true;
-
-        protected override async Task OnInitializedAsync()
+    private async Task SaveQuestion()
+    {
+        hasSubmitAttempted = true;
+        if (editContext != null && !editContext.Validate())
+        {
+            isSubmitting = false;
+            return;
+        }
+        if (isSubmitting) return;
+        isSubmitting = true;
+        try
         {
             if (IsEdit)
             {
-                var question = await AssessmentRepository.GetQuestionByIdAsync(id.Value);
-                if (question != null)
+                var result = await AssessmentRepository.UpdateQuestionAsync(id.Value, Question);
+                if (result != null)
                 {
-                    Question = new CreateQuestionRequest
-                    {
-                        Text = question.Text,
-                        AssessmentId = question.AssessmentId,
-                        Type = (int)question.Type,
-                        Points = question.Points,
-                        OrderIndex = question.OrderIndex,
-                        Explanation = question.Explanation,
-                        IsRequired = question.IsRequired,
-                        Options = question.Options?.Select(o => new CreateQuestionOptionRequest
-                        {
-                            Text = o.Text,
-                            IsCorrect = o.IsCorrect,
-                            OrderIndex = o.OrderIndex
-                        }).ToList() ?? new List<CreateQuestionOptionRequest>()
-                    };
+                    Snackbar.Add("Question updated successfully!", Severity.Success);
+                    NavigationManager.NavigateTo("/admin/questions");
                 }
                 else
                 {
-                    Snackbar.Add("Question not found.", Severity.Error);
+                    Snackbar.Add("Failed to update question. Please try again.", Severity.Error);
+                }
+            }
+            else
+            {
+                var result = await AssessmentRepository.CreateQuestionAsync(Question);
+                if (result != null)
+                {
+                    Snackbar.Add("Question created successfully!", Severity.Success);
                     NavigationManager.NavigateTo("/admin/questions");
+                }
+                else
+                {
+                    Snackbar.Add("Failed to create question. Please try again.", Severity.Error);
                     return;
                 }
             }
-            editContext = new EditContext(Question);
-            isLoading = false;
         }
-
-        private async Task SaveQuestion()
+        catch (Exception ex)
         {
-            hasSubmitAttempted = true;
-            if (editContext != null && !editContext.Validate())
-            {
-                isSubmitting = false;
-                return;
-            }
-            if (isSubmitting) return;
-            isSubmitting = true;
-            try
-            {
-                if (IsEdit)
-                {
-                    var result = await AssessmentRepository.UpdateQuestionAsync(id.Value, Question);
-                    if (result != null)
-                    {
-                        Snackbar.Add("Question updated successfully!", Severity.Success);
-                        NavigationManager.NavigateTo("/admin/questions");
-                    }
-                    else
-                    {
-                        Snackbar.Add("Failed to update question. Please try again.", Severity.Error);
-                    }
-                }
-                else
-                {
-                    var result = await AssessmentRepository.CreateQuestionAsync(Question);
-                    if (result != null)
-                    {
-                        Snackbar.Add("Question created successfully!", Severity.Success);
-                        NavigationManager.NavigateTo("/admin/questions");
-                    }
-                    else
-                    {
-                        Snackbar.Add("Failed to create question. Please try again.", Severity.Error);
-                        return;
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                Snackbar.Add($"Error saving question: {ex.Message}", Severity.Error);
-            }
-            finally
-            {
-                isSubmitting = false;
-            }
+            Snackbar.Add($"Error saving question: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            isSubmitting = false;
         }
     }
 }

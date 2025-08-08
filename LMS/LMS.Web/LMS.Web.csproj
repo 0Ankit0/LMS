@@ -26,4 +26,9 @@
     <ProjectReference Include="..\LMS.Data\LMS.Data.csproj" />
   </ItemGroup>
 
+
+  <ItemGroup>
+    <Folder Include="wwwroot\uploads\images\" />
+  </ItemGroup>
+
 </Project>

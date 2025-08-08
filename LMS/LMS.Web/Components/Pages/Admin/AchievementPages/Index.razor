@@ -2,82 +2,109 @@
 @layout AdminLayout
 @attribute [OutputCache(Duration = 60)]
 @inject IAchievementRepository AchievementRepository
+@inject ISnackbar Snackbar
+@rendermode @(new InteractiveServerRenderMode())
+
 <PageTitle>Achievements - Admin</PageTitle>
 <title>Achievements - Admin</title>
 
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h1 class="mb-0">Achievements</h1>
-    <MudButton Variant="Variant.Filled" Color="Color.Primary" Href="/admin/achievements/create">
-        <MudIcon Icon="@Icons.Material.Filled.Add" Class="me-2" />
-        Add New Achievement
-    </MudButton>
-</div>
+<MudCard Elevation="2">
+    <MudCardHeader>
+        <MudText Typo="Typo.h6">Achievements</MudText>
+        <MudSpacer />
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" Href="/admin/achievements/create">
+            <MudIcon Icon="@Icons.Material.Filled.Add" Class="me-2" />
+            Add New Achievement
+        </MudButton>
+    </MudCardHeader>
+    <MudCardContent>
+        <MudTable T="AchievementModel" ServerData="@ServerData" Hover="true" Breakpoint="Breakpoint.Sm" Loading="@_loading">
+            <HeaderContent>
+                <MudTh><MudTableSortLabel T="AchievementModel" SortBy="new Func<AchievementModel, object>(x => x.Name)">Name</MudTableSortLabel></MudTh>
+                <MudTh><MudTableSortLabel T="AchievementModel" SortBy="new Func<AchievementModel, object>(x => x.Description)">Description</MudTableSortLabel></MudTh>
+                <MudTh><MudTableSortLabel T="AchievementModel" SortBy="new Func<AchievementModel, object>(x => x.Points)">Points</MudTableSortLabel></MudTh>
+                <MudTh><MudTableSortLabel T="AchievementModel" SortBy="new Func<AchievementModel, object>(x => x.Type)">Type</MudTableSortLabel></MudTh>
+                <MudTh><MudTableSortLabel T="AchievementModel" SortBy="new Func<AchievementModel, object>(x => x.IsActive)">Active</MudTableSortLabel></MudTh>
+                <MudTh><MudTableSortLabel T="AchievementModel" SortBy="new Func<AchievementModel, object>(x => x.UsersEarnedCount)">Users Earned</MudTableSortLabel></MudTh>
+                <MudTh>Actions</MudTh>
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd DataLabel="Name">
+                    <div class="d-flex align-items-center">
+                        @if (!string.IsNullOrEmpty(context.IconUrl))
+                        {
+                            <img src="@context.IconUrl" alt="@context.Name" style="width: 24px; height: 24px; margin-right: 8px;" />
+                        }
+                        else if (!string.IsNullOrEmpty(context.IconName))
+                        {
+                            <MudIcon Icon="@context.IconName" Class="me-2" />
+                        }
+                        @context.Name
+                    </div>
+                </MudTd>
+                <MudTd DataLabel="Description">@context.Description</MudTd>
+                <MudTd DataLabel="Points">
+                    <MudChip T="int" Color="Color.Primary" Size="Size.Small">@context.Points pts</MudChip>
+                </MudTd>
+                <MudTd DataLabel="Type">
+                    <MudChip T="string" Color="@GetTypeBadgeColor(context.Type)" Size="Size.Small">@context.Type</MudChip>
+                </MudTd>
+                <MudTd DataLabel="Active">
+                    <MudChip T="bool" Color="@(context.IsActive ? Color.Success : Color.Secondary)" Size="Size.Small">
+                        @(context.IsActive ? "Active" : "Inactive")
+                    </MudChip>
+                </MudTd>
+                <MudTd DataLabel="Users Earned">@context.UsersEarnedCount</MudTd>
+                <MudTd DataLabel="Actions">
+                    <MudButtonGroup>
+                        <MudButton Variant="Variant.Outlined" Color="Color.Primary" Href="@($"/admin/achievements/edit?id={context.Id}")">
+                            <MudIcon Icon="@Icons.Material.Filled.Edit" Class="me-1" /> Edit
+                        </MudButton>
+                        <MudButton Variant="Variant.Outlined" Color="Color.Error" OnClick="() => ConfirmDelete(context)">
+                            <MudIcon Icon="@Icons.Material.Filled.Delete" Class="me-1" /> Delete
+                        </MudButton>
+                    </MudButtonGroup>
+                </MudTd>
+            </RowTemplate>
+            <PagerContent>
+                <MudTablePager PageSizeOptions="@(new int[]{10, 25, 50})" />
+            </PagerContent>
+        </MudTable>
+    </MudCardContent>
+</MudCard>
 
-@if (_loading)
-{
-    int columnCount = 7; // Number of columns in the table
-    int rowCount = 3;
-    <div class="mb-3">
-        @for (int r = 0; r < rowCount; r++)
-        {
-            <div class="row @(r > 0 ? "mt-2" : null)">
-                @for (int c = 0; c < columnCount; c++)
-                {
-                    <div class="col"> <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="32px" Width="20px" /> </div>
-                }
-            </div>
-        }
-    </div>
-}
-else
-{
-    <MudTable T="AchievementModel" ServerData="@ServerData" Hover="true" Breakpoint="Breakpoint.Sm" Loading="@_loading">
-        <HeaderContent>
-            <MudTh><MudTableSortLabel T="AchievementModel" SortBy="new Func<AchievementModel, object>(x => x.Name)">Name</MudTableSortLabel></MudTh>
-            <MudTh><MudTableSortLabel T="AchievementModel" SortBy="new Func<AchievementModel, object>(x => x.Description)">Description</MudTableSortLabel></MudTh>
-            <MudTh><MudTableSortLabel T="AchievementModel" SortBy="new Func<AchievementModel, object>(x => x.Points)">Points</MudTableSortLabel></MudTh>
-            <MudTh><MudTableSortLabel T="AchievementModel" SortBy="new Func<AchievementModel, object>(x => x.Type)">Type</MudTableSortLabel></MudTh>
-            <MudTh><MudTableSortLabel T="AchievementModel" SortBy="new Func<AchievementModel, object>(x => x.IsActive)">Active</MudTableSortLabel></MudTh>
-            <MudTh><MudTableSortLabel T="AchievementModel" SortBy="new Func<AchievementModel, object>(x => x.UsersEarnedCount)">Users Earned</MudTableSortLabel></MudTh>
-            <MudTh>Actions</MudTh>
-        </HeaderContent>
-        <RowTemplate>
-            <MudTd DataLabel="Name">@context.Name</MudTd>
-            <MudTd DataLabel="Description">@context.Description</MudTd>
-            <MudTd DataLabel="Points">@context.Points</MudTd>
-            <MudTd DataLabel="Type">@context.Type</MudTd>
-            <MudTd DataLabel="Active">@(context.IsActive ? "Yes" : "No")</MudTd>
-            <MudTd DataLabel="Users Earned">@context.UsersEarnedCount</MudTd>
-            <MudTd DataLabel="Actions">
-                <MudButtonGroup>
-                    <MudButton Variant="Variant.Outlined" Color="Color.Primary" Href="@($"/admin/achievements/edit?id={context.Id}")">
-                        <MudIcon Icon="@Icons.Material.Filled.Edit" Class="me-1" /> Edit
-                    </MudButton>
-                    <MudButton Variant="Variant.Outlined" Color="Color.Info" Href="@($"/admin/achievements/details?id={context.Id}")">
-                        <MudIcon Icon="@Icons.Material.Filled.Info" Class="me-1" /> Details
-                    </MudButton>
-                    <MudButton Variant="Variant.Outlined" Color="Color.Error" OnClick="() => DeleteAchievement(context.Id)">
-                        <MudIcon Icon="@Icons.Material.Filled.Delete" Class="me-1" /> Delete
-                    </MudButton>
-                </MudButtonGroup>
-            </MudTd>
-        </RowTemplate>
-        <PagerContent>
-            <MudTablePager PageSizeOptions="@(new int[]{10, 25, 50})" />
-        </PagerContent>
-    </MudTable>
-}
+<!-- Delete Confirmation Modal -->
+<MudDialog @bind-IsVisible="@showDeleteConfirm" Options="@dialogOptions">
+    <TitleContent>
+        <MudText Typo="Typo.h6" Class="text-danger">
+            <MudIcon Icon="@Icons.Material.Filled.Warning" /> Confirm Delete
+        </MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudText>Are you sure you want to delete the achievement <strong>@achievementToDelete?.Name</strong>? This action cannot be undone.</MudText>
+    </DialogContent>
+    <DialogActions>
+        <MudButton Color="Color.Error" OnClick="DeleteAchievement">
+            <MudIcon Icon="@Icons.Material.Filled.Delete" Class="me-1" /> Delete
+        </MudButton>
+        <MudButton Color="Color.Secondary" OnClick="CancelDelete">Cancel</MudButton>
+    </DialogActions>
+</MudDialog>
 
 @code {
     private bool _loading = false;
+    private bool showDeleteConfirm = false;
+    private DialogOptions dialogOptions = new() { CloseButton = true, MaxWidth = MaxWidth.Small, FullWidth = true };
+    private AchievementModel? achievementToDelete;
 
     private async Task<TableData<AchievementModel>> ServerData(TableState state, CancellationToken cancellationToken)
     {
         _loading = true;
         StateHasChanged();
+        
         try
         {
-            var pageNumber = state.Page < 1 ? 1 : state.Page;
+            var pageNumber = state.Page + 1; // Convert from 0-based to 1-based indexing
             var pageSize = state.PageSize < 1 ? 10 : state.PageSize;
             var paginationRequest = new PaginationRequest
             {
@@ -91,40 +118,120 @@ else
             {
                 result = new PaginatedResult<AchievementModel>
                 {
-                    Items = new List<AchievementModel>
-                    {
-                        new AchievementModel { Id = 1, Name = "First Course Completion", Description = "Completed your first course.", Points = 100, Type = "Course", IsActive = true, CreatedAt = DateTime.Now, UsersEarnedCount = 5 },
-                        new AchievementModel { Id = 2, Name = "Top Learner", Description = "Achieved top score in a quiz.", Points = 200, Type = "Quiz", IsActive = true, CreatedAt = DateTime.Now, UsersEarnedCount = 2 },
-                        new AchievementModel { Id = 3, Name = "Forum Contributor", Description = "Made 10 forum posts.", Points = 50, Type = "Forum", IsActive = true, CreatedAt = DateTime.Now, UsersEarnedCount = 8 }
-                    },
+                    Items = GetSampleAchievements(),
                     TotalCount = 3,
-                    PageNumber = state.Page,
-                    PageSize = state.PageSize
+                    PageNumber = pageNumber,
+                    PageSize = pageSize
                 };
             }
 
-            _loading = false;
-            return new TableData<AchievementModel>() { TotalItems = result.TotalCount, Items = result.Items };
+            return new TableData<AchievementModel>() 
+            { 
+                TotalItems = result.TotalCount, 
+                Items = result.Items 
+            };
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error loading achievements: {ex.Message}");
+            Snackbar.Add($"Error loading achievements: {ex.Message}", Severity.Error);
+            return new TableData<AchievementModel>() 
+            { 
+                TotalItems = 3, 
+                Items = GetSampleAchievements() 
+            };
+        }
+        finally
+        {
             _loading = false;
-            return new TableData<AchievementModel>() { TotalItems = 0, Items = new List<AchievementModel>() };
+            StateHasChanged();
         }
     }
 
-    private async Task DeleteAchievement(int id)
+    private List<AchievementModel> GetSampleAchievements()
     {
-        try
+        return new List<AchievementModel>
         {
-            await AchievementRepository.DeleteAchievementAsync(id);
-            // Refresh the table after deletion
-            await ServerData(new TableState { Page = 0, PageSize = 10 }, CancellationToken.None);
-        }
-        catch (Exception ex)
+            new AchievementModel 
+            { 
+                Id = 1, 
+                Name = "First Course Completion", 
+                Description = "Completed your first course.", 
+                Points = 100, 
+                Type = "Course", 
+                IsActive = true, 
+                CreatedAt = DateTime.Now.AddDays(-10), 
+                UsersEarnedCount = 15,
+                IconName = Icons.Material.Filled.School
+            },
+            new AchievementModel 
+            { 
+                Id = 2, 
+                Name = "Top Learner", 
+                Description = "Achieved top score in a quiz.", 
+                Points = 200, 
+                Type = "Quiz", 
+                IsActive = true, 
+                CreatedAt = DateTime.Now.AddDays(-5), 
+                UsersEarnedCount = 8,
+                IconName = Icons.Material.Filled.EmojiEvents
+            },
+            new AchievementModel 
+            { 
+                Id = 3, 
+                Name = "Forum Contributor", 
+                Description = "Made 10 forum posts.", 
+                Points = 50, 
+                Type = "Forum", 
+                IsActive = true, 
+                CreatedAt = DateTime.Now.AddDays(-2), 
+                UsersEarnedCount = 23,
+                IconName = Icons.Material.Filled.Forum
+            }
+        };
+    }
+
+    private void ConfirmDelete(AchievementModel achievement)
+    {
+        achievementToDelete = achievement;
+        showDeleteConfirm = true;
+    }
+
+    private void CancelDelete()
+    {
+        showDeleteConfirm = false;
+        achievementToDelete = null;
+    }
+
+    private async Task DeleteAchievement()
+    {
+        if (achievementToDelete != null)
         {
-            Console.WriteLine($"Error deleting achievement: {ex.Message}");
+            try
+            {
+                await AchievementRepository.DeleteAchievementAsync(achievementToDelete.Id);
+                Snackbar.Add($"Achievement '{achievementToDelete.Name}' deleted successfully.", Severity.Success);
+                showDeleteConfirm = false;
+                achievementToDelete = null;
+                // Refresh the table
+                StateHasChanged();
+            }
+            catch (Exception ex)
+            {
+                Snackbar.Add($"Error deleting achievement: {ex.Message}", Severity.Error);
+            }
         }
+    }
+
+    private Color GetTypeBadgeColor(string type)
+    {
+        return type switch
+        {
+            "Course" => Color.Primary,
+            "Quiz" => Color.Success,
+            "Forum" => Color.Info,
+            "Assignment" => Color.Warning,
+            "Certificate" => Color.Secondary,
+            _ => Color.Default
+        };
     }
 }

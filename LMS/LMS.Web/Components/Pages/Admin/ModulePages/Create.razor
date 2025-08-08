@@ -2,60 +2,82 @@
 @page "/admin/modules/edit/{id:int}"
 
 @using LMS.Repositories
+@using MudBlazor;
+@using System.Reflection;
 
 @inject ICourseRepository CourseRepository
 @inject IDropdownRepository DropdownRepository
 @inject NavigationManager NavigationManager
 @inject ISnackbar Snackbar
+@inject IImageRepository ImageRepository
+@inject IJSRuntime JSRuntime
 @rendermode @(new InteractiveServerRenderMode())
 
 <PageTitle>@(IsEdit ? "Edit Module" : "Create Module") - Admin</PageTitle>
 
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h1 class="mb-0">@(IsEdit ? "Edit Module" : "Create New Module")</h1>
+<MudSkeleton Height="40px" Width="100%" Animation="Animation.Wave" />
+<MudPaper Class="mb-4 p-4">
+    <MudText Typo="Typo.h4">@(IsEdit ? "Edit Module" : "Create New Module")</MudText>
     <MudButton Variant="Variant.Text" Color="Color.Secondary" Href="/admin/modules">
         <MudIcon Icon="@Icons.Material.Filled.ArrowBack" Class="me-2" />
         Back to Modules
     </MudButton>
-</div>
+</MudPaper>
 
 <MudCard Elevation="2">
     <MudCardHeader>
         <MudText Typo="Typo.h6">Module Information</MudText>
     </MudCardHeader>
     <MudCardContent>
-        <EditForm Model="Module" OnValidSubmit="SaveModule">
+        <EditForm EditContext="@editContext" OnValidSubmit="SaveModule">
             <AntiforgeryToken />
             <DataAnnotationsValidator />
             <ValidationSummary />
-            <MudAlert Severity="Severity.Error" Class="my-3" Visible="@(!editContext?.Validate() ?? false)">
+            <MudAlert Severity="Severity.Error" Class="my-3" Visible="@(!(editContext?.Validate() ?? true))">
                 <MudText>Please correct the errors below.</MudText>
             </MudAlert>
-
             <MudTextField @bind-Value="Module.Title" Label="Title" Variant="Variant.Text" Required="true" RequiredError="Title is required!" />
-
             <MudTextField @bind-Value="Module.Description" Label="Description" Variant="Variant.Text" Lines="3" Placeholder="Enter module description" />
-
-            <div class="row">
+            <MudStack Direction="Row" Spacing="2">
                 <MudItem xs="12" md="6">
                     <MudAutocomplete T="int?" Value="Module.CourseId" ValueChanged="@(v => Module.CourseId = v ?? 0)" Label="Course" Variant="Variant.Text" Required="true" RequiredError="Course is required!" Placeholder="Search course..."
-                ToStringFunc="@(id => courses.FirstOrDefault(c => c.Value == id)?.Text ?? string.Empty)"
-                SearchFunc="SearchCourses" />
+                        ToStringFunc="@(id => courses.FirstOrDefault(c => c.Value == id)?.Text ?? string.Empty)"
+                        SearchFunc="SearchCourses" />
                 </MudItem>
                 <MudItem xs="12" md="6">
                     <MudNumericField @bind-Value="Module.OrderIndex" Label="Order Index" Variant="Variant.Text" Placeholder="1" />
                 </MudItem>
-            </div>
-
+            </MudStack>
             <MudCheckBox T="bool" @bind-Checked="Module.IsRequired" Label="Is Required" Color="Color.Primary" />
 
-            <div class="d-flex gap-2">
+            <!-- Image Upload Button -->
+            <MudStack Direction="Row" Spacing="2" Class="my-2">
+                <MudText Typo="Typo.subtitle2">Module Image</MudText>
+                <MudButton Variant="Variant.Outlined" Color="Color.Primary" OnClick="@(()=>TriggerFileInput())">
+                    <MudIcon Icon="@Icons.Material.Filled.Upload" class="me-2" />Upload Image
+                </MudButton>
+                <input type="file" style="display:none" @ref="fileInputRef" @onchange="OnImageSelected" accept="image/*" />
+                @if (!string.IsNullOrEmpty(Module.ImageUrl))
+                {
+                    <img src="@Module.ImageUrl" alt="Module Image" style="max-height:60px;max-width:120px;" />
+                }
+            </MudStack>
+
+            <!-- Icon Picker with Reflection and Autocomplete -->
+            <MudAutocomplete T="string" @bind-Value="Module.IconName" Label="Module Icon" Variant="Variant.Text"
+                SearchFunc="SearchIcons" ToStringFunc="@(icon => icon ?? string.Empty)" />
+            @if (!string.IsNullOrEmpty(Module.IconName))
+            {
+                <MudIcon Icon="@Module.IconName" Class="ms-2" />
+            }
+
+            <MudStack Direction="Row" Spacing="2">
                 <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Disabled="@isSubmitting">
                     <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Class="me-2" />
                     @(IsEdit ? "Update Module" : "Create Module")
                 </MudButton>
                 <MudButton Variant="Variant.Filled" Color="Color.Secondary" Href="/admin/modules">Cancel</MudButton>
-            </div>
+            </MudStack>
         </EditForm>
     </MudCardContent>
 </MudCard>
@@ -69,10 +91,14 @@
     private EditContext? editContext;
     private List<DropdownOption<int>> courses = new();
     private bool IsEdit => id.HasValue && id.Value > 0;
+    private ElementReference fileInputRef;
+    private List<string> allMudIcons = new();
 
     protected override async Task OnInitializedAsync()
     {
         courses = await DropdownRepository.GetCoursesAsync();
+        allMudIcons = typeof(Icons.Material.Filled).GetFields(BindingFlags.Public | BindingFlags.Static)
+            .Select(f => f.GetValue(null)?.ToString()).Where(x => !string.IsNullOrEmpty(x)).ToList();
         if (IsEdit)
         {
             var module = await CourseRepository.GetModuleByIdAsync(id.Value);
@@ -84,7 +110,9 @@
                     Description = module.Description,
                     CourseId = module.CourseId,
                     OrderIndex = module.OrderIndex,
-                    IsRequired = module.IsRequired
+                    IsRequired = module.IsRequired,
+                    ImageUrl = module.ImageUrl,
+                    IconName = module.IconName
                 };
             }
             else
@@ -95,6 +123,34 @@
             }
         }
         editContext = new EditContext(Module);
+    }
+
+    private async Task OnImageSelected(ChangeEventArgs e)
+    {
+        var files = (e.Value as Microsoft.AspNetCore.Components.Forms.IBrowserFile[])
+            ?? new[] { e.Value as Microsoft.AspNetCore.Components.Forms.IBrowserFile };
+        var file = files?.FirstOrDefault();
+        if (file != null)
+        {
+            var result = await ImageRepository.SaveImageAsync(file);
+            if (result != null)
+            {
+                Module.ImageUrl = result.Url;
+                Snackbar.Add("Image uploaded successfully!", Severity.Success);
+            }
+            else
+            {
+                Snackbar.Add("Failed to upload image.", Severity.Error);
+            }
+        }
+    }
+
+    private Task<IEnumerable<string>> SearchIcons(string value, CancellationToken token)
+    {
+        IEnumerable<string> result = string.IsNullOrWhiteSpace(value)
+            ? allMudIcons
+            : allMudIcons.Where(i => i.Contains(value, StringComparison.OrdinalIgnoreCase));
+        return Task.FromResult(result);
     }
 
     private async Task SaveModule()
@@ -147,5 +203,10 @@
             ? courses.Select(c => (int?)c.Value)
             : courses.Where(c => c.Text.Contains(value, StringComparison.OrdinalIgnoreCase)).Select(c => (int?)c.Value);
         return Task.FromResult(result);
+    }
+
+    private void TriggerFileInput()
+    {
+        _ = JSRuntime.InvokeVoidAsync("eval", $"document.getElementById('{fileInputRef.Id}').click();");
     }
 }

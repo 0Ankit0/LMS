@@ -48,23 +48,6 @@
     </PagerContent>
 </MudTable>
 
-@if (_loading)
-{
-    int columnCount = 6; // Number of columns in the table
-    int rowCount = 3;
-    <div class="mb-3">
-        @for (int r = 0; r < rowCount; r++)
-        {
-            <div class="row @(r > 0 ? "mt-2" : null)">
-                @for (int c = 0; c < columnCount; c++)
-                {
-                    <div class="col"> <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="32px"  Width="20px"/> </div>
-                }
-            </div>
-        }
-    </div>
-}
-
 @code {
     private bool _loading = false;
 
@@ -72,6 +55,7 @@
     {
         _loading = true;
         StateHasChanged();
+        
         try
         {
             var pageNumber = state.Page < 1 ? 1 : state.Page;
@@ -83,14 +67,18 @@
             };
             var paginatedResult = await ForumRepository.GetAllForumPostsPaginatedAsync(request);
             var items = paginatedResult?.Items ?? GetMockForumPosts();
-            _loading = false;
+            
             return new MudBlazor.TableData<ForumPostModel> { TotalItems = paginatedResult?.TotalCount ?? items.Count(), Items = items };
         }
         catch (Exception ex)
         {
             Console.WriteLine($"Error loading forum posts: {ex.Message}");
-            _loading = false;
             return new MudBlazor.TableData<ForumPostModel> { TotalItems = 0, Items = GetMockForumPosts() };
+        }
+        finally
+        {
+            _loading = false;
+            StateHasChanged();
         }
     }
 

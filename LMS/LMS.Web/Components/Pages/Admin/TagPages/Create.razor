@@ -25,25 +25,28 @@
                 <MudText Typo="Typo.h6">Tag Information</MudText>
             </MudCardHeader>
             <MudCardContent>
-                <EditForm Model="Tag" OnValidSubmit="SaveTag">
-                    <DataAnnotationsValidator />
-                    <ValidationSummary />
-                    <MudGrid>
-                        <MudItem xs="12" md="8">
-                            <MudTextField @bind-Value="Tag.Name" Label="Name" Variant="Variant.Text" Required="true" RequiredError="Name is required!" Placeholder="Enter tag name" />
-                        </MudItem>
-                        <MudItem xs="12" md="4">
-                            <MudTextField @bind-Value="Tag.Color" Label="Color" Variant="Variant.Text" InputType="InputType.Color" />
-                        </MudItem>
-                    </MudGrid>
-                    <div class="d-flex gap-2">
-                        <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Disabled="@isSubmitting">
-                            <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Class="me-2" />
-                            @(IsEdit ? "Update Tag" : "Create Tag")
-                        </MudButton>
-                        <MudButton Variant="Variant.Filled" Color="Color.Secondary" Href="/admin/tags">Cancel</MudButton>
-                    </div>
-                </EditForm>
+                @if (editContext != null)
+                {
+                    <EditForm EditContext="@editContext" OnValidSubmit="SaveTag">
+                        <DataAnnotationsValidator />
+                        <ValidationSummary />
+                        <MudGrid>
+                            <MudItem xs="12" md="8">
+                                <MudTextField @bind-Value="Tag.Name" Label="Name" Variant="Variant.Text" Required="true" RequiredError="Name is required!" Placeholder="Enter tag name" />
+                            </MudItem>
+                            <MudItem xs="12" md="4">
+                                <MudTextField @bind-Value="Tag.Color" Label="Color" Variant="Variant.Text" InputType="InputType.Color" />
+                            </MudItem>
+                        </MudGrid>
+                        <MudStack Direction="Row" Spacing="2">
+                            <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Disabled="@isSubmitting">
+                                <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Class="me-2" />
+                                @(IsEdit ? "Update Tag" : "Create Tag")
+                            </MudButton>
+                            <MudButton Variant="Variant.Filled" Color="Color.Secondary" Href="/admin/tags">Cancel</MudButton>
+                        </MudStack>
+                    </EditForm>
+                }
             </MudCardContent>
         </MudCard>
     </div>
@@ -52,16 +55,17 @@
 @code {
     [Parameter]
     [SupplyParameterFromQuery] public int? id { get; set; }
-    
     private CreateTagRequest Tag { get; set; } = new();
     private bool isSubmitting = false;
     private bool IsEdit => id.HasValue && id > 0;
+    private EditContext? editContext;
 
     protected override async Task OnInitializedAsync()
     {
+        editContext = new EditContext(Tag);
         if (IsEdit)
         {
-            var tagId =  id ?? 0;
+            var tagId = id ?? 0;
             try
             {
                 var existingTag = await TagRepository.GetTagByIdAsync(tagId);
@@ -72,6 +76,7 @@
                         Name = existingTag.Name,
                         Color = existingTag.Color
                     };
+                    editContext = new EditContext(Tag);
                 }
             }
             catch (Exception ex)
@@ -91,7 +96,7 @@
         {
             if (IsEdit)
             {
-                var tagId =  id ?? 0;
+                var tagId = id ?? 0;
                 await TagRepository.UpdateTagAsync(tagId, Tag);
                 Snackbar.Add("Tag updated successfully!", Severity.Success);
             }

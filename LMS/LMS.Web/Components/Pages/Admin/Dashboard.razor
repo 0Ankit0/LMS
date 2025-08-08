@@ -6,47 +6,47 @@
 
 @if (isLoading)
 {
-    <div class="row mb-4">
-        <div class="col-12">
+    <MudGrid Class="mb-4">
+        <MudItem xs="12">
             <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="80px" />
-        </div>
-    </div>
+        </MudItem>
+    </MudGrid>
 
-    <div class="row g-4">
+    <MudGrid GutterSize="4">
         @for (int i = 0; i < 4; i++)
         {
-            <div class="col-lg-3 col-md-6">
+            <MudItem lg="3" md="6" xs="12">
                 <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="150px" />
-            </div>
+            </MudItem>
         }
-    </div>
+    </MudGrid>
 
-    <div class="row g-4 mt-2">
-        <div class="col-lg-8">
+    <MudGrid GutterSize="4" Class="mt-2">
+        <MudItem lg="8" xs="12">
             <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="350px" />
-        </div>
-        <div class="col-lg-4">
+        </MudItem>
+        <MudItem lg="4" xs="12">
             <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="350px" />
-        </div>
-    </div>
+        </MudItem>
+    </MudGrid>
 
-    <div class="row g-4 mt-2">
-        <div class="col-lg-6">
+    <MudGrid GutterSize="4" Class="mt-2">
+        <MudItem lg="6" xs="12">
             <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="350px" />
-        </div>
-        <div class="col-lg-6">
+        </MudItem>
+        <MudItem lg="6" xs="12">
             <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="350px" />
-        </div>
-    </div>
+        </MudItem>
+    </MudGrid>
 
-    <div class="row g-4 mt-2">
-        <div class="col-md-6">
+    <MudGrid GutterSize="4" Class="mt-2">
+        <MudItem md="6" xs="12">
             <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="250px" />
-        </div>
-        <div class="col-md-6">
+        </MudItem>
+        <MudItem md="6" xs="12">
             <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="250px" />
-        </div>
-    </div>
+        </MudItem>
+    </MudGrid>
 }
 else
 {

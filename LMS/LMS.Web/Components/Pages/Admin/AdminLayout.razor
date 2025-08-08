@@ -11,30 +11,33 @@
         <MudSpacer />
         <MudIconButton Icon="@Icons.Material.Filled.MoreVert" Color="Color.Inherit" Edge="Edge.End" />
     </MudAppBar>
-    <MudPaper Style="height:calc(100vh - 64px); overflow:hidden; position:relative;">
-        <MudDrawerContainer Class="mud-height-full">
-            <MudDrawer @bind-Open="_drawerOpen" Fixed="false" Elevation="2" Variant="DrawerVariant.Mini" Breakpoint="Breakpoint.None">
-                <MudNavMenu>
-                    @foreach (var nav in NavLinks)
+    <MudDrawerContainer Style="height:calc(100vh - 64px);">
+        <MudDrawer @bind-Open="_drawerOpen" 
+                   Fixed="true" 
+                   Elevation="2" 
+                   Variant="DrawerVariant.Mini" 
+                   Breakpoint="Breakpoint.None"
+                   ClipMode="DrawerClipMode.Never">
+            <MudNavMenu>
+                @foreach (var nav in NavLinks)
+                {
+                    if (!_drawerOpen)
                     {
-                        if (!_drawerOpen)
-                        {
-                            <MudTooltip Text="@nav.Title">
-                                <MudNavLink Href="@nav.Href" Icon="@nav.Icon" />
-                            </MudTooltip>
-                        }
-                        else
-                        {
-                            <MudNavLink Href="@nav.Href" Icon="@nav.Icon">@nav.Title</MudNavLink>
-                        }
+                        <MudTooltip Text="@nav.Title">
+                            <MudNavLink Href="@nav.Href" Icon="@nav.Icon" />
+                        </MudTooltip>
                     }
-                </MudNavMenu>
-            </MudDrawer>
-            <MudMainContent Class="mud-height-full p-4">
-                @Body
-            </MudMainContent>
-        </MudDrawerContainer>
-    </MudPaper>
+                    else
+                    {
+                        <MudNavLink Href="@nav.Href" Icon="@nav.Icon">@nav.Title</MudNavLink>
+                    }
+                }
+            </MudNavMenu>
+        </MudDrawer>
+        <MudMainContent Style="padding:16px; overflow-y:auto; height:calc(100vh - 64px);">
+            @Body
+        </MudMainContent>
+    </MudDrawerContainer>
 </MudLayout>
 
 @code{

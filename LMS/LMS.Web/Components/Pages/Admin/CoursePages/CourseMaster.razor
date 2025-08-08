@@ -6,22 +6,28 @@
 
 @if (isLoading)
 {
-    <div class="d-flex flex-column" style="min-height: 100vh;">
+    <MudStack Spacing="2" Style="min-height: 100vh;">
         <!-- Skeleton for Top Navigation Bar -->
-        <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="64px" Class="w-100" />
+        <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="64px" Width="100%" />
 
         <!-- Skeleton for Tab Navigation -->
-        <div class="d-flex justify-content-around p-4">
-            <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="100px" Height="40px" />
-            <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="100px" Height="40px" />
-            <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="100px" Height="40px" />
-        </div>
+        <MudGrid Justify="Justify.SpaceAround" Class="p-4">
+            <MudItem xs="4" sm="4" md="4">
+                <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="100px" Height="40px" />
+            </MudItem>
+            <MudItem xs="4" sm="4" md="4">
+                <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="100px" Height="40px" />
+            </MudItem>
+            <MudItem xs="4" sm="4" md="4">
+                <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="100px" Height="40px" />
+            </MudItem>
+        </MudGrid>
 
         <!-- Skeleton for Tab Content -->
-        <div class="flex-grow-1 p-4">
-            <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="500px" />
-        </div>
-    </div>
+        <MudStack Class="p-4" Style="flex-grow:1;">
+            <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="500px" Width="100%" />
+        </MudStack>
+    </MudStack>
 }
 else
 {

@@ -2,28 +2,33 @@
 @page "/admin/forums/edit/{id}"
 
 @using LMS.Repositories
+@using MudBlazor;
+@using System.Reflection;
 @inject IForumRepository ForumRepository
 @inject IDropdownRepository DropdownRepository
 @inject NavigationManager NavigationManager
 @inject ISnackbar Snackbar
+@inject IImageRepository ImageRepository
+@inject IJSRuntime JSRuntime
 @rendermode @(new InteractiveServerRenderMode())
 
 <PageTitle>@(IsEdit ? "Edit Forum" : "Create Forum") - Admin</PageTitle>
 
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h1 class="mb-0">@(IsEdit ? "Edit Forum" : "Create New Forum")</h1>
+<MudSkeleton Height="40px" Width="100%" Animation="Animation.Wave" />
+<MudPaper Class="mb-4 p-4">
+    <MudText Typo="Typo.h4">@(IsEdit ? "Edit Forum" : "Create New Forum")</MudText>
     <MudButton Variant="Variant.Text" Color="Color.Secondary" Href="/admin/forums">
         <MudIcon Icon="@Icons.Material.Filled.ArrowBack" Class="me-2" />
         Back to Forums
     </MudButton>
-</div>
+</MudPaper>
 
 <MudCard Elevation="2">
     <MudCardHeader>
         <MudText Typo="Typo.h6">Forum Information</MudText>
     </MudCardHeader>
     <MudCardContent>
-        <EditForm Model="Forum" OnValidSubmit="SaveForum">
+        <EditForm EditContext="@editContext" OnValidSubmit="SaveForum">
             <MudAlert Severity="Severity.Error" Class="mb-3">
                 <MudText>Please correct the errors below.</MudText>
             </MudAlert>
@@ -41,14 +46,38 @@
 
             <MudCheckBox T="bool" @bind-Checked="Forum.IsGeneral" Label="Is General Forum" Color="Color.Primary" />
 
-            <div class="d-flex gap-2">
+            <!-- Image Upload Button -->
+            <MudStack Direction="Row" Spacing="2" Class="my-2">
+                <MudText Typo="Typo.subtitle2">Forum Image</MudText>
+                <MudButton Variant="Variant.Outlined" Color="Color.Primary" OnClick="@(()=>TriggerFileInput())">
+                    <MudIcon Icon="@Icons.Material.Filled.Upload" class="me-2" />Upload Image
+                </MudButton>
+                <input type="file" style="display:none" @ref="fileInputRef" @onchange="OnImageSelected" accept="image/*" />
+                @if (!string.IsNullOrEmpty(Forum.ImageUrl))
+                {
+                    <img src="@Forum.ImageUrl" alt="Forum Image" style="max-height:60px;max-width:120px;" />
+                }
+            </MudStack>
+
+            <!-- Icon Picker with Reflection and Autocomplete -->
+            <MudStack Direction="Row" Spacing="2" Class="my-2">
+                <MudText Typo="Typo.subtitle2">Forum Icon (MudBlazor)</MudText>
+                <MudAutocomplete T="string" @bind-Value="Forum.IconName" Label="Forum Icon" Variant="Variant.Text"
+                    SearchFunc="SearchIcons" ToStringFunc="@(icon => icon ?? string.Empty)" />
+                @if (!string.IsNullOrEmpty(Forum.IconName))
+                {
+                    <MudIcon Icon="@Forum.IconName" Class="ms-2" />
+                }
+            </MudStack>
+
+            <MudStack Direction="Row" Spacing="2">
                 <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary"
                     Disabled="@isSubmitting">
                     <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Class="me-2" />
                     @(IsEdit ? "Update Forum" : "Create Forum")
                 </MudButton>
                 <MudButton Variant="Variant.Filled" Color="Color.Secondary" Href="/admin/forums">Cancel</MudButton>
-            </div>
+            </MudStack>
         </EditForm>
     </MudCardContent>
 </MudCard>
@@ -56,11 +85,14 @@
 @code {
     [Parameter]
     [SupplyParameterFromQuery] public int? id { get; set; }
-
+    [SupplyParameterFromForm]
     private CreateForumRequest Forum { get; set; } = new();
     private bool isSubmitting = false;
     private bool IsEdit => ( id) > 0;
     private List<DropdownOption<int>> Courses = new();
+    private EditContext editContext;
+    private ElementReference fileInputRef;
+    private List<string> allMudIcons = new();
 
     protected override async Task OnInitializedAsync()
     {
@@ -71,7 +103,9 @@
             Description = c.Description,
             IsDisabled = c.IsDisabled
         }).ToList();
-
+        allMudIcons = typeof(Icons.Material.Filled).GetFields(BindingFlags.Public | BindingFlags.Static)
+            .Select(f => f.GetValue(null)?.ToString()).Where(x => !string.IsNullOrEmpty(x)).ToList();
+        editContext = new EditContext(Forum);
         if (IsEdit)
         {
             var forumId =  id ?? 0;
@@ -85,8 +119,11 @@
                         Title = existingForum.Title,
                         Description = existingForum.Description,
                         CourseId = existingForum.CourseId,
-                        IsGeneral = existingForum.IsGeneral
+                        IsGeneral = existingForum.IsGeneral,
+                        ImageUrl = existingForum.ImageUrl,
+                        IconName = existingForum.IconName
                     };
+                    editContext = new EditContext(Forum);
                 }
             }
             catch (Exception ex)
@@ -96,6 +133,34 @@
                 return;
             }
         }
+    }
+
+    private async Task OnImageSelected(ChangeEventArgs e)
+    {
+        var files = (e.Value as Microsoft.AspNetCore.Components.Forms.IBrowserFile[])
+            ?? new[] { e.Value as Microsoft.AspNetCore.Components.Forms.IBrowserFile };
+        var file = files?.FirstOrDefault();
+        if (file != null)
+        {
+            var result = await ImageRepository.SaveImageAsync(file);
+            if (result != null)
+            {
+                Forum.ImageUrl = result.Url;
+                Snackbar.Add("Image uploaded successfully!", Severity.Success);
+            }
+            else
+            {
+                Snackbar.Add("Failed to upload image.", Severity.Error);
+            }
+        }
+    }
+
+    private Task<IEnumerable<string>> SearchIcons(string value, CancellationToken token)
+    {
+        IEnumerable<string> result = string.IsNullOrWhiteSpace(value)
+            ? allMudIcons
+            : allMudIcons.Where(i => i.Contains(value, StringComparison.OrdinalIgnoreCase));
+        return Task.FromResult(result);
     }
 
     private async Task SaveForum()
@@ -141,5 +206,10 @@
         ? Courses.Select(c => (int?)c.Value)
         : Courses.Where(c => c.Text.Contains(value, StringComparison.OrdinalIgnoreCase)).Select(c => (int?)c.Value);
         return Task.FromResult(result);
+    }
+
+    private void TriggerFileInput()
+    {
+        _ = JSRuntime.InvokeVoidAsync("eval", $"document.getElementById('{fileInputRef.Id}').click();");
     }
 }

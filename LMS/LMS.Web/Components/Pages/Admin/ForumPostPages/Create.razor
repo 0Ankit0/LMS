@@ -9,65 +9,58 @@
 @inject UserManager<User> UserManager
 @using System.Security.Claims
 @using Microsoft.AspNetCore.Identity
+@using MudBlazor
 
 <PageTitle>@(IsEdit ? "Edit Forum Post - Admin" : "Create Forum Post - Admin")</PageTitle>
 
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h1 class="mb-0">@(IsEdit ? "Edit Forum Post" : "Create New Forum Post")</h1>
+<MudSkeleton Height="40px" Width="100%" Animation="Animation.Wave" />
+<MudPaper Class="mb-4 p-4">
+    <MudText Typo="Typo.h4">@(IsEdit ? "Edit Forum Post" : "Create New Forum Post")</MudText>
     <MudButton Variant="Variant.Text" Color="Color.Secondary" Href="/admin/forumposts">
         <MudIcon Icon="@Icons.Material.Filled.ArrowBack" Class="me-2" />
         Back to Forum Posts
     </MudButton>
-</div>
+</MudPaper>
 
-<div class="row">
-    <div class="col-lg-8">
-        <MudCard Elevation="2">
-            <MudCardHeader>
-                <MudText Typo="Typo.h6">Forum Post Information</MudText>
-            </MudCardHeader>
-            <MudCardContent>
-                <EditForm Model="ForumPost" OnValidSubmit="SaveForumPost">
-                    <MudAlert Severity="Severity.Error" Class="mb-3" >
-                        <MudText>Please correct the errors below.</MudText>
-                    </MudAlert>
-
-                    <MudTextField @bind-Value="ForumPost.Content" Label="Content" Variant="Variant.Text" Lines="6" Required="true" RequiredError="Content is required!" Placeholder="Enter post content" />
-
-                    <MudAutocomplete T="int?" Value="ForumPost.TopicId" ValueChanged="@(v => ForumPost.TopicId = v ?? 0)" Label="Topic" Variant="Variant.Text" Required="true" RequiredError="Topic is required!" Placeholder="Search topic..."
+<MudCard Elevation="2">
+    <MudCardHeader>
+        <MudText Typo="Typo.h6">Forum Post Information</MudText>
+    </MudCardHeader>
+    <MudCardContent>
+        <EditForm EditContext="@editContext" OnValidSubmit="SaveForumPost">
+            <MudAlert Severity="Severity.Error" Class="mb-3" >
+                <MudText>Please correct the errors below.</MudText>
+            </MudAlert>
+            <MudTextField @bind-Value="ForumPost.Content" Label="Content" Variant="Variant.Text" Lines="6" Required="true" RequiredError="Content is required!" Placeholder="Enter post content" />
+            <MudAutocomplete T="int?" Value="ForumPost.TopicId" ValueChanged="@(v => ForumPost.TopicId = v ?? 0)" Label="Topic" Variant="Variant.Text" Required="true" RequiredError="Topic is required!" Placeholder="Search topic..."
     ToStringFunc="@(id => Forums.FirstOrDefault(f => f.Value == id)?.Text ?? string.Empty)"
     SearchFunc="SearchTopics" />
-
-                    <div class="mb-3">
-                        <label for="parentpostid" class="form-label">Parent Post ID (Optional)</label>
-                        <InputNumber id="parentpostid" @bind-Value="ForumPost.ParentPostId" class="form-control"
-                            placeholder="Enter parent post ID for replies" />
-                        <ValidationMessage For="() => ForumPost.ParentPostId" class="text-danger" />
-                        <div class="form-text">Leave empty for new topics, or enter a post ID to reply to an existing post.</div>
-                    </div>
-
-                    <div class="d-flex gap-2">
-                        <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Disabled="@isSubmitting">
-                            <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Class="me-2" />
-                            @(IsEdit ? "Update Forum Post" : "Create Forum Post")
-                        </MudButton>
-                        <MudButton Variant="Variant.Text" Color="Color.Secondary" Href="/admin/forumposts">Cancel</MudButton>
-                    </div>
-                </EditForm>
-            </MudCardContent>
-        </MudCard>
-    </div>
-</div>
+            <MudPaper Class="mb-3 p-2">
+                <MudText Typo="Typo.subtitle2">Parent Post ID (Optional)</MudText>
+                <MudNumericField @bind-Value="ForumPost.ParentPostId" Label="Parent Post ID" Variant="Variant.Text" Placeholder="Enter parent post ID for replies" />
+                <ValidationMessage For="() => ForumPost.ParentPostId" />
+                <MudText Typo="Typo.caption">Leave empty for new topics, or enter a post ID to reply to an existing post.</MudText>
+            </MudPaper>
+            <MudStack Direction="Row" Spacing="2">
+                <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Disabled="@isSubmitting">
+                    <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Class="me-2" />
+                    @(IsEdit ? "Update Forum Post" : "Create Forum Post")
+                </MudButton>
+                <MudButton Variant="Variant.Text" Color="Color.Secondary" Href="/admin/forumposts">Cancel</MudButton>
+            </MudStack>
+        </EditForm>
+    </MudCardContent>
+</MudCard>
 
 @code {
     [Parameter]
     public int? id { get; set; }
-
     private CreateForumPostRequest ForumPost { get; set; } = new();
     private bool isSubmitting = false;
     private bool isLoading = true;
     private List<DropdownOption<int>> Forums = new();
     private bool IsEdit => id.HasValue && id.Value > 0;
+    private EditContext editContext;
 
     protected override async Task OnInitializedAsync()
     {
@@ -78,7 +71,7 @@
             Description = f.Description,
             IsDisabled = f.IsDisabled
         }).ToList();
-
+        editContext = new EditContext(ForumPost);
         if (IsEdit)
         {
             var post = await ForumRepository.GetPostByIdAsync(id.Value);
@@ -90,6 +83,7 @@
                     TopicId = post.TopicId,
                     ParentPostId = post.ParentPostId
                 };
+                editContext = new EditContext(ForumPost);
             }
             else
             {

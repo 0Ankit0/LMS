@@ -2,36 +2,40 @@
 @page "/admin/courses/edit/{id:int}"
 @rendermode @(new InteractiveServerRenderMode())
 @using LMS.Repositories
+@using MudBlazor;
+@using System.Reflection;
 @inject IDropdownRepository DropdownRepository
 @inject ICourseRepository CourseRepository
 @inject NavigationManager NavigationManager
 @inject ISnackbar Snackbar
+@inject IImageRepository ImageRepository
+@inject IJSRuntime JSRuntime
 
 <PageTitle>@(IsEdit ? "Edit Course - Admin" : "Create Course - Admin")</PageTitle>
 
 @if (isLoading)
 {
-    <div class="d-flex justify-content-between align-items-center mb-4">
+    <MudStack Direction="Row" Spacing="2" Class="mb-4">
         <MudSkeleton SkeletonType="SkeletonType.Text" Width="200px" Height="40px" />
         <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="180px" Height="40px" />
-    </div>
+    </MudStack>
     <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="800px" />
 }
 else
 {
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1 class="mb-0">@(IsEdit ? "Edit Course" : "Create New Course")</h1>
+    <MudStack Direction="Row" Spacing="2" Class="mb-4">
+        <MudText Typo="Typo.h4">@(IsEdit ? "Edit Course" : "Create New Course")</MudText>
         <MudButton Variant="Variant.Text" Color="Color.Secondary" Href="/admin/courses">
             <MudIcon Icon="@Icons.Material.Filled.ArrowBack" Class="me-2" />
             Back to Courses
         </MudButton>
-    </div>
+    </MudStack>
     <MudCard Elevation="2">
         <MudCardHeader>
             <MudText Typo="Typo.h6">Course Information</MudText>
         </MudCardHeader>
         <MudCardContent>
-            <EditForm Model="Course" OnValidSubmit="SaveCourse">
+            <EditForm EditContext="@editContext" OnValidSubmit="SaveCourse">
                 <MudAlert Severity="Severity.Error" Class="mb-3" >
                     <MudText>Please correct the errors below.</MudText>
                 </MudAlert>
@@ -51,7 +55,17 @@ else
                 <MudTextField @bind-Value="Course.Description" Label="Description" Variant="Variant.Text" Lines="4" Required="true" RequiredError="Description is required!" Placeholder="Enter course description" />
                 <MudGrid>
                     <MudItem xs="12" md="6">
-                        <MudTextField @bind-Value="Course.ThumbnailUrl" Label="Thumbnail URL" Variant="Variant.Text" Placeholder="https://example.com/image.jpg" />
+                        <MudStack Direction="Row" Spacing="2" Class="my-2">
+                            <MudText Typo="Typo.subtitle2">Course Image</MudText>
+                            <MudButton Variant="Variant.Outlined" Color="Color.Primary" OnClick="@(()=>TriggerFileInput())">
+                                <MudIcon Icon="@Icons.Material.Filled.Upload" class="me-2" />Upload Image
+                            </MudButton>
+                            <input type="file" style="display:none" @ref="fileInputRef" @onchange="OnImageSelected" accept="image/*" />
+                            @if (!string.IsNullOrEmpty(Course.ThumbnailUrl))
+                            {
+                                <img src="@Course.ThumbnailUrl" alt="Course Image" style="max-height:60px;max-width:120px;" />
+                            }
+                        </MudStack>
                     </MudItem>
                     <MudItem xs="12" md="6">
                         <MudAutocomplete T="string" @bind-Value="Course.InstructorId" Label="Instructor" Variant="Variant.Text" Required="true" RequiredError="Instructor is required!" Placeholder="Search instructor..."
@@ -86,6 +100,15 @@ else
                 <MudTextField @bind-Value="Course.Prerequisites" Label="Prerequisites" Variant="Variant.Text" Lines="3" Placeholder="List any prerequisites..." />
                 <MudTextField @bind-Value="Course.LearningObjectives" Label="Learning Objectives" Variant="Variant.Text" Lines="3" Placeholder="What will students learn..." />
                 <MudCheckBox T="bool" @bind-Checked="Course.IsActive" Label="Is Active" Color="Color.Primary" />
+                <MudStack Direction="Row" Spacing="2" Class="my-2">
+                    <MudText Typo="Typo.subtitle2">Course Icon</MudText>
+                    <MudAutocomplete T="string" @bind-Value="Course.IconName" Label="Course Icon" Variant="Variant.Text"
+                        SearchFunc="SearchIcons" ToStringFunc="@(icon => icon ?? string.Empty)" />
+                    @if (!string.IsNullOrEmpty(Course.IconName))
+                    {
+                        <MudIcon Icon="@Course.IconName" Class="ms-2" />
+                    }
+                </MudStack>
                 <div class="d-flex gap-2">
                     <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Disabled="@isSubmitting">
                         <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Class="me-2" />
@@ -107,11 +130,17 @@ else
     private bool isLoading = true;
     private bool IsEdit => id.HasValue && id.Value > 0;
     private List<DropdownOption<string>> instructors = new();
+    private EditContext editContext;
+    private ElementReference fileInputRef;
+    private List<string> allMudIcons = new();
 
     protected override async Task OnInitializedAsync()
     {
         await Task.Delay(500);
         instructors = (await LoadInstructorsAsync()).ToList();
+        allMudIcons = typeof(Icons.Material.Filled).GetFields(BindingFlags.Public | BindingFlags.Static)
+            .Select(f => f.GetValue(null)?.ToString()).Where(x => !string.IsNullOrEmpty(x)).ToList();
+        editContext = new EditContext(Course);
         if (IsEdit)
         {
             var course = await CourseRepository.GetCourseByIdAsync(id.Value);
@@ -133,8 +162,10 @@ else
                     LearningObjectives = course.LearningObjectives,
                     IsActive = true, // Default to true or map if available
                     CategoryIds = new List<int>(), // Map if available
-                    TagIds = new List<int>() // Map if available
+                    TagIds = new List<int>(), // Map if available
+                    IconName = course.IconName
                 };
+                editContext = new EditContext(Course);
             }
             else
             {
@@ -171,6 +202,34 @@ else
         IEnumerable<string> result = string.IsNullOrWhiteSpace(value)
             ? instructors.Select(i => i.Value)
             : instructors.Where(i => i.Text.Contains(value, StringComparison.OrdinalIgnoreCase)).Select(i => i.Value);
+        return Task.FromResult(result);
+    }
+
+    private async Task OnImageSelected(ChangeEventArgs e)
+    {
+        var files = (e.Value as Microsoft.AspNetCore.Components.Forms.IBrowserFile[])
+            ?? new[] { e.Value as Microsoft.AspNetCore.Components.Forms.IBrowserFile };
+        var file = files?.FirstOrDefault();
+        if (file != null)
+        {
+            var result = await ImageRepository.SaveImageAsync(file);
+            if (result != null)
+            {
+                Course.ThumbnailUrl = result.Url;
+                Snackbar.Add("Image uploaded successfully!", Severity.Success);
+            }
+            else
+            {
+                Snackbar.Add("Failed to upload image.", Severity.Error);
+            }
+        }
+    }
+
+    private Task<IEnumerable<string>> SearchIcons(string value, CancellationToken token)
+    {
+        IEnumerable<string> result = string.IsNullOrWhiteSpace(value)
+            ? allMudIcons
+            : allMudIcons.Where(i => i.Contains(value, StringComparison.OrdinalIgnoreCase));
         return Task.FromResult(result);
     }
 
@@ -215,5 +274,10 @@ else
         {
             isSubmitting = false;
         }
+    }
+
+    private void TriggerFileInput()
+    {
+        _ = JSRuntime.InvokeVoidAsync("eval", "document.getElementById('" + fileInputRef.Id + "').click();");
     }
 }

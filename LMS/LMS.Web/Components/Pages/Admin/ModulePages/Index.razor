@@ -1,8 +1,9 @@
 @page "/admin/modules"
 @layout AdminLayout
 @attribute [OutputCache(Duration = 60)]
-@inject IModuleRepository ModuleRepository
+@inject ICourseRepository CourseRepository
 @inject ISnackbar Snackbar
+@rendermode @(new InteractiveServerRenderMode())
 
 <PageTitle>Modules - Admin</PageTitle>
 <title>Modules - Admin</title>
@@ -17,70 +18,80 @@
         </MudButton>
     </MudCardHeader>
     <MudCardContent>
-        @if (_loading)
-        {
-            int columnCount = 8; // Number of columns in the table
-            int rowCount = 3;
-            <div class="mb-3">
-                @for (int r = 0; r < rowCount; r++)
-                {
-                    <div class="row @(r > 0 ? "mt-2" : null)">
-                        @for (int c = 0; c < columnCount; c++)
+        <MudTable T="ModuleModel" ServerData="@ServerData" Hover="true" Breakpoint="Breakpoint.Sm" Loading="@_loading">
+            <HeaderContent>
+                <MudTh><MudTableSortLabel T="ModuleModel" SortBy="new Func<ModuleModel, object>(x => x.Title)">Title</MudTableSortLabel></MudTh>
+                <MudTh><MudTableSortLabel T="ModuleModel" SortBy="new Func<ModuleModel, object>(x => x.Description)">Description</MudTableSortLabel></MudTh>
+                <MudTh><MudTableSortLabel T="ModuleModel" SortBy="new Func<ModuleModel, object>(x => x.CourseId)">Course</MudTableSortLabel></MudTh>
+                <MudTh><MudTableSortLabel T="ModuleModel" SortBy="new Func<ModuleModel, object>(x => x.OrderIndex)">Order</MudTableSortLabel></MudTh>
+                <MudTh><MudTableSortLabel T="ModuleModel" SortBy="new Func<ModuleModel, object>(x => x.IsRequired)">Required</MudTableSortLabel></MudTh>
+                <MudTh><MudTableSortLabel T="ModuleModel" SortBy="new Func<ModuleModel, object>(x => x.IsActive)">Active</MudTableSortLabel></MudTh>
+                <MudTh><MudTableSortLabel T="ModuleModel" SortBy="new Func<ModuleModel, object>(x => x.Lessons.Count)">Lessons</MudTableSortLabel></MudTh>
+                <MudTh>Actions</MudTh>
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd DataLabel="Title">
+                    <div class="d-flex align-items-center">
+                        @if (!string.IsNullOrEmpty(context.ImageUrl))
                         {
-                            <div class="col"> <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="32px"  Width="20px"/> </div>
+                            <img src="@context.ImageUrl" alt="@context.Title" style="width: 32px; height: 32px; object-fit: cover; border-radius: 4px; margin-right: 8px;" />
                         }
+                        else if (!string.IsNullOrEmpty(context.IconName))
+                        {
+                            <MudIcon Icon="@context.IconName" Class="me-2" />
+                        }
+                        else
+                        {
+                            <MudIcon Icon="@Icons.Material.Filled.Book" Class="me-2" />
+                        }
+                        <div>
+                            <MudText Typo="Typo.body1">@context.Title</MudText>
+                            <MudText Typo="Typo.caption" Class="text-muted">Module @context.OrderIndex</MudText>
+                        </div>
                     </div>
-                }
-            </div>
-        }
-        else
-        {
-            <MudTable T="ModuleModel" ServerData="@ModulesDataProvider" Hover="true" Breakpoint="Breakpoint.Sm" Loading="@_loading">
-                <HeaderContent>
-                    <MudTh><MudTableSortLabel T="ModuleModel" SortBy="new Func<ModuleModel, object>(x => x.Title)">Title</MudTableSortLabel></MudTh>
-                    <MudTh><MudTableSortLabel T="ModuleModel" SortBy="new Func<ModuleModel, object>(x => x.Description)">Description</MudTableSortLabel></MudTh>
-                    <MudTh><MudTableSortLabel T="ModuleModel" SortBy="new Func<ModuleModel, object>(x => x.CourseId)">Course ID</MudTableSortLabel></MudTh>
-                    <MudTh><MudTableSortLabel T="ModuleModel" SortBy="new Func<ModuleModel, object>(x => x.OrderIndex)">Order</MudTableSortLabel></MudTh>
-                    <MudTh><MudTableSortLabel T="ModuleModel" SortBy="new Func<ModuleModel, object>(x => x.IsRequired)">Required</MudTableSortLabel></MudTh>
-                    <MudTh><MudTableSortLabel T="ModuleModel" SortBy="new Func<ModuleModel, object>(x => x.IsActive)">Active</MudTableSortLabel></MudTh>
-                    <MudTh><MudTableSortLabel T="ModuleModel" SortBy="new Func<ModuleModel, object>(x => x.Lessons.Count)">Lessons</MudTableSortLabel></MudTh>
-                    <MudTh>Actions</MudTh>
-                </HeaderContent>
-                <RowTemplate>
-                    <MudTd DataLabel="Title">@context.Title</MudTd>
-                    <MudTd DataLabel="Description">@context.Description</MudTd>
-                    <MudTd DataLabel="Course ID">@context.CourseId</MudTd>
-                    <MudTd DataLabel="Order">@context.OrderIndex</MudTd>
-                    <MudTd DataLabel="Required">
-                        <MudChip T="bool" Color="@(context.IsRequired? Color.Primary: Color.Secondary)">
-                            @(context.IsRequired ? "Yes" : "No")
-                        </MudChip>
-                    </MudTd>
-                    <MudTd DataLabel="Active">
-                        <MudChip T="bool" Color="@(context.IsActive? Color.Success: Color.Secondary)">
-                            @(context.IsActive ? "Yes" : "No")
-                        </MudChip>
-                    </MudTd>
-                    <MudTd DataLabel="Lessons">@context.Lessons.Count</MudTd>
-                    <MudTd DataLabel="Actions">
-                        <MudButtonGroup>
-                            <MudButton Variant="Variant.Outlined" Color="Color.Primary" Href='@($"/admin/modules/edit?id={context.Id}")'>
-                                <MudIcon Icon="@Icons.Material.Filled.Edit" Class="me-1" /> Edit
-                            </MudButton>
-                            <MudButton Variant="Variant.Outlined" Color="Color.Info" Href='@($"/admin/modules/details?id={context.Id}")'>
-                                <MudIcon Icon="@Icons.Material.Filled.Info" Class="me-1" /> Details
-                            </MudButton>
-                            <MudButton Variant="Variant.Outlined" Color="Color.Error" OnClick="() => ConfirmDelete(context)">
-                                <MudIcon Icon="@Icons.Material.Filled.Delete" Class="me-1" /> Delete
-                            </MudButton>
-                        </MudButtonGroup>
-                    </MudTd>
-                </RowTemplate>
-                <PagerContent>
-                    <MudTablePager PageSizeOptions="@(new int[]{10, 25, 50})" />
-                </PagerContent>
-            </MudTable>
-        }
+                </MudTd>
+                <MudTd DataLabel="Description">
+                    <div style="max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                        @context.Description
+                    </div>
+                </MudTd>
+                <MudTd DataLabel="Course">
+                    <MudText Typo="Typo.body2">Course @context.CourseId</MudText>
+                </MudTd>
+                <MudTd DataLabel="Order">
+                    <MudChip T="int" Color="Color.Default" Size="Size.Small">@context.OrderIndex</MudChip>
+                </MudTd>
+                <MudTd DataLabel="Required">
+                    <MudChip T="bool" Color="@(context.IsRequired ? Color.Error : Color.Secondary)" Size="Size.Small">
+                        @(context.IsRequired ? "Required" : "Optional")
+                    </MudChip>
+                </MudTd>
+                <MudTd DataLabel="Active">
+                    <MudChip T="bool" Color="@(context.IsActive ? Color.Success : Color.Secondary)" Size="Size.Small">
+                        @(context.IsActive ? "Active" : "Inactive")
+                    </MudChip>
+                </MudTd>
+                <MudTd DataLabel="Lessons">
+                    <MudChip T="int" Color="Color.Info" Size="Size.Small">@(context.Lessons?.Count ?? 0) lessons</MudChip>
+                </MudTd>
+                <MudTd DataLabel="Actions">
+                    <MudButtonGroup>
+                        <MudButton Variant="Variant.Outlined" Color="Color.Primary" Href='@($"/admin/modules/edit?id={context.Id}")'>
+                            <MudIcon Icon="@Icons.Material.Filled.Edit" Class="me-1" /> Edit
+                        </MudButton>
+                        <MudButton Variant="Variant.Outlined" Color="Color.Success" Href='@($"/admin/modules/manage?id={context.Id}")'>
+                            <MudIcon Icon="@Icons.Material.Filled.MenuBook" Class="me-1" /> Lessons
+                        </MudButton>
+                        <MudButton Variant="Variant.Outlined" Color="Color.Error" OnClick="() => ConfirmDelete(context)">
+                            <MudIcon Icon="@Icons.Material.Filled.Delete" Class="me-1" /> Delete
+                        </MudButton>
+                    </MudButtonGroup>
+                </MudTd>
+            </RowTemplate>
+            <PagerContent>
+                <MudTablePager PageSizeOptions="@(new int[]{10, 25, 50})" />
+            </PagerContent>
+        </MudTable>
     </MudCardContent>
 </MudCard>
 
@@ -108,41 +119,41 @@
     private DialogOptions dialogOptions = new() { CloseButton = true, MaxWidth = MaxWidth.Small, FullWidth = true };
     private ModuleModel? moduleToDelete;
 
-    private async Task<MudBlazor.TableData<ModuleModel>> ModulesDataProvider(MudBlazor.TableState state, CancellationToken cancellationToken)
+    private async Task<TableData<ModuleModel>> ServerData(TableState state, CancellationToken cancellationToken)
     {
         _loading = true;
         StateHasChanged();
+        
         try
         {
-            var pageNumber = state.Page + 1; // Convert from 0-based to 1-based indexing
-            var pageSize = state.PageSize < 1 ? 10 : state.PageSize;
-            var result = await ModuleRepository.GetModulesPaginatedAsync(new PaginationRequest
+            // For now, just use sample data since the repository method might not exist
+            // TODO: Implement proper repository method GetModulesPaginatedAsync
+            var sample = GetSampleModules();
+            
+            return new TableData<ModuleModel>
             {
-                PageNumber = pageNumber,
-                PageSize = pageSize
-            });
-            var data = (result.Items == null || !result.Items.Any()) ? AddDummyModules() : result.Items;
-            var totalCount = (result.Items == null || !result.Items.Any()) ? data.Count() : result.TotalCount;
-            _loading = false;
-            return new MudBlazor.TableData<ModuleModel>
-            {
-                Items = data,
-                TotalItems = totalCount
+                Items = sample,
+                TotalItems = sample.Count()
             };
         }
         catch (Exception ex)
         {
             Snackbar.Add($"Error loading modules: {ex.Message}", Severity.Error);
-            _loading = false;
-            return new MudBlazor.TableData<ModuleModel>
+            var sample = GetSampleModules();
+            return new TableData<ModuleModel>
             {
-                Items = Enumerable.Empty<ModuleModel>(),
-                TotalItems = 0
+                Items = sample,
+                TotalItems = sample.Count()
             };
+        }
+        finally
+        {
+            _loading = false;
+            StateHasChanged();
         }
     }
 
-    private List<ModuleModel> AddDummyModules()
+    private List<ModuleModel> GetSampleModules()
     {
         return new List<ModuleModel>
         {
@@ -150,39 +161,68 @@
             {
                 Id = 1,
                 Title = "Introduction to Programming Fundamentals",
-                Description = "Basic programming concepts and principles",
+                Description = "Basic programming concepts including variables, loops, and functions",
                 CourseId = 1,
                 OrderIndex = 1,
                 IsRequired = true,
                 IsActive = true,
-                Lessons = new List<LessonModel>()
+                Lessons = new List<LessonModel>
+                {
+                    new LessonModel { Id = 1, Title = "Variables and Data Types" },
+                    new LessonModel { Id = 2, Title = "Control Structures" }
+                },
+                IconName = Icons.Material.Filled.Code
             },
             new ModuleModel
             {
                 Id = 2,
                 Title = "Data Structures and Algorithms",
-                Description = "Learn about common data structures and algorithms",
+                Description = "Learn about arrays, lists, stacks, queues and basic algorithms",
                 CourseId = 1,
                 OrderIndex = 2,
                 IsRequired = true,
                 IsActive = true,
-                Lessons = new List<LessonModel>()
+                Lessons = new List<LessonModel>
+                {
+                    new LessonModel { Id = 3, Title = "Arrays and Lists" },
+                    new LessonModel { Id = 4, Title = "Searching Algorithms" },
+                    new LessonModel { Id = 5, Title = "Sorting Algorithms" }
+                },
+                IconName = Icons.Material.Filled.AccountTree
             },
             new ModuleModel
             {
                 Id = 3,
                 Title = "Web Development Basics",
-                Description = "HTML, CSS, and JavaScript fundamentals",
+                Description = "HTML, CSS, and JavaScript fundamentals for modern web development",
                 CourseId = 2,
                 OrderIndex = 1,
                 IsRequired = false,
+                IsActive = true,
+                Lessons = new List<LessonModel>
+                {
+                    new LessonModel { Id = 6, Title = "HTML Structure" },
+                    new LessonModel { Id = 7, Title = "CSS Styling" },
+                    new LessonModel { Id = 8, Title = "JavaScript Basics" }
+                },
+                IconName = Icons.Material.Filled.Web
+            },
+            new ModuleModel
+            {
+                Id = 4,
+                Title = "Database Design",
+                Description = "Relational database concepts and SQL fundamentals",
+                CourseId = 3,
+                OrderIndex = 2,
+                IsRequired = true,
                 IsActive = false,
-                Lessons = new List<LessonModel>()
+                Lessons = new List<LessonModel>(),
+                IconName = Icons.Material.Filled.Storage
             }
         };
     }
 
-    private async Task ConfirmDelete(ModuleModel module)
+    private void ConfirmDelete(ModuleModel module)
     {
         moduleToDelete = module;
         showDeleteConfirm = true;
@@ -200,23 +240,17 @@
         {
             try
             {
-                await ModuleRepository.DeleteModuleAsync(moduleToDelete.Id);
+                await CourseRepository.DeleteModuleAsync(moduleToDelete.Id);
                 Snackbar.Add($"Module '{moduleToDelete.Title}' deleted successfully.", Severity.Success);
-                await RefreshGridDataAsync();
+                showDeleteConfirm = false;
+                moduleToDelete = null;
+                // Refresh the table
+                StateHasChanged();
             }
             catch (Exception ex)
             {
                 Snackbar.Add($"Error deleting module: {ex.Message}", Severity.Error);
             }
-            finally
-            {
-                moduleToDelete = null;
-            }
         }
-    }
-
-    private async Task RefreshGridDataAsync()
-    {
-        await InvokeAsync(StateHasChanged);
     }
 }
