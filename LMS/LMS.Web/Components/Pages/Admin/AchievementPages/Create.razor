@@ -2,6 +2,7 @@
 @page "/admin/achievements/edit/{id:int}"
 @layout AdminLayout
 @using LMS.Repositories
+@using LMS.Web.Components.Shared
 @using MudBlazor;
 @using System.Reflection;
 
@@ -51,14 +52,7 @@ else
                         <MudItem xs="12" md="6">
                             <MudStack Direction="Row" Spacing="2" Class="my-2">
                                 <MudText Typo="Typo.subtitle2">Achievement Icon Image</MudText>
-                                <MudButton Variant="Variant.Outlined" Color="Color.Primary" OnClick="@(()=>TriggerFileInput())">
-                                    <MudIcon Icon="@Icons.Material.Filled.Upload" class="me-2" />Upload Icon Image
-                                </MudButton>
-                                <input type="file" style="display:none" @ref="fileInputRef" @onchange="OnImageSelected" accept="image/*" />
-                                @if (!string.IsNullOrEmpty(Achievement.IconUrl))
-                                {
-                                    <img src="@Achievement.IconUrl" alt="Achievement Icon" style="max-height:60px;max-width:120px;" />
-                                }
+                                <FileUpload ImageUrl="@Achievement.IconUrl" ImageUrlChanged="@(url => Achievement.IconUrl = url)" ButtonText="Upload Icon Image" />
                             </MudStack>
                         </MudItem>
                         <MudItem xs="12" md="6">
@@ -81,8 +75,7 @@ else
                     </MudGrid>
                     <MudStack Direction="Row" Spacing="2" Class="my-2">
                         <MudText Typo="Typo.subtitle2">Achievement Icon (MudBlazor)</MudText>
-                        <MudAutocomplete T="string" @bind-Value="Achievement.IconName" Label="Achievement Icon" Variant="Variant.Text"
-                            SearchFunc="SearchIcons" ToStringFunc="@(icon => icon ?? string.Empty)" />
+                        <MudIconPicker T="string" @bind-Value="Achievement.IconName" Label="Achievement Icon" />
                         @if (!string.IsNullOrEmpty(Achievement.IconName))
                         {
                             <MudIcon Icon="@Achievement.IconName" Class="ms-2" />
@@ -112,14 +105,10 @@ else
     private AchievementType SelectedType { get; set; }
     private bool hasSubmitAttempted = false;
     private EditContext? editContext;
-    private ElementReference fileInputRef;
-    private List<string> allMudIcons = new();
 
     protected override async Task OnInitializedAsync()
     {
         editContext = new EditContext(Achievement);
-        allMudIcons = typeof(Icons.Material.Filled).GetFields(BindingFlags.Public | BindingFlags.Static)
-            .Select(f => f.GetValue(null)?.ToString()).Where(x => !string.IsNullOrEmpty(x)).ToList();
         if (IsEdit)
         {
             var achievement = await AchievementRepository.GetAchievementByIdAsync(id.Value);
@@ -154,34 +143,6 @@ else
             SelectedType = AchievementType.Course;
         }
         isLoading = false;
-    }
-
-    private async Task OnImageSelected(ChangeEventArgs e)
-    {
-        var files = (e.Value as Microsoft.AspNetCore.Components.Forms.IBrowserFile[])
-            ?? new[] { e.Value as Microsoft.AspNetCore.Components.Forms.IBrowserFile };
-        var file = files?.FirstOrDefault();
-        if (file != null)
-        {
-            var result = await ImageRepository.SaveImageAsync(file);
-            if (result != null)
-            {
-                Achievement.IconUrl = result.Url;
-                Snackbar.Add("Icon image uploaded successfully!", Severity.Success);
-            }
-            else
-            {
-                Snackbar.Add("Failed to upload icon image.", Severity.Error);
-            }
-        }
-    }
-
-    private Task<IEnumerable<string>> SearchIcons(string value, CancellationToken token)
-    {
-        IEnumerable<string> result = string.IsNullOrWhiteSpace(value)
-            ? allMudIcons
-            : allMudIcons.Where(i => i.Contains(value, StringComparison.OrdinalIgnoreCase));
-        return Task.FromResult(result);
     }
 
     private async Task SaveAchievement()
@@ -232,10 +193,5 @@ else
         {
             isSubmitting = false;
         }
-    }
-
-    private void TriggerFileInput()
-    {
-        _ = JSRuntime.InvokeVoidAsync("eval", $"document.getElementById('{fileInputRef.Id}').click();");
     }
 }

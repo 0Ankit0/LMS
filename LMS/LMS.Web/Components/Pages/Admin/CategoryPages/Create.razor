@@ -1,6 +1,7 @@
 ﻿@page "/admin/categories/create"
 @page "/admin/categories/edit/{id:int}"
 @using LMS.Repositories
+@using LMS.Web.Components.Shared
 @using MudBlazor;
 @using System.Reflection;
 @rendermode @(new InteractiveServerRenderMode())
@@ -70,8 +71,7 @@ else
                 </MudGrid>
                 <MudStack Direction="Row" Spacing="2" Class="my-2">
                     <MudText Typo="Typo.subtitle2">Category Icon (MudBlazor)</MudText>
-                    <MudAutocomplete T="string" @bind-Value="Category.IconName" Label="Category Icon" Variant="Variant.Text"
-                        SearchFunc="SearchIcons" ToStringFunc="@(icon => icon ?? string.Empty)" />
+                    <MudIconPicker T="string" @bind-Value="Category.IconName" Label="Category Icon" />
                     @if (!string.IsNullOrEmpty(Category.IconName))
                     {
                         <MudIcon Icon="@Category.IconName" Class="ms-2" />

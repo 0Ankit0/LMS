@@ -2,6 +2,7 @@
 @page "/admin/modules/edit/{id:int}"
 
 @using LMS.Repositories
+@using LMS.Web.Components.Shared
 @using MudBlazor;
 @using System.Reflection;
 
@@ -29,11 +30,11 @@
         <MudText Typo="Typo.h6">Module Information</MudText>
     </MudCardHeader>
     <MudCardContent>
-        <EditForm EditContext="@editContext" OnValidSubmit="SaveModule">
+        <EditForm Model="@Module" OnValidSubmit="SaveModule">
             <AntiforgeryToken />
             <DataAnnotationsValidator />
             <ValidationSummary />
-            <MudAlert Severity="Severity.Error" Class="my-3" Visible="@(!(editContext?.Validate() ?? true))">
+            <MudAlert Severity="Severity.Error" Class="my-3">
                 <MudText>Please correct the errors below.</MudText>
             </MudAlert>
             <MudTextField @bind-Value="Module.Title" Label="Title" Variant="Variant.Text" Required="true" RequiredError="Title is required!" />
@@ -63,13 +64,15 @@
                 }
             </MudStack>
 
-            <!-- Icon Picker with Reflection and Autocomplete -->
-            <MudAutocomplete T="string" @bind-Value="Module.IconName" Label="Module Icon" Variant="Variant.Text"
-                SearchFunc="SearchIcons" ToStringFunc="@(icon => icon ?? string.Empty)" />
-            @if (!string.IsNullOrEmpty(Module.IconName))
-            {
-                <MudIcon Icon="@Module.IconName" Class="ms-2" />
-            }
+            <!-- Icon Picker Component -->
+            <MudStack Direction="Row" Spacing="2" Class="my-2">
+                <MudText Typo="Typo.subtitle2">Module Icon</MudText>
+                <MudIconPicker T="string" Value="@Module.IconName" ValueChanged="ValueChangedModuleIcon" Label="Module Icon" />
+                @if (!string.IsNullOrEmpty(Module.IconName))
+                {
+                    <MudIcon Icon="@Module.IconName" Class="ms-2" />
+                }
+            </MudStack>
 
             <MudStack Direction="Row" Spacing="2">
                 <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Disabled="@isSubmitting">
@@ -88,7 +91,6 @@
     [SupplyParameterFromForm]
     private CreateModuleRequest Module { get; set; } = new();
     private bool isSubmitting = false;
-    private EditContext? editContext;
     private List<DropdownOption<int>> courses = new();
     private bool IsEdit => id.HasValue && id.Value > 0;
     private ElementReference fileInputRef;
@@ -122,7 +124,6 @@
                 return;
             }
         }
-        editContext = new EditContext(Module);
     }
 
     private async Task OnImageSelected(ChangeEventArgs e)
@@ -143,14 +144,6 @@
                 Snackbar.Add("Failed to upload image.", Severity.Error);
             }
         }
-    }
-
-    private Task<IEnumerable<string>> SearchIcons(string value, CancellationToken token)
-    {
-        IEnumerable<string> result = string.IsNullOrWhiteSpace(value)
-            ? allMudIcons
-            : allMudIcons.Where(i => i.Contains(value, StringComparison.OrdinalIgnoreCase));
-        return Task.FromResult(result);
     }
 
     private async Task SaveModule()
@@ -209,4 +202,6 @@
     {
         _ = JSRuntime.InvokeVoidAsync("eval", $"document.getElementById('{fileInputRef.Id}').click();");
     }
+
+    private void ValueChangedModuleIcon(string v) => Module.IconName = v;
 }

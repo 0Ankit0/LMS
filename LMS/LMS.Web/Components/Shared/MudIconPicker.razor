@@ -1,0 +1,124 @@
+@typeparam T
+@using Microsoft.AspNetCore.Components
+@using System.Reflection
+
+<MudAutocomplete T="T" @bind-Value="Value" Label="@Label" SearchFunc="SearchIcons" AdornmentIcon="@GetIcon(Value?.ToString() ?? string.Empty)" AdornmentColor="Color.Primary">
+    <ItemTemplate>
+        <MudIcon Icon="@GetIcon(context?.ToString() ?? string.Empty)" Class="mr-2" /> @context
+    </ItemTemplate>
+</MudAutocomplete>
+
+@code {
+    [Parameter]
+    public T? Value { get; set; }
+    [Parameter]
+    public EventCallback<T?> ValueChanged { get; set; }
+    [Parameter]
+    public string Label { get; set; } = "Icon";
+
+    private async Task<IEnumerable<T>> SearchIcons(string value, CancellationToken token)
+    {
+        var allIcons = GetAllIcons().Cast<T>();
+        if (string.IsNullOrEmpty(value))
+            return await Task.FromResult(allIcons);
+        return await Task.FromResult(allIcons.Where(i => i?.ToString()?.Contains(value, StringComparison.InvariantCultureIgnoreCase) == true));
+    }
+
+    private IEnumerable<string> GetAllIcons()
+    {
+        var icons = new List<string>();
+        var filledIconsType = typeof(MudBlazor.Icons.Material.Filled);
+        foreach (var prop in filledIconsType.GetProperties(BindingFlags.Public | BindingFlags.Static))
+        {
+            if (prop.PropertyType == typeof(string))
+            {
+                icons.Add($"Filled.{prop.Name}");
+            }
+        }
+        foreach (var field in filledIconsType.GetFields(BindingFlags.Public | BindingFlags.Static))
+        {
+            if (field.FieldType == typeof(string))
+            {
+                icons.Add($"Filled.{field.Name}");
+            }
+        }
+        foreach (var nestedType in filledIconsType.GetNestedTypes(BindingFlags.Public | BindingFlags.Static))
+        {
+            foreach (var prop in nestedType.GetProperties(BindingFlags.Public | BindingFlags.Static))
+            {
+                if (prop.PropertyType == typeof(string))
+                {
+                    icons.Add($"Filled.{nestedType.Name}.{prop.Name}");
+                }
+            }
+            foreach (var field in nestedType.GetFields(BindingFlags.Public | BindingFlags.Static))
+            {
+                if (field.FieldType == typeof(string))
+                {
+                    icons.Add($"Filled.{nestedType.Name}.{field.Name}");
+                }
+            }
+        }
+        return icons.OrderBy(i => i);
+    }
+
+    private string GetIcon(string iconName)
+    {
+        if (string.IsNullOrEmpty(iconName))
+        {
+            return string.Empty;
+        }
+        var parts = iconName.Split('.');
+        if (parts.Length < 2)
+        {
+            return string.Empty; // Invalid format
+        }
+        Type iconType = null;
+        if (parts[0] == "Filled")
+        {
+            iconType = typeof(MudBlazor.Icons.Material.Filled);
+        }
+        if (iconType == null)
+        {
+            return string.Empty;
+        }
+        object iconValue = null;
+        if (parts.Length == 2)
+        {
+            var prop = iconType.GetProperty(parts[1], BindingFlags.Public | BindingFlags.Static);
+            if (prop != null && prop.PropertyType == typeof(string))
+            {
+                iconValue = prop.GetValue(null);
+            }
+            else
+            {
+                var field = iconType.GetField(parts[1], BindingFlags.Public | BindingFlags.Static);
+                if (field != null && field.FieldType == typeof(string))
+                {
+                    iconValue = field.GetValue(null);
+                }
+            }
+        }
+        else if (parts.Length == 3)
+        {
+            var nestedType = iconType.GetNestedType(parts[1], BindingFlags.Public | BindingFlags.Static);
+            if (nestedType != null)
+            {
+                var prop = nestedType.GetProperty(parts[2], BindingFlags.Public | BindingFlags.Static);
+                if (prop != null && prop.PropertyType == typeof(string))
+                {
+                    iconValue = prop.GetValue(null);
+                }
+                else
+                {
+                    var field = nestedType.GetField(parts[2], BindingFlags.Public | BindingFlags.Static);
+                    if (field != null && field.FieldType == typeof(string))
+                    {
+                        iconValue = field.GetValue(null);
+                    }
+                }
+            }
+        }
+        return iconValue?.ToString() ?? string.Empty;
+    }
+}

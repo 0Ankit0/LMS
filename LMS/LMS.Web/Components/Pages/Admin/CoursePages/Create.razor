@@ -2,6 +2,7 @@
 @page "/admin/courses/edit/{id:int}"
 @rendermode @(new InteractiveServerRenderMode())
 @using LMS.Repositories
+@using LMS.Web.Components.Shared
 @using MudBlazor;
 @using System.Reflection;
 @inject IDropdownRepository DropdownRepository
@@ -102,8 +103,7 @@ else
                 <MudCheckBox T="bool" @bind-Checked="Course.IsActive" Label="Is Active" Color="Color.Primary" />
                 <MudStack Direction="Row" Spacing="2" Class="my-2">
                     <MudText Typo="Typo.subtitle2">Course Icon</MudText>
-                    <MudAutocomplete T="string" @bind-Value="Course.IconName" Label="Course Icon" Variant="Variant.Text"
-                        SearchFunc="SearchIcons" ToStringFunc="@(icon => icon ?? string.Empty)" />
+                    <MudIconPicker T="string" Value="@Course.IconName" ValueChanged="ValueChangedCourseIcon" Label="Course Icon" />
                     @if (!string.IsNullOrEmpty(Course.IconName))
                     {
                         <MudIcon Icon="@Course.IconName" Class="ms-2" />
@@ -225,14 +225,6 @@ else
         }
     }
 
-    private Task<IEnumerable<string>> SearchIcons(string value, CancellationToken token)
-    {
-        IEnumerable<string> result = string.IsNullOrWhiteSpace(value)
-            ? allMudIcons
-            : allMudIcons.Where(i => i.Contains(value, StringComparison.OrdinalIgnoreCase));
-        return Task.FromResult(result);
-    }
-
     private async Task SaveCourse()
     {
         if (isSubmitting) return;
@@ -280,4 +272,6 @@ else
     {
         _ = JSRuntime.InvokeVoidAsync("eval", "document.getElementById('" + fileInputRef.Id + "').click();");
     }
+
+    private void ValueChangedCourseIcon(string v) => Course.IconName = v;
 }

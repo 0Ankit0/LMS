@@ -1,0 +1,46 @@
+@using Microsoft.AspNetCore.Components.Forms
+@inject IImageRepository ImageRepository
+@inject ISnackbar Snackbar
+
+<MudFileUpload T="IBrowserFile" OnFilesChanged="OnInputFileChange">
+    <ActivatorContent>
+        <MudFab Color="Color.Secondary"
+                StartIcon="@Icons.Material.Filled.Image"
+                Label="Load picture" />
+    </ActivatorContent>
+    <SelectedTemplate>
+        @if (!string.IsNullOrEmpty(ImageUrl))
+        {
+            <img src="@ImageUrl" alt="Uploaded Image" style="max-height:60px;max-width:120px;" />
+        }
+        else
+        {
+            <MudText Typo="Typo.body2">No image selected</MudText>
+        }
+    </SelectedTemplate>
+</MudFileUpload>
+
+@code {
+    [Parameter] public string? ImageUrl { get; set; }
+    [Parameter] public EventCallback<string?> ImageUrlChanged { get; set; }
+    [Parameter] public string ButtonText { get; set; } = "Upload Image";
+
+    private async Task OnInputFileChange(InputFileChangeEventArgs e)
+    {
+        var file = e.File;
+        if (file != null)
+        {
+            var result = await ImageRepository.SaveImageAsync(file);
+            if (result != null)
+            {
+                ImageUrl = result.Url;
+                await ImageUrlChanged.InvokeAsync(ImageUrl);
+                Snackbar.Add("Image uploaded successfully!", Severity.Success);
+            }
+            else
+            {
+                Snackbar.Add("Failed to upload image.", Severity.Error);
+            }
+        }
+    }
+}

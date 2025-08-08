@@ -2,6 +2,7 @@
 @page "/admin/forums/edit/{id}"
 
 @using LMS.Repositories
+@using LMS.Web.Components.Shared
 @using MudBlazor;
 @using System.Reflection;
 @inject IForumRepository ForumRepository
@@ -28,7 +29,7 @@
         <MudText Typo="Typo.h6">Forum Information</MudText>
     </MudCardHeader>
     <MudCardContent>
-        <EditForm EditContext="@editContext" OnValidSubmit="SaveForum">
+        <EditForm Model="@Forum" OnValidSubmit="SaveForum">
             <MudAlert Severity="Severity.Error" Class="mb-3">
                 <MudText>Please correct the errors below.</MudText>
             </MudAlert>
@@ -62,8 +63,7 @@
             <!-- Icon Picker with Reflection and Autocomplete -->
             <MudStack Direction="Row" Spacing="2" Class="my-2">
                 <MudText Typo="Typo.subtitle2">Forum Icon (MudBlazor)</MudText>
-                <MudAutocomplete T="string" @bind-Value="Forum.IconName" Label="Forum Icon" Variant="Variant.Text"
-                    SearchFunc="SearchIcons" ToStringFunc="@(icon => icon ?? string.Empty)" />
+                <MudIconPicker T="string" @bind-Value="Forum.IconName" Label="Forum Icon" />
                 @if (!string.IsNullOrEmpty(Forum.IconName))
                 {
                     <MudIcon Icon="@Forum.IconName" Class="ms-2" />
@@ -90,7 +90,6 @@
     private bool isSubmitting = false;
     private bool IsEdit => ( id) > 0;
     private List<DropdownOption<int>> Courses = new();
-    private EditContext editContext;
     private ElementReference fileInputRef;
     private List<string> allMudIcons = new();
 
@@ -105,7 +104,6 @@
         }).ToList();
         allMudIcons = typeof(Icons.Material.Filled).GetFields(BindingFlags.Public | BindingFlags.Static)
             .Select(f => f.GetValue(null)?.ToString()).Where(x => !string.IsNullOrEmpty(x)).ToList();
-        editContext = new EditContext(Forum);
         if (IsEdit)
         {
             var forumId =  id ?? 0;
@@ -123,7 +121,6 @@
                         ImageUrl = existingForum.ImageUrl,
                         IconName = existingForum.IconName
                     };
-                    editContext = new EditContext(Forum);
                 }
             }
             catch (Exception ex)
@@ -153,14 +150,6 @@
                 Snackbar.Add("Failed to upload image.", Severity.Error);
             }
         }
-    }
-
-    private Task<IEnumerable<string>> SearchIcons(string value, CancellationToken token)
-    {
-        IEnumerable<string> result = string.IsNullOrWhiteSpace(value)
-            ? allMudIcons
-            : allMudIcons.Where(i => i.Contains(value, StringComparison.OrdinalIgnoreCase));
-        return Task.FromResult(result);
     }
 
     private async Task SaveForum()
