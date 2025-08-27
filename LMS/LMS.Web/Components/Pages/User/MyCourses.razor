@@ -11,104 +11,128 @@
 
 <PageTitle>My Courses - LMS</PageTitle>
 
-<div class="container-fluid">
-    <MudToolBar Class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-        <MudText Typo="Typo.h5" Class="h2">
-            <MudIcon Icon="@Icons.Material.Filled.Book" Class="me-2" />My Courses
-        </MudText>
-        <MudSpacer />
-        <MudButtonGroup Color="Color.Primary" Variant="Variant.Outlined">
-            <MudButton OnClick='() => FilterCourses("all")' Variant="@(currentFilter == "all" ? Variant.Filled : Variant.Outlined)">All</MudButton>
-            <MudButton OnClick='() => FilterCourses("active")' Variant="@(currentFilter == "active" ? Variant.Filled : Variant.Outlined)">Active</MudButton>
-            <MudButton OnClick='() => FilterCourses("completed")' Variant="@(currentFilter == "completed" ? Variant.Filled : Variant.Outlined)">Completed</MudButton>
-        </MudButtonGroup>
-    </MudToolBar>
 
-    @if (isLoading)
-    {
-        <MudGrid Spacing="3">
-            @for (int i = 0; i < 6; i++)
-            {
-                <MudItem xs="12" md="6" lg="4">
-                    <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="350px" />
-                </MudItem>
-            }
-        </MudGrid>
-    }
-    else if (filteredEnrollments?.Any() == true)
-    {
-        @foreach (var enrollment in filteredEnrollments)
+<div class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-950/20 dark:to-indigo-950/20 border-b border-border">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 py-8">
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
+            <div class="flex items-center gap-3">
+                <div class="p-3 bg-blue-500 rounded-xl shadow-lg">
+                    <MudIcon Icon="@Icons.Material.Filled.Book" Class="h-6 w-6 text-white" />
+                </div>
+                <h1 class="text-2xl font-bold text-gray-900 dark:text-white">My Courses</h1>
+            </div>
+            <MudButtonGroup Color="Color.Primary" Variant="Variant.Outlined" Class="flex gap-2">
+                <MudButton OnClick='() => FilterCourses("all")' Variant="@(currentFilter == "all" ? Variant.Filled : Variant.Outlined)" Class="rounded-md">All</MudButton>
+                <MudButton OnClick='() => FilterCourses("active")' Variant="@(currentFilter == "active" ? Variant.Filled : Variant.Outlined)" Class="rounded-md">Active</MudButton>
+                <MudButton OnClick='() => FilterCourses("completed")' Variant="@(currentFilter == "completed" ? Variant.Filled : Variant.Outlined)" Class="rounded-md">Completed</MudButton>
+            </MudButtonGroup>
+        </div>
+
+        @if (isLoading)
         {
-            <MudItem xs="12" md="6" lg="4">
-                <MudCard Elevation="2" Class="h-100">
-                    <MudCardMedia Image="@enrollment.CourseThumbnailUrl" Style="height: 200px; object-fit: cover;" Alt="@enrollment.CourseTitle" />
-                    <MudCardContent>
-                        <MudText Typo="Typo.h5">@enrollment.CourseTitle</MudText>
-                        <MudText Typo="Typo.body2">@enrollment.CourseDescription</MudText>
-                        <MudProgressLinear Value="@enrollment.ProgressPercentage" Color="Color.Success" Class="my-3" />
-                        <div class="d-flex justify-content-between align-items-center mb-3">
-                            <MudText Typo="Typo.caption">Progress</MudText>
-                            <MudText Typo="Typo.caption">@($"{enrollment.ProgressPercentage:F0}%")</MudText>
-                        </div>
-                        <div>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                @for (int i = 0; i < 6; i++)
+                {
+                    <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="350px" Class="h-80 w-full rounded-2xl bg-gray-200 dark:bg-gray-700" />
+                }
+            </div>
+        }
+        else if (filteredEnrollments?.Any() == true)
+        {
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                @foreach (var enrollment in filteredEnrollments)
+                {
+                    <MudCard Elevation="2" Class="flex flex-col h-full rounded-2xl shadow-lg bg-white dark:bg-gray-900">
+                        <MudCardMedia Image="@enrollment.CourseThumbnailUrl" Style="height: 200px; object-fit: cover;" Alt="@enrollment.CourseTitle" Class="rounded-t-2xl" />
+                        <MudCardContent Class="flex-1 flex flex-col p-6">
+                            <MudText Typo="Typo.h5" Class="font-bold text-gray-900 dark:text-white">@enrollment.CourseTitle</MudText>
+                            <MudText Typo="Typo.body2" Class="text-gray-500 dark:text-gray-300 mb-2">@enrollment.CourseDescription</MudText>
+                            <MudProgressLinear Value="@enrollment.ProgressPercentage" Color="Color.Success" Class="my-3" />
+                            <div class="flex justify-between items-center mb-3">
+                                <MudText Typo="Typo.caption" Class="text-gray-500">Progress</MudText>
+                                <MudText Typo="Typo.caption" Class="text-gray-500">@($"{enrollment.ProgressPercentage:F0}%")</MudText>
+                            </div>
+                            <div>
+                                @if (enrollment.CompletedAt.HasValue)
+                                {
+                                    <MudChip T="string" Icon="@Icons.Material.Filled.Check" Color="Color.Success" Size="Size.Small" Class="rounded">Completed</MudChip>
+                                }
+                                else if (enrollment.LastAccessedAt.HasValue && enrollment.LastAccessedAt > DateTime.Now.AddDays(-7))
+                                {
+                                    <MudChip T="string" Icon="@Icons.Material.Filled.PlayArrow" Color="Color.Primary" Size="Size.Small" Class="rounded">Active</MudChip>
+                                }
+                                else
+                                {
+                                    <MudChip T="string" Icon="@Icons.Material.Filled.Pause" Color="Color.Warning" Size="Size.Small" Class="rounded">Paused</MudChip>
+                                }
+                            </div>
+                            <div class="mt-3">
+                                <MudText Typo="Typo.caption" Class="block text-gray-400">
+                                    <MudIcon Icon="@Icons.Material.Filled.CalendarToday" Size="Size.Small" Class="mr-1" />
+                                    Enrolled: @enrollment.EnrolledAt.ToString("MMM dd, yyyy")
+                                </MudText>
+                                @if (enrollment.LastAccessedAt.HasValue)
+                                {
+                                    <MudText Typo="Typo.caption" Class="block text-gray-400">
+                                        <MudIcon Icon="@Icons.Material.Filled.AccessTime" Size="Size.Small" Class="mr-1" />
+                                        Last accessed: @enrollment.LastAccessedAt.Value.ToString("MMM dd, yyyy")
+                                    </MudText>
+                                }
+                            </div>
+                        </MudCardContent>
+                        <MudCardActions Class="flex flex-wrap gap-2 p-4 border-t border-gray-100 dark:border-gray-800">
+                            @if (IsAdmin)
+                            {
+                                <MudButton Color="Color.Info" Size="Size.Small" Href="@($"/admin/courses/manage/{enrollment.CourseId}")" StartIcon="@Icons.Material.Filled.Settings" Class="rounded">Manage</MudButton>
+                            }
                             @if (enrollment.CompletedAt.HasValue)
                             {
-                                <MudChip T="string" Icon="@Icons.Material.Filled.Check" Color="Color.Success" Size="Size.Small">Completed</MudChip>
-                            }
-                            else if (enrollment.LastAccessedAt.HasValue && enrollment.LastAccessedAt > DateTime.Now.AddDays(-7))
-                            {
-                                <MudChip T="string" Icon="@Icons.Material.Filled.PlayArrow" Color="Color.Primary" Size="Size.Small">Active</MudChip>
+                                <MudButton Color="Color.Primary" Variant="Variant.Outlined" Size="Size.Small" Href="@($"/course/{enrollment.CourseId}")" StartIcon="@Icons.Material.Filled.Visibility" Class="rounded">Review</MudButton>
+                                <MudButton Color="Color.Success" Size="Size.Small" OnClick="() => DownloadCertificate(enrollment.CourseId)" StartIcon="@Icons.Material.Filled.Download" Class="rounded">Certificate</MudButton>
                             }
                             else
                             {
-                                <MudChip T="string" Icon="@Icons.Material.Filled.Pause" Color="Color.Warning" Size="Size.Small">Paused</MudChip>
+                                <MudButton Color="Color.Primary" Size="Size.Small" Href="@($"/course/{enrollment.CourseId}")" StartIcon="@Icons.Material.Filled.PlayArrow" Class="rounded">Continue</MudButton>
+                                <MudButton Color="Color.Error" Variant="Variant.Outlined" Size="Size.Small" OnClick="() => ShowUnenrollModal(enrollment)" StartIcon="@Icons.Material.Filled.Close" Class="rounded">Unenroll</MudButton>
                             }
-                        </div>
-                        <div class="mt-3">
-                            <MudText Typo="Typo.caption" Class="d-block">
-                                <MudIcon Icon="@Icons.Material.Filled.CalendarToday" Size="Size.Small" Class="me-1" />
-                                Enrolled: @enrollment.EnrolledAt.ToString("MMM dd, yyyy")
-                            </MudText>
-                            @if (enrollment.LastAccessedAt.HasValue)
-                            {
-                                <MudText Typo="Typo.caption" Class="d-block">
-                                    <MudIcon Icon="@Icons.Material.Filled.AccessTime" Size="Size.Small" Class="me-1" />
-                                    Last accessed: @enrollment.LastAccessedAt.Value.ToString("MMM dd, yyyy")
-                                </MudText>
-                            }
-                        </div>
-                    </MudCardContent>
-                    <MudCardActions>
-                        @if (IsAdmin)
-                        {
-                            <MudButton Color="Color.Info" Size="Size.Small" Href="@($"/admin/courses/manage/{enrollment.CourseId}")" StartIcon="@Icons.Material.Filled.Settings">Manage</MudButton>
-                        }
-                        @if (enrollment.CompletedAt.HasValue)
-                        {
-                            <MudButton Color="Color.Primary" Variant="Variant.Outlined" Size="Size.Small" Href="@($"/course/{enrollment.CourseId}")" StartIcon="@Icons.Material.Filled.Visibility">Review</MudButton>
-                            <MudButton Color="Color.Success" Size="Size.Small" OnClick="() => DownloadCertificate(enrollment.CourseId)" StartIcon="@Icons.Material.Filled.Download">Certificate</MudButton>
-                        }
-                        else
-                        {
-                            <MudButton Color="Color.Primary" Size="Size.Small" Href="@($"/course/{enrollment.CourseId}")" StartIcon="@Icons.Material.Filled.PlayArrow">Continue</MudButton>
-                            <MudButton Color="Color.Error" Variant="Variant.Outlined" Size="Size.Small" OnClick="() => ShowUnenrollModal(enrollment)" StartIcon="@Icons.Material.Filled.Close">Unenroll</MudButton>
-                        }
-                    </MudCardActions>
-                </MudCard>
-            </MudItem>
-        }
-    }
-    else
-    {
-        <MudItem xs="12">
-            <div classs="text-center py-5">
-                <MudIcon Icon="@Icons.Material.Filled.Book" Size="Size.Large" Class="text-muted mb-3" />
-                <MudText Typo="Typo.h5" Class="text-muted">No courses found</MudText>
-                <MudText Typo="Typo.body1" Class="text-muted">@GetEmptyStateMessage()</MudText>
-                <MudButton Color="Color.Primary" Href="/courses" StartIcon="@Icons.Material.Filled.Search">Browse Courses</MudButton>
+                        </MudCardActions>
+                    </MudCard>
+                }
             </div>
-        </MudItem>
-    }
+        }
+        else
+        {
+            <div class="flex flex-col items-center justify-center py-16">
+                <MudIcon Icon="@Icons.Material.Filled.Book" Size="Size.Large" Class="text-gray-400 mb-3" />
+                <MudText Typo="Typo.h5" Class="text-gray-500">No courses found</MudText>
+                <MudText Typo="Typo.body1" Class="text-gray-400 mb-4">@GetEmptyStateMessage()</MudText>
+                <MudButton Color="Color.Primary" Href="/courses" StartIcon="@Icons.Material.Filled.Search" Class="rounded">Browse Courses</MudButton>
+            </div>
+        }
+    </div>
+
+    <!-- Unenroll Confirmation Modal -->
+    <MudDialog @bind-IsVisible="@isUnenrollModalVisible" Options="@dialogOptions">
+        <TitleContent>
+            <MudText Typo="Typo.h6">Confirm Unenrollment</MudText>
+        </TitleContent>
+        <DialogContent>
+            @if (selectedEnrollment != null)
+            {
+                <MudText>Are you sure you want to unenroll from <strong>@selectedEnrollment.CourseTitle</strong>?</MudText>
+                <MudAlert Severity="Severity.Warning" Class="mt-3">
+                    <MudIcon Icon="@Icons.Material.Filled.Warning" Class="mr-2" />
+                    Your progress will be lost and cannot be recovered.
+                </MudAlert>
+            }
+        </DialogContent>
+        <DialogActions>
+            <MudButton Color="Color.Secondary" OnClick="HideUnenrollModal" Class="rounded">Cancel</MudButton>
+            <MudButton Color="Color.Error" OnClick="ConfirmUnenroll" Class="rounded">
+                Unenroll
+            </MudButton>
+        </DialogActions>
+    </MudDialog>
 </div>
 
 

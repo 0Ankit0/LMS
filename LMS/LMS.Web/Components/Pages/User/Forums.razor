@@ -23,60 +23,59 @@
 <div class="forums-layout">
     @if (isLoading)
     {
-        <!-- Skeleton for Course Group Sidebar -->
-        <div class="course-group-sidebar">
-            <div class="group-list">
-                @for (int i = 0; i < 5; i++)
-                {
-                    <MudSkeleton SkeletonType="SkeletonType.Circle" Width="48px" Height="48px" Class="mb-2" />
-                }
+        <div class="md:col-span-2 flex flex-col gap-6">
+            <div class="bg-white dark:bg-gray-900 rounded-2xl shadow-lg p-6 mb-4">
+                <h1 class="text-2xl font-bold text-gray-900 dark:text-white mb-2">Forums</h1>
+                <p class="text-gray-600 dark:text-gray-300">Join the discussion and connect with other learners.</p>
             </div>
-            <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="48px" Class="add-forum-button" />
-        </div>
-
-        <!-- Skeleton for Forum List Sidebar -->
-        <div class="forum-list-sidebar">
-            <div class="forum-header">
-                <MudSkeleton SkeletonType="SkeletonType.Text" Width="60%" Height="30px" />
-                <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="40px" Class="mt-3" />
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                <MudCard Class="rounded-2xl shadow bg-white dark:bg-gray-900">
+                    <MudCardContent>
+                        <MudText Typo="Typo.subtitle1" Class="text-gray-500 dark:text-gray-300">Active Threads</MudText>
+                        <MudText Typo="Typo.h6" Class="font-bold text-purple-600 dark:text-purple-400">@ActiveThreadsCount</MudText>
+                    </MudCardContent>
+                </MudCard>
+                <MudCard Class="rounded-2xl shadow bg-white dark:bg-gray-900">
+                    <MudCardContent>
+                        <MudText Typo="Typo.subtitle1" Class="text-gray-500 dark:text-gray-300">My Posts</MudText>
+                        <MudText Typo="Typo.h6" Class="font-bold text-pink-600 dark:text-pink-400">@MyPostsCount</MudText>
+                    </MudCardContent>
+                </MudCard>
             </div>
-            <div class="forum-list mt-4">
-                @for (int i = 0; i < 4; i++)
-                {
-                    <MudExpansionPanel>
-                        <TitleContent>
-                            <MudSkeleton SkeletonType="SkeletonType.Text" Width="100%" Height="40px" />
-                        </TitleContent>
-                        <ChildContent>
-                            <div class="p-3">
-                                <MudSkeleton SkeletonType="SkeletonType.Text" Width="80%" />
-                                <MudSkeleton SkeletonType="SkeletonType.Text" Width="50%" Class="mt-1" />
-                            </div>
-                        </ChildContent>
-                    </MudExpansionPanel>
-                }
+            <div class="bg-white dark:bg-gray-900 rounded-2xl shadow p-6 mt-4">
+                <MudText Typo="Typo.h6" Class="mb-2 font-bold text-gray-900 dark:text-white">Recent Threads</MudText>
+                <MudList T="string">
+                    @foreach (var thread in RecentThreads)
+                    {
+                        <MudListItem T="string">
+                            <MudListItemText>@thread</MudListItemText>
+                        </MudListItem>
+                    }
+                </MudList>
             </div>
-        </div>
-
-        <!-- Skeleton for Main Discussion Area -->
-        <div class="discussion-area">
-            <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="100%" />
-        </div>
-    }
-    else
-    {
-        <!-- Course Group Sidebar -->
-        <div class="course-group-sidebar">
-            <div class="group-list">
-                <!-- General Group -->
-                <div class="group-item @(selectedGroup == "general" ? "active" : "")"
-                    @onclick='() => SelectGroup("general")' title="General Discussion">
-                    <div class="group-icon general-icon">
-                        <MudIcon Icon="@Icons.Material.Filled.Public" />
-                    </div>
-                </div>
-
-                <!-- Course Groups -->
+            <div class="flex flex-col gap-6">
+                <MudCard Class="rounded-2xl shadow bg-white dark:bg-gray-900 mb-4">
+                    <MudCardContent>
+                        <MudText Typo="Typo.subtitle1" Class="text-gray-500 dark:text-gray-300">Top Contributors</MudText>
+                        <MudList T="string">
+                            @foreach (var contributor in TopContributors)
+                            {
+                                <MudListItem T="string">
+                                    <MudListItemText>@contributor</MudListItemText>
+                                </MudListItem>
+                            }
+                        </MudList>
+                    </MudCardContent>
+                </MudCard>
+                <MudCard Class="rounded-2xl shadow bg-white dark:bg-gray-900">
+                    <MudCardContent>
+                        <MudText Typo="Typo.subtitle1" Class="text-gray-500 dark:text-gray-300">Forum Stats</MudText>
+                        <MudText Typo="Typo.body2" Class="text-gray-600 dark:text-gray-300">Threads: @TotalThreads</MudText>
+                        <MudText Typo="Typo.body2" Class="text-gray-600 dark:text-gray-300">Posts: @TotalPosts</MudText>
+                    </MudCardContent>
+                </MudCard>
+            </div>
+            <div>
                 @if (courseGroups != null)
                 {
                     @foreach (var courseGroup in courseGroups)
@@ -90,330 +89,329 @@
                     }
                 }
             </div>
-
-            <!-- Add Forum Button -->
-            <MudFab Color="Color.Primary" Icon="@Icons.Material.Filled.Add" Size="Size.Large" Class="add-forum-button" OnClick="ShowCreateForumModal" Label="Create New Forum" />
         </div>
+    }
+    <!-- Add Forum Button -->
+    <MudFab Color="Color.Primary" Icon="@Icons.Material.Filled.Add" Size="Size.Large" Class="add-forum-button" OnClick="ShowCreateForumModal" Label="Create New Forum" />
+</div>
 
-        <!-- Forum List Sidebar -->
-        <div class="forum-list-sidebar">
-            @if (!string.IsNullOrEmpty(selectedGroup))
-            {
-                <div class="forum-header">
-                    <h4 class="forum-title">
-                        @if (selectedGroup == "general")
-                        {
-                            <MudIcon Icon="@Icons.Material.Filled.Public" Class="me-2" />
-                            <span>General Discussion</span>
-                        }
-                        else
-                        {
-                            <MudIcon Icon="@Icons.Material.Filled.School" Class="me-2" />
-                            <span>@selectedGroup</span>
-                        }
-                    </h4>
-                    <!-- Search Box -->
-                    <div class="forum-search-container">
-                        <MudTextField @bind-Value="searchQuery" Placeholder="Search forums & topics..." Variant="Variant.Text" Clearable="true" Adornment="Adornment.End" AdornmentIcon="@Icons.Material.Filled.Search" />
-                    </div>
-                </div>
-
-                <div class="forum-list">
-                    @if (selectedGroupForums != null)
-                    {
-                        @foreach (var forum in selectedGroupForums)
-                        {
-                            <MudExpansionPanel Text="@forum.Title">
-                                <TitleContent>
-                                    <div class="forum-info">
-                                        <div class="forum-name">
-                                            <MudIcon Icon="@Icons.Material.Filled.Tag" Class="me-2" />
-                                            <span>@forum.Title</span>
-                                        </div>
-                                        <div class="forum-stats">
-                                            <MudText Typo="Typo.caption" Class="text-muted">@forum.TopicCount topics</MudText>
-                                        </div>
-                                    </div>
-                                    <div class="forum-actions">
-                                        <MudIconButton Icon="@Icons.Material.Filled.Add" Size="Size.Small" OnClick="@(e => ShowNewTopicModal(e, forum.Id))" Title="Add new topic" />
-                                    </div>
-                                </TitleContent>
-                                <ChildContent>
-                                    @if (expandedForums.Contains(forum.Id) && selectedForumTopics != null)
-                                    {
-                                        <div class="topics-dropdown">
-                                            @foreach (var topic in selectedForumTopics.Where(t => t.ForumId == forum.Id))
-                                            {
-                                                <MudListItem T="ForumTopicModel" OnClick="() => SelectTopic(topic.Id)" Class="@(selectedTopicId == topic.Id ? "active" : "")">
-                                                    <div class="topic-info">
-                                                        <div class="topic-icon">
-                                                            @if (topic.IsLocked)
-                                                            {
-                                                                <MudIcon Icon="@Icons.Material.Filled.Lock" Class="text-secondary" />
-                                                            }
-                                                            else
-                                                            {
-                                                                <MudIcon Icon="@Icons.Material.Filled.ChatBubble" Class="text-primary" />
-                                                            }
-                                                        </div>
-                                                        <div class="topic-details">
-                                                            <MudText Typo="Typo.subtitle1" Class="topic-title">@topic.Title</MudText>
-                                                            <div class="topic-meta">
-                                                                <MudText Typo="Typo.caption" Class="text-muted">@topic.PostCount posts</MudText>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </MudListItem>
-                                            }
-                                        </div>
-                                    }
-                                </ChildContent>
-                            </MudExpansionPanel>
-                        }
-                    }
-                </div>
-            }
-            else
-            {
-                <div class="forum-placeholder text-center py-5">
-                    <MudIcon Icon="@Icons.Material.Filled.ChatBubble" Size="Size.Large" Class="text-muted mb-3" />
-                    <MudText Typo="Typo.h5" Class="text-muted">Select a group to view forums</MudText>
-                </div>
-            }
-        </div>
-
-        <!-- Main Discussion Area -->
-        <div class="discussion-area">
-            @if (selectedForumId.HasValue && selectedForum is not null)
-            {
-                @if (selectedTopicId.HasValue && selectedTopic is not null)
+<!-- Forum List Sidebar -->
+<div class="forum-list-sidebar">
+    @if (!string.IsNullOrEmpty(selectedGroup))
+    {
+        <div class="forum-header">
+            <h4 class="forum-title">
+                @if (selectedGroup == "general")
                 {
-                    <!-- Topic View Header -->
-                    <div class="discussion-header">
-                        <div class="discussion-title">
-                            <MudButton Variant="Variant.Text" Color="Color.Secondary" Size="Size.Small" Class="me-2" OnClick="BackToForum" Title="Back to Forum">
-                                <MudIcon Icon="@Icons.Material.Filled.ArrowBack" />
-                            </MudButton>
-                            @if (selectedTopic?.IsLocked == true)
-                            {
-                                <MudIcon Icon="@Icons.Material.Filled.Lock" Class="me-2 text-secondary" />
-                            }
-                            else
-                            {
-                                <MudIcon Icon="@Icons.Material.Filled.ChatBubble" Class="me-2" />
-                            }
-                            <MudText Typo="Typo.h6">@selectedTopic?.Title</MudText>
-                        </div>
-                        <div class="discussion-actions">
-                            <div class="topic-stats me-3">
-                                <MudText Typo="Typo.caption" Class="text-muted">
-                                    <MudIcon Icon="@Icons.Material.Filled.Chat" Size="Size.Small" Class="me-1" />@selectedTopic?.PostCount posts
-                                    <span class="ms-2">
-                                        <MudIcon Icon="@Icons.Material.Filled.Person" Size="Size.Small" Class="me-1" />by @selectedTopic?.CreatedByUserName
-                                    </span>
-                                </MudText>
+                    <MudIcon Icon="@Icons.Material.Filled.Public" Class="me-2" />
+                    <span>General Discussion</span>
+                }
+                else
+                {
+                    <MudIcon Icon="@Icons.Material.Filled.School" Class="me-2" />
+                    <span>@selectedGroup</span>
+                }
+            </h4>
+            <!-- Search Box -->
+            <div class="forum-search-container">
+                <MudTextField @bind-Value="searchQuery" Placeholder="Search forums & topics..." Variant="Variant.Text" Clearable="true" Adornment="Adornment.End" AdornmentIcon="@Icons.Material.Filled.Search" />
+            </div>
+        </div>
+
+        <div class="forum-list">
+            @if (selectedGroupForums != null)
+            {
+                @foreach (var forum in selectedGroupForums)
+                {
+                    <MudExpansionPanel Text="@forum.Title">
+                        <TitleContent>
+                            <div class="forum-info">
+                                <div class="forum-name">
+                                    <MudIcon Icon="@Icons.Material.Filled.Tag" Class="me-2" />
+                                    <span>@forum.Title</span>
+                                </div>
+                                <div class="forum-stats">
+                                    <MudText Typo="Typo.caption" Class="text-muted">@forum.TopicCount topics</MudText>
+                                </div>
                             </div>
-                            <MudButton Variant="Variant.Text" Color="Color.Secondary" Size="Size.Small" Class="me-2" Title="Search Topics">
-                                <MudIcon Icon="@Icons.Material.Filled.Search" />
-                            </MudButton>
-                            <MudMenu>
-                                <ActivatorContent>
-                                    <MudButton Variant="Variant.Text" Color="Color.Secondary" Size="Size.Small">
-                                        <MudIcon Icon="@Icons.Material.Filled.MoreVert" />
-                                    </MudButton>
-                                </ActivatorContent>
-                                <ChildContent>
-                                    <MudMenuItem>
-                                        <MudIcon Icon="@Icons.Material.Filled.CalendarToday" Class="me-2" />Sort by Date
-                                    </MudMenuItem>
-                                    <MudMenuItem>
-                                        <MudIcon Icon="@Icons.Material.Filled.Reply" Class="me-2" />Sort by Replies
-                                    </MudMenuItem>
-                                    <MudMenuItem>
-                                        <MudIcon Icon="@Icons.Material.Filled.Person" Class="me-2" />Sort by Author
-                                    </MudMenuItem>
-                                </ChildContent>
-                            </MudMenu>
-                        </div>
-                    </div>
-
-                    <!-- Topic Posts - Scrollable -->
-                    <MudChat Class="content-area" Style="height: 100%;" id="messagesArea">
-                        @if (selectedTopicPosts != null)
-                        {
-                            @foreach (var post in selectedTopicPosts)
+                            <div class="forum-actions">
+                                <MudIconButton Icon="@Icons.Material.Filled.Add" Size="Size.Small" OnClick="@(e => ShowNewTopicModal(e, forum.Id))" Title="Add new topic" />
+                            </div>
+                        </TitleContent>
+                        <ChildContent>
+                            @if (expandedForums.Contains(forum.Id) && selectedForumTopics != null)
                             {
-                                <MudChatBubble Text="@((MarkupString)post.Content.Replace("\n", "<br />"))"
-                                               Time="@post.CreatedAt.ToString("MMM dd, yyyy HH:mm")"
-                                               Origin="@(currentUserId == post.AuthorId ? MudBlazor.Origin.TopRight : MudBlazor.Origin.TopLeft)"
-                                               Color="@(currentUserId == post.AuthorId ? Color.Primary : Color.Secondary)">
-                                    <ChildContent>
-                                        <div class="d-flex align-items-center mb-2">
-                                            <MudAvatar Color="Color.Dark" Variant="Variant.Outlined" Class="me-2">
-                                                <MudText Typo="Typo.h6">@post.AuthorName?.FirstOrDefault()</MudText>
-                                            </MudAvatar>
-                                            <MudText Typo="Typo.subtitle1">@(post.AuthorName ?? "Unknown")</MudText>
-                                        </div>
-                                        @if (post.UpdatedAt.HasValue && post.UpdatedAt != post.CreatedAt)
-                                        {
-                                            <MudText Typo="Typo.caption" Class="text-muted">(edited @post.UpdatedAt.Value.ToString("MMM dd, HH:mm"))</MudText>
-                                        }
-                                        <MudCardActions Class="pa-0">
-                                            <MudButton Variant="Variant.Text" Color="Color.Inherit" Size="Size.Small" Title="Like">
-                                                <MudIcon Icon="@Icons.Material.Filled.FavoriteBorder" Class="me-1" />0
-                                            </MudButton>
-                                            <MudButton Variant="Variant.Text" Color="Color.Inherit" Size="Size.Small" OnClick="() => QuotePost(post)" Title="Quote">
-                                                <MudIcon Icon="@Icons.Material.Filled.FormatQuote" Class="me-1" />Quote
-                                            </MudButton>
-                                            @if (currentUserId == post.AuthorId)
-                                            {
-                                                <MudButton Variant="Variant.Text" Color="Color.Inherit" Size="Size.Small" OnClick="() => EditPost(post)" Title="Edit">
-                                                    <MudIcon Icon="@Icons.Material.Filled.Edit" Class="me-1" />Edit
-                                                </MudButton>
-                                                <MudButton Variant="Variant.Text" Color="Color.Inherit" Size="Size.Small" OnClick="() => DeletePost(post)" Title="Delete">
-                                                    <MudIcon Icon="@Icons.Material.Filled.Delete" Class="me-1" />Delete
-                                                </MudButton>
-                                            }
-                                        </MudCardActions>
-                                    </ChildContent>
-                                </MudChatBubble>
+                                <div class="topics-dropdown">
+                                    @foreach (var topic in selectedForumTopics.Where(t => t.ForumId == forum.Id))
+                                    {
+                                        <MudListItem T="ForumTopicModel" OnClick="() => SelectTopic(topic.Id)" Class="@(selectedTopicId == topic.Id ? "active" : "")">
+                                            <div class="topic-info">
+                                                <div class="topic-icon">
+                                                    @if (topic.IsLocked)
+                                                    {
+                                                        <MudIcon Icon="@Icons.Material.Filled.Lock" Class="text-secondary" />
+                                                    }
+                                                    else
+                                                    {
+                                                        <MudIcon Icon="@Icons.Material.Filled.ChatBubble" Class="text-primary" />
+                                                    }
+                                                </div>
+                                                <div class="topic-details">
+                                                    <MudText Typo="Typo.subtitle1" Class="topic-title">@topic.Title</MudText>
+                                                    <div class="topic-meta">
+                                                        <MudText Typo="Typo.caption" Class="text-muted">@topic.PostCount posts</MudText>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </MudListItem>
+                                    }
+                                </div>
                             }
-                        }
-                    </MudChat>
+                        </ChildContent>
+                    </MudExpansionPanel>
+                }
+            }
+        </div>
+    }
+    else
+    {
+        <div class="forum-placeholder text-center py-5">
+            <MudIcon Icon="@Icons.Material.Filled.ChatBubble" Size="Size.Large" Class="text-muted mb-3" />
+            <MudText Typo="Typo.h5" Class="text-muted">Select a group to view forums</MudText>
+        </div>
+    }
+</div>
 
-                    <!-- Quick Reply - Sticky Bottom -->
-                    @if (selectedTopic?.IsLocked != true)
+<!-- Main Discussion Area -->
+<div class="discussion-area">
+    @if (selectedForumId.HasValue && selectedForum is not null)
+    {
+        @if (selectedTopicId.HasValue && selectedTopic is not null)
+        {
+            <!-- Topic View Header -->
+            <div class="discussion-header">
+                <div class="discussion-title">
+                    <MudButton Variant="Variant.Text" Color="Color.Secondary" Size="Size.Small" Class="me-2" OnClick="BackToForum" Title="Back to Forum">
+                        <MudIcon Icon="@Icons.Material.Filled.ArrowBack" />
+                    </MudButton>
+                    @if (selectedTopic?.IsLocked == true)
                     {
-                        <div class="input-area d-flex align-items-center pa-2">
-                            @if (!string.IsNullOrEmpty(quotedText))
-                            {
-                                <MudPaper Elevation="2" Class="quoted-text" Style="width: 100%; margin-bottom: 8px;">
-                                    <div class="quote-header d-flex justify-content-between align-items-center">
-                                        <MudText Typo="Typo.subtitle2">Replying to @quotedAuthor:</MudText>
-                                        <MudIconButton Icon="@Icons.Material.Filled.Close" Size="Size.Small" OnClick="ClearQuote" />
-                                    </div>
-                                    <MudText Typo="Typo.body2" Class="quote-content">@quotedText</MudText>
-                                </MudPaper>
-                            }
-                            <MudTextField T="string" @bind-Value="newTopicReply"
-                                          Placeholder="Type your reply..." Variant="Variant.Outlined" FullWidth="true"
-                                          Adornment="Adornment.End" AdornmentIcon="@Icons.Material.Filled.Send"
-                                          OnAdornmentClick="SendTopicReply" OnKeyPress="HandleTopicReplyKeyPress" />
-                            <MudButton Variant="Variant.Filled" Color="Color.Primary" Class="ml-2" OnClick="SendTopicReply" Disabled="@string.IsNullOrWhiteSpace(newTopicReply)">
-                                <MudIcon Icon="@Icons.Material.Filled.Send" />
+                        <MudIcon Icon="@Icons.Material.Filled.Lock" Class="me-2 text-secondary" />
+                    }
+                    else
+                    {
+                        <MudIcon Icon="@Icons.Material.Filled.ChatBubble" Class="me-2" />
+                    }
+                    <MudText Typo="Typo.h6">@selectedTopic?.Title</MudText>
+                </div>
+                <div class="discussion-actions">
+                    <div class="topic-stats me-3">
+                        <MudText Typo="Typo.caption" Class="text-muted">
+                            <MudIcon Icon="@Icons.Material.Filled.Chat" Size="Size.Small" Class="me-1" />@selectedTopic?.PostCount posts
+                            <span class="ms-2">
+                                <MudIcon Icon="@Icons.Material.Filled.Person" Size="Size.Small" Class="me-1" />by @selectedTopic?.CreatedByUserName
+                            </span>
+                        </MudText>
+                    </div>
+                    <MudButton Variant="Variant.Text" Color="Color.Secondary" Size="Size.Small" Class="me-2" Title="Search Topics">
+                        <MudIcon Icon="@Icons.Material.Filled.Search" />
+                    </MudButton>
+                    <MudMenu>
+                        <ActivatorContent>
+                            <MudButton Variant="Variant.Text" Color="Color.Secondary" Size="Size.Small">
+                                <MudIcon Icon="@Icons.Material.Filled.MoreVert" />
                             </MudButton>
-                        </div>
+                        </ActivatorContent>
+                        <ChildContent>
+                            <MudMenuItem>
+                                <MudIcon Icon="@Icons.Material.Filled.CalendarToday" Class="me-2" />Sort by Date
+                            </MudMenuItem>
+                            <MudMenuItem>
+                                <MudIcon Icon="@Icons.Material.Filled.Reply" Class="me-2" />Sort by Replies
+                            </MudMenuItem>
+                            <MudMenuItem>
+                                <MudIcon Icon="@Icons.Material.Filled.Person" Class="me-2" />Sort by Author
+                            </MudMenuItem>
+                        </ChildContent>
+                    </MudMenu>
+                </div>
+            </div>
+
+            <!-- Topic Posts - Scrollable -->
+            <MudChat Class="content-area" Style="height: 100%;" id="messagesArea">
+                @if (selectedTopicPosts != null)
+                {
+                    @foreach (var post in selectedTopicPosts)
+                    {
+                        <MudChatBubble Text="@((MarkupString)post.Content.Replace("\n", "<br />"))"
+                                       Time="@post.CreatedAt.ToString("MMM dd, yyyy HH:mm")"
+                                       Origin="@(currentUserId == post.AuthorId ? MudBlazor.Origin.TopRight : MudBlazor.Origin.TopLeft)"
+                                       Color="@(currentUserId == post.AuthorId ? Color.Primary : Color.Secondary)">
+                            <ChildContent>
+                                <div class="d-flex align-items-center mb-2">
+                                    <MudAvatar Color="Color.Dark" Variant="Variant.Outlined" Class="me-2">
+                                        <MudText Typo="Typo.h6">@post.AuthorName?.FirstOrDefault()</MudText>
+                                    </MudAvatar>
+                                    <MudText Typo="Typo.subtitle1">@(post.AuthorName ?? "Unknown")</MudText>
+                                </div>
+                                @if (post.UpdatedAt.HasValue && post.UpdatedAt != post.CreatedAt)
+                                {
+                                    <MudText Typo="Typo.caption" Class="text-muted">(edited @post.UpdatedAt.Value.ToString("MMM dd, HH:mm"))</MudText>
+                                }
+                                <MudCardActions Class="pa-0">
+                                    <MudButton Variant="Variant.Text" Color="Color.Inherit" Size="Size.Small" Title="Like">
+                                        <MudIcon Icon="@Icons.Material.Filled.FavoriteBorder" Class="me-1" />0
+                                    </MudButton>
+                                    <MudButton Variant="Variant.Text" Color="Color.Inherit" Size="Size.Small" OnClick="() => QuotePost(post)" Title="Quote">
+                                        <MudIcon Icon="@Icons.Material.Filled.FormatQuote" Class="me-1" />Quote
+                                    </MudButton>
+                                    @if (currentUserId == post.AuthorId)
+                                    {
+                                        <MudButton Variant="Variant.Text" Color="Color.Inherit" Size="Size.Small" OnClick="() => EditPost(post)" Title="Edit">
+                                            <MudIcon Icon="@Icons.Material.Filled.Edit" Class="me-1" />Edit
+                                        </MudButton>
+                                        <MudButton Variant="Variant.Text" Color="Color.Inherit" Size="Size.Small" OnClick="() => DeletePost(post)" Title="Delete">
+                                            <MudIcon Icon="@Icons.Material.Filled.Delete" Class="me-1" />Delete
+                                        </MudButton>
+                                    }
+                                </MudCardActions>
+                            </ChildContent>
+                        </MudChatBubble>
+                    }
+                }
+            </MudChat>
+
+            <!-- Quick Reply - Sticky Bottom -->
+            @if (selectedTopic?.IsLocked != true)
+            {
+                <div class="input-area d-flex align-items-center pa-2">
+                    @if (!string.IsNullOrEmpty(quotedText))
+                    {
+                        <MudPaper Elevation="2" Class="quoted-text" Style="width: 100%; margin-bottom: 8px;">
+                            <div class="quote-header d-flex justify-content-between align-items-center">
+                                <MudText Typo="Typo.subtitle2">Replying to @quotedAuthor:</MudText>
+                                <MudIconButton Icon="@Icons.Material.Filled.Close" Size="Size.Small" OnClick="ClearQuote" />
+                            </div>
+                            <MudText Typo="Typo.body2" Class="quote-content">@quotedText</MudText>
+                        </MudPaper>
+                    }
+                    <MudTextField T="string" @bind-Value="newTopicReply"
+                                  Placeholder="Type your reply..." Variant="Variant.Outlined" FullWidth="true"
+                                  Adornment="Adornment.End" AdornmentIcon="@Icons.Material.Filled.Send"
+                                  OnAdornmentClick="SendTopicReply" OnKeyPress="HandleTopicReplyKeyPress" />
+                    <MudButton Variant="Variant.Filled" Color="Color.Primary" Class="ml-2" OnClick="SendTopicReply" Disabled="@string.IsNullOrWhiteSpace(newTopicReply)">
+                        <MudIcon Icon="@Icons.Material.Filled.Send" />
+                    </MudButton>
+                </div>
+            }
+        }
+        else
+        {
+            <!-- Forum Topics View -->
+            <div class="discussion-header">
+                <div class="discussion-title">
+                    <MudIcon Icon="@Icons.Material.Filled.Tag" Class="me-2" />
+                    <MudText Typo="Typo.h5">@selectedForum.Title</MudText>
+                </div>
+                <div class="discussion-actions">
+                    <div class="forum-stats me-3">
+                        <MudText Typo="Typo.caption" Class="text-muted">
+                            <MudIcon Icon="@Icons.Material.Filled.List" Size="Size.Small" Class="me-1" />@selectedForum.TopicCount topics
+                            <span class="ms-2">
+                                <MudIcon Icon="@Icons.Material.Filled.People" Size="Size.Small" Class="me-1" />@(selectedForumTopics?.SelectMany(t => new[]
+                                                                { t.CreatedByUserId }).Distinct().Count() ?? 0) contributors
+                            </span>
+                        </MudText>
+                    </div>
+                    <MudButton Variant="Variant.Text" Color="Color.Secondary" Size="Size.Small" Class="me-2" Title="Search Topics">
+                        <MudIcon Icon="@Icons.Material.Filled.Search" />
+                    </MudButton>
+                    <MudMenu>
+                        <ActivatorContent>
+                            <MudButton Variant="Variant.Text" Color="Color.Secondary" Size="Size.Small">
+                                <MudIcon Icon="@Icons.Material.Filled.Sort" />
+                            </MudButton>
+                        </ActivatorContent>
+                        <ChildContent>
+                            <MudMenuItem>
+                                <MudIcon Icon="@Icons.Material.Filled.CalendarToday" Class="me-2" />Sort by Date
+                            </MudMenuItem>
+                            <MudMenuItem>
+                                <MudIcon Icon="@Icons.Material.Filled.Reply" Class="me-2" />Sort by Replies
+                            </MudMenuItem>
+                            <MudMenuItem>
+                                <MudIcon Icon="@Icons.Material.Filled.Person" Class="me-2" />Sort by Author
+                            </MudMenuItem>
+                        </ChildContent>
+                    </MudMenu>
+                </div>
+            </div>
+
+            <!-- Topics List -->
+            <div class="content-area topics-area" id="topicsArea">
+                @if (selectedForumTopics != null && selectedForumTopics.Any())
+                {
+                    @foreach (var topic in selectedForumTopics)
+                    {
+                        <MudListItem T="ForumTopicModel" OnClick="() => SelectTopic(topic.Id)" Class="topic-item">
+                            <div class="topic-icon">
+                                @if (topic.IsLocked)
+                                {
+                                    <MudIcon Icon="@Icons.Material.Filled.Lock" Class="text-secondary" />
+                                }
+                                else
+                                {
+                                    <MudIcon Icon="@Icons.Material.Filled.ChatBubble" Class="text-primary" />
+                                }
+                            </div>
+                            <div class="topic-content">
+                                <MudText Typo="Typo.subtitle1" Class="topic-title">@topic.Title</MudText>
+                                <div class="topic-badges">
+                                    @if (topic.IsLocked)
+                                    {
+                                        <MudChip T="string" Color="Color.Secondary" Size="Size.Small">Locked</MudChip>
+                                    }
+                                </div>
+                                <div class="topic-meta">
+                                    <MudText Typo="Typo.caption" Class="topic-author">by <strong>@topic.CreatedByUserName</strong></MudText>
+                                    <MudText Typo="Typo.caption" Class="topic-date">@topic.CreatedAt.ToString("MMM dd, yyyy")</MudText>
+                                    @if (topic.LastPostAt.HasValue)
+                                    {
+                                        <MudText Typo="Typo.caption" Class="topic-last-post">Last: @topic.LastPostAt.Value.ToString("MMM dd, HH:mm")</MudText>
+                                    }
+                                </div>
+                            </div>
+                            <div class="topic-stats">
+                                <div class="post-count">
+                                    <MudText Typo="Typo.subtitle1" Class="count">@topic.PostCount</MudText>
+                                    <MudText Typo="Typo.caption">posts</MudText>
+                                </div>
+                            </div>
+                        </MudListItem>
                     }
                 }
                 else
                 {
-                    <!-- Forum Topics View -->
-                    <div class="discussion-header">
-                        <div class="discussion-title">
-                            <MudIcon Icon="@Icons.Material.Filled.Tag" Class="me-2" />
-                            <MudText Typo="Typo.h5">@selectedForum.Title</MudText>
-                        </div>
-                        <div class="discussion-actions">
-                            <div class="forum-stats me-3">
-                                <MudText Typo="Typo.caption" Class="text-muted">
-                                    <MudIcon Icon="@Icons.Material.Filled.List" Size="Size.Small" Class="me-1" />@selectedForum.TopicCount topics
-                                    <span class="ms-2">
-                                        <MudIcon Icon="@Icons.Material.Filled.People" Size="Size.Small" Class="me-1" />@(selectedForumTopics?.SelectMany(t => new[]
-                                                                    { t.CreatedByUserId }).Distinct().Count() ?? 0) contributors
-                                    </span>
-                                </MudText>
-                            </div>
-                            <MudButton Variant="Variant.Text" Color="Color.Secondary" Size="Size.Small" Class="me-2" Title="Search Topics">
-                                <MudIcon Icon="@Icons.Material.Filled.Search" />
-                            </MudButton>
-                            <MudMenu>
-                                <ActivatorContent>
-                                    <MudButton Variant="Variant.Text" Color="Color.Secondary" Size="Size.Small">
-                                        <MudIcon Icon="@Icons.Material.Filled.Sort" />
-                                    </MudButton>
-                                </ActivatorContent>
-                                <ChildContent>
-                                    <MudMenuItem>
-                                        <MudIcon Icon="@Icons.Material.Filled.CalendarToday" Class="me-2" />Sort by Date
-                                    </MudMenuItem>
-                                    <MudMenuItem>
-                                        <MudIcon Icon="@Icons.Material.Filled.Reply" Class="me-2" />Sort by Replies
-                                    </MudMenuItem>
-                                    <MudMenuItem>
-                                        <MudIcon Icon="@Icons.Material.Filled.Person" Class="me-2" />Sort by Author
-                                    </MudMenuItem>
-                                </ChildContent>
-                            </MudMenu>
-                        </div>
-                    </div>
-
-                    <!-- Topics List -->
-                    <div class="content-area topics-area" id="topicsArea">
-                        @if (selectedForumTopics != null && selectedForumTopics.Any())
-                        {
-                            @foreach (var topic in selectedForumTopics)
-                            {
-                                <MudListItem T="ForumTopicModel" OnClick="() => SelectTopic(topic.Id)" Class="topic-item">
-                                    <div class="topic-icon">
-                                        @if (topic.IsLocked)
-                                        {
-                                            <MudIcon Icon="@Icons.Material.Filled.Lock" Class="text-secondary" />
-                                        }
-                                        else
-                                        {
-                                            <MudIcon Icon="@Icons.Material.Filled.ChatBubble" Class="text-primary" />
-                                        }
-                                    </div>
-                                    <div class="topic-content">
-                                        <MudText Typo="Typo.subtitle1" Class="topic-title">@topic.Title</MudText>
-                                        <div class="topic-badges">
-                                            @if (topic.IsLocked)
-                                            {
-                                                <MudChip T="string" Color="Color.Secondary" Size="Size.Small">Locked</MudChip>
-                                            }
-                                        </div>
-                                        <div class="topic-meta">
-                                            <MudText Typo="Typo.caption" Class="topic-author">by <strong>@topic.CreatedByUserName</strong></MudText>
-                                            <MudText Typo="Typo.caption" Class="topic-date">@topic.CreatedAt.ToString("MMM dd, yyyy")</MudText>
-                                            @if (topic.LastPostAt.HasValue)
-                                            {
-                                                <MudText Typo="Typo.caption" Class="topic-last-post">Last: @topic.LastPostAt.Value.ToString("MMM dd, HH:mm")</MudText>
-                                            }
-                                        </div>
-                                    </div>
-                                    <div class="topic-stats">
-                                        <div class="post-count">
-                                            <MudText Typo="Typo.subtitle1" Class="count">@topic.PostCount</MudText>
-                                            <MudText Typo="Typo.caption">posts</MudText>
-                                        </div>
-                                    </div>
-                                </MudListItem>
-                            }
-                        }
-                        else
-                        {
-                            <MudCard Elevation="2" Class="content-placeholder text-center py-5">
-                                <MudCardContent>
-                                    <MudIcon Icon="@Icons.Material.Filled.ChatBubble" Size="Size.Large" Class="text-muted mb-3" />
-                                    <MudText Typo="Typo.h5" Class="text-muted">No Topics Yet</MudText>
-                                    <MudText Typo="Typo.body1" Class="text-muted">Be the first to start a discussion in this forum!</MudText>
-                                </MudCardContent>
-                            </MudCard>
-                        }
-                    </div>
+                    <MudCard Elevation="2" Class="content-placeholder text-center py-5">
+                        <MudCardContent>
+                            <MudIcon Icon="@Icons.Material.Filled.ChatBubble" Size="Size.Large" Class="text-muted mb-3" />
+                            <MudText Typo="Typo.h5" Class="text-muted">No Topics Yet</MudText>
+                            <MudText Typo="Typo.body1" Class="text-muted">Be the first to start a discussion in this forum!</MudText>
+                        </MudCardContent>
+                    </MudCard>
                 }
-            }
-            else
-            {
-                <MudCard Elevation="2" Class="chat-placeholder p-4 text-center">
-                    <MudCardContent>
-                        <MudIcon Icon="@Icons.Material.Filled.ChatBubble" Size="Size.Large" Class="text-muted mb-4" />
-                        <MudText Typo="Typo.h3" Class="text-muted mb-2">Welcome to Forums</MudText>
-                        <MudText Typo="Typo.body1" Class="text-muted">Select a forum from the sidebar to view topics and discussions</MudText>
-                    </MudCardContent>
-                </MudCard>
-            }
-        </div>
+            </div>
+        }
+    }
+    else
+    {
+        <MudCard Elevation="2" Class="chat-placeholder p-4 text-center">
+            <MudCardContent>
+                <MudIcon Icon="@Icons.Material.Filled.ChatBubble" Size="Size.Large" Class="text-muted mb-4" />
+                <MudText Typo="Typo.h3" Class="text-muted mb-2">Welcome to Forums</MudText>
+                <MudText Typo="Typo.body1" Class="text-muted">Select a forum from the sidebar to view topics and discussions</MudText>
+            </MudCardContent>
+        </MudCard>
     }
 </div>
 
@@ -467,7 +465,7 @@
                         <MudText Typo="Typo.subtitle2"><strong>@quotedAuthor wrote:</strong></MudText>
                         <MudIconButton Icon="@Icons.Material.Filled.Close" Size="Size.Small" OnClick="ClearQuote" />
                     </div>
-                    <MudText Typo="Typo.body2" Class="quote-content">@quotedText</MudText>
+                    <MudText Typo="Typo.body2" class="quote-content">@quotedText</MudText>
                 </MudPaper>
             }
 
@@ -535,7 +533,7 @@
 </MudDialog>
 
 @code {
-    private bool isLoading = true; // FIX: define isLoading
+    private bool isLoading = true;
     private bool isCreating = false;
     private string statusMessage = "";
     private MudDialog? createForumModal;
@@ -574,6 +572,15 @@
     private CreateForumPostRequest newPost = new();
     private CourseModel? selectedCourse;
 
+    private int ActiveThreadsCount = 0;
+    private int MyPostsCount = 0;
+    private int TotalThreads = 0;
+    private int TotalPosts = 0;
+    private List<string> RecentThreads = new() { "Welcome to LMS!", "How to use the forum?", "Share your progress!" };
+    private List<string> TopContributors = new() { "Alice", "Bob", "Charlie" };
+
+    public class CourseGroup { public string CourseName { get; set; } = string.Empty; }
+
     protected override async Task OnInitializedAsync()
     {
         await LoadForumData();
@@ -585,7 +592,8 @@
         try
         {
             forums = await ForumRepository.GetAllForumsAsync();
-            courseGroups = await ForumRepository.GetCourseGroupsAsync();
+            var repoGroups = await ForumRepository.GetCourseGroupsAsync();
+            courseGroups = repoGroups.Select(g => new CourseGroup { CourseName = g.CourseName }).ToList();
             availableCourses = await CourseRepository.GetAllCoursesAsync();
             SelectGroup("general");
         }

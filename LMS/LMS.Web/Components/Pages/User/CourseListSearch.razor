@@ -4,24 +4,23 @@
 @using MudBlazor
 
 
-<div class="card h-100 d-flex flex-column border-0">
-    <div class="card-header bg-info p-0 border-0 rounded-top">
-        <MudTextField @bind-Value="searchTerm" Placeholder="Search courses..."
-                      Variant="Variant.Filled" Clearable="true"
-                      Adornment="Adornment.End" AdornmentIcon="@Icons.Material.Filled.Search"
-                      OnClearButtonClick="OnClearSearchButtonClick"
-                      Immediate="true" />
+
+<div class="h-full flex flex-col rounded-2xl shadow bg-white dark:bg-gray-900">
+    <div class="rounded-t-2xl bg-info-100 dark:bg-info-900 p-0">
+        <MudTextField @bind-Value="searchTerm" Placeholder="Search courses..." Variant="Variant.Filled" Clearable="true"
+            Adornment="Adornment.End" AdornmentIcon="@Icons.Material.Filled.Search"
+            OnClearButtonClick="OnClearSearchButtonClick" Immediate="true" Class="w-full rounded-t-2xl" />
     </div>
-    <div class="card-body border-0 p-0 flex-grow-1 overflow-auto">
+    <div class="flex-1 p-0 overflow-auto">
         @if (isLoading)
         {
-            <div class="d-flex justify-content-center align-items-center h-100 py-5">
+            <div class="flex justify-center items-center h-full py-8">
                 <MudProgressCircular Indeterminate="true" Color="Color.Info" />
             </div>
         }
         else if (filteredCourses?.Any() == true)
         {
-            <div class="p-2 d-flex flex-column gap-4 border-0">
+            <div class="p-4 flex flex-col gap-4">
                 @foreach (var course in filteredCourses)
                 {
                     <CourseCard Course="course" OnClick="@(c => NavigationManager.NavigateTo($"/user/lms/course/{c.Id}"))" />
@@ -30,8 +29,9 @@
         }
         else
         {
-            <MudCard Elevation="2" Class="m-3 shadow-sm d-flex align-items-center justify-content-center border-0 mud-background-paper" Style="min-height: 140px;">
-                <MudCardContent Class="text-center mud-text-secondary">
+            <MudCard Elevation="2"
+                Class="m-3 shadow-sm flex items-center justify-center bg-gray-50 dark:bg-gray-800 min-h-[140px]">
+                <MudCardContent Class="text-center text-gray-400 dark:text-gray-500">
                     <MudIcon Icon="@Icons.Material.Filled.SentimentDissatisfied" Size="Size.Large" Class="mb-2" />
                     <MudText Typo="Typo.h6">No courses found.</MudText>
                 </MudCardContent>
@@ -92,11 +92,11 @@
         else
         {
             filteredCourses = courses?
-                .Where(c =>
-                    (!string.IsNullOrEmpty(c.Title) && c.Title.Contains(searchTerm, StringComparison.OrdinalIgnoreCase)) ||
-                    (!string.IsNullOrEmpty(c.Description) && c.Description.Contains(searchTerm, StringComparison.OrdinalIgnoreCase)) ||
-                    (!string.IsNullOrEmpty(c.InstructorName) && c.InstructorName.Contains(searchTerm, StringComparison.OrdinalIgnoreCase)))
-                .ToList();
+            .Where(c =>
+            (!string.IsNullOrEmpty(c.Title) && c.Title.Contains(searchTerm, StringComparison.OrdinalIgnoreCase)) ||
+            (!string.IsNullOrEmpty(c.Description) && c.Description.Contains(searchTerm, StringComparison.OrdinalIgnoreCase)) ||
+            (!string.IsNullOrEmpty(c.InstructorName) && c.InstructorName.Contains(searchTerm, StringComparison.OrdinalIgnoreCase)))
+            .ToList();
         }
     }
 

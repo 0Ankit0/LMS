@@ -1,12 +1,11 @@
 module.exports = {
-    content: [
-        '../LMS.Web.Components/**/*.razor',
-        './**/*.razor',
-        './**/*.html',
-        './**/*.cshtml'
-    ],
-    theme: {
-        extend: {},
-    },
-    plugins: [],
+  content: [
+    './Components/**/*.razor',
+    './Pages/**/*.razor',
+    './**/*.razor',
+    './**/*.html',
+    './**/*.cshtml'
+  ],
+  theme: { extend: {} },
+  plugins: [],
 }
