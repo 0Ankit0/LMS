@@ -7,7 +7,8 @@
 @inject IJSRuntime JSRuntime
 @using MudBlazor.Components
 
-<div class="min-h-screen bg-gradient-to-br from-yellow-50 to-orange-50 dark:from-yellow-950/20 dark:to-orange-950/20 border-b border-border">
+<div
+    class="min-h-screen bg-gradient-to-br from-yellow-50 to-orange-50 dark:from-yellow-950/20 dark:to-orange-950/20 border-b border-border">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 py-8">
         <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
             <div class="flex items-center gap-3">
@@ -35,224 +36,224 @@
             </div>
         </div>
 
-@if (isLoading)
-{
-    <!-- Skeleton Loader -->
-    <div class="space-y-6">
-        <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="150px" Class="rounded-2xl w-full" />
-        <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="250px" Class="rounded-2xl w-full" />
-        <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="400px" Class="rounded-2xl w-full" />
-    </div>
-}
-else
-{
-    <!-- Current User Stats -->
-    @if (currentUserRank != null)
-    {
-        <div class="mb-8">
-            <MudCard Elevation="2" Class="rounded-2xl shadow-lg bg-white dark:bg-gray-900">
-                <MudCardContent>
-                    <div class="flex flex-col md:flex-row items-center gap-6">
-                        <div class="flex flex-col items-center md:w-1/4">
-                            <div class="relative">
-                                <MudAvatar Image="@GetAvatarUrl(currentUserRank.UserId)" Alt="@currentUserRank.UserName"
-                                    Class="border-4 border-white dark:border-gray-900 shadow-lg"
-                                    Style="width: 80px; height: 80px; object-fit: cover;" />
-                                <MudChip T="string" Color="Color.Warning" Class="absolute -top-2 -right-2 rounded-full">
-                                    #@currentUserRank.Rank</MudChip>
-                            </div>
-                        </div>
-                        <div class="flex-1">
-                            <MudText Typo="Typo.h5" Class="mb-2 font-bold text-gray-900 dark:text-white">Your Ranking
-                            </MudText>
-                            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                                <div class="text-center">
-                                    <MudText Typo="Typo.h6" Class="mb-1">@currentUserRank.Rank</MudText>
-                                    <MudText Typo="Typo.caption">Rank</MudText>
-                                </div>
-                                <div class="text-center">
-                                    <MudText Typo="Typo.h6" Class="mb-1">@currentUserRank.Score</MudText>
-                                    <MudText Typo="Typo.caption">Points</MudText>
-                                </div>
-                                <div class="text-center">
-                                    <MudText Typo="Typo.h6" Class="mb-1">@currentUserRank.CompletedCourses</MudText>
-                                    <MudText Typo="Typo.caption">Courses</MudText>
-                                </div>
-                                <div class="text-center">
-                                    <MudText Typo="Typo.h6" Class="mb-1">@currentUserRank.Achievements</MudText>
-                                    <MudText Typo="Typo.caption">Achievements</MudText>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </MudCardContent>
-            </MudCard>
-        </div>
-    }
-
-    <!-- Top 3 Podium -->
-    @if (topRanks?.Count >= 3)
-    {
-        <div class="mb-8">
-            <MudCard Elevation="2" Class="rounded-2xl shadow-lg bg-white dark:bg-gray-900">
-                <MudCardContent>
-                    <MudText Typo="Typo.h5" Class="text-center mb-4 font-bold text-yellow-700 dark:text-yellow-300">
-                        <MudIcon Icon="@Icons.Material.Filled.EmojiEvents" Class="text-yellow-500 mr-2" /> Top
-                        Performers
-                    </MudText>
-                    <div class="flex flex-col md:flex-row justify-center gap-8">
-                        <!-- 2nd Place -->
-                        <div class="flex flex-col items-center order-1">
-                            <div class="relative mb-3">
-                                <MudAvatar Image="@GetAvatarUrl(topRanks[1].UserId)" Alt="@topRanks[1].UserName"
-                                    Class="border-4 border-gray-400 dark:border-gray-700 shadow-lg"
-                                    Style="width: 80px; height: 80px; object-fit: cover;" />
-                                <MudChip T="string" Color="Color.Secondary"
-                                    Class="absolute -top-2 -right-2 rounded-full flex items-center">
-                                    <MudIcon Icon="@Icons.Material.Filled.EmojiEvents" Size="Size.Small" Class="mr-1" />
-                                    2
-                                </MudChip>
-                            </div>
-                            <MudText Typo="Typo.h6" Class="font-bold">@topRanks[1].UserName</MudText>
-                            <MudText Typo="Typo.body2" Class="text-gray-500 mb-1">@topRanks[1].Score pts</MudText>
-                            <MudText Typo="Typo.caption" Class="text-gray-400">@topRanks[1].CompletedCourses courses
-                            </MudText>
-                        </div>
-                        <!-- 1st Place -->
-                        <div class="flex flex-col items-center order-2">
-                            <div class="relative mb-3">
-                                <MudAvatar Image="@GetAvatarUrl(topRanks[0].UserId)" Alt="@topRanks[0].UserName"
-                                    Class="border-4 border-yellow-400 dark:border-yellow-600 shadow-lg"
-                                    Style="width: 100px; height: 100px; object-fit: cover;" />
-                                <MudChip T="string" Color="Color.Warning"
-                                    Class="absolute -top-2 -right-2 rounded-full flex items-center">
-                                    <MudIcon Icon="@Icons.Material.Filled.EmojiEvents" Size="Size.Small" Class="mr-1" />
-                                    1
-                                </MudChip>
-                            </div>
-                            <MudText Typo="Typo.h5" Class="font-bold text-yellow-700 dark:text-yellow-300">
-                                @topRanks[0].UserName</MudText>
-                            <MudText Typo="Typo.subtitle1" Class="text-yellow-700 dark:text-yellow-300 mb-1">
-                                @topRanks[0].Score pts</MudText>
-                            <MudText Typo="Typo.caption" Class="text-gray-400">@topRanks[0].CompletedCourses courses
-                            </MudText>
-                        </div>
-                        <!-- 3rd Place -->
-                        <div class="flex flex-col items-center order-3">
-                            <div class="relative mb-3">
-                                <MudAvatar Image="@GetAvatarUrl(topRanks[2].UserId)" Alt="@topRanks[2].UserName"
-                                    Class="border-4 border-red-400 dark:border-red-700 shadow-lg"
-                                    Style="width: 80px; height: 80px; object-fit: cover;" />
-                                <MudChip T="string" Color="Color.Error"
-                                    Class="absolute -top-2 -right-2 rounded-full flex items-center">
-                                    <MudIcon Icon="@Icons.Material.Filled.EmojiEvents" Size="Size.Small" Class="mr-1" />
-                                    3
-                                </MudChip>
-                            </div>
-                            <MudText Typo="Typo.h6" Class="font-bold">@topRanks[2].UserName</MudText>
-                            <MudText Typo="Typo.body2" Class="text-red-500 mb-1">@topRanks[2].Score pts</MudText>
-                            <MudText Typo="Typo.caption" Class="text-gray-400">@topRanks[2].CompletedCourses courses
-                            </MudText>
-                        </div>
-                    </div>
-                </MudCardContent>
-            </MudCard>
-        </div>
-    }
-
-    <!-- Full Leaderboard Table -->
-    @if (leaderboard?.Any() == true)
-    {
-        <div class="mb-8">
-            <MudCard Elevation="2" Class="rounded-2xl shadow-lg bg-white dark:bg-gray-900">
-                <MudCardHeader
-                    Class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 p-6 border-b border-gray-100 dark:border-gray-800">
-                    <MudText Typo="Typo.h6" Class="flex items-center font-bold text-gray-900 dark:text-white">
-                        <MudIcon Icon="@Icons.Material.Filled.FormatListNumbered" Class="mr-2" /> Full Rankings
-                    </MudText>
-                    <MudTextField @bind-Value="searchTerm" Placeholder="Search users..." Variant="Variant.Text"
-                        Clearable="true" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search"
-                        OnClearButtonClick="FilterLeaderboard" Class="w-full md:w-64" />
-                </MudCardHeader>
-                <MudCardContent>
-                    <MudTable T="LeaderboardEntryModel" Items="@filteredLeaderboard" Hover="true"
-                        Breakpoint="Breakpoint.Sm" Class="w-full">
-                        <HeaderContent>
-                            <MudTh>Rank</MudTh>
-                            <MudTh>User</MudTh>
-                            <MudTh>Points</MudTh>
-                            <MudTh>Courses</MudTh>
-                            <MudTh>Achievements</MudTh>
-                            <MudTh>Avg. Score</MudTh>
-                            <MudTh>Streak</MudTh>
-                        </HeaderContent>
-                        <RowTemplate>
-                            <MudTd DataLabel="Rank">
-                                <div class="flex items-center">
-                                    @if (context.Rank <= 3)
-                                    {
-                                        <MudIcon Icon="@Icons.Material.Filled.EmojiEvents"
-                                            Class="@($"mr-2 {GetRankColor(context.Rank)}")" />
-                                    }
-                                    <MudText Typo="Typo.body2" Class="font-bold">@context.Rank</MudText>
-                                    @if (context.UserId == currentUserId)
-                                    {
-                                        <MudChip T="string" Color="Color.Primary" Size="Size.Small" Class="ml-2">You
-                                        </MudChip>
-                                    }
-                                </div>
-                            </MudTd>
-                            <MudTd DataLabel="User">
-                                <div class="flex items-center">
-                                    <MudAvatar Image="@GetAvatarUrl(context.UserId)" Alt="@context.UserName"
-                                        Class="mr-3" Style="width: 40px; height: 40px; object-fit: cover;" />
-                                    <div>
-                                        <MudText Typo="Typo.body1" Class="font-bold">@context.UserName</MudText>
-                                        <MudText Typo="Typo.caption" Class="text-gray-400">@context.UserName</MudText>
+        @if (isLoading)
+        {
+            <!-- Skeleton Loader -->
+            <div class="space-y-6">
+                <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="150px" Class="rounded-2xl w-full" />
+                <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="250px" Class="rounded-2xl w-full" />
+                <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="400px" Class="rounded-2xl w-full" />
+            </div>
+        }
+        else
+        {
+            <!-- Current User Stats -->
+            @if (currentUserRank != null)
+            {
+                <div class="mb-8">
+                    <MudCard Elevation="2" Class="rounded-2xl shadow-lg bg-white dark:bg-gray-900">
+                        <MudCardContent>
+                            <div class="flex flex-col md:flex-row items-center gap-6">
+                                <div class="flex flex-col items-center md:w-1/4">
+                                    <div class="relative">
+                                        <MudAvatar Image="@GetAvatarUrl(currentUserRank.UserId)" Alt="@currentUserRank.UserName"
+                                            Class="border-4 border-white dark:border-gray-900 shadow-lg"
+                                            Style="width: 80px; height: 80px; object-fit: cover;" />
+                                        <MudChip T="string" Color="Color.Warning" Class="absolute -top-2 -right-2 rounded-full">
+                                            #@currentUserRank.Rank</MudChip>
                                     </div>
                                 </div>
-                            </MudTd>
-                            <MudTd DataLabel="Points" Class="text-center">
-                                <MudChip T="string" Color="Color.Primary" Size="Size.Medium">@context.Score</MudChip>
-                            </MudTd>
-                            <MudTd DataLabel="Courses" Class="text-center">
-                                <MudChip T="string" Color="Color.Success" Size="Size.Medium">@context.CompletedCourses
-                                </MudChip>
-                            </MudTd>
-                            <MudTd DataLabel="Achievements" Class="text-center">
-                                <MudChip T="string" Color="Color.Warning" Size="Size.Medium">@context.Achievements
-                                </MudChip>
-                            </MudTd>
-                            <MudTd DataLabel="Avg. Score" Class="text-center">
-                                <MudChip T="string" Color="@GetScoreBadgeColor(context.AverageScore)">
-                                    @context.AverageScore.ToString("F1")%</MudChip>
-                            </MudTd>
-                            <MudTd DataLabel="Streak" Class="text-center">
-                                @if (context.CurrentStreak > 0)
-                                {
-                                    <MudChip T="string" Color="Color.Info">
-                                        <MudIcon Icon="@Icons.Material.Filled.LocalFireDepartment" Size="Size.Small"
-                                            Class="mr-1" /> @context.CurrentStreak
-                                    </MudChip>
-                                }
-                                else
-                                {
-                                    <MudText Typo="Typo.body2" Class="text-gray-400">-</MudText>
-                                }
-                            </MudTd>
-                        </RowTemplate>
-                    </MudTable>
-                    @if (filteredLeaderboard.Count == 0 && !string.IsNullOrEmpty(searchTerm))
-                    {
-                        <div class="text-center py-4">
-                            <p class="text-gray-400">No users found matching "@searchTerm"</p>
-                        </div>
-                    }
-                </MudCardContent>
-            </MudCard>
-        </div>
-    }
-}
+                                <div class="flex-1">
+                                    <MudText Typo="Typo.h5" Class="mb-2 font-bold text-gray-900 dark:text-white">Your Ranking
+                                    </MudText>
+                                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                        <div class="text-center">
+                                            <MudText Typo="Typo.h6" Class="mb-1">@currentUserRank.Rank</MudText>
+                                            <MudText Typo="Typo.caption">Rank</MudText>
+                                        </div>
+                                        <div class="text-center">
+                                            <MudText Typo="Typo.h6" Class="mb-1">@currentUserRank.Score</MudText>
+                                            <MudText Typo="Typo.caption">Points</MudText>
+                                        </div>
+                                        <div class="text-center">
+                                            <MudText Typo="Typo.h6" Class="mb-1">@currentUserRank.CompletedCourses</MudText>
+                                            <MudText Typo="Typo.caption">Courses</MudText>
+                                        </div>
+                                        <div class="text-center">
+                                            <MudText Typo="Typo.h6" Class="mb-1">@currentUserRank.Achievements</MudText>
+                                            <MudText Typo="Typo.caption">Achievements</MudText>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </MudCardContent>
+                    </MudCard>
+                </div>
+            }
+
+            <!-- Top 3 Podium -->
+            @if (topRanks?.Count >= 3)
+            {
+                <div class="mb-8">
+                    <MudCard Elevation="2" Class="rounded-2xl shadow-lg bg-white dark:bg-gray-900">
+                        <MudCardContent>
+                            <MudText Typo="Typo.h5" Class="text-center mb-4 font-bold text-yellow-700 dark:text-yellow-300">
+                                <MudIcon Icon="@Icons.Material.Filled.EmojiEvents" Class="text-yellow-500 mr-2" /> Top
+                                Performers
+                            </MudText>
+                            <div class="flex flex-col md:flex-row justify-center gap-8">
+                                <!-- 2nd Place -->
+                                <div class="flex flex-col items-center order-1">
+                                    <div class="relative mb-3">
+                                        <MudAvatar Image="@GetAvatarUrl(topRanks[1].UserId)" Alt="@topRanks[1].UserName"
+                                            Class="border-4 border-gray-400 dark:border-gray-700 shadow-lg"
+                                            Style="width: 80px; height: 80px; object-fit: cover;" />
+                                        <MudChip T="string" Color="Color.Secondary"
+                                            Class="absolute -top-2 -right-2 rounded-full flex items-center">
+                                            <MudIcon Icon="@Icons.Material.Filled.EmojiEvents" Size="Size.Small" Class="mr-1" />
+                                            2
+                                        </MudChip>
+                                    </div>
+                                    <MudText Typo="Typo.h6" Class="font-bold">@topRanks[1].UserName</MudText>
+                                    <MudText Typo="Typo.body2" Class="text-gray-500 mb-1">@topRanks[1].Score pts</MudText>
+                                    <MudText Typo="Typo.caption" Class="text-gray-400">@topRanks[1].CompletedCourses courses
+                                    </MudText>
+                                </div>
+                                <!-- 1st Place -->
+                                <div class="flex flex-col items-center order-2">
+                                    <div class="relative mb-3">
+                                        <MudAvatar Image="@GetAvatarUrl(topRanks[0].UserId)" Alt="@topRanks[0].UserName"
+                                            Class="border-4 border-yellow-400 dark:border-yellow-600 shadow-lg"
+                                            Style="width: 100px; height: 100px; object-fit: cover;" />
+                                        <MudChip T="string" Color="Color.Warning"
+                                            Class="absolute -top-2 -right-2 rounded-full flex items-center">
+                                            <MudIcon Icon="@Icons.Material.Filled.EmojiEvents" Size="Size.Small" Class="mr-1" />
+                                            1
+                                        </MudChip>
+                                    </div>
+                                    <MudText Typo="Typo.h5" Class="font-bold text-yellow-700 dark:text-yellow-300">
+                                        @topRanks[0].UserName</MudText>
+                                    <MudText Typo="Typo.subtitle1" Class="text-yellow-700 dark:text-yellow-300 mb-1">
+                                        @topRanks[0].Score pts</MudText>
+                                    <MudText Typo="Typo.caption" Class="text-gray-400">@topRanks[0].CompletedCourses courses
+                                    </MudText>
+                                </div>
+                                <!-- 3rd Place -->
+                                <div class="flex flex-col items-center order-3">
+                                    <div class="relative mb-3">
+                                        <MudAvatar Image="@GetAvatarUrl(topRanks[2].UserId)" Alt="@topRanks[2].UserName"
+                                            Class="border-4 border-red-400 dark:border-red-700 shadow-lg"
+                                            Style="width: 80px; height: 80px; object-fit: cover;" />
+                                        <MudChip T="string" Color="Color.Error"
+                                            Class="absolute -top-2 -right-2 rounded-full flex items-center">
+                                            <MudIcon Icon="@Icons.Material.Filled.EmojiEvents" Size="Size.Small" Class="mr-1" />
+                                            3
+                                        </MudChip>
+                                    </div>
+                                    <MudText Typo="Typo.h6" Class="font-bold">@topRanks[2].UserName</MudText>
+                                    <MudText Typo="Typo.body2" Class="text-red-500 mb-1">@topRanks[2].Score pts</MudText>
+                                    <MudText Typo="Typo.caption" Class="text-gray-400">@topRanks[2].CompletedCourses courses
+                                    </MudText>
+                                </div>
+                            </div>
+                        </MudCardContent>
+                    </MudCard>
+                </div>
+            }
+
+            <!-- Full Leaderboard Table -->
+            @if (leaderboard?.Any() == true)
+            {
+                <div class="mb-8">
+                    <MudCard Elevation="2" Class="rounded-2xl shadow-lg bg-white dark:bg-gray-900">
+                        <MudCardHeader
+                            Class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 p-6 border-b border-gray-100 dark:border-gray-800">
+                            <MudText Typo="Typo.h6" Class="flex items-center font-bold text-gray-900 dark:text-white">
+                                <MudIcon Icon="@Icons.Material.Filled.FormatListNumbered" Class="mr-2" /> Full Rankings
+                            </MudText>
+                            <MudTextField @bind-Value="searchTerm" Placeholder="Search users..." Variant="Variant.Text"
+                                Clearable="true" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search"
+                                OnClearButtonClick="FilterLeaderboard" Class="w-full md:w-64" />
+                        </MudCardHeader>
+                        <MudCardContent>
+                            <MudTable T="LeaderboardEntryModel" Items="@filteredLeaderboard" Hover="true"
+                                Breakpoint="Breakpoint.Sm" Class="w-full">
+                                <HeaderContent>
+                                    <MudTh>Rank</MudTh>
+                                    <MudTh>User</MudTh>
+                                    <MudTh>Points</MudTh>
+                                    <MudTh>Courses</MudTh>
+                                    <MudTh>Achievements</MudTh>
+                                    <MudTh>Avg. Score</MudTh>
+                                    <MudTh>Streak</MudTh>
+                                </HeaderContent>
+                                <RowTemplate>
+                                    <MudTd DataLabel="Rank">
+                                        <div class="flex items-center">
+                                            @if (context.Rank <= 3)
+                                            {
+                                                <MudIcon Icon="@Icons.Material.Filled.EmojiEvents"
+                                                    Class="@($"mr-2 {GetRankColor(context.Rank)}")" />
+                                            }
+                                            <MudText Typo="Typo.body2" Class="font-bold">@context.Rank</MudText>
+                                            @if (context.UserId == currentUserId)
+                                            {
+                                                <MudChip T="string" Color="Color.Primary" Size="Size.Small" Class="ml-2">You
+                                                </MudChip>
+                                            }
+                                        </div>
+                                    </MudTd>
+                                    <MudTd DataLabel="User">
+                                        <div class="flex items-center">
+                                            <MudAvatar Image="@GetAvatarUrl(context.UserId)" Alt="@context.UserName"
+                                                Class="mr-3" Style="width: 40px; height: 40px; object-fit: cover;" />
+                                            <div>
+                                                <MudText Typo="Typo.body1" Class="font-bold">@context.UserName</MudText>
+                                                <MudText Typo="Typo.caption" Class="text-gray-400">@context.UserName</MudText>
+                                            </div>
+                                        </div>
+                                    </MudTd>
+                                    <MudTd DataLabel="Points" Class="text-center">
+                                        <MudChip T="string" Color="Color.Primary" Size="Size.Medium">@context.Score</MudChip>
+                                    </MudTd>
+                                    <MudTd DataLabel="Courses" Class="text-center">
+                                        <MudChip T="string" Color="Color.Success" Size="Size.Medium">@context.CompletedCourses
+                                        </MudChip>
+                                    </MudTd>
+                                    <MudTd DataLabel="Achievements" Class="text-center">
+                                        <MudChip T="string" Color="Color.Warning" Size="Size.Medium">@context.Achievements
+                                        </MudChip>
+                                    </MudTd>
+                                    <MudTd DataLabel="Avg. Score" Class="text-center">
+                                        <MudChip T="string" Color="@GetScoreBadgeColor(context.AverageScore)">
+                                            @context.AverageScore.ToString("F1")%</MudChip>
+                                    </MudTd>
+                                    <MudTd DataLabel="Streak" Class="text-center">
+                                        @if (context.CurrentStreak > 0)
+                                        {
+                                            <MudChip T="string" Color="Color.Info">
+                                                <MudIcon Icon="@Icons.Material.Filled.LocalFireDepartment" Size="Size.Small"
+                                                    Class="mr-1" /> @context.CurrentStreak
+                                            </MudChip>
+                                        }
+                                        else
+                                        {
+                                            <MudText Typo="Typo.body2" Class="text-gray-400">-</MudText>
+                                        }
+                                    </MudTd>
+                                </RowTemplate>
+                            </MudTable>
+                            @if (filteredLeaderboard.Count == 0 && !string.IsNullOrEmpty(searchTerm))
+                            {
+                                <div class="text-center py-4">
+                                    <p class="text-gray-400">No users found matching "@searchTerm"</p>
+                                </div>
+                            }
+                        </MudCardContent>
+                    </MudCard>
+                </div>
+            }
+        }
     </div>
 </div>
 

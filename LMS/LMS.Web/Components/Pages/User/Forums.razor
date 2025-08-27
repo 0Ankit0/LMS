@@ -20,80 +20,76 @@
 
 <PageTitle>Forums - LMS</PageTitle>
 
-<div class="forums-layout">
-    @if (isLoading)
-    {
-        <div class="md:col-span-2 flex flex-col gap-6">
-            <div class="bg-white dark:bg-gray-900 rounded-2xl shadow-lg p-6 mb-4">
-                <h1 class="text-2xl font-bold text-gray-900 dark:text-white mb-2">Forums</h1>
-                <p class="text-gray-600 dark:text-gray-300">Join the discussion and connect with other learners.</p>
-            </div>
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                <MudCard Class="rounded-2xl shadow bg-white dark:bg-gray-900">
-                    <MudCardContent>
-                        <MudText Typo="Typo.subtitle1" Class="text-gray-500 dark:text-gray-300">Active Threads</MudText>
-                        <MudText Typo="Typo.h6" Class="font-bold text-purple-600 dark:text-purple-400">@ActiveThreadsCount</MudText>
-                    </MudCardContent>
-                </MudCard>
-                <MudCard Class="rounded-2xl shadow bg-white dark:bg-gray-900">
-                    <MudCardContent>
-                        <MudText Typo="Typo.subtitle1" Class="text-gray-500 dark:text-gray-300">My Posts</MudText>
-                        <MudText Typo="Typo.h6" Class="font-bold text-pink-600 dark:text-pink-400">@MyPostsCount</MudText>
-                    </MudCardContent>
-                </MudCard>
-            </div>
-            <div class="bg-white dark:bg-gray-900 rounded-2xl shadow p-6 mt-4">
-                <MudText Typo="Typo.h6" Class="mb-2 font-bold text-gray-900 dark:text-white">Recent Threads</MudText>
-                <MudList T="string">
-                    @foreach (var thread in RecentThreads)
-                    {
-                        <MudListItem T="string">
-                            <MudListItemText>@thread</MudListItemText>
-                        </MudListItem>
-                    }
-                </MudList>
-            </div>
-            <div class="flex flex-col gap-6">
-                <MudCard Class="rounded-2xl shadow bg-white dark:bg-gray-900 mb-4">
+
+<div class="min-h-screen bg-gradient-to-br from-gray-50 to-indigo-50 dark:from-gray-900 dark:to-indigo-950">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 py-8">
+        <div class="flex flex-col lg:flex-row gap-8">
+            <!-- Sidebar -->
+            <aside class="w-full lg:w-72 flex-shrink-0 sticky top-4 h-fit z-10">
+                <div class="bg-white dark:bg-gray-900 rounded-2xl shadow-lg p-6 mb-6">
+                    <h1 class="text-2xl font-bold text-gray-900 dark:text-white mb-2">Forums</h1>
+                    <p class="text-gray-600 dark:text-gray-300">Join the discussion and connect with other learners.</p>
+                </div>
+                <div class="grid grid-cols-2 gap-4 mb-6">
+                    <MudCard Class="rounded-2xl shadow bg-white dark:bg-gray-900">
+                        <MudCardContent>
+                            <MudText Typo="Typo.subtitle1" Class="text-gray-500 dark:text-gray-300">Active Threads</MudText>
+                            <MudText Typo="Typo.h6" Class="font-bold text-purple-600 dark:text-purple-400">@ActiveThreadsCount</MudText>
+                        </MudCardContent>
+                    </MudCard>
+                    <MudCard Class="rounded-2xl shadow bg-white dark:bg-gray-900">
+                        <MudCardContent>
+                            <MudText Typo="Typo.subtitle1" Class="text-gray-500 dark:text-gray-300">My Posts</MudText>
+                            <MudText Typo="Typo.h6" Class="font-bold text-pink-600 dark:text-pink-400">@MyPostsCount</MudText>
+                        </MudCardContent>
+                    </MudCard>
+                </div>
+                <div class="bg-white dark:bg-gray-900 rounded-2xl shadow p-6 mb-6">
+                    <MudText Typo="Typo.h6" Class="mb-2 font-bold text-gray-900 dark:text-white">Recent Threads</MudText>
+                    <MudList T="string">
+                        @foreach (var thread in RecentThreads)
+                        {
+                            <MudListItem T="string">
+                                <span>@thread</span>
+                            </MudListItem>
+                        }
+                    </MudList>
+                </div>
+                <MudCard Class="rounded-2xl shadow bg-white dark:bg-gray-900 mb-6">
                     <MudCardContent>
                         <MudText Typo="Typo.subtitle1" Class="text-gray-500 dark:text-gray-300">Top Contributors</MudText>
                         <MudList T="string">
                             @foreach (var contributor in TopContributors)
                             {
                                 <MudListItem T="string">
-                                    <MudListItemText>@contributor</MudListItemText>
+                                      <span>@contributor</span>
                                 </MudListItem>
                             }
                         </MudList>
                     </MudCardContent>
                 </MudCard>
-                <MudCard Class="rounded-2xl shadow bg-white dark:bg-gray-900">
+                <MudCard Class="rounded-2xl shadow bg-white dark:bg-gray-900 mb-6">
                     <MudCardContent>
                         <MudText Typo="Typo.subtitle1" Class="text-gray-500 dark:text-gray-300">Forum Stats</MudText>
                         <MudText Typo="Typo.body2" Class="text-gray-600 dark:text-gray-300">Threads: @TotalThreads</MudText>
                         <MudText Typo="Typo.body2" Class="text-gray-600 dark:text-gray-300">Posts: @TotalPosts</MudText>
                     </MudCardContent>
                 </MudCard>
-            </div>
-            <div>
-                @if (courseGroups != null)
-                {
-                    @foreach (var courseGroup in courseGroups)
+                <div class="flex flex-wrap gap-2 mt-4">
+                    @if (courseGroups != null)
                     {
-                        <div class="group-item @(selectedGroup == courseGroup.CourseName ? "active" : "")"
-                            @onclick="() => SelectGroup(courseGroup.CourseName)" title="@courseGroup.CourseName">
-                            <div class="group-icon course-icon">
-                                <MudText Typo="Typo.h6">@courseGroup.CourseName.FirstOrDefault()</MudText>
-                            </div>
-                        </div>
+                        @foreach (var courseGroup in courseGroups)
+                        {
+                            <button class="group-item course-icon rounded-full w-12 h-12 flex items-center justify-center text-lg font-bold transition-all duration-150 border-2 border-transparent hover:border-indigo-400 focus:outline-none @(selectedGroup == courseGroup.CourseName ? "bg-indigo-600 text-white border-indigo-600" : "bg-gray-200 dark:bg-gray-800 text-gray-700 dark:text-gray-200")" @onclick="() => SelectGroup(courseGroup.CourseName)" title="@courseGroup.CourseName">
+                                @courseGroup.CourseName.FirstOrDefault()
+                            </button>
+                        }
                     }
-                }
-            </div>
-        </div>
-    }
-    <!-- Add Forum Button -->
-    <MudFab Color="Color.Primary" Icon="@Icons.Material.Filled.Add" Size="Size.Large" Class="add-forum-button" OnClick="ShowCreateForumModal" Label="Create New Forum" />
-</div>
+                </div>
+                <MudFab Color="Color.Primary" Icon="@Icons.Material.Filled.Add" Size="Size.Large" Class="add-forum-button mt-8 w-full" OnClick="ShowCreateForumModal" Label="Create New Forum" />
+    </aside>
+    <!-- Main Content Area -->
+    <main class="flex-1">
 
 <!-- Forum List Sidebar -->
 <div class="forum-list-sidebar">
@@ -413,8 +409,11 @@
             </MudCardContent>
         </MudCard>
     }
+    </div>
+            </main>
+        </div>
+    </div>
 </div>
-
 
 <!-- New Topic Modal -->
 <MudDialog @bind-IsVisible="@isNewTopicModalVisible" Options="@dialogOptions">
@@ -434,15 +433,15 @@
                           Placeholder="Write the first post for this topic..." Required="true" RequiredError="Post content is required!" />
             <MudText Typo="Typo.caption" Class="mud-text-secondary">You can use basic formatting: **bold**, *italic*, `code`</MudText>
 
-            <MudDialogActions>
-                <MudButton Color="Color.Secondary" OnClick="HideNewTopicModal">
-                    <MudIcon Icon="@Icons.Material.Filled.Close" Class="me-1" />Cancel
-                </MudButton>
-                <MudButton Color="Color.Primary" ButtonType="ButtonType.Submit" Disabled="@isCreatingTopic">
-                    <MudIcon Icon="@Icons.Material.Filled.Add" Class="me-1" />
-                    <span>Create Topic</span>
-                </MudButton>
-            </MudDialogActions>
+                <div class="mud-dialog-actions flex gap-2 justify-end mt-4">
+                    <MudButton Color="Color.Secondary" OnClick="HideNewTopicModal">
+                        <MudIcon Icon="@Icons.Material.Filled.Close" Class="me-1" />Cancel
+                    </MudButton>
+                    <MudButton Color="Color.Primary" ButtonType="ButtonType.Submit" Disabled="@isCreatingTopic">
+                        <MudIcon Icon="@Icons.Material.Filled.Add" Class="me-1" />
+                        <span>Create Topic</span>
+                    </MudButton>
+                </div>
         </EditForm>
     </DialogContent>
 </MudDialog>
@@ -473,15 +472,15 @@
                           Placeholder="Share your thoughts..." Required="true" RequiredError="Post content is required!" />
             <MudText Typo="Typo.caption" Class="mud-text-secondary">You can use basic formatting: **bold**, *italic*, `code`</MudText>
 
-            <MudDialogActions>
-                <MudButton Color="Color.Secondary" OnClick="HideNewPostModal">
-                    <MudIcon Icon="@Icons.Material.Filled.Close" Class="me-1" />Cancel
-                </MudButton>
-                <MudButton Color="Color.Primary" ButtonType="ButtonType.Submit" Disabled="@isCreatingPost">
-                    <MudIcon Icon="@Icons.Material.Filled.Reply" Class="me-1" />
-                    <span>Post Reply</span>
-                </MudButton>
-            </MudDialogActions>
+                <div class="mud-dialog-actions flex gap-2 justify-end mt-4">
+                    <MudButton Color="Color.Secondary" OnClick="HideNewPostModal">
+                        <MudIcon Icon="@Icons.Material.Filled.Close" Class="me-1" />Cancel
+                    </MudButton>
+                    <MudButton Color="Color.Primary" ButtonType="ButtonType.Submit" Disabled="@isCreatingPost">
+                        <MudIcon Icon="@Icons.Material.Filled.Reply" Class="me-1" />
+                        <span>Post Reply</span>
+                    </MudButton>
+                </div>
         </EditForm>
     </DialogContent>
 </MudDialog>
@@ -519,79 +518,69 @@
             <MudTextField T="string" Label="Description" Variant="Variant.Text" Lines="4" @bind-Value="newForum.Description"
                           Placeholder="Describe what this forum is about..." />
 
-            <MudDialogActions>
-                <MudButton Color="Color.Secondary" OnClick="HideCreateModal">
-                    <MudIcon Icon="@Icons.Material.Filled.Close" Class="me-1" />Cancel
-                </MudButton>
-                <MudButton Color="Color.Primary" ButtonType="ButtonType.Submit" Disabled="@isCreating">
-                    <MudIcon Icon="@Icons.Material.Filled.Add" Class="me-1" />
-                    <span>Create Forum</span>
-                </MudButton>
-            </MudDialogActions>
+                <div class="mud-dialog-actions flex gap-2 justify-end mt-4">
+                    <MudButton Color="Color.Secondary" OnClick="HideCreateModal">
+                        <MudIcon Icon="@Icons.Material.Filled.Close" Class="me-1" />Cancel
+                    </MudButton>
+                    <MudButton Color="Color.Primary" ButtonType="ButtonType.Submit" Disabled="@isCreating">
+                        <MudIcon Icon="@Icons.Material.Filled.Add" Class="me-1" />
+                        <span>Create Forum</span>
+                    </MudButton>
+                </div>
         </EditForm>
     </DialogContent>
 </MudDialog>
 
 @code {
-    private bool isLoading = true;
-    private bool isCreating = false;
-    private string statusMessage = "";
-    private MudDialog? createForumModal;
-    private MudDialog? newTopicModal;
-    private MudDialog? newPostModal;
-    private bool isNewTopicModalVisible = false;
-    private bool isNewPostModalVisible = false;
-    private bool isCreateForumModalVisible = false;
-    private DialogOptions dialogOptions = new() { CloseButton = true, MaxWidth = MaxWidth.Medium, FullWidth = true };
-
-    private string? currentUserId = "current-user"; // Set a dummy user for demo
-    private string newTopicReply = "";
-    private string searchQuery = "";
-
-    private bool isCreatingTopic = false;
-    private bool isCreatingPost = false;
-
-    private int? selectedTopicId;
-    private ForumTopicModel? selectedTopic;
-    private List<ForumTopicModel>? selectedForumTopics;
-    private List<ForumPostModel>? selectedTopicPosts;
-    private string quotedText = "";
-    private string quotedAuthor = "";
-
-    private string selectedGroup = "";
-    private int? selectedForumId;
-    private ForumModel? selectedForum;
-    private List<ForumModel>? selectedGroupForums;
-    private List<CourseGroup>? courseGroups;
-    private HashSet<int> expandedForums = new HashSet<int>();
-
-    private List<ForumModel>? forums;
-    private List<CourseModel>? availableCourses;
-    private CreateForumRequest newForum = new();
-    private CreateForumTopicRequest newTopic = new();
-    private CreateForumPostRequest newPost = new();
-    private CourseModel? selectedCourse;
-
-    private int ActiveThreadsCount = 0;
-    private int MyPostsCount = 0;
-    private int TotalThreads = 0;
-    private int TotalPosts = 0;
-    private List<string> RecentThreads = new() { "Welcome to LMS!", "How to use the forum?", "Share your progress!" };
-    private List<string> TopContributors = new() { "Alice", "Bob", "Charlie" };
-
-    public class CourseGroup { public string CourseName { get; set; } = string.Empty; }
+    // Forum sidebar and main content variables
+    private int ActiveThreadsCount { get; set; }
+    private int MyPostsCount { get; set; }
+    private List<string> RecentThreads { get; set; } = new();
+    private List<string> TopContributors { get; set; } = new();
+    private int TotalThreads { get; set; }
+    private int TotalPosts { get; set; }
+    private List<CourseGroup>? courseGroups { get; set; }
+    private string selectedGroup { get; set; } = "general";
+    private List<ForumModel>? forums { get; set; }
+    private List<ForumModel>? selectedGroupForums { get; set; }
+    private HashSet<int> expandedForums { get; set; } = new();
+    private List<ForumTopicModel>? selectedForumTopics { get; set; }
+    private int? selectedForumId { get; set; }
+    private ForumModel? selectedForum { get; set; }
+    private int? selectedTopicId { get; set; }
+    private ForumTopicModel? selectedTopic { get; set; }
+    private List<ForumPostModel>? selectedTopicPosts { get; set; }
+    private string? currentUserId { get; set; }
+    private string? searchQuery { get; set; }
+    private string? newTopicReply { get; set; }
+    private bool isNewTopicModalVisible { get; set; }
+    private bool isNewPostModalVisible { get; set; }
+    private bool isCreateForumModalVisible { get; set; }
+    private CreateForumTopicRequest newTopic { get; set; } = new();
+    private CreateForumPostRequest newPost { get; set; } = new();
+    private CreateForumRequest newForum { get; set; } = new();
+    private CourseModel? selectedCourse { get; set; }
+    private List<CourseModel>? availableCourses { get; set; }
+    private string? statusMessage { get; set; }
+    private bool isCreatingTopic { get; set; }
+    private bool isCreatingPost { get; set; }
+    private bool isCreating { get; set; }
+    private string? quotedText { get; set; }
+    private string? quotedAuthor { get; set; }
+    private DialogOptions dialogOptions = new() { MaxWidth = MaxWidth.Medium, FullWidth = true };
 
     protected override async Task OnInitializedAsync()
     {
-        await LoadForumData();
-        isLoading = false; // FIX: set isLoading to false after loading
-    }
-
-    private async Task LoadForumData()
-    {
         try
         {
+            // Simulate loading data
             forums = await ForumRepository.GetAllForumsAsync();
+            ActiveThreadsCount = forums?.Sum(f => f.TopicCount) ?? 0;
+            MyPostsCount = 0; // Replace with actual user post count
+            RecentThreads = forums?.OrderByDescending(f => f.LastPostAt).Take(5).Select(f => f.Title).ToList() ?? new();
+            TopContributors = new List<string> { "Alice", "Bob", "Charlie" }; // Replace with actual contributors
+            TotalThreads = forums?.Sum(f => f.TopicCount) ?? 0;
+            TotalPosts = 0; // Replace with actual post count
             var repoGroups = await ForumRepository.GetCourseGroupsAsync();
             courseGroups = repoGroups.Select(g => new CourseGroup { CourseName = g.CourseName }).ToList();
             availableCourses = await CourseRepository.GetAllCoursesAsync();
@@ -620,7 +609,7 @@
     {
         try
         {
-        selectedForumTopics = await ForumRepository.GetTopicsByForumIdAsync(forumId);
+            selectedForumTopics = await ForumRepository.GetTopicsByForumIdAsync(forumId);
         }
         catch (Exception ex)
         {
@@ -689,7 +678,7 @@
     {
         try
         {
-        selectedTopicPosts = await ForumRepository.GetPostsByTopicIdAsync(topicId);
+            selectedTopicPosts = await ForumRepository.GetPostsByTopicIdAsync(topicId);
         }
         catch (Exception ex)
         {
@@ -922,7 +911,11 @@
     private async Task<IEnumerable<CourseModel>> SearchCourses(string value, CancellationToken token)
     {
         if (string.IsNullOrEmpty(value))
+        {
+            await Task.CompletedTask;
             return availableCourses ?? new List<CourseModel>();
+        }
+        await Task.CompletedTask;
         return availableCourses?.Where(x => x.Title.Contains(value, StringComparison.InvariantCultureIgnoreCase)) ?? new List<CourseModel>();
     }
 }

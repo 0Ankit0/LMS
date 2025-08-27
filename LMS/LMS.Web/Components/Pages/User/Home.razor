@@ -1,6 +1,7 @@
 ﻿@page "/home"
 @page "/"
 
+@layout LMS.Web.Components.Pages.User.Shared.SharedPagesLayout
 @inject NavigationManager NavigationManager
 @inject UserManager<User> UserManager
 @inject AuthenticationStateProvider AuthenticationStateProvider
@@ -13,20 +14,17 @@
 {
     <div class="p-6">
         <div class="max-w-7xl mx-auto">
-            <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
-                <!-- Left: Navigation Cards Skeleton -->
-                <div class="lg:col-span-1 flex flex-col space-y-3">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="flex flex-col gap-3">
                     @for (int i = 0; i < 6; i++)
                     {
                         <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="60px" Class="mb-3 rounded-lg" />
                     }
                 </div>
-                <!-- Middle: Announcements Skeleton -->
-                <div class="lg:col-span-2 flex flex-col">
+                <div class="flex flex-col">
                     <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="400px" Class="mb-4 flex-grow rounded-lg" />
                 </div>
-                <!-- Right: Course List Search Skeleton -->
-                <div class="lg:col-span-1 flex flex-col">
+                <div class="flex flex-col">
                     <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="400px" Class="w-full rounded-lg" />
                 </div>
             </div>
@@ -35,86 +33,65 @@
 }
 else
 {
-    <div class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-950/20 dark:to-indigo-950/20 py-8">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6">
-            <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
-                <!-- Left: Navigation Cards -->
-                <div class="lg:col-span-1 flex flex-col space-y-3">
-                    @* Navigation Cards *@
-                    <MudCard Elevation="2" Class="mb-3 rounded-2xl shadow bg-white dark:bg-gray-900">
-                        <MudLink Href="/admin" Style="text-decoration:none;">
-                            <MudCardContent Class="flex items-center cursor-pointer gap-2">
-                                <MudIcon Icon="@Icons.Material.Filled.Speed" Class="text-primary text-2xl" />
-                                <MudText>Admin</MudText>
-                            </MudCardContent>
+    <div class="max-w-7xl mx-auto px-2 md:px-4 py-6">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <!-- Quick Links -->
+            <div class="flex flex-col gap-4">
+                <MudCard Elevation="2"
+                    Class="rounded-2xl shadow bg-white dark:bg-gray-900 hover:shadow-lg transition cursor-pointer">
+                    <MudCardContent Class="flex flex-col gap-2 p-4">
+                        <MudLink Href="/user/lms/dashboard" Class="flex items-center gap-2 group"
+                            Style="text-decoration:none;">
+                            <MudIcon Icon="@Icons.Material.Filled.Dashboard"
+                                Class="text-primary text-2xl group-hover:scale-110 transition" />
+                            <MudText>Dashboard</MudText>
                         </MudLink>
-                    </MudCard>
-                    <MudCard Elevation="2" Class="mb-3 rounded-2xl shadow bg-white dark:bg-gray-900">
-                        <MudLink Href="/reports" Style="text-decoration:none;">
-                            <MudCardContent Class="flex items-center cursor-pointer gap-2">
-                                <MudIcon Icon="@Icons.Material.Filled.Assessment" Class="text-primary text-2xl" />
-                                <MudText>Reports</MudText>
-                            </MudCardContent>
+                        <MudLink Href="/user/lms/forums" Class="flex items-center gap-2 group"
+                            Style="text-decoration:none;">
+                            <MudIcon Icon="@Icons.Material.Filled.Forum"
+                                Class="text-success text-2xl group-hover:scale-110 transition" />
+                            <MudText>Forums</MudText>
                         </MudLink>
-                    </MudCard>
-                    <MudCard Elevation="2" Class="mb-3 rounded-2xl shadow bg-white dark:bg-gray-900">
-                        <MudLink Href="/user/lms/dashboard" Style="text-decoration:none;">
-                            <MudCardContent Class="flex items-center cursor-pointer gap-2">
-                                <MudIcon Icon="@Icons.Material.Filled.Dashboard" Class="text-primary text-2xl" />
-                                <MudText>Dashboard</MudText>
-                            </MudCardContent>
+                        <MudLink Href="/user/lms/analytics" Class="flex items-center gap-2 group"
+                            Style="text-decoration:none;">
+                            <MudIcon Icon="@Icons.Material.Filled.Analytics"
+                                Class="text-info text-2xl group-hover:scale-110 transition" />
+                            <MudText>Analytics</MudText>
                         </MudLink>
-                    </MudCard>
-                    <MudCard Elevation="2" Class="mb-3 rounded-2xl shadow bg-white dark:bg-gray-900">
-                        <MudLink Href="/user/lms/forums" Style="text-decoration:none;">
-                            <MudCardContent Class="flex items-center cursor-pointer gap-2">
-                                <MudIcon Icon="@Icons.Material.Filled.Forum" Class="text-success text-2xl" />
-                                <MudText>Forums</MudText>
-                            </MudCardContent>
+                        <MudLink Href="/user/lms/my-courses" Class="flex items-center gap-2 group"
+                            Style="text-decoration:none;">
+                            <MudIcon Icon="@Icons.Material.Filled.School"
+                                Class="text-warning text-2xl group-hover:scale-110 transition" />
+                            <MudText>My Courses</MudText>
                         </MudLink>
-                    </MudCard>
-                    <MudCard Elevation="2" Class="mb-3 rounded-2xl shadow bg-white dark:bg-gray-900">
-                        <MudLink Href="/user/lms/analytics" Style="text-decoration:none;">
-                            <MudCardContent Class="flex items-center cursor-pointer gap-2">
-                                <MudIcon Icon="@Icons.Material.Filled.Analytics" Class="text-info text-2xl" />
-                                <MudText>Analytics</MudText>
-                            </MudCardContent>
-                        </MudLink>
-                    </MudCard>
-                    <MudCard Elevation="2" Class="mb-3 rounded-2xl shadow bg-white dark:bg-gray-900">
-                        <MudLink Href="/user/lms/my-courses" Style="text-decoration:none;">
-                            <MudCardContent Class="flex items-center cursor-pointer gap-2">
-                                <MudIcon Icon="@Icons.Material.Filled.School" Class="text-warning text-2xl" />
-                                <MudText>My Courses</MudText>
-                            </MudCardContent>
-                        </MudLink>
-                    </MudCard>
-                </div>
-                <!-- Middle: Announcements -->
-                <div class="lg:col-span-2 flex flex-col">
-                    <MudCard Elevation="2" Class="flex-grow flex flex-col rounded-2xl shadow bg-white dark:bg-gray-900">
-                        <MudCardHeader
-                            Class="bg-primary text-white flex items-center justify-between rounded-t-2xl px-4 py-2">
-                            <MudText Typo="Typo.h6" Class="flex items-center">
-                                <MudIcon Icon="@Icons.Material.Filled.Campaign" Class="mr-2" /> Announcements
-                            </MudText>
-                            <MudButton Variant="Variant.Text" Color="Color.Inherit" Size="Size.Small"
-                                Href="/user/lms/announcement-list" Style="text-decoration: none;">
-                                View All
-                            </MudButton>
-                        </MudCardHeader>
-                        <MudCardContent Class="p-0 flex-grow flex flex-col hide-scrollbar"
-                            Style="max-height: 80svh; overflow-y: auto;">
-                            <Announcements />
-                        </MudCardContent>
-                    </MudCard>
-                </div>
-                <!-- Right: Course List Search -->
-                <div class="lg:col-span-1 flex flex-col">
-                    <div class="bg-white dark:bg-gray-900 rounded-2xl shadow p-4">
+                    </MudCardContent>
+                </MudCard>
+            </div>
+            <!-- Announcements -->
+            <div class="flex flex-col gap-4">
+                <MudCard Elevation="2" Class="flex-grow flex flex-col rounded-2xl shadow bg-white dark:bg-gray-900">
+                    <MudCardHeader Class="bg-primary text-white flex items-center justify-between rounded-t-2xl px-4 py-2">
+                        <MudText Typo="Typo.h6" Class="flex items-center">
+                            <MudIcon Icon="@Icons.Material.Filled.Campaign" Class="mr-2" /> Announcements
+                        </MudText>
+                        <MudButton Variant="Variant.Text" Color="Color.Inherit" Size="Size.Small"
+                            Href="/user/lms/announcement-list" Style="text-decoration: none;">
+                            View All
+                        </MudButton>
+                    </MudCardHeader>
+                    <MudCardContent Class="p-0 flex-grow flex flex-col hide-scrollbar"
+                        Style="max-height: 80svh; overflow-y: auto;">
+                        <Announcements />
+                    </MudCardContent>
+                </MudCard>
+            </div>
+            <!-- Course Search -->
+            <div class="flex flex-col gap-4">
+                <MudCard Elevation="2" Class="rounded-2xl shadow bg-white dark:bg-gray-900">
+                    <MudCardContent Class="p-4">
                         <CourseListSearch User="currentUser" />
-                    </div>
-                </div>
+                    </MudCardContent>
+                </MudCard>
             </div>
         </div>
     </div>
@@ -130,18 +107,9 @@ else
         var user = await UserManager.GetUserAsync(authState.User);
         if (user is not null)
         {
-            currentUser = new UserModel { UserName = user.UserName };
+            var userName = user.UserName ?? string.Empty;
+            currentUser = new UserModel { UserName = userName };
         }
         isLoading = false;
-    }
-
-    private void NavigateTo(string url)
-    {
-        NavigationManager.NavigateTo(url);
-    }
-
-    private void NavigateToServer(string url)
-    {
-        NavigationManager.NavigateTo(url, forceLoad: true);
     }
 }

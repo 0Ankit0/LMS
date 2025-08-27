@@ -2,6 +2,7 @@
 @layout ReportLayout
 @attribute [OutputCache(Duration = 60)]
 @inject IReportRepository ReportRepository
+@inject ICourseRepository CourseRepository
 @inject IJSRuntime JSRuntime
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @inject UserManager<User> UserManager
@@ -25,13 +26,13 @@
 <!-- Filters -->
 <MudGrid Class="report-filters">
     <MudItem xs="12" md="3">
-        <MudDatePicker Label="Start Date" @bind-Date="startDate" DateFormat="yyyy-MM-dd" OnChange="LoadData" />
+            <MudDatePicker Label="Start Date" @bind-Date="startDate" DateFormat="yyyy-MM-dd" />
     </MudItem>
     <MudItem xs="12" md="3">
-        <MudDatePicker Label="End Date" @bind-Date="endDate" DateFormat="yyyy-MM-dd" OnChange="LoadData" />
+            <MudDatePicker Label="End Date" @bind-Date="endDate" DateFormat="yyyy-MM-dd" />
     </MudItem>
     <MudItem xs="12" md="3">
-        <MudSelect T="string" Label="Student" @bind-Value="selectedStudentId" OnChange="LoadData">
+        <MudSelect T="string" Label="Student" Value="@selectedStudentId" ValueChanged="@(async (string value) => await OnStudentChanged(value))">
             <MudSelectItem Value="@string.Empty">All Students</MudSelectItem>
             @if (students?.Any() == true)
             {
@@ -43,7 +44,7 @@
         </MudSelect>
     </MudItem>
     <MudItem xs="12" md="3">
-        <MudSelect T="int?" Label="Course" @bind-Value="selectedCourseId" OnChange="LoadData">
+        <MudSelect T="int?" Label="Course" Value="@selectedCourseId" ValueChanged="@(async (int? value) => await OnCourseChanged(value))">
             <MudSelectItem Value="@((int?)null)">All Courses</MudSelectItem>
             @if (courses?.Any() == true)
             {
@@ -165,17 +166,33 @@ else
     private DateTime? endDate = DateTime.Today;
     private string selectedStudentId = "";
     private int? selectedCourseId;
+
+    private async Task OnStudentChanged(string value)
+    {
+        selectedStudentId = value;
+        await LoadData();
+    }
+
+    private async Task OnCourseChanged(int? value)
+    {
+        selectedCourseId = value;
+        await LoadData();
+    }
     private bool loading = true;
     private int currentPage = 1;
     private int pageSize = 20;
     private int totalPages = 1;
 
     private IEnumerable<StudentProgressReportDto>? reports;
-    private IEnumerable<User>? students;
-    private IEnumerable<Course>? courses;
+    #pragma warning disable CS8618 // Field is assigned in OnInitializedAsync and LoadData
+    private IEnumerable<User> students = new List<User>();
+    #pragma warning restore CS8618
+    private IEnumerable<CourseModel>? courses;
 
     protected override async Task OnInitializedAsync()
     {
+        students = UserManager.Users.ToList();
+        courses = await CourseRepository.GetAllCoursesAsync();
         await LoadData();
     }
 
@@ -184,6 +201,7 @@ else
         try
         {
             loading = true;
+            students = UserManager.Users.ToList();
 
             // Get the current user
             var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
@@ -214,7 +232,6 @@ else
         catch (Exception ex)
         {
             Console.WriteLine($"Error loading student progress data: {ex.Message}");
-            
             // On error, also show dummy data
             var dummyReports = GenerateDummyData();
             totalPages = (int)Math.Ceiling((double)dummyReports.Count() / pageSize);

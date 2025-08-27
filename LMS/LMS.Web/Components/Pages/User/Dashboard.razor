@@ -6,36 +6,24 @@
 @inject UserManager<User> UserManager
 @if (isLoading)
 {
-    <div class="row g-4 mb-4">
-        <!-- Continue with Course Skeleton -->
-        <div class="col-lg-8">
-            <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="180px" Class="w-100" />
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+        <div class="lg:col-span-2 flex flex-col gap-6">
+            <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="180px" Class="w-full rounded-2xl mb-6" />
         </div>
-        <!-- Your Progress Skeleton -->
-        <div class="col-lg-4">
-            <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="180px" Class="w-100" />
+        <div class="flex flex-col gap-6">
+            <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="180px" Class="w-full rounded-2xl" />
         </div>
     </div>
-
-    <div class="row g-4 mb-4">
-        <!-- New Courses Skeleton -->
-        <div class="col-lg-6">
-            <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="300px" Class="w-100" />
-        </div>
-        <!-- Your Courses Skeleton -->
-        <div class="col-lg-6">
-            <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="300px" Class="w-100" />
-        </div>
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="300px" Class="w-full rounded-2xl" />
+        <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="300px" Class="w-full rounded-2xl" />
     </div>
-
-    <div class="row g-4 mb-4">
-        <!-- Upcoming Courses Skeleton -->
-        <div class="col-lg-8">
-            <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="250px" Class="w-100" />
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+        <div class="lg:col-span-2 flex flex-col gap-6">
+            <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="250px" Class="w-full rounded-2xl mb-6" />
         </div>
-        <!-- Your Notes Skeleton -->
-        <div class="col-lg-4">
-            <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="250px" Class="w-100" />
+        <div class="flex flex-col gap-6">
+            <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="250px" Class="w-full rounded-2xl" />
         </div>
     </div>
 }
@@ -106,77 +94,68 @@ else
                 </div>
             </div>
 
-            <MudGrid Spacing="4">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
                 <!-- New Courses -->
-                <MudItem xs="12" lg="6">
-                    <MudCard Elevation="2" Class="h-100">
-                        <MudCardHeader>
-                            <CardHeaderContent>
-                                <MudText Typo="Typo.h6">New Courses</MudText>
-                            </CardHeaderContent>
-                            <CardHeaderActions>
-                                <MudButton Variant="Variant.Text" Color="Color.Primary" Href="/courses">See All</MudButton>
-                            </CardHeaderActions>
-                        </MudCardHeader>
-                        <MudCardContent>
-                            <MudGrid Spacing="3">
-                                @foreach (var course in NewCourses)
-                                {
-                                    <MudItem xs="12" md="6">
-                                        <MudCard Elevation="0">
-                                            <MudCardMedia Image="@course.ThumbnailUrl" Height="90" />
-                                            <MudCardContent>
-                                                <MudText Typo="Typo.h6">@course.Title</MudText>
-                                                <MudText Typo="Typo.body2" Class="text-muted">@course.Description</MudText>
-                                            </MudCardContent>
-                                            <MudCardActions>
-                                                <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small"
-                                                    Href="@($"/courses/details?id={course.Id}")" FullWidth="true">View
-                                                </MudButton>
-                                            </MudCardActions>
-                                        </MudCard>
-                                    </MudItem>
-                                }
-                            </MudGrid>
-                        </MudCardContent>
-                    </MudCard>
-                </MudItem>
+                <MudCard Elevation="2" Class="h-full rounded-2xl shadow-lg bg-white dark:bg-gray-900">
+                    <MudCardHeader>
+                        <CardHeaderContent>
+                            <MudText Typo="Typo.h6">New Courses</MudText>
+                        </CardHeaderContent>
+                        <CardHeaderActions>
+                            <MudButton Variant="Variant.Text" Color="Color.Primary" Href="/courses">See All</MudButton>
+                        </CardHeaderActions>
+                    </MudCardHeader>
+                    <MudCardContent>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            @foreach (var course in NewCourses)
+                            {
+                                <MudCard Elevation="0" Class="rounded-xl border border-gray-100 dark:border-gray-800">
+                                    <MudCardMedia Image="@course.ThumbnailUrl" Height="90" />
+                                    <MudCardContent>
+                                        <MudText Typo="Typo.h6">@course.Title</MudText>
+                                        <MudText Typo="Typo.body2" Class="text-muted">@course.Description</MudText>
+                                    </MudCardContent>
+                                    <MudCardActions>
+                                        <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small"
+                                            Href="@($"/courses/details?id={course.Id}")" FullWidth="true">View
+                                        </MudButton>
+                                    </MudCardActions>
+                                </MudCard>
+                            }
+                        </div>
+                    </MudCardContent>
+                </MudCard>
                 <!-- Your Courses -->
-                <MudItem xs="12" lg="6">
-                    <MudCard Elevation="2" Class="h-100">
-                        <MudCardHeader>
-                            <CardHeaderContent>
-                                <MudText Typo="Typo.h6">Your Courses</MudText>
-                            </CardHeaderContent>
-                            <CardHeaderActions>
-                                <MudButton Variant="Variant.Text" Color="Color.Primary" Href="/user/courses">See All
-                                </MudButton>
-                            </CardHeaderActions>
-                        </MudCardHeader>
-                        <MudCardContent>
-                            <MudGrid Spacing="3">
-                                @foreach (var course in YourCourses)
-                                {
-                                    <MudItem xs="12" md="6">
-                                        <MudCard Elevation="0">
-                                            <MudCardMedia Image="@course.ThumbnailUrl" Height="90" />
-                                            <MudCardContent>
-                                                <MudText Typo="Typo.h6">@course.Title</MudText>
-                                                <MudText Typo="Typo.body2" Class="text-muted">@course.Description</MudText>
-                                            </MudCardContent>
-                                            <MudCardActions>
-                                                <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small"
-                                                    Href="@($"/courses/details?id={course.Id}")" FullWidth="true">View
-                                                </MudButton>
-                                            </MudCardActions>
-                                        </MudCard>
-                                    </MudItem>
-                                }
-                            </MudGrid>
-                        </MudCardContent>
-                    </MudCard>
-                </MudItem>
-            </MudGrid>
+                <MudCard Elevation="2" Class="h-full rounded-2xl shadow-lg bg-white dark:bg-gray-900">
+                    <MudCardHeader>
+                        <CardHeaderContent>
+                            <MudText Typo="Typo.h6">Your Courses</MudText>
+                        </CardHeaderContent>
+                        <CardHeaderActions>
+                            <MudButton Variant="Variant.Text" Color="Color.Primary" Href="/user/courses">See All</MudButton>
+                        </CardHeaderActions>
+                    </MudCardHeader>
+                    <MudCardContent>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            @foreach (var course in YourCourses)
+                            {
+                                <MudCard Elevation="0" Class="rounded-xl border border-gray-100 dark:border-gray-800">
+                                    <MudCardMedia Image="@course.ThumbnailUrl" Height="90" />
+                                    <MudCardContent>
+                                        <MudText Typo="Typo.h6">@course.Title</MudText>
+                                        <MudText Typo="Typo.body2" Class="text-muted">@course.Description</MudText>
+                                    </MudCardContent>
+                                    <MudCardActions>
+                                        <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small"
+                                            Href="@($"/courses/details?id={course.Id}")" FullWidth="true">View
+                                        </MudButton>
+                                    </MudCardActions>
+                                </MudCard>
+                            }
+                        </div>
+                    </MudCardContent>
+                </MudCard>
+            </div>
 
             <MudGrid Spacing="4">
                 <!-- Upcoming Courses -->

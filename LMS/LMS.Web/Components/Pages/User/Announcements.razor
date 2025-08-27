@@ -1,4 +1,4 @@
-
+@using LMS.Web.Components.Pages.User.Shared
 @using MudBlazor;
 @using MudBlazor.Utilities;
 @using System.Net.Http.Json
@@ -10,38 +10,44 @@
 
 <PageTitle>Announcements - LMS</PageTitle>
 
-<MudGrid Spacing="3">
-    @if (isLoading)
-    {
-        @for (int i = 0; i < 3; i++)
-        {
-            <MudItem xs="12">
-                <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="120px" />
-            </MudItem>
-        }
-    }
-    else if (announcements?.Any() == true)
-    {
-        @foreach (var announcement in announcements)
-        {
-            <MudItem xs="12">
-                <AnnouncementCard Announcement="announcement" />
-            </MudItem>
-        }
-        <MudItem xs="12" Class="d-flex justify-content-end">
-            <MudLink Href="/user/lms/announcement-list" Color="Color.Primary">View All</MudLink>
-        </MudItem>
-    }
-    else
-    {
-        <MudItem xs="12">
-            <MudAlert Severity="Severity.Info" Icon="@Icons.Material.Filled.Campaign">
-                <MudText Typo="Typo.h5">No announcements available</MudText>
-                <MudText>There are no announcements at this time.</MudText>
-            </MudAlert>
-        </MudItem>
-    }
-</MudGrid>
+
+<div class="min-h-screen bg-gradient-to-br from-orange-50 to-red-50 dark:from-orange-950/20 dark:to-red-950/20 py-8">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6">
+        <div class="bg-white dark:bg-gray-900 rounded-2xl shadow-lg p-6">
+            <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
+                <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Latest Announcements</h1>
+                <MudLink Href="/user/lms/announcement-list" Color="Color.Primary">View All</MudLink>
+            </div>
+            <div>
+                @if (isLoading)
+                {
+                    <div class="flex flex-col gap-4">
+                        @for (int i = 0; i < 3; i++)
+                        {
+                            <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="120px" Class="rounded-xl w-full" />
+                        }
+                    </div>
+                }
+                else if (announcements?.Any() == true)
+                {
+                    <div class="flex flex-col gap-4">
+                        @foreach (var announcement in announcements)
+                        {
+                            <AnnouncementCard Announcement="announcement" />
+                        }
+                    </div>
+                }
+                else
+                {
+                    <MudAlert Severity="Severity.Info" Icon="@Icons.Material.Filled.Campaign" Class="mt-6">
+                        <MudText Typo="Typo.h5">No announcements available</MudText>
+                        <MudText>There are no announcements at this time.</MudText>
+                    </MudAlert>
+                }
+            </div>
+        </div>
+    </div>
+</div>
 
 @code {
     private bool isLoading = true;

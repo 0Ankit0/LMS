@@ -5,10 +5,11 @@
 @inject NavigationManager NavigationManager
 
 
+
 <div class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-950/20 dark:to-indigo-950/20 py-8">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 grid grid-cols-1 md:grid-cols-4 gap-8">
         <!-- Sidebar -->
-        <div class="md:col-span-1">
+        <aside class="md:col-span-1">
             <div class="bg-white dark:bg-gray-900 rounded-2xl shadow-lg p-6 sticky top-8">
                 <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-4">Categories</h2>
                 <nav class="flex flex-col gap-2 mb-6">
@@ -33,14 +34,14 @@
                             OnChange="ApplyFilters" />
                         <MudCheckBox T="bool" @bind-Checked="filters.Intermediate" Label="Intermediate"
                             Color="Color.Primary" OnChange="ApplyFilters" />
-                        <MudCheckBox T="bool" @bind-checked="filters.Advanced" Label="Advanced" Color="Color.Primary"
+                        <MudCheckBox T="bool" @bind-Checked="filters.Advanced" Label="Advanced" Color="Color.Primary"
                             OnChange="ApplyFilters" />
                     </div>
                 </div>
             </div>
-        </div>
+        </aside>
         <!-- Main Content -->
-        <div class="md:col-span-3">
+        <main class="md:col-span-3">
             <div class="bg-white dark:bg-gray-900 rounded-2xl shadow-lg p-8">
                 <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
                     <div>
@@ -85,7 +86,7 @@
                     }
                 </div>
             </div>
-        </div>
+        </main>
     </div>
 </div>
 

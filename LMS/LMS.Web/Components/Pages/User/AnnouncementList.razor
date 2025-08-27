@@ -9,41 +9,42 @@
 <PageTitle>Announcements - LMS</PageTitle>
 
 
+
 <div
-    class="min-h-screen bg-gradient-to-br from-orange-50 to-red-50 dark:from-orange-950/20 dark:to-red-950/20 border-b border-border">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 py-8 grid grid-cols-1 md:grid-cols-4 gap-8">
+    class="min-h-screen bg-gradient-to-br from-orange-50 to-red-50 dark:from-orange-950/20 dark:to-red-950/20 border-b border-border py-8">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 grid grid-cols-1 md:grid-cols-4 gap-8">
         <!-- Sidebar as Tabs -->
-        <div class="md:col-span-1">
+        <aside class="md:col-span-1">
             <div class="bg-white dark:bg-gray-900 rounded-2xl shadow-lg p-6 sticky top-8">
                 <MudTabs @bind-ActivePanelIndex="@selectedFilterIndex" Elevation="2" Rounded="true"
                     Orientation="Orientation.Vertical" Class="w-full">
                     <MudTabPanel Text="All Announcements">
-                        <MudButton Variant="Variant.Text" Color="Color.Primary"
-                            Class=$"w-full text-left {GetFilterClass(\"all\")}" OnClick='@(() => SelectFilter(0))'>
+                        <MudButton Variant="Variant.Text" Color="Color.Primary" Class=$"w-full text-left
+                            {GetFilterClass(\"all\")}" OnClick='@(() => SelectFilter(0))'>
                             <MudIcon Icon="@Icons.Material.Filled.Campaign" Class="mr-2" /> All Announcements
                         </MudButton>
                     </MudTabPanel>
                     <MudTabPanel Text="High Priority">
-                        <MudButton Variant="Variant.Text" Color="Color.Primary"
-                            Class=$"w-full text-left {GetFilterClass(\"high\")}" OnClick='@(() => SelectFilter(1))'>
+                        <MudButton Variant="Variant.Text" Color="Color.Primary" Class=$"w-full text-left
+                            {GetFilterClass(\"high\")}" OnClick='@(() => SelectFilter(1))'>
                             <MudIcon Icon="@Icons.Material.Filled.Warning" Class="mr-2" /> High Priority
                         </MudButton>
                     </MudTabPanel>
                     <MudTabPanel Text="Medium Priority">
-                        <MudButton Variant="Variant.Text" Color="Color.Primary"
-                            Class=$"w-full text-left {GetFilterClass(\"medium\")}" OnClick='@(() => SelectFilter(2))'>
+                        <MudButton Variant="Variant.Text" Color="Color.Primary" Class=$"w-full text-left
+                            {GetFilterClass(\"medium\")}" OnClick='@(() => SelectFilter(2))'>
                             <MudIcon Icon="@Icons.Material.Filled.Info" Class="mr-2" /> Medium Priority
                         </MudButton>
                     </MudTabPanel>
                     <MudTabPanel Text="Low Priority">
-                        <MudButton Variant="Variant.Text" Color="Color.Primary"
-                            Class=$"w-full text-left {GetFilterClass(\"low\")}" OnClick='@(() => SelectFilter(3))'>
+                        <MudButton Variant="Variant.Text" Color="Color.Primary" Class=$"w-full text-left
+                            {GetFilterClass(\"low\")}" OnClick='@(() => SelectFilter(3))'>
                             <MudIcon Icon="@Icons.Material.Filled.Notifications" Class="mr-2" /> Low Priority
                         </MudButton>
                     </MudTabPanel>
                     <MudTabPanel Text="Recent">
-                        <MudButton Variant="Variant.Text" Color="Color.Primary"
-                            Class=$"w-full text-left {GetFilterClass(\"recent\")}" OnClick='@(() => SelectFilter(4))'>
+                        <MudButton Variant="Variant.Text" Color="Color.Primary" Class=$"w-full text-left
+                            {GetFilterClass(\"recent\")}" OnClick='@(() => SelectFilter(4))'>
                             <MudIcon Icon="@Icons.Material.Filled.History" Class="mr-2" /> Recent
                         </MudButton>
                     </MudTabPanel>
@@ -70,9 +71,9 @@
                     </MudTabPanel>
                 </MudTabs>
             </div>
-        </div>
+        </aside>
         <!-- Main Announcements Area -->
-        <div class="md:col-span-3">
+        <main class="md:col-span-3">
             <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
                 <div>
                     <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Announcements</h1>
@@ -97,7 +98,7 @@
                 }
                 else if (filteredAnnouncements?.Any() == true)
                 {
-                    <div class="space-y-6">
+                    <div class="flex flex-col gap-6">
                         @foreach (var announcement in filteredAnnouncements)
                         {
                             <AnnouncementCard Announcement="announcement" />
@@ -118,7 +119,7 @@
                     </MudCard>
                 }
             </div>
-        </div>
+        </main>
     </div>
 </div>
 

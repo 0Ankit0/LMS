@@ -3,23 +3,36 @@
 
 
 <MudLayout>
-    <MudAppBar Elevation="0" Color="Color.Primary" Class="mud-theme-provider">
-        <MudText Typo="Typo.h6" Class="ml-2">LMS</MudText>
-        <MudSpacer />
-        <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" OnClick="ToggleDrawer" />
+    <MudAppBar Elevation="0" Color="Color.Primary" Class="mud-theme-provider shadow-md dark:shadow-lg px-4">
+        <div class="flex items-center w-full">
+            <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" OnClick="ToggleDrawer"
+                Class="mr-2 md:hidden" />
+            <MudText Typo="Typo.h6" Class="font-bold tracking-tight text-white">LMS</MudText>
+            <MudSpacer />
+            <MudIconButton Icon="@Icons.Material.Filled.AccountCircle" Color="Color.Inherit" />
+        </div>
     </MudAppBar>
-    <MudDrawer Elevation="1" Variant="DrawerVariant.Mini" Open="@drawerOpen" Anchor="Anchor.Left" Class="mud-theme-provider">
-        <MudNavMenu>
-            <MudNavLink Href="/user/lms/dashboard" Icon="@Icons.Material.Filled.Dashboard">Dashboard</MudNavLink>
-            <MudNavLink Href="/user/lms/announcements" Icon="@Icons.Material.Filled.Campaign">Announcements</MudNavLink>
-            <MudNavLink Href="/user/lms/course-catalog" Icon="@Icons.Material.Filled.MenuBook">Course Catalog</MudNavLink>
-            <MudNavLink Href="/user/lms/achievements" Icon="@Icons.Material.Filled.EmojiEvents">Achievements</MudNavLink>
-            <MudNavLink Href="/user/lms/analytics" Icon="@Icons.Material.Filled.Analytics">Analytics</MudNavLink>
-            <MudNavLink Href="/user/lms/assessments" Icon="@Icons.Material.Filled.Assignment">Assessments</MudNavLink>
-            <MudNavLink Href="/user/lms/certificates" Icon="@Icons.Material.Filled.CardMembership">Certificates</MudNavLink>
+    <MudDrawer Elevation="2" Variant="DrawerVariant.Responsive" Open="@drawerOpen" Anchor="Anchor.Left"
+        Class="mud-theme-provider bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800">
+        <MudNavMenu Class="pt-4">
+            <MudNavLink Href="/user/lms/dashboard" Icon="@Icons.Material.Filled.Dashboard" Class="mb-2">Dashboard
+            </MudNavLink>
+            <MudNavLink Href="/user/lms/announcements" Icon="@Icons.Material.Filled.Campaign" Class="mb-2">Announcements
+            </MudNavLink>
+            <MudNavLink Href="/user/lms/course-catalog" Icon="@Icons.Material.Filled.MenuBook" Class="mb-2">Course
+                Catalog</MudNavLink>
+            <MudNavLink Href="/user/lms/achievements" Icon="@Icons.Material.Filled.EmojiEvents" Class="mb-2">
+                Achievements</MudNavLink>
+            <MudNavLink Href="/user/lms/analytics" Icon="@Icons.Material.Filled.Analytics" Class="mb-2">Analytics
+            </MudNavLink>
+            <MudNavLink Href="/user/lms/assessments" Icon="@Icons.Material.Filled.Assignment" Class="mb-2">Assessments
+            </MudNavLink>
+            <MudNavLink Href="/user/lms/certificates" Icon="@Icons.Material.Filled.CardMembership" Class="mb-2">
+                Certificates</MudNavLink>
         </MudNavMenu>
     </MudDrawer>
-    <MudMainContent>
+    <MudMainContent
+        Class="bg-gradient-to-br from-gray-50 to-indigo-50 dark:from-gray-900 dark:to-indigo-950 min-h-screen p-4 md:p-8">
         @Body
     </MudMainContent>
 </MudLayout>

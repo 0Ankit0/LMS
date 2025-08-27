@@ -47,7 +47,7 @@
                     }
                     else if (filteredMessages?.Any() == true)
                     {
-                        <MudList T="MessageModel" Clickable="true" Class="divide-y divide-gray-100 dark:divide-gray-800">
+                        <MudList T="MessageModel" Class="divide-y divide-gray-100 dark:divide-gray-800">
                             @foreach (var message in filteredMessages)
                             {
                                 var itemClass = "px-2 py-3 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 rounded transition-all ";
@@ -110,10 +110,15 @@
                     @if (selectedMessage != null)
                     {
                         <MudChat Style="height: 100%;" Class="flex flex-col gap-4">
-                            <MudChatBubble Text="@((MarkupString)selectedMessage.Content.Replace("\n", "<br>"))"
-                                Time="@selectedMessage.SentAt.ToString("MMM dd, yyyy 'at' h:mm tt")"
-                                Origin="@(selectedMessage.FromUserId == currentUserId ? MudBlazor.Origin.TopRight : MudBlazor.Origin.TopLeft)"
-                                Color="@(selectedMessage.FromUserId == currentUserId ? Color.Primary : Color.Secondary)">
+                            <MudChatBubble Color="@(selectedMessage.FromUserId == currentUserId ? Color.Primary : Color.Secondary)">
+                                <div class="flex items-center mb-2">
+                                    <MudAvatar Color="Color.Dark" Variant="Variant.Outlined" Class="mr-2">
+                                        <MudText Typo="Typo.h6">@selectedMessage.FromUserName?.FirstOrDefault()</MudText>
+                                    </MudAvatar>
+                                    <MudText Typo="Typo.subtitle1">@(selectedMessage.FromUserName ?? "Unknown")</MudText>
+                                    <span class="ml-2 text-xs text-gray-400">@selectedMessage.SentAt.ToString("MMM dd, yyyy 'at' h:mm tt")</span>
+                                </div>
+                                <div>@((MarkupString)selectedMessage.Content.Replace("\n", "<br>"))</div>
                                 <div class="flex items-center mb-2">
                                     <MudAvatar Color="Color.Dark" Variant="Variant.Outlined" Class="mr-2">
                                         <MudText Typo="Typo.h6">@selectedMessage.FromUserName?.FirstOrDefault()</MudText>
@@ -150,16 +155,15 @@
                             {
                                 @foreach (var reply in selectedMessage.Replies)
                                 {
-                                    <MudChatBubble Text="@((MarkupString)reply.Content.Replace("\n", "<br>"))"
-                                        Time="@reply.SentAt.ToString("MMM dd, yyyy 'at' h:mm tt")"
-                                        Origin="@(reply.FromUserId == currentUserId ? MudBlazor.Origin.TopRight : MudBlazor.Origin.TopLeft)"
-                                        Color="@(reply.FromUserId == currentUserId ? Color.Primary : Color.Secondary)">
+                                    <MudChatBubble Color="@(reply.FromUserId == currentUserId ? Color.Primary : Color.Secondary)">
                                         <div class="flex items-center mb-2">
                                             <MudAvatar Color="Color.Dark" Variant="Variant.Outlined" Class="mr-2">
                                                 <MudText Typo="Typo.h6">@reply.FromUserName?.FirstOrDefault()</MudText>
                                             </MudAvatar>
                                             <MudText Typo="Typo.subtitle1">@(reply.FromUserName ?? "Unknown")</MudText>
+                                            <span class="ml-2 text-xs text-gray-400">@reply.SentAt.ToString("MMM dd, yyyy 'at' h:mm tt")</span>
                                         </div>
+                                        <div>@((MarkupString)reply.Content.Replace("\n", "<br>"))</div>
                                     </MudChatBubble>
                                 }
                             }
@@ -182,8 +186,7 @@
     <!-- Compose Message Modal -->
 <MudDialog @bind-IsVisible="@isComposeModalVisible" Options="@dialogOptions">
     <TitleContent>
-        <MudText Typo="Typo.h6">@(replyToMessage != null ? "Reply to: " + replyToMessage.Subject : "Compose Message")
-        </MudText>
+        <MudText Typo="Typo.h6">@(replyToMessage != null ? "Reply to: " + replyToMessage.Subject : "Compose Message")</MudText>
     </TitleContent>
     <DialogContent>
         <EditForm Model="@newMessage" OnValidSubmit="SendMessage">
@@ -193,11 +196,10 @@
 
             @if (replyToMessage == null)
             {
-                <MudTextField T="string" Label="To" Variant="Variant.Text" @bind-Value="toUserSearch"
-                    Placeholder="Search for a user..." />
+                <MudTextField T="string" Label="To" Variant="Variant.Text" @bind-Value="toUserSearch" Placeholder="Search for a user..." />
                 @if (searchedUsers?.Any() == true)
                 {
-                    <MudList T="UserModel" Clickable="true">
+                    <MudList T="UserModel">
                         @foreach (var user in searchedUsers.Take(5))
                         {
                             <MudListItem T="UserModel" OnClick="() => SelectRecipient(user)">
@@ -208,27 +210,22 @@
                 }
             }
 
-            <MudTextField T="string" Label="Subject" Variant="Variant.Text" @bind-Value="newMessage.Subject"
-                Required="true" RequiredError="Subject is required!" />
+            <MudTextField T="string" Label="Subject" Variant="Variant.Text" @bind-Value="newMessage.Subject" Required="true" RequiredError="Subject is required!" />
 
-            <MudAutocomplete T="int" Label="Priority" Variant="Variant.Text" @bind-Value="newMessage.Priority"
-                SearchFunc="@SearchPriorityOptions"
-                ToStringFunc="@(p => priorityOptions.FirstOrDefault(x => x.Value == p)?.DisplayName ?? string.Empty)"
-                Clearable="false" Placeholder="Select priority">
+            <MudAutocomplete T="int" Label="Priority" Variant="Variant.Text" @bind-Value="newMessage.Priority" SearchFunc="@SearchPriorityOptions" ToStringFunc="@(p => priorityOptions.FirstOrDefault(x => x.Value == p)?.DisplayName ?? string.Empty)" Clearable="false" Placeholder="Select priority">
                 <ItemTemplate Context="priorityContext">
                     <MudText>@(priorityOptions.FirstOrDefault(o => o.Value == priorityContext)?.DisplayName)</MudText>
                 </ItemTemplate>
             </MudAutocomplete>
 
-            <MudTextField T="string" Label="Message" Variant="Variant.Text" Lines="6" @bind-Value="newMessage.Content"
-                Required="true" RequiredError="Message content is required!" />
+            <MudTextField T="string" Label="Message" Variant="Variant.Text" Lines="6" @bind-Value="newMessage.Content" Required="true" RequiredError="Message content is required!" />
 
-            <MudDialogActions>
+            <MudCardActions>
                 <MudButton Color="Color.Secondary" OnClick="HideComposeModal">Cancel</MudButton>
                 <MudButton Color="Color.Primary" ButtonType="ButtonType.Submit" Disabled="@isSending">
                     Send Message
                 </MudButton>
-            </MudDialogActions>
+            </MudCardActions>
         </EditForm>
     </DialogContent>
 </MudDialog>

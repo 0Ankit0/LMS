@@ -1,13 +1,9 @@
-@using LMS.Web.Components.Account
-@using Microsoft.AspNetCore.Components.Authorization
-@using Microsoft.JSInterop
-@using System.Security.Claims
 @page "/user/lms/analytics"
+@using System.Security.Claims
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @inject IEnrollmentRepository EnrollmentRepository
 @inject ISnackbar Snackbar
-
-<div class="p-6">
+<div class="px-4 py-8 md:px-8 bg-gray-50 dark:bg-gray-900 min-h-screen">
     <div class="max-w-7xl mx-auto">
         <!-- Header -->
         <div class="flex items-center justify-between mb-8">
@@ -252,7 +248,7 @@
 </div>
 
 @code {
-    private MudDrawer drawer;
+    private MudDrawer? drawer;
     private bool isDrawerOpen = false;
 
     private void OnShowOffcanvasClick()
