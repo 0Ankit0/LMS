@@ -4,6 +4,7 @@ using LMS.Web.Components;
 using LMS.Web.Components.Account;
 using LMS.Web.Data;
 using LMS.Web.Infrastructure;
+using LMS.Web.Repositories;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -49,6 +50,10 @@ builder.Services.AddIdentityCore<User>(options => options.SignIn.RequireConfirme
     .AddDefaultTokenProviders();
 
 builder.Services.AddSingleton<IEmailSender<User>, IdentityNoOpEmailSender>();
+
+// Register repositories
+builder.Services.AddScoped<INoteRepository, NoteRepository>();
+builder.Services.AddScoped<IDashboardRepository, DashboardRepository>();
 
 builder.Services.AddMudServices(config =>
 {

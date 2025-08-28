@@ -4,7 +4,7 @@ using LMS.Web.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 
-namespace LMS.Repositories
+namespace LMS.Web.Repositories
 {
     public interface IAchievementRepository
     {
@@ -19,6 +19,7 @@ namespace LMS.Repositories
         Task<UserAchievementModel> AwardAchievementAsync(string userId, int achievementId, int? courseId = null);
         Task<bool> RemoveUserAchievementAsync(int userAchievementId);
         Task<int> GetUserTotalPointsAsync(string userId);
+        Task<UserAchievementsModel> GetUserAchievementsDataAsync(string userId);
     }
 
     public class AchievementRepository : IAchievementRepository
@@ -133,7 +134,15 @@ namespace LMS.Repositories
                     Points = request.Points,
                     BadgeColor = request.BadgeColor,
                     Type = Enum.Parse<AchievementType>(request.Type),
-                    Criteria = request.Criteria,
+                    Criteria = request.Criteria?.Select(c => new LMS.Data.Entities.AchievementCriteria
+                    {
+                        Type = (LMS.Data.Entities.CriteriaType)c.Type,
+                        AdditionalData = c.TargetValue,
+                        CourseId = c.Parameters.ContainsKey("CourseId") ? (int?)c.Parameters["CourseId"] : null,
+                        AssessmentId = c.Parameters.ContainsKey("AssessmentId") ? (int?)c.Parameters["AssessmentId"] : null,
+                        MinScore = c.Parameters.ContainsKey("MinScore") ? (double?)c.Parameters["MinScore"] : null,
+                        RequiredCount = c.Parameters.ContainsKey("RequiredCount") ? (int?)c.Parameters["RequiredCount"] : null
+                    }).ToList() ?? new List<LMS.Data.Entities.AchievementCriteria>(),
                     IsActive = true,
                     CreatedAt = DateTime.UtcNow
                 };
@@ -165,7 +174,24 @@ namespace LMS.Repositories
                 achievement.Points = request.Points;
                 achievement.BadgeColor = request.BadgeColor;
                 achievement.Type = Enum.Parse<AchievementType>(request.Type);
-                achievement.Criteria = request.Criteria;
+
+                // Clear existing criteria and add new ones
+                achievement.Criteria.Clear();
+                if (request.Criteria != null)
+                {
+                    foreach (var criteriaDto in request.Criteria)
+                    {
+                        achievement.Criteria.Add(new LMS.Data.Entities.AchievementCriteria
+                        {
+                            Type = (LMS.Data.Entities.CriteriaType)criteriaDto.Type,
+                            AdditionalData = criteriaDto.TargetValue,
+                            CourseId = criteriaDto.Parameters.ContainsKey("CourseId") ? (int?)criteriaDto.Parameters["CourseId"] : null,
+                            AssessmentId = criteriaDto.Parameters.ContainsKey("AssessmentId") ? (int?)criteriaDto.Parameters["AssessmentId"] : null,
+                            MinScore = criteriaDto.Parameters.ContainsKey("MinScore") ? (double?)criteriaDto.Parameters["MinScore"] : null,
+                            RequiredCount = criteriaDto.Parameters.ContainsKey("RequiredCount") ? (int?)criteriaDto.Parameters["RequiredCount"] : null
+                        });
+                    }
+                }
 
                 await context.SaveChangesAsync();
 
@@ -305,7 +331,21 @@ namespace LMS.Repositories
                 Points = achievement.Points,
                 BadgeColor = achievement.BadgeColor,
                 Type = achievement.Type.ToString(),
-                Criteria = achievement.Criteria?.ToList() ?? new List<AchievementCriteria>(),
+                Criteria = achievement.Criteria?.Select(c => new LMS.Data.DTOs.AchievementCriteria
+                {
+                    Id = c.Id,
+                    AchievementId = c.AchievementId,
+                    Type = (LMS.Data.DTOs.CriteriaType)c.Type,
+                    TargetValue = c.AdditionalData,
+                    ComparisonOperator = ">=", // Default operator
+                    Parameters = new Dictionary<string, object>
+                    {
+                        { "CourseId", c.CourseId ?? 0 },
+                        { "AssessmentId", c.AssessmentId ?? 0 },
+                        { "MinScore", c.MinScore ?? 0.0 },
+                        { "RequiredCount", c.RequiredCount ?? 0 }
+                    }
+                }).ToList() ?? new List<LMS.Data.DTOs.AchievementCriteria>(),
                 IsActive = achievement.IsActive,
                 CreatedAt = achievement.CreatedAt,
                 UsersEarnedCount = achievement.UserAchievements?.Count ?? 0
@@ -329,6 +369,49 @@ namespace LMS.Repositories
                 CourseId = userAchievement.CourseId,
                 CourseName = userAchievement.Course?.Title
             };
+        }
+
+        public async Task<UserAchievementsModel> GetUserAchievementsDataAsync(string userId)
+        {
+            try
+            {
+                using var context = _contextFactory.CreateDbContext();
+
+                // Get earned achievements
+                var earnedAchievements = await GetUserAchievementsAsync(userId);
+
+                // Get available achievements (not yet earned)
+                var allAchievements = await GetAllAchievementsAsync();
+                var earnedIds = earnedAchievements.Select(ea => ea.AchievementId).ToHashSet();
+                var availableAchievements = allAchievements.Where(a => !earnedIds.Contains(a.Id)).ToList();
+
+                // Get total points
+                var totalPoints = await GetUserTotalPointsAsync(userId);
+
+                // Get leaderboard data (simplified - using dummy data for now)
+                var leaderboardEntries = new List<LeaderboardEntryModel>();
+
+                // Calculate user rank (simplified - returning 1 for now)
+                var userRank = 1;
+
+                return new UserAchievementsModel
+                {
+                    EarnedAchievements = earnedAchievements,
+                    AvailableAchievements = availableAchievements,
+                    LeaderboardEntries = leaderboardEntries,
+                    TotalPoints = totalPoints,
+                    EarnedCount = earnedAchievements.Count,
+                    AvailableCount = availableAchievements.Count,
+                    UserRank = userRank
+                };
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting user achievements data for user {UserId}", userId);
+
+                // Return empty model on error
+                return new UserAchievementsModel();
+            }
         }
     }
 }

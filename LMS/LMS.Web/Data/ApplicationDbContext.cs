@@ -35,6 +35,7 @@ namespace LMS.Web.Data
         public DbSet<LessonResource> LessonResources { get; set; }
         public DbSet<Certificate> Certificates { get; set; }
         public DbSet<Attendance> Attendances { get; set; }
+        public DbSet<Note> Notes { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
@@ -266,6 +267,46 @@ namespace LMS.Web.Data
                 .WithMany()
                 .HasForeignKey(c => c.CourseId)
                 .OnDelete(DeleteBehavior.Cascade);
+
+            // Configure Note relationships
+            builder.Entity<Note>()
+                .HasOne(n => n.User)
+                .WithMany(u => u.Notes)
+                .HasForeignKey(n => n.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            builder.Entity<Note>()
+                .HasOne(n => n.Course)
+                .WithMany()
+                .HasForeignKey(n => n.CourseId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            builder.Entity<Note>()
+                .HasOne(n => n.Lesson)
+                .WithMany()
+                .HasForeignKey(n => n.LessonId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            // Configure Note indexes
+            builder.Entity<Note>()
+                .HasIndex(n => new { n.UserId, n.CreatedAt })
+                .HasDatabaseName("IX_Note_UserId_CreatedAt");
+
+            builder.Entity<Note>()
+                .HasIndex(n => new { n.UserId, n.IsPinned })
+                .HasDatabaseName("IX_Note_UserId_IsPinned");
+
+            builder.Entity<Note>()
+                .HasIndex(n => new { n.UserId, n.IsDeleted })
+                .HasDatabaseName("IX_Note_UserId_IsDeleted");
+
+            builder.Entity<Note>()
+                .HasIndex(n => n.Type)
+                .HasDatabaseName("IX_Note_Type");
+
+            builder.Entity<Note>()
+                .HasIndex(n => n.Priority)
+                .HasDatabaseName("IX_Note_Priority");
 
             // Configure relationships
             builder.Entity<Message>()
