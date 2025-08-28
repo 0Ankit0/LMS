@@ -21,75 +21,80 @@
 <PageTitle>Forums - LMS</PageTitle>
 
 
-<div class="min-h-screen bg-gradient-to-br from-gray-50 to-indigo-50 dark:from-gray-900 dark:to-indigo-950">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 py-8">
-        <div class="flex flex-col lg:flex-row gap-8">
-            <!-- Sidebar -->
-            <aside class="w-full lg:w-72 flex-shrink-0 sticky top-4 h-fit z-10">
-                <div class="bg-white dark:bg-gray-900 rounded-2xl shadow-lg p-6 mb-6">
-                    <h1 class="text-2xl font-bold text-gray-900 dark:text-white mb-2">Forums</h1>
-                    <p class="text-gray-600 dark:text-gray-300">Join the discussion and connect with other learners.</p>
-                </div>
-                <div class="grid grid-cols-2 gap-4 mb-6">
-                    <MudCard Class="rounded-2xl shadow bg-white dark:bg-gray-900">
-                        <MudCardContent>
-                            <MudText Typo="Typo.subtitle1" Class="text-gray-500 dark:text-gray-300">Active Threads</MudText>
-                            <MudText Typo="Typo.h6" Class="font-bold text-purple-600 dark:text-purple-400">@ActiveThreadsCount</MudText>
-                        </MudCardContent>
-                    </MudCard>
-                    <MudCard Class="rounded-2xl shadow bg-white dark:bg-gray-900">
-                        <MudCardContent>
-                            <MudText Typo="Typo.subtitle1" Class="text-gray-500 dark:text-gray-300">My Posts</MudText>
-                            <MudText Typo="Typo.h6" Class="font-bold text-pink-600 dark:text-pink-400">@MyPostsCount</MudText>
-                        </MudCardContent>
-                    </MudCard>
-                </div>
-                <div class="bg-white dark:bg-gray-900 rounded-2xl shadow p-6 mb-6">
+<MudContainer MaxWidth="MaxWidth.Large" Class="mx-auto px-4 sm:px-6 py-8 min-h-screen bg-gradient-to-br from-gray-50 to-indigo-50 dark:from-gray-900 dark:to-indigo-950">
+    <MudGrid GutterSize="32">
+        <MudItem xs="12" lg="3">
+            <MudStack Spacing="3">
+                <MudCard Class="rounded-2xl shadow-lg bg-white dark:bg-gray-900 p-6">
+                    <MudText Typo="Typo.h5" Class="font-bold text-gray-900 dark:text-white mb-2">Forums</MudText>
+                    <MudText Typo="Typo.body2" Class="text-gray-600 dark:text-gray-300">Join the discussion and connect with other learners.</MudText>
+                </MudCard>
+                <MudGrid GutterSize="16">
+                    <MudItem xs="6">
+                        <MudCard Class="rounded-2xl shadow bg-white dark:bg-gray-900">
+                            <MudCardContent>
+                                <MudText Typo="Typo.subtitle1" Class="text-gray-500 dark:text-gray-300">Active Threads</MudText>
+                                <MudText Typo="Typo.h6" Class="font-bold text-purple-600 dark:text-purple-400">@ActiveThreadsCount</MudText>
+                            </MudCardContent>
+                        </MudCard>
+                    </MudItem>
+                    <MudItem xs="6">
+                        <MudCard Class="rounded-2xl shadow bg-white dark:bg-gray-900">
+                            <MudCardContent>
+                                <MudText Typo="Typo.subtitle1" Class="text-gray-500 dark:text-gray-300">My Posts</MudText>
+                                <MudText Typo="Typo.h6" Class="font-bold text-pink-600 dark:text-pink-400">@MyPostsCount</MudText>
+                            </MudCardContent>
+                        </MudCard>
+                    </MudItem>
+                </MudGrid>
+                <MudCard Class="rounded-2xl shadow bg-white dark:bg-gray-900 p-6">
                     <MudText Typo="Typo.h6" Class="mb-2 font-bold text-gray-900 dark:text-white">Recent Threads</MudText>
                     <MudList T="string">
                         @foreach (var thread in RecentThreads)
                         {
                             <MudListItem T="string">
-                                <span>@thread</span>
+                                <MudText>@thread</MudText>
                             </MudListItem>
                         }
                     </MudList>
-                </div>
-                <MudCard Class="rounded-2xl shadow bg-white dark:bg-gray-900 mb-6">
+                </MudCard>
+                <MudCard Class="rounded-2xl shadow bg-white dark:bg-gray-900">
                     <MudCardContent>
                         <MudText Typo="Typo.subtitle1" Class="text-gray-500 dark:text-gray-300">Top Contributors</MudText>
                         <MudList T="string">
                             @foreach (var contributor in TopContributors)
                             {
                                 <MudListItem T="string">
-                                      <span>@contributor</span>
+                                    <MudText>@contributor</MudText>
                                 </MudListItem>
                             }
                         </MudList>
                     </MudCardContent>
                 </MudCard>
-                <MudCard Class="rounded-2xl shadow bg-white dark:bg-gray-900 mb-6">
+                <MudCard Class="rounded-2xl shadow bg-white dark:bg-gray-900">
                     <MudCardContent>
                         <MudText Typo="Typo.subtitle1" Class="text-gray-500 dark:text-gray-300">Forum Stats</MudText>
                         <MudText Typo="Typo.body2" Class="text-gray-600 dark:text-gray-300">Threads: @TotalThreads</MudText>
                         <MudText Typo="Typo.body2" Class="text-gray-600 dark:text-gray-300">Posts: @TotalPosts</MudText>
                     </MudCardContent>
                 </MudCard>
-                <div class="flex flex-wrap gap-2 mt-4">
+                <MudStack Direction="Row" Spacing="1" Class="flex flex-wrap gap-2 mt-4">
                     @if (courseGroups != null)
                     {
                         @foreach (var courseGroup in courseGroups)
                         {
-                            <button class="group-item course-icon rounded-full w-12 h-12 flex items-center justify-center text-lg font-bold transition-all duration-150 border-2 border-transparent hover:border-indigo-400 focus:outline-none @(selectedGroup == courseGroup.CourseName ? "bg-indigo-600 text-white border-indigo-600" : "bg-gray-200 dark:bg-gray-800 text-gray-700 dark:text-gray-200")" @onclick="() => SelectGroup(courseGroup.CourseName)" title="@courseGroup.CourseName">
+                            <MudButton Variant="Variant.Filled" Color="@(selectedGroup == courseGroup.CourseName ? Color.Primary : Color.Default)" Class="rounded-full w-12 h-12 flex items-center justify-center text-lg font-bold transition-all duration-150 border-2 border-transparent hover:border-indigo-400 focus:outline-none" OnClick="() => SelectGroup(courseGroup.CourseName)" Title="@courseGroup.CourseName">
                                 @courseGroup.CourseName.FirstOrDefault()
-                            </button>
+                            </MudButton>
                         }
                     }
-                </div>
-                <MudFab Color="Color.Primary" Icon="@Icons.Material.Filled.Add" Size="Size.Large" Class="add-forum-button mt-8 w-full" OnClick="ShowCreateForumModal" Label="Create New Forum" />
-    </aside>
-    <!-- Main Content Area -->
-    <main class="flex-1">
+                </MudStack>
+                <MudFab Color="Color.Primary" Icon="@Icons.Material.Filled.Add" Size="Size.Large" Class="mt-8 w-full" OnClick="ShowCreateForumModal" Label="Create New Forum" />
+            </MudStack>
+        </MudItem>
+        <MudItem xs="12" lg="9">
+            <MudPaper Elevation="2" Class="rounded-2xl shadow-lg bg-white dark:bg-gray-900 p-6">
+                <!-- Main Content Area -->
 
 <!-- Forum List Sidebar -->
 <div class="forum-list-sidebar">
@@ -410,10 +415,7 @@
         </MudCard>
     }
     </div>
-            </main>
-        </div>
-    </div>
-</div>
+           
 
 <!-- New Topic Modal -->
 <MudDialog @bind-IsVisible="@isNewTopicModalVisible" Options="@dialogOptions">
@@ -530,6 +532,11 @@
         </EditForm>
     </DialogContent>
 </MudDialog>
+
+            </MudPaper>
+        </MudItem>
+    </MudGrid>
+</MudContainer>
 
 @code {
     // Forum sidebar and main content variables

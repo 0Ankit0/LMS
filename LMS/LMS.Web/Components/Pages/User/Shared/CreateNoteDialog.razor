@@ -1,0 +1,185 @@
+@using LMS.Data.DTOs.LMS.Note
+@using LMS.Data.Entities
+@using LMS.Web.Repositories
+@inject INoteRepository NoteRepository
+@inject ISnackbar Snackbar
+
+<MudDialog Class="create-note-dialog">
+    <DialogContent>
+        <div class="space-y-6">
+            <MudTextField @bind-Value="model.Title"
+                         Label="Note Title"
+                         Placeholder="Enter a descriptive title for your note..."
+                         Required="true"
+                         RequiredError="Title is required"
+                         MaxLength="200"
+                         Class="w-full" />
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <MudSelect @bind-Value="model.Type"
+                          Label="Note Type"
+                          Required="true"
+                          Class="w-full">
+                    @foreach (NoteType noteType in Enum.GetValues<NoteType>())
+                    {
+                        <MudSelectItem Value="noteType">
+                            <div class="flex items-center space-x-2">
+                                <MudIcon Icon="@GetTypeIcon(noteType)" Size="Size.Small" />
+                                <span>@noteType.ToString()</span>
+                            </div>
+                        </MudSelectItem>
+                    }
+                </MudSelect>
+
+                <MudSelect @bind-Value="model.Priority"
+                          Label="Priority"
+                          Required="true"
+                          Class="w-full">
+                    @foreach (NotePriority priority in Enum.GetValues<NotePriority>())
+                    {
+                        <MudSelectItem Value="priority">
+                            <div class="flex items-center space-x-2">
+                                <div class="w-3 h-3 rounded-full @GetPriorityColorClass(priority)"></div>
+                                <span>@priority.ToString()</span>
+                            </div>
+                        </MudSelectItem>
+                    }
+                </MudSelect>
+            </div>
+
+            <MudTextField @bind-Value="model.Content"
+                         Label="Content"
+                         Placeholder="Write your note content here..."
+                         Lines="8"
+                         Required="true"
+                         RequiredError="Content is required"
+                         Class="w-full" />
+
+            <MudTextField @bind-Value="model.Tags"
+                         Label="Tags"
+                         Placeholder="Enter tags separated by commas (e.g., math, chapter1, important)"
+                         HelperText="Use tags to organize and quickly find your notes"
+                         Class="w-full" />
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="space-y-4">
+                    <MudSwitch @bind-Checked="model.IsPrivate"
+                              Color="Color.Primary"
+                              Label="Private Note"
+                              T="bool"
+                              Class="w-full" />
+                    <MudText Typo="Typo.caption" Class="text-gray-600">
+                        Private notes are only visible to you
+                    </MudText>
+                </div>
+
+                <div class="space-y-4">
+                    <MudSwitch @bind-Checked="model.IsPinned"
+                              Color="Color.Warning"
+                              Label="Pin This Note"
+                              T="bool"
+                              Class="w-full" />
+                    <MudText Typo="Typo.caption" Class="text-gray-600">
+                        Pinned notes appear at the top of your notes list
+                    </MudText>
+                </div>
+            </div>
+        </div>
+    </DialogContent>
+    <DialogActions>
+        <div class="flex justify-end space-x-3 w-full pt-4">
+            <MudButton Variant="Variant.Outlined"
+                      Color="Color.Default"
+                      OnClick="Cancel"
+                      Class="px-6 py-2 border-gray-300 text-gray-600 hover:bg-gray-50 rounded-lg">
+                Cancel
+            </MudButton>
+            <MudButton Variant="Variant.Filled"
+                      Color="Color.Primary"
+                      OnClick="Save"
+                      Disabled="isLoading"
+                      Class="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg">
+                @if (isLoading)
+                {
+                    <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" />
+                }
+                Create Note
+            </MudButton>
+        </div>
+    </DialogActions>
+</MudDialog>
+
+<style>
+.create-note-dialog {
+    min-width: 600px;
+    max-width: 800px;
+}
+</style>
+
+@code {
+    [CascadingParameter] IMudDialogInstance MudDialog { get; set; } = null!;
+    [Parameter] public string UserId { get; set; } = string.Empty;
+
+    private CreateNoteDTO model = new();
+    private bool isLoading = false;
+
+    protected override void OnInitialized()
+    {
+        // Set default values
+        model.Type = NoteType.General;
+        model.Priority = NotePriority.Normal;
+        model.IsPrivate = true;
+        model.IsPinned = false;
+    }
+
+    private async Task Save()
+    {
+        if (string.IsNullOrWhiteSpace(model.Title) || string.IsNullOrWhiteSpace(model.Content))
+        {
+            Snackbar.Add("Please fill in all required fields", Severity.Warning);
+            return;
+        }
+
+        try
+        {
+            isLoading = true;
+            StateHasChanged();
+
+            var createdNote = await NoteRepository.CreateNoteAsync(model, UserId);
+            MudDialog.Close(DialogResult.Ok(createdNote));
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error creating note: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            isLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    private void Cancel()
+    {
+        MudDialog.Cancel();
+    }
+
+    private static string GetTypeIcon(NoteType type) => type switch
+    {
+        NoteType.StudyNote => Icons.Material.Filled.MenuBook,
+        NoteType.Reminder => Icons.Material.Filled.Alarm,
+        NoteType.Question => Icons.Material.Filled.QuestionMark,
+        NoteType.Summary => Icons.Material.Filled.Summarize,
+        NoteType.Highlight => Icons.Material.Filled.Highlight,
+        _ => Icons.Material.Filled.Note
+    };
+
+    private static string GetPriorityColorClass(NotePriority priority) => priority switch
+    {
+        NotePriority.Urgent => "bg-red-500",
+        NotePriority.High => "bg-orange-500",
+        NotePriority.Normal => "bg-blue-500",
+        NotePriority.Low => "bg-gray-500",
+        _ => "bg-blue-500"
+    };
+}

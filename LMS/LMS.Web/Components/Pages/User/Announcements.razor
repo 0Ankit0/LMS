@@ -10,44 +10,54 @@
 
 <PageTitle>Announcements - LMS</PageTitle>
 
+<MudContainer MaxWidth="MaxWidth.Large"
+    Class="min-h-screen bg-gradient-to-br from-orange-50 to-red-50 dark:from-orange-950/20 dark:to-red-950/20 py-8">
+    <MudPaper Elevation="2" Class="rounded-2xl shadow-lg p-8">
+        <!-- Header Section -->
+        <MudGrid AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Class="mb-6">
+            <MudItem xs="12" md="8">
+                <MudStack Row Spacing="3" AlignItems="AlignItems.Center">
+                    <MudIcon Icon="@Icons.Material.Filled.Campaign" Color="Color.Primary" Size="Size.Large" />
+                    <MudText Typo="Typo.h4" Class="font-bold text-gray-900 dark:text-white">Latest Announcements
+                    </MudText>
+                </MudStack>
+            </MudItem>
+            <MudItem xs="12" md="4" Class="flex justify-end">
+                <MudButton Href="/user/lms/announcement-list" Color="Color.Primary" Variant="Variant.Outlined"
+                    EndIcon="@Icons.Material.Filled.ArrowForward" Class="rounded">View All</MudButton>
+            </MudItem>
+        </MudGrid>
 
-<div class="min-h-screen bg-gradient-to-br from-orange-50 to-red-50 dark:from-orange-950/20 dark:to-red-950/20 py-8">
-    <div class="max-w-4xl mx-auto px-4 sm:px-6">
-        <div class="bg-white dark:bg-gray-900 rounded-2xl shadow-lg p-6">
-            <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
-                <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Latest Announcements</h1>
-                <MudLink Href="/user/lms/announcement-list" Color="Color.Primary">View All</MudLink>
-            </div>
-            <div>
-                @if (isLoading)
+        <!-- Content Section -->
+        @if (isLoading)
+        {
+            <MudStack Spacing="4">
+                @for (int i = 0; i < 3; i++)
                 {
-                    <div class="flex flex-col gap-4">
-                        @for (int i = 0; i < 3; i++)
-                        {
-                            <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="120px" Class="rounded-xl w-full" />
-                        }
-                    </div>
+                    <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="120px" Class="rounded-xl w-full" />
                 }
-                else if (announcements?.Any() == true)
+            </MudStack>
+        }
+        else if (announcements?.Any() == true)
+        {
+            <MudStack Spacing="4">
+                @foreach (var announcement in announcements)
                 {
-                    <div class="flex flex-col gap-4">
-                        @foreach (var announcement in announcements)
-                        {
-                            <AnnouncementCard Announcement="announcement" />
-                        }
-                    </div>
+                    <AnnouncementCard Announcement="announcement" />
                 }
-                else
-                {
-                    <MudAlert Severity="Severity.Info" Icon="@Icons.Material.Filled.Campaign" Class="mt-6">
-                        <MudText Typo="Typo.h5">No announcements available</MudText>
-                        <MudText>There are no announcements at this time.</MudText>
-                    </MudAlert>
-                }
-            </div>
-        </div>
-    </div>
-</div>
+            </MudStack>
+        }
+        else
+        {
+            <MudStack Spacing="4" AlignItems="AlignItems.Center" Class="py-12">
+                <MudIcon Icon="@Icons.Material.Filled.Campaign" Size="Size.Large" Class="text-gray-400" />
+                <MudText Typo="Typo.h5" Class="text-gray-500">No announcements available</MudText>
+                <MudText Typo="Typo.body1" Class="text-gray-400 text-center">There are no announcements at this time. Check
+                    back later for updates.</MudText>
+            </MudStack>
+        }
+    </MudPaper>
+</MudContainer>
 
 @code {
     private bool isLoading = true;

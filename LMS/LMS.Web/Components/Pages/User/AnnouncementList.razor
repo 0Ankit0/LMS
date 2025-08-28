@@ -8,120 +8,114 @@
 
 <PageTitle>Announcements - LMS</PageTitle>
 
+<MudContainer MaxWidth="MaxWidth.ExtraLarge"
+    Class="min-h-screen bg-gradient-to-br from-orange-50 to-red-50 dark:from-orange-950/20 dark:to-red-950/20 py-8">
+    <MudGrid Spacing="6">
+        <!-- Sidebar -->
+        <MudItem xs="12" md="3">
+            <MudPaper Elevation="2" Class="rounded-2xl shadow-lg p-6 sticky top-8">
+                <MudText Typo="Typo.h6" Class="font-bold mb-4">Filter Announcements</MudText>
 
+                <!-- Priority Filters -->
+                <MudStack Spacing="2" Class="mb-6">
+                    <MudText Typo="Typo.subtitle2" Class="font-medium text-gray-700 dark:text-gray-200">Priority
+                    </MudText>
+                    <MudButtonGroup Orientation="Orientation.Vertical" Color="Color.Primary" FullWidth="true">
+                        <MudButton Variant="@(selectedFilterIndex == 0 ? Variant.Filled : Variant.Text)"
+                            OnClick='@(() => SelectFilter(0))' StartIcon="@Icons.Material.Filled.Campaign"
+                            Class="justify-start rounded">All Announcements</MudButton>
+                        <MudButton Variant="@(selectedFilterIndex == 1 ? Variant.Filled : Variant.Text)"
+                            OnClick='@(() => SelectFilter(1))' StartIcon="@Icons.Material.Filled.Warning"
+                            Class="justify-start rounded">High Priority</MudButton>
+                        <MudButton Variant="@(selectedFilterIndex == 2 ? Variant.Filled : Variant.Text)"
+                            OnClick='@(() => SelectFilter(2))' StartIcon="@Icons.Material.Filled.Info"
+                            Class="justify-start rounded">Medium Priority</MudButton>
+                        <MudButton Variant="@(selectedFilterIndex == 3 ? Variant.Filled : Variant.Text)"
+                            OnClick='@(() => SelectFilter(3))' StartIcon="@Icons.Material.Filled.Notifications"
+                            Class="justify-start rounded">Low Priority</MudButton>
+                        <MudButton Variant="@(selectedFilterIndex == 4 ? Variant.Filled : Variant.Text)"
+                            OnClick='@(() => SelectFilter(4))' StartIcon="@Icons.Material.Filled.History"
+                            Class="justify-start rounded">Recent</MudButton>
+                    </MudButtonGroup>
+                </MudStack>
 
-<div
-    class="min-h-screen bg-gradient-to-br from-orange-50 to-red-50 dark:from-orange-950/20 dark:to-red-950/20 border-b border-border py-8">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 grid grid-cols-1 md:grid-cols-4 gap-8">
-        <!-- Sidebar as Tabs -->
-        <aside class="md:col-span-1">
-            <div class="bg-white dark:bg-gray-900 rounded-2xl shadow-lg p-6 sticky top-8">
-                <MudTabs @bind-ActivePanelIndex="@selectedFilterIndex" Elevation="2" Rounded="true"
-                    Orientation="Orientation.Vertical" Class="w-full">
-                    <MudTabPanel Text="All Announcements">
-                        <MudButton Variant="Variant.Text" Color="Color.Primary" Class=$"w-full text-left
-                            {GetFilterClass(\"all\")}" OnClick='@(() => SelectFilter(0))'>
-                            <MudIcon Icon="@Icons.Material.Filled.Campaign" Class="mr-2" /> All Announcements
+                <!-- Date Range Filters -->
+                <MudStack Spacing="2">
+                    <MudText Typo="Typo.subtitle2" Class="font-medium text-gray-700 dark:text-gray-200">Date Range
+                    </MudText>
+                    <MudButtonGroup Orientation="Orientation.Vertical" Color="Color.Secondary" FullWidth="true">
+                        <MudButton Variant="@(selectedDateFilterIndex == 0 ? Variant.Filled : Variant.Text)"
+                            OnClick='@(() => SelectDateFilter(0))' Class="justify-start rounded">Today</MudButton>
+                        <MudButton Variant="@(selectedDateFilterIndex == 1 ? Variant.Filled : Variant.Text)"
+                            OnClick='@(() => SelectDateFilter(1))' Class="justify-start rounded">This Week</MudButton>
+                        <MudButton Variant="@(selectedDateFilterIndex == 2 ? Variant.Filled : Variant.Text)"
+                            OnClick='@(() => SelectDateFilter(2))' Class="justify-start rounded">This Month</MudButton>
+                        <MudButton Variant="@(selectedDateFilterIndex == 3 ? Variant.Filled : Variant.Text)"
+                            OnClick='@(() => SelectDateFilter(3))' Class="justify-start rounded">All Time</MudButton>
+                    </MudButtonGroup>
+                </MudStack>
+            </MudPaper>
+        </MudItem>
+
+        <!-- Main Content -->
+        <MudItem xs="12" md="9">
+            <!-- Header Section -->
+            <MudGrid AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Class="mb-8">
+                <MudItem xs="12" md="6">
+                    <MudStack>
+                        <MudText Typo="Typo.h4" Class="font-bold text-gray-900 dark:text-white">Announcements</MudText>
+                        <MudText Typo="Typo.body1" Class="text-gray-500 dark:text-gray-300">Stay updated with the latest
+                            news and information</MudText>
+                    </MudStack>
+                </MudItem>
+                <MudItem xs="12" md="6">
+                    <MudStack Row Spacing="3" AlignItems="AlignItems.Center">
+                        <MudTextField Value="searchQuery"
+                            ValueChanged="@((string value) => { searchQuery = value; ApplyFilters(); })"
+                            Placeholder="Search announcements..." Variant="Variant.Outlined" Clearable="true"
+                            Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search"
+                            Class="flex-1 rounded" />
+                        <MudButton Variant="Variant.Outlined" Color="Color.Primary" OnClick="RefreshAnnouncements"
+                            StartIcon="@Icons.Material.Filled.Refresh" Class="rounded">Refresh</MudButton>
+                    </MudStack>
+                </MudItem>
+            </MudGrid>
+
+            <!-- Content Section -->
+            @if (isLoading)
+            {
+                <MudStack Spacing="3" AlignItems="AlignItems.Center" Class="py-16">
+                    <MudProgressCircular Indeterminate="true" Color="Color.Primary" Size="Size.Large" />
+                    <MudText Typo="Typo.body1" Class="text-gray-500 dark:text-gray-300">Loading announcements...</MudText>
+                </MudStack>
+            }
+            else if (filteredAnnouncements?.Any() == true)
+            {
+                <MudStack Spacing="4">
+                    @foreach (var announcement in filteredAnnouncements)
+                    {
+                        <AnnouncementCard Announcement="announcement" />
+                    }
+                </MudStack>
+            }
+            else
+            {
+                <MudPaper Elevation="2" Class="rounded-2xl p-12">
+                    <MudStack Spacing="4" AlignItems="AlignItems.Center">
+                        <MudIcon Icon="@Icons.Material.Filled.Campaign" Size="Size.Large" Class="text-gray-400" />
+                        <MudText Typo="Typo.h5" Class="font-bold text-gray-500">No announcements found</MudText>
+                        <MudText Typo="Typo.body1" Class="text-gray-400 text-center">There are no announcements matching
+                            your current filters.</MudText>
+                        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="ClearFilters"
+                            Class="rounded mt-4">
+                            Clear Filters
                         </MudButton>
-                    </MudTabPanel>
-                    <MudTabPanel Text="High Priority">
-                        <MudButton Variant="Variant.Text" Color="Color.Primary" Class=$"w-full text-left
-                            {GetFilterClass(\"high\")}" OnClick='@(() => SelectFilter(1))'>
-                            <MudIcon Icon="@Icons.Material.Filled.Warning" Class="mr-2" /> High Priority
-                        </MudButton>
-                    </MudTabPanel>
-                    <MudTabPanel Text="Medium Priority">
-                        <MudButton Variant="Variant.Text" Color="Color.Primary" Class=$"w-full text-left
-                            {GetFilterClass(\"medium\")}" OnClick='@(() => SelectFilter(2))'>
-                            <MudIcon Icon="@Icons.Material.Filled.Info" Class="mr-2" /> Medium Priority
-                        </MudButton>
-                    </MudTabPanel>
-                    <MudTabPanel Text="Low Priority">
-                        <MudButton Variant="Variant.Text" Color="Color.Primary" Class=$"w-full text-left
-                            {GetFilterClass(\"low\")}" OnClick='@(() => SelectFilter(3))'>
-                            <MudIcon Icon="@Icons.Material.Filled.Notifications" Class="mr-2" /> Low Priority
-                        </MudButton>
-                    </MudTabPanel>
-                    <MudTabPanel Text="Recent">
-                        <MudButton Variant="Variant.Text" Color="Color.Primary" Class=$"w-full text-left
-                            {GetFilterClass(\"recent\")}" OnClick='@(() => SelectFilter(4))'>
-                            <MudIcon Icon="@Icons.Material.Filled.History" Class="mr-2" /> Recent
-                        </MudButton>
-                    </MudTabPanel>
-                    <MudTabPanel Text="Date Range">
-                        <div class="mt-3">
-                            <MudText Typo="Typo.subtitle1" Class="font-semibold text-gray-700 dark:text-gray-200 mb-2">
-                                Date Range</MudText>
-                            <MudButtonGroup Color="Color.Primary" Variant="Variant.Outlined"
-                                Class="w-full flex flex-wrap gap-2">
-                                <MudButton OnClick='@(() => SelectDateFilter(0))'
-                                    Variant="@(selectedDateFilterIndex == 0 ? Variant.Filled : Variant.Outlined)"
-                                    Class="rounded">Today</MudButton>
-                                <MudButton OnClick='@(() => SelectDateFilter(1))'
-                                    Variant="@(selectedDateFilterIndex == 1 ? Variant.Filled : Variant.Outlined)"
-                                    Class="rounded">This Week</MudButton>
-                                <MudButton OnClick='@(() => SelectDateFilter(2))'
-                                    Variant="@(selectedDateFilterIndex == 2 ? Variant.Filled : Variant.Outlined)"
-                                    Class="rounded">This Month</MudButton>
-                                <MudButton OnClick='@(() => SelectDateFilter(3))'
-                                    Variant="@(selectedDateFilterIndex == 3 ? Variant.Filled : Variant.Outlined)"
-                                    Class="rounded">All Time</MudButton>
-                            </MudButtonGroup>
-                        </div>
-                    </MudTabPanel>
-                </MudTabs>
-            </div>
-        </aside>
-        <!-- Main Announcements Area -->
-        <main class="md:col-span-3">
-            <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
-                <div>
-                    <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Announcements</h1>
-                    <p class="text-gray-500 dark:text-gray-300">Stay updated with the latest news and information</p>
-                </div>
-                <div class="flex flex-col sm:flex-row gap-4 items-center">
-                    <MudTextField @bind-Value="searchQuery" Placeholder="Search announcements..."
-                        Variant="Variant.Outlined" Clearable="true" Class="w-full sm:w-64" />
-                    <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="RefreshAnnouncements"
-                        Class="flex items-center gap-2">
-                        <MudIcon Icon="@Icons.Material.Filled.Refresh" Class="mr-2" /> Refresh
-                    </MudButton>
-                </div>
-            </div>
-            <div>
-                @if (isLoading)
-                {
-                    <div class="flex flex-col items-center justify-center py-12">
-                        <MudProgressCircular Indeterminate="true" Color="Color.Primary" />
-                        <p class="text-gray-500 dark:text-gray-300 mt-4">Loading announcements...</p>
-                    </div>
-                }
-                else if (filteredAnnouncements?.Any() == true)
-                {
-                    <div class="flex flex-col gap-6">
-                        @foreach (var announcement in filteredAnnouncements)
-                        {
-                            <AnnouncementCard Announcement="announcement" />
-                        }
-                    </div>
-                }
-                else
-                {
-                    <MudCard Elevation="2" Class="text-center py-16 border-0 shadow-lg bg-white dark:bg-gray-900">
-                        <MudCardContent>
-                            <MudIcon Icon="@Icons.Material.Filled.Campaign" Size="Size.Large" Class="text-gray-400 mb-3" />
-                            <MudText Typo="Typo.h5" Class="font-bold">No announcements found</MudText>
-                            <MudText Typo="Typo.body1" Class="text-gray-500 dark:text-gray-300 mb-6">There are no
-                                announcements matching your current filters.</MudText>
-                            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="ClearFilters">Clear Filters
-                            </MudButton>
-                        </MudCardContent>
-                    </MudCard>
-                }
-            </div>
-        </main>
-    </div>
-</div>
+                    </MudStack>
+                </MudPaper>
+            }
+        </MudItem>
+    </MudGrid>
+</MudContainer>
 
 @code {
     private int selectedFilterIndex = 0;
@@ -159,6 +153,7 @@
             isLoading = false;
         }
     }
+
     private void SelectFilter(int index)
     {
         selectedFilterIndex = index;
@@ -242,6 +237,7 @@
     private async Task RefreshAnnouncements()
     {
         await LoadAnnouncements();
+        Snackbar.Add("Announcements refreshed successfully", Severity.Success);
     }
 
     private void ClearFilters()
@@ -250,18 +246,5 @@
         selectedDateFilterIndex = 3;
         searchQuery = "";
         ApplyFilters();
-    }
-
-    private string GetFilterClass(string filterName)
-    {
-        return filterName switch
-        {
-            "all" => selectedFilterIndex == 0 ? "mud-button-filled" : "mud-button-outlined",
-            "high" => selectedFilterIndex == 1 ? "mud-button-filled" : "mud-button-outlined",
-            "medium" => selectedFilterIndex == 2 ? "mud-button-filled" : "mud-button-outlined",
-            "low" => selectedFilterIndex == 3 ? "mud-button-filled" : "mud-button-outlined",
-            "recent" => selectedFilterIndex == 4 ? "mud-button-filled" : "mud-button-outlined",
-            _ => "mud-button-outlined"
-        };
     }
 }

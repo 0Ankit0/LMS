@@ -1,7 +1,7 @@
 ﻿@page "/admin/achievements/create"
 @page "/admin/achievements/edit/{id:int}"
 @layout AdminLayout
-@using LMS.Repositories
+@using LMS.Web.Repositories
 @using LMS.Web.Components.Shared
 @using MudBlazor;
 @using System.Reflection;
@@ -42,30 +42,35 @@ else
             @if (editContext != null)
             {
                 <EditForm EditContext="@editContext" OnValidSubmit="SaveAchievement">
-                    <MudAlert Severity="Severity.Error" Class="mb-3" Visible="@(hasSubmitAttempted && editContext != null && !editContext.Validate())">
+                    <MudAlert Severity="Severity.Error" Class="mb-3"
+                        Visible="@(hasSubmitAttempted && editContext != null && !editContext.Validate())">
                         <MudText>Please correct the errors below.</MudText>
                     </MudAlert>
-                    <MudTextField @bind-Value="Achievement.Name" Label="Name" Variant="Variant.Text" Required="true" RequiredError="Name is required!" />
+                    <MudTextField @bind-Value="Achievement.Name" Label="Name" Variant="Variant.Text" Required="true"
+                        RequiredError="Name is required!" />
                     <MudTextField @bind-Value="Achievement.Description" Label="Description" Variant="Variant.Text" Lines="3"
-                                  Placeholder="Enter achievement description" />
+                        Placeholder="Enter achievement description" />
                     <MudGrid>
                         <MudItem xs="12" md="6">
                             <MudStack Direction="Row" Spacing="2" Class="my-2">
                                 <MudText Typo="Typo.subtitle2">Achievement Icon Image</MudText>
-                                <FileUpload ImageUrl="@Achievement.IconUrl" ImageUrlChanged="@(url => Achievement.IconUrl = url)" ButtonText="Upload Icon Image" />
+                                <FileUpload ImageUrl="@Achievement.IconUrl"
+                                    ImageUrlChanged="@(url => Achievement.IconUrl = url)" ButtonText="Upload Icon Image" />
                             </MudStack>
                         </MudItem>
                         <MudItem xs="12" md="6">
                             <MudNumericField @bind-Value="Achievement.Points" Label="Points" Variant="Variant.Text"
-                                             Placeholder="100" />
+                                Placeholder="100" />
                         </MudItem>
                     </MudGrid>
                     <MudGrid>
                         <MudItem xs="12" md="6">
-                            <MudTextField @bind-Value="Achievement.BadgeColor" Label="Badge Color" Variant="Variant.Text" InputType="InputType.Color" />
+                            <MudTextField @bind-Value="Achievement.BadgeColor" Label="Badge Color" Variant="Variant.Text"
+                                InputType="InputType.Color" />
                         </MudItem>
                         <MudItem xs="12" md="6">
-                            <MudSelect T="AchievementType" @bind-Value="SelectedType" Label="Achievement Type" Variant="Variant.Text">
+                            <MudSelect T="AchievementType" @bind-Value="SelectedType" Label="Achievement Type"
+                                Variant="Variant.Text">
                                 @foreach (var enumValue in Enum.GetValues(typeof(AchievementType)).Cast<AchievementType>())
                                 {
                                     <MudSelectItem T="AchievementType" Value="@enumValue">@enumValue.ToString()</MudSelectItem>
@@ -82,11 +87,13 @@ else
                         }
                     </MudStack>
                     <div class="d-flex gap-2">
-                        <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Disabled="@isSubmitting">
+                        <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary"
+                            Disabled="@isSubmitting">
                             <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Class="me-2" />
                             @(IsEdit ? "Update Achievement" : "Create Achievement")
                         </MudButton>
-                        <MudButton Variant="Variant.Filled" Color="Color.Secondary" Href="/admin/achievements">Cancel</MudButton>
+                        <MudButton Variant="Variant.Filled" Color="Color.Secondary" Href="/admin/achievements">Cancel
+                        </MudButton>
                     </div>
                 </EditForm>
             }

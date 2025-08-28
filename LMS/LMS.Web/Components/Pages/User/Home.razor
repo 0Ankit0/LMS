@@ -12,89 +12,96 @@
 
 @if (isLoading)
 {
-    <div class="p-6">
-        <div class="max-w-7xl mx-auto">
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div class="flex flex-col gap-3">
-                    @for (int i = 0; i < 6; i++)
-                    {
-                        <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="60px" Class="mb-3 rounded-lg" />
-                    }
-                </div>
-                <div class="flex flex-col">
-                    <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="400px" Class="mb-4 flex-grow rounded-lg" />
-                </div>
-                <div class="flex flex-col">
-                    <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="400px" Class="w-full rounded-lg" />
-                </div>
-            </div>
-        </div>
-    </div>
+    <MudContainer MaxWidth="MaxWidth.Large" Class="mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <MudGrid GutterSize="32">
+            <MudItem xs="12" lg="3">
+                @for (int i = 0; i < 3; i++)
+                {
+                    <MudSkeleton Height="120px" Class="mb-4 rounded-lg" />
+                }
+            </MudItem>
+            <MudItem xs="12" lg="5">
+                <MudSkeleton Height="60px" Class="mb-4 rounded-lg" />
+                <MudSkeleton Height="200px" Class="mb-4 rounded-lg" />
+                <MudSkeleton Height="200px" Class="mb-4 rounded-lg" />
+            </MudItem>
+            <MudItem xs="12" lg="4">
+                <MudSkeleton Height="60px" Class="mb-4 rounded-lg" />
+                <MudSkeleton Height="200px" Class="mb-4 rounded-lg" />
+                <MudSkeleton Height="200px" Class="mb-4 rounded-lg" />
+            </MudItem>
+        </MudGrid>
+    </MudContainer>
 }
 else
 {
-    <div class="max-w-7xl mx-auto px-2 md:px-4 py-6">
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <!-- Quick Links -->
-            <div class="flex flex-col gap-4">
-                <MudCard Elevation="2"
-                    Class="rounded-2xl shadow bg-white dark:bg-gray-900 hover:shadow-lg transition cursor-pointer">
-                    <MudCardContent Class="flex flex-col gap-2 p-4">
-                        <MudLink Href="/user/lms/dashboard" Class="flex items-center gap-2 group"
-                            Style="text-decoration:none;">
-                            <MudIcon Icon="@Icons.Material.Filled.Dashboard"
-                                Class="text-primary text-2xl group-hover:scale-110 transition" />
-                            <MudText>Dashboard</MudText>
-                        </MudLink>
-                        <MudLink Href="/user/lms/forums" Class="flex items-center gap-2 group"
-                            Style="text-decoration:none;">
-                            <MudIcon Icon="@Icons.Material.Filled.Forum"
-                                Class="text-success text-2xl group-hover:scale-110 transition" />
-                            <MudText>Forums</MudText>
-                        </MudLink>
-                        <MudLink Href="/user/lms/analytics" Class="flex items-center gap-2 group"
-                            Style="text-decoration:none;">
-                            <MudIcon Icon="@Icons.Material.Filled.Analytics"
-                                Class="text-info text-2xl group-hover:scale-110 transition" />
-                            <MudText>Analytics</MudText>
-                        </MudLink>
-                        <MudLink Href="/user/lms/my-courses" Class="flex items-center gap-2 group"
-                            Style="text-decoration:none;">
-                            <MudIcon Icon="@Icons.Material.Filled.School"
-                                Class="text-warning text-2xl group-hover:scale-110 transition" />
-                            <MudText>My Courses</MudText>
-                        </MudLink>
-                    </MudCardContent>
-                </MudCard>
-            </div>
-            <!-- Announcements -->
-            <div class="flex flex-col gap-4">
-                <MudCard Elevation="2" Class="flex-grow flex flex-col rounded-2xl shadow bg-white dark:bg-gray-900">
-                    <MudCardHeader Class="bg-primary text-white flex items-center justify-between rounded-t-2xl px-4 py-2">
-                        <MudText Typo="Typo.h6" Class="flex items-center">
-                            <MudIcon Icon="@Icons.Material.Filled.Campaign" Class="mr-2" /> Announcements
-                        </MudText>
-                        <MudButton Variant="Variant.Text" Color="Color.Inherit" Size="Size.Small"
-                            Href="/user/lms/announcement-list" Style="text-decoration: none;">
-                            View All
-                        </MudButton>
-                    </MudCardHeader>
-                    <MudCardContent Class="p-0 flex-grow flex flex-col hide-scrollbar"
-                        Style="max-height: 80svh; overflow-y: auto;">
+    <MudContainer MaxWidth="MaxWidth.Large" Class="mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <MudGrid GutterSize="32">
+            <!-- Left Section - Quick Navigation -->
+            <MudItem xs="12" lg="3">
+                <MudStack Spacing="2">
+                    <MudCard Class="mb-2 cursor-pointer hover:shadow-md transition-shadow">
+                        <MudCardContent Class="p-4">
+                            <MudLink Href="/user/lms/dashboard" Class="flex items-center gap-3">
+                                <MudIcon Icon="@Icons.Material.Filled.Dashboard" Color="Color.Primary" />
+                                <MudText>Dashboard</MudText>
+                            </MudLink>
+                        </MudCardContent>
+                    </MudCard>
+                    <MudCard Class="mb-2 cursor-pointer hover:shadow-md transition-shadow">
+                        <MudCardContent Class="p-4">
+                            <MudLink Href="/user/lms/forums" Class="flex items-center gap-3">
+                                <MudIcon Icon="@Icons.Material.Filled.Forum" Color="Color.Secondary" />
+                                <MudText>Forums</MudText>
+                            </MudLink>
+                        </MudCardContent>
+                    </MudCard>
+                    <MudCard Class="mb-2 cursor-pointer hover:shadow-md transition-shadow">
+                        <MudCardContent Class="p-4">
+                            <MudLink Href="/user/lms/analytics" Class="flex items-center gap-3">
+                                <MudIcon Icon="@Icons.Material.Filled.Analytics" Color="Color.Info" />
+                                <MudText>Analytics</MudText>
+                            </MudLink>
+                        </MudCardContent>
+                    </MudCard>
+                    <MudCard Class="mb-2 cursor-pointer hover:shadow-md transition-shadow">
+                        <MudCardContent Class="p-4">
+                            <MudLink Href="/user/lms/my-courses" Class="flex items-center gap-3">
+                                <MudIcon Icon="@Icons.Material.Filled.School" Color="Color.Success" />
+                                <MudText>My Courses</MudText>
+                            </MudLink>
+                        </MudCardContent>
+                    </MudCard>
+                </MudStack>
+            </MudItem>
+            <!-- Middle Section - Announcements -->
+            <MudItem xs="12" lg="5">
+                <MudStack Spacing="2">
+                    <MudStack Row="true" AlignItems="AlignItems.End" JustifyContent="SpaceBetween">
+                        <MudText Typo="Typo.h6">Announcements</MudText>
+                        <MudBadge Color="Color.Info" Variant="Variant.Filled" Class="mr-2">New</MudBadge>
+                        <MudButton Ripple="true" Variant="Variant.Outlined" Color="Color.Primary" Size="Size.Small"
+                            Href="/user/lms/announcement-list">View All</MudButton>
+                    </MudStack>
+                    <MudPaper Class="max-h-96 overflow-y-auto p-2">
                         <Announcements />
-                    </MudCardContent>
-                </MudCard>
-            </div>
-            <!-- Course Search -->
-            <div class="flex flex-col gap-4">
-                <MudCard Elevation="2" Class="rounded-2xl shadow bg-white dark:bg-gray-900">
-                    <MudCardContent Class="p-4">
+                    </MudPaper>
+                </MudStack>
+            </MudItem>
+            <!-- Right Section - Course List -->
+            <MudItem xs="12" lg="4">
+                <MudStack Spacing="2">
+                    <MudStack Direction="Row" AlignItems="AlignItems.Center" JustifyContent="SpaceBetween">
+                        <MudText Typo="Typo.h6">My Courses</MudText>
+                        <MudBadge Color="Color.Success" Variant="Variant.Filled">Enrolled</MudBadge>
+                    </MudStack>
+                    <MudPaper Class="max-h-96 overflow-y-auto p-2">
                         <CourseListSearch User="currentUser" />
-                    </MudCardContent>
-                </MudCard>
-            </div>
-        </div>
-    </div>
+                    </MudPaper>
+                </MudStack>
+            </MudItem>
+        </MudGrid>
+    </MudContainer>
 }
 
 @code {

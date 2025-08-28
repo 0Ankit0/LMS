@@ -2,46 +2,55 @@
 @using LMS.Web.Components.Account
 @using MudBlazor.Utilities
 @using System.Security.Claims
+@using LMS.Web.Repositories
+@using LMS.Data.DTOs.LMS.Note
+@using RepositoryCourseModel = LMS.Data.DTOs.CourseModel
 @inject ISnackbar Snackbar
 @inject UserManager<User> UserManager
+@inject IDashboardRepository DashboardRepository
+@inject AuthenticationStateProvider AuthenticationStateProvider
 @if (isLoading)
 {
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-        <div class="lg:col-span-2 flex flex-col gap-6">
-            <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="180px" Class="w-full rounded-2xl mb-6" />
-        </div>
-        <div class="flex flex-col gap-6">
-            <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="180px" Class="w-full rounded-2xl" />
-        </div>
-    </div>
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-        <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="300px" Class="w-full rounded-2xl" />
-        <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="300px" Class="w-full rounded-2xl" />
-    </div>
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-        <div class="lg:col-span-2 flex flex-col gap-6">
-            <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="250px" Class="w-full rounded-2xl mb-6" />
-        </div>
-        <div class="flex flex-col gap-6">
-            <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="250px" Class="w-full rounded-2xl" />
-        </div>
-    </div>
+    <MudContainer MaxWidth="MaxWidth.Large" Class="mx-auto px-4 sm:px-6 py-8">
+        <MudGrid GutterSize="24">
+            <MudItem xs="12" lg="8">
+                <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="180px" Class="w-full rounded-2xl mb-6" />
+            </MudItem>
+            <MudItem xs="12" lg="4">
+                <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="180px" Class="w-full rounded-2xl" />
+            </MudItem>
+            <MudItem xs="12" lg="6">
+                <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="300px" Class="w-full rounded-2xl" />
+            </MudItem>
+            <MudItem xs="12" lg="6">
+                <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="300px" Class="w-full rounded-2xl" />
+            </MudItem>
+            <MudItem xs="12" lg="8">
+                <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="250px" Class="w-full rounded-2xl" />
+            </MudItem>
+            <MudItem xs="12" lg="4">
+                <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="250px" Class="w-full rounded-2xl" />
+            </MudItem>
+        </MudGrid>
+    </MudContainer>
 }
 else
 {
-    <div class="min-h-screen bg-gradient-to-br from-green-50 to-teal-50 dark:from-green-950/20 dark:to-teal-950/20 py-8">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6">
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-                <!-- Continue with Course -->
-                <div class="lg:col-span-2 flex flex-col gap-6">
+    <MudContainer MaxWidth="MaxWidth.Large"
+        Class="mx-auto px-4 sm:px-6 py-8 min-h-screen bg-gradient-to-br from-green-50 to-teal-50 dark:from-green-950/20 dark:to-teal-950/20">
+        <MudGrid GutterSize="24">
+            <!-- Continue with Course -->
+            <MudItem xs="12" lg="8">
+                @if (ContinueCourse != null)
+                {
                     <MudCard Elevation="2" Class="rounded-2xl shadow-lg bg-white dark:bg-gray-900 mb-6">
                         <MudCardContent>
-                            <div class="flex flex-col md:flex-row items-center gap-6">
+                            <MudStack Direction="Row" Spacing="6" Class="flex flex-col md:flex-row items-center gap-6">
                                 <MudImage Src="@ContinueCourse.ThumbnailUrl" Alt="Course image" Elevation="25"
                                     Class="rounded-xl w-40 h-40 object-cover" />
-                                <div class="flex-1">
-                                    <MudChip T="string" Color="Color.Primary" Variant="Variant.Outlined" Class="mb-2">
-                                        Continue Course</MudChip>
+                                <MudStack Spacing="3" Class="flex-1">
+                                    <MudChip T="string" Color="Color.Primary" Variant="Variant.Outlined" Class="mb-2">Continue
+                                        Course</MudChip>
                                     <MudText Typo="Typo.h4" Class="font-bold text-green-700 dark:text-green-300 mb-2">
                                         @ContinueCourse.Title</MudText>
                                     <MudText Typo="Typo.body1" Class="mb-3 text-gray-600 dark:text-gray-300">
@@ -49,53 +58,60 @@ else
                                     <MudButton Variant="Variant.Filled" Color="Color.Primary"
                                         Href="@($"/courses/details?id={ContinueCourse.Id}")"
                                         EndIcon="@Icons.Material.Filled.ArrowRight" Class="rounded">Go to Course</MudButton>
-                                </div>
-                            </div>
+                                </MudStack>
+                            </MudStack>
                         </MudCardContent>
                     </MudCard>
-                </div>
-                <!-- Your Progress -->
-                <div class="flex flex-col gap-6">
-                    <MudCard Elevation="2" Class="rounded-2xl shadow-lg bg-white dark:bg-gray-900">
-                        <MudCardHeader>
-                            <CardHeaderContent>
-                                <MudText Typo="Typo.h6" Class="text-center font-bold text-teal-700 dark:text-teal-300">Your
-                                    Progress</MudText>
-                            </CardHeaderContent>
-                        </MudCardHeader>
+                }
+                else
+                {
+                    <MudCard Elevation="2" Class="rounded-2xl shadow-lg bg-white dark:bg-gray-900 mb-6">
                         <MudCardContent>
-                            <MudSelect T="int" Label="Select Course" Variant="Variant.Outlined"
-                                @bind-Value="selectedProgressCourseId" @onchange="HandleProgressCourseChanged" Class="mb-4">
-                                @foreach (var item in ProgressCourses)
-                                {
-                                    <MudSelectItem T="int" Value="@item.Course.Id">@item.Course.Title</MudSelectItem>
-                                }
-                            </MudSelect>
-                            <div class="flex justify-center my-4">
-                                <MudProgressCircular Value="@SelectedProgressCourseProgress" Size="Size.Large"
-                                    Color="Color.Primary">
-                                    <MudText>@($"{SelectedProgressCourseProgress}%")</MudText>
-                                </MudProgressCircular>
-                            </div>
-                            @if (SelectedProgressCourse != null)
-                            {
-                                <div class="text-center">
-                                    <MudText Typo="Typo.subtitle1" Class="font-bold">@SelectedProgressCourse.Title</MudText>
-                                    <MudText Typo="Typo.body2" Class="text-gray-400">@SelectedProgressCourse.Description
-                                    </MudText>
-                                    <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small"
-                                        Href="@($"/courses/details?id={SelectedProgressCourse.Id}")"
-                                        EndIcon="@Icons.Material.Filled.ArrowRight" Class="mt-2 rounded">Go to Course
-                                    </MudButton>
-                                </div>
-                            }
+                            <MudText Typo="Typo.h6" Class="text-center text-muted">No courses to continue. Start a new course!
+                            </MudText>
                         </MudCardContent>
                     </MudCard>
-                </div>
-            </div>
+                }
+            </MudItem>
+            <!-- Your Progress -->
+            <MudItem xs="12" lg="4">
+                <MudCard Elevation="2" Class="rounded-2xl shadow-lg bg-white dark:bg-gray-900">
+                    <MudCardHeader>
+                        <CardHeaderContent>
+                            <MudText Typo="Typo.h6" Class="text-center font-bold text-teal-700 dark:text-teal-300">Your
+                                Progress</MudText>
+                        </CardHeaderContent>
+                    </MudCardHeader>
+                    <MudCardContent>
+                        <MudSelect T="int" Label="Select Course" Variant="Variant.Outlined"
+                            @bind-Value="selectedProgressCourseId" @onchange="HandleProgressCourseChanged" Class="mb-4">
+                            @foreach (var item in ProgressCourses)
+                            {
+                                <MudSelectItem T="int" Value="@item.Course.Id">@item.Course.Title</MudSelectItem>
+                            }
+                        </MudSelect>
+                        <MudStack Spacing="2" Class="flex justify-center my-4">
+                            <MudProgressCircular Value="@SelectedProgressCourseProgress" Size="Size.Large"
+                                Color="Color.Primary">
+                                <MudText>@($"{SelectedProgressCourseProgress}%")</MudText>
+                            </MudProgressCircular>
+                        </MudStack>
+                        @if (SelectedProgressCourse != null)
+                        {
+                            <MudStack Spacing="1" Class="text-center">
+                                <MudText Typo="Typo.subtitle1" Class="font-bold">@SelectedProgressCourse.Title</MudText>
+                                <MudText Typo="Typo.body2" Class="text-gray-400">@SelectedProgressCourse.Description</MudText>
+                                <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small"
+                                    Href="@($"/courses/details?id={SelectedProgressCourse.Id}")"
+                                    EndIcon="@Icons.Material.Filled.ArrowRight" Class="mt-2 rounded">Go to Course</MudButton>
+                            </MudStack>
+                        }
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
 
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-                <!-- New Courses -->
+            <!-- New Courses and Your Courses -->
+            <MudItem xs="12" lg="6">
                 <MudCard Elevation="2" Class="h-full rounded-2xl shadow-lg bg-white dark:bg-gray-900">
                     <MudCardHeader>
                         <CardHeaderContent>
@@ -106,26 +122,28 @@ else
                         </CardHeaderActions>
                     </MudCardHeader>
                     <MudCardContent>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <MudGrid GutterSize="16">
                             @foreach (var course in NewCourses)
                             {
-                                <MudCard Elevation="0" Class="rounded-xl border border-gray-100 dark:border-gray-800">
-                                    <MudCardMedia Image="@course.ThumbnailUrl" Height="90" />
-                                    <MudCardContent>
-                                        <MudText Typo="Typo.h6">@course.Title</MudText>
-                                        <MudText Typo="Typo.body2" Class="text-muted">@course.Description</MudText>
-                                    </MudCardContent>
-                                    <MudCardActions>
-                                        <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small"
-                                            Href="@($"/courses/details?id={course.Id}")" FullWidth="true">View
-                                        </MudButton>
-                                    </MudCardActions>
-                                </MudCard>
+                                <MudItem xs="12" md="6">
+                                    <MudCard Elevation="0" Class="rounded-xl border border-gray-100 dark:border-gray-800">
+                                        <MudCardMedia Image="@course.ThumbnailUrl" Height="90" />
+                                        <MudCardContent>
+                                            <MudText Typo="Typo.h6">@course.Title</MudText>
+                                            <MudText Typo="Typo.body2" Class="text-muted">@course.Description</MudText>
+                                        </MudCardContent>
+                                        <MudCardActions>
+                                            <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small"
+                                                Href="@($"/courses/details?id={course.Id}")" FullWidth="true">View</MudButton>
+                                        </MudCardActions>
+                                    </MudCard>
+                                </MudItem>
                             }
-                        </div>
+                        </MudGrid>
                     </MudCardContent>
                 </MudCard>
-                <!-- Your Courses -->
+            </MudItem>
+            <MudItem xs="12" lg="6">
                 <MudCard Elevation="2" Class="h-full rounded-2xl shadow-lg bg-white dark:bg-gray-900">
                     <MudCardHeader>
                         <CardHeaderContent>
@@ -136,103 +154,102 @@ else
                         </CardHeaderActions>
                     </MudCardHeader>
                     <MudCardContent>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <MudGrid GutterSize="16">
                             @foreach (var course in YourCourses)
                             {
-                                <MudCard Elevation="0" Class="rounded-xl border border-gray-100 dark:border-gray-800">
-                                    <MudCardMedia Image="@course.ThumbnailUrl" Height="90" />
-                                    <MudCardContent>
-                                        <MudText Typo="Typo.h6">@course.Title</MudText>
-                                        <MudText Typo="Typo.body2" Class="text-muted">@course.Description</MudText>
-                                    </MudCardContent>
-                                    <MudCardActions>
-                                        <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small"
-                                            Href="@($"/courses/details?id={course.Id}")" FullWidth="true">View
-                                        </MudButton>
-                                    </MudCardActions>
-                                </MudCard>
+                                <MudItem xs="12" md="6">
+                                    <MudCard Elevation="0" Class="rounded-xl border border-gray-100 dark:border-gray-800">
+                                        <MudCardMedia Image="@course.ThumbnailUrl" Height="90" />
+                                        <MudCardContent>
+                                            <MudText Typo="Typo.h6">@course.Title</MudText>
+                                            <MudText Typo="Typo.body2" Class="text-muted">@course.Description</MudText>
+                                        </MudCardContent>
+                                        <MudCardActions>
+                                            <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small"
+                                                Href="@($"/courses/details?id={course.Id}")" FullWidth="true">View</MudButton>
+                                        </MudCardActions>
+                                    </MudCard>
+                                </MudItem>
                             }
-                        </div>
+                        </MudGrid>
                     </MudCardContent>
                 </MudCard>
-            </div>
+            </MudItem>
 
-            <MudGrid Spacing="4">
-                <!-- Upcoming Courses -->
-                <MudItem xs="12" lg="8">
-                    <MudCard Elevation="2" Class="h-100">
-                        <MudCardHeader>
-                            <CardHeaderContent>
-                                <MudText Typo="Typo.h6">Upcoming Courses</MudText>
-                            </CardHeaderContent>
-                        </MudCardHeader>
-                        <MudCardContent>
-                            @if (UpcomingCourses.Any())
+            <!-- Upcoming Courses -->
+            <MudItem xs="12" lg="8">
+                <MudCard Elevation="2" Class="h-full rounded-2xl shadow-lg bg-white dark:bg-gray-900">
+                    <MudCardHeader>
+                        <CardHeaderContent>
+                            <MudText Typo="Typo.h6">Upcoming Courses</MudText>
+                        </CardHeaderContent>
+                    </MudCardHeader>
+                    <MudCardContent>
+                        @if (UpcomingCourses.Any())
+                        {
+                            @foreach (var course in UpcomingCourses)
                             {
-                                @foreach (var course in UpcomingCourses)
+                                <MudCard Elevation="0" Class="mb-3">
+                                    <MudCardContent>
+                                        <MudGrid AlignItems="AlignItems.Center">
+                                            <MudItem xs="12" md="3">
+                                                <MudImage Src="@course.ThumbnailUrl" Alt="Course image" Elevation="25"
+                                                    Class="rounded-lg" />
+                                            </MudItem>
+                                            <MudItem xs="12" md="9">
+                                                <MudText Typo="Typo.h6">@course.Title</MudText>
+                                                <MudText Typo="Typo.body2" Class="text-muted">@course.Description</MudText>
+                                                <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small"
+                                                    Href="@($"/courses/details?id={course.Id}")" Class="mt-2">Go to Course
+                                                </MudButton>
+                                            </MudItem>
+                                        </MudGrid>
+                                    </MudCardContent>
+                                </MudCard>
+                            }
+                        }
+                        else
+                        {
+                            <MudText Typo="Typo.body1" Class="text-muted">No upcoming courses.</MudText>
+                        }
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+            <!-- Your Notes -->
+            <MudItem xs="12" lg="4">
+                <MudCard Elevation="2" Class="h-full rounded-2xl shadow-lg bg-white dark:bg-gray-900">
+                    <MudCardHeader>
+                        <CardHeaderContent>
+                            <MudText Typo="Typo.h6">Your Notes</MudText>
+                        </CardHeaderContent>
+                    </MudCardHeader>
+                    <MudCardContent>
+                        @if (UserNotes.Any())
+                        {
+                            <MudList T="NoteQuickAccessDTO">
+                                @foreach (var note in UserNotes)
                                 {
-                                    <MudCard Elevation="0" Class="mb-3">
-                                        <MudCardContent>
-                                            <MudGrid AlignItems="AlignItems.Center">
-                                                <MudItem xs="12" md="3">
-                                                    <MudImage Src="@course.ThumbnailUrl" Alt="Course image" Elevation="25"
-                                                        Class="rounded-lg" />
-                                                </MudItem>
-                                                <MudItem xs="12" md="9">
-                                                    <MudText Typo="Typo.h6">@course.Title</MudText>
-                                                    <MudText Typo="Typo.body2" Class="text-muted">@course.Description</MudText>
-                                                    <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small"
-                                                        Href="@($"/courses/details?id={course.Id}")" Class="mt-2">Go to Course
-                                                    </MudButton>
-                                                </MudItem>
-                                            </MudGrid>
-                                        </MudCardContent>
-                                    </MudCard>
+                                    <MudListItem T="NoteQuickAccessDTO">
+                                        <MudText Typo="Typo.subtitle1">@note.Title</MudText>
+                                        <MudText Typo="Typo.body2" Class="text-muted">@note.CourseTitle</MudText>
+                                    </MudListItem>
                                 }
-                            }
-                            else
-                            {
-                                <MudText Typo="Typo.body1" Class="text-muted">No upcoming courses.</MudText>
-                            }
-                        </MudCardContent>
-                    </MudCard>
-                </MudItem>
-                <!-- Your Notes -->
-                <MudItem xs="12" lg="4">
-                    <MudCard Elevation="2" Class="h-100">
-                        <MudCardHeader>
-                            <CardHeaderContent>
-                                <MudText Typo="Typo.h6">Your Notes</MudText>
-                            </CardHeaderContent>
-                        </MudCardHeader>
-                        <MudCardContent>
-                            @if (UserNotes.Any())
-                            {
-                                <MudList T="NoteModel">
-                                    @foreach (var note in UserNotes)
-                                    {
-                                        <MudListItem T="NoteModel">
-                                            <MudText Typo="Typo.subtitle1">@note.Title</MudText>
-                                            <MudText Typo="Typo.body2" Class="text-muted">@note.Content</MudText>
-                                        </MudListItem>
-                                    }
-                                </MudList>
-                            }
-                            else
-                            {
-                                <MudText Typo="Typo.body1" Class="text-muted">No notes yet.</MudText>
-                            }
-                        </MudCardContent>
-                    </MudCard>
-                </MudItem>
-            </MudGrid>
-        </div>
-    </div>
+                            </MudList>
+                        }
+                        else
+                        {
+                            <MudText Typo="Typo.body1" Class="text-muted">No notes yet.</MudText>
+                        }
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+        </MudGrid>
+    </MudContainer>
 }
 
 @code {
     private bool isLoading = true;
-    private CourseModel ContinueCourse = new CourseModel();
+    private CourseModel? ContinueCourse;
     private int selectedProgressCourseId;
     private List<ProgressCourseModel> ProgressCourses = new();
     private double SelectedProgressCourseProgress = 0;
@@ -240,46 +257,69 @@ else
     private List<CourseModel> NewCourses = new();
     private List<CourseModel> YourCourses = new();
     private List<CourseModel> UpcomingCourses = new();
-    private List<NoteModel> UserNotes = new();
+    private List<NoteQuickAccessDTO> UserNotes = new();
+    private string? currentUserId;
 
     protected override async Task OnInitializedAsync()
     {
-        // TODO: Replace with actual data loading from repository for the logged-in user
-        // For now, set isLoading to false to show the UI
-        isLoading = false;
+        await LoadDashboardData();
     }
 
-    private async Task HandleProgressCourseChanged(ChangeEventArgs e)
+    private async Task LoadDashboardData()
+    {
+        try
+        {
+            isLoading = true;
+            var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+            var user = await UserManager.GetUserAsync(authState.User);
+            currentUserId = user?.Id;
+
+            if (!string.IsNullOrEmpty(currentUserId))
+            {
+                // Load dashboard data using repository
+                var dashboardData = await DashboardRepository.GetDashboardDataAsync(currentUserId);
+
+                ContinueCourse = dashboardData.ContinueCourse;
+                ProgressCourses = dashboardData.ProgressCourses;
+                NewCourses = dashboardData.NewCourses;
+                YourCourses = dashboardData.YourCourses;
+                UpcomingCourses = dashboardData.UpcomingCourses;
+                UserNotes = dashboardData.UserNotes;
+
+                // Initialize selected progress course
+                if (ProgressCourses.Any())
+                {
+                    selectedProgressCourseId = ProgressCourses.First().Course.Id;
+                    OnProgressCourseChanged(selectedProgressCourseId);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error loading dashboard: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private Task HandleProgressCourseChanged(ChangeEventArgs e)
     {
         if (int.TryParse(e.Value?.ToString(), out var courseId))
         {
             OnProgressCourseChanged(courseId);
         }
+        return Task.CompletedTask;
     }
 
     private void OnProgressCourseChanged(int courseId)
     {
-        SelectedProgressCourse = ProgressCourses.FirstOrDefault(p => p.Course.Id == courseId)?.Course;
-        SelectedProgressCourseProgress = ProgressCourses.FirstOrDefault(p => p.Course.Id == courseId)?.Progress ?? 0;
-    }
-
-    public class ProgressCourseModel
-    {
-        public CourseModel Course { get; set; } = new CourseModel();
-        public int Progress { get; set; }
-    }
-
-    public class CourseModel
-    {
-        public int Id { get; set; }
-        public string Title { get; set; } = string.Empty;
-        public string Description { get; set; } = string.Empty;
-        public string ThumbnailUrl { get; set; } = string.Empty;
-    }
-
-    public class NoteModel
-    {
-        public string Title { get; set; } = string.Empty;
-        public string Content { get; set; } = string.Empty;
+        var progressCourse = ProgressCourses.FirstOrDefault(p => p.Course.Id == courseId);
+        if (progressCourse != null)
+        {
+            SelectedProgressCourse = progressCourse.Course;
+            SelectedProgressCourseProgress = progressCourse.Progress;
+        }
     }
 }

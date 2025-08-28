@@ -1,422 +1,310 @@
 @using LMS.Data.DTOs
-@using LMS.Data.Entities
 @using System.Security.Claims
 @using MudBlazor
+@using LMS.Web.Repositories
 @page "/user/lms/achievements"
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @inject IAchievementRepository AchievementRepository
 @inject ILeaderboardRepository LeaderboardRepository
-        @if (isLoading)
-        {
-            <!-- Skeleton Loader -->
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-                @for (int i = 0; i < 4; i++)
-                {
-                    <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="120px" Class="h-32" />
-                }
-            </div>
-            <MudTabs Elevation="2" Rounded="true" Class="space-y-6">
-                <MudTabPanel Text="Earned">
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-4">
-                        @for (int i = 0; i < 6; i++)
-                        {
-                            <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="220px" Class="h-64" />
-                        }
-                    </div>
-                </MudTabPanel>
-                <MudTabPanel Text="Available">
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-4">
-                        @for (int i = 0; i < 6; i++)
-                        {
-                            <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="220px" Class="h-64" />
-                        }
-                    </div>
-                </MudTabPanel>
-                <MudTabPanel Text="Leaderboard">
-                    <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="300px" Class="mt-4 h-80" />
-                </MudTabPanel>
-            </MudTabs>
-        }
-        else
-        {
-            <!-- Stats Cards -->
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-                <MudCard>
-                    <MudCardContent Class="p-6 text-center bg-blue-600 text-white">
-                        <MudIcon Icon="@Icons.Material.Filled.EmojiEvents" Class="h-8 w-8 mx-auto mb-2" />
-                        <MudText Typo="Typo.h4" Class="text-3xl font-bold">@earnedCount</MudText>
-                        <MudText Typo="Typo.body1" Class="text-sm opacity-90">Earned</MudText>
-                    </MudCardContent>
-                </MudCard>
-                <MudCard>
-                    <MudCardContent Class="p-6 text-center bg-green-600 text-white">
-                        <MudIcon Icon="@Icons.Material.Filled.Star" Class="h-8 w-8 mx-auto mb-2" />
-                        <MudText Typo="Typo.h4" Class="text-3xl font-bold">@totalPoints</MudText>
-                        <MudText Typo="Typo.body1" Class="text-sm opacity-90">Total Points</MudText>
-                    </MudCardContent>
-                </MudCard>
-                <MudCard>
-                    <MudCardContent Class="p-6 text-center bg-cyan-600 text-white">
-                        <MudIcon Icon="@Icons.Material.Filled.TrackChanges" Class="h-8 w-8 mx-auto mb-2" />
-                        <MudText Typo="Typo.h4" Class="text-3xl font-bold">@availableCount</MudText>
-                        <MudText Typo="Typo.body1" Class="text-sm opacity-90">Available</MudText>
-                    </MudCardContent>
-                </MudCard>
-                <MudCard>
-                    <MudCardContent Class="p-6 text-center bg-orange-600 text-white">
-                        <MudIcon Icon="@Icons.Material.Filled.BarChart" Class="h-8 w-8 mx-auto mb-2" />
-                        <MudText Typo="Typo.h4" Class="text-3xl font-bold">#@userRank</MudText>
-                        <MudText Typo="Typo.body1" Class="text-sm opacity-90">Rank</MudText>
-                    </MudCardContent>
-                </MudCard>
-            </div>
-            <MudTabs @bind-ActivePanelIndex="@currentTab" Elevation="2" Rounded="true" Class="space-y-6">
-                <MudTabPanel Text="Earned">
-                    @if (earnedAchievements?.Any() == true)
-                    {
-                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                            @foreach (var achievement in earnedAchievements)
-                            {
-                                <MudCard Class="border-green-200 bg-green-50 dark:bg-green-900 dark:border-green-700 rounded-xl shadow-md">
-                                    <MudCardContent Class="p-6 text-center">
-                                        <div class="w-16 h-16 rounded-full mx-auto mb-4 flex items-center justify-center" style="background-color: @achievement.BadgeColor">
-                                            @if (!string.IsNullOrEmpty(achievement.AchievementIconUrl))
-                                            {
-                                                <img src="@achievement.AchievementIconUrl" alt="@achievement.AchievementName" class="w-10 h-10" />
-                                            }
-                                            else
-                                            {
-                                                <MudIcon Icon="@Icons.Material.Filled.EmojiEvents" Class="h-8 w-8 text-white" />
-                                            }
-                                        </div>
-                                        <MudText Typo="Typo.h5" Class="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-2">@achievement.AchievementName</MudText>
-                                        <MudText Typo="Typo.body2" Class="text-gray-600 dark:text-gray-300 text-sm mb-4">@achievement.AchievementDescription</MudText>
-                                        <div class="flex items-center justify-between">
-                                            <MudChip T="string" Color="Color.Success" Class="bg-green-100 dark:bg-green-800 text-green-800 dark:text-green-200">@achievement.Points pts</MudChip>
-                                            <span class="text-xs text-gray-500 dark:text-gray-400">Earned @achievement.EarnedAt.ToString("MMM dd, yyyy")</span>
-                                        </div>
-                                    </MudCardContent>
-                                </MudCard>
-                            }
-                        </div>
-                    }
-                    else
-                    {
-                        <MudCard Class="text-center py-12 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-md">
-                            <MudCardContent>
-                                <MudIcon Icon="@Icons.Material.Filled.EmojiEvents" Class="h-16 w-16 text-gray-400 mx-auto mb-4" />
-                                <MudText Typo="Typo.h4" Class="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">No achievements earned yet</MudText>
-                                <MudText Typo="Typo.body1" Class="text-gray-600 dark:text-gray-300">Complete courses and activities to earn your first achievement!</MudText>
-                            </MudCardContent>
-                        </MudCard>
-                    }
-                </MudTabPanel>
-                <MudTabPanel Text="Available">
-                    @if (availableAchievements?.Any() == true)
-                    {
-                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        @foreach (var achievement in availableAchievements)
-                        {
-                            <MudCard Class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-md">
-                                <MudCardContent Class="p-6 text-center">
-                                    <div class="w-16 h-16 rounded-full mx-auto mb-4 flex items-center justify-center opacity-50" style="background-color: @achievement.BadgeColor">
-                                        @if (!string.IsNullOrEmpty(achievement.IconUrl))
-                                        {
-                                            <img src="@achievement.IconUrl" alt="@achievement.Name" class="w-10 h-10" />
-                                        }
-                                        else
-                                        {
-                                            <MudIcon Icon="@Icons.Material.Filled.EmojiEvents" Class="h-8 w-8 text-white" />
-                                        }
-                                    </div>
-                                    <MudText Typo="Typo.h5" Class="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-2">@achievement.Name</MudText>
-                                    <MudText Typo="Typo.body2" Class="text-gray-600 dark:text-gray-300 text-sm mb-4">@achievement.Description</MudText>
-                                    <div class="flex items-center justify-between mb-4">
-                                        <MudChip T="string" Color="Color.Primary" Class="text-blue-600 dark:text-blue-200 border-blue-200 dark:border-blue-700">@achievement.Points pts</MudChip>
-                                        <span class="text-xs text-gray-500 dark:text-gray-400">@achievement.Type</span>
-                                    </div>
-                                    @if (achievement.Criteria != null && achievement.Criteria.Count > 0)
-                                    {
-                                        <div class="space-y-2">
-                                            @foreach (var criterion in achievement.Criteria)
-                                            {
-                                                <div class="flex items-center text-xs text-blue-600">
-                                                    <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Class="h-3 w-3 mr-1" />
-                                                    <span>@criterion.Type</span>
-                                                </div>
-                                            }
-                                        </div>
-                                    }
-                                </MudCardContent>
-                            </MudCard>
-                        }
-                        </div>
-                    }
-                    else
-                    {
-                        <MudCard Class="text-center py-12">
-                            <MudCardContent>
-                                <MudIcon Icon="@Icons.Material.Filled.TrackChanges" Class="h-16 w-16 text-gray-400 mx-auto mb-4" />
-                                <MudText Typo="Typo.h4" Class="text-xl font-semibold text-gray-900 mb-2">No available achievements</MudText>
-                                <MudText Typo="Typo.body1" Class="text-gray-600">All achievements have been earned! Great job!</MudText>
-                            </MudCardContent>
-                        </MudCard>
-                    }
-                </MudTabPanel>
-                <MudTabPanel Text="Leaderboard">
-                    <MudCard>
-                        <MudCardHeader>
-                            <MudText Typo="Typo.h5" Class="flex items-center space-x-2">
-                                <MudIcon Icon="@Icons.Material.Filled.BarChart" Class="h-5 w-5" />
-                                <span>Achievement Leaderboard</span>
-                            </MudText>
-                        </MudCardHeader>
-                        <MudCardContent>
-                            @if (leaderboardEntries?.Any() == true)
-                            {
-                                <div class="overflow-x-auto">
-                                    <table class="min-w-full divide-y divide-gray-200">
-                                        <thead class="bg-gray-50">
-                                            <tr>
-                                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Rank</th>
-                                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User</th>
-                                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Points</th>
-                                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Achievements</th>
-                                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Latest Achievement</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody class="bg-white divide-y divide-gray-200">
-                                            @foreach (var entry in leaderboardEntries)
-                                            {
-                                                <tr>
-                                                    <td class="px-6 py-4 whitespace-nowrap">
-                                                        <div class="flex items-center space-x-2">
-                                                            <span class="font-bold">#@entry.Rank</span>
-                                                            @if (entry.Rank <= 3)
-                                                            {
-                                                                <MudIcon Icon="@Icons.Material.Filled.EmojiEvents" Class=$"h-4 w-4 {GetRankIconClass(entry.Rank)}" />
-                                                            }
-                                                        </div>
-                                                    </td>
-                                                    <td class="px-6 py-4 whitespace-nowrap">
-                                                        <div class="flex items-center space-x-3">
-                                                            @if (!string.IsNullOrEmpty(entry.ProfilePictureUrl))
-                                                            {
-                                                                <MudAvatar Image="@entry.ProfilePictureUrl" Class="h-8 w-8" />
-                                                            }
-                                                            else
-                                                            {
-                                                                <MudAvatar Color="Color.Secondary" Class="h-8 w-8">
-                                                                    <MudIcon Icon="@Icons.Material.Filled.Person" Class="h-4 w-4" />
-                                                                </MudAvatar>
-                                                            }
-                                                            <div class="flex items-center space-x-2">
-                                                                <span>@entry.UserName</span>
-                                                                @if (entry.UserId == currentUserId)
-                                                                {
-                                                                    <MudChip T="string" Color="Color.Primary" Size="Size.Small" Class="text-xs">You</MudChip>
-                                                                }
-                                                            </div>
-                                                        </div>
-                                                    </td>
-                                                    <td class="px-6 py-4 whitespace-nowrap font-medium">@entry.TotalPoints</td>
-                                                    <td class="px-6 py-4 whitespace-nowrap">@entry.AchievementCount</td>
-                                                    <td class="px-6 py-4 whitespace-nowrap text-gray-500">@entry.LastUpdated.ToString("MMM dd, yyyy")</td>
-                                                </tr>
-                                            }
-                                        </tbody>
-                                    </table>
-                                </div>
-                            }
-                            else
-                            {
-                                <div class="text-center py-12">
-                                    <MudIcon Icon="@Icons.Material.Filled.BarChart" Class="h-16 w-16 text-gray-400 mx-auto mb-4" />
-                                    <MudText Typo="Typo.h4" Class="text-xl font-semibold text-gray-900 mb-2">No leaderboard data available</MudText>
-                                    <MudText Typo="Typo.body1" Class="text-gray-600">Start earning achievements to appear on the leaderboard!</MudText>
-                                </div>
-                            }
-                        </MudCardContent>
-                    </MudCard>
-                </MudTabPanel>
-            </MudTabs>
-        }
-            <!-- Stats Cards -->
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-                <MudCard>
-                    <MudCardContent Class="p-6 text-center bg-blue-600 text-white">
-                        <MudIcon Icon="@Icons.Material.Filled.EmojiEvents" Class="h-8 w-8 mx-auto mb-2" />
-                        <MudText Typo="Typo.h4" Class="text-3xl font-bold">@earnedCount</MudText>
-                        <MudText Typo="Typo.body1" Class="text-sm opacity-90">Earned</MudText>
-                    </MudCardContent>
-                </MudCard>
-                <MudCard>
-                    <MudCardContent Class="p-6 text-center bg-green-600 text-white">
-                        <MudIcon Icon="@Icons.Material.Filled.Star" Class="h-8 w-8 mx-auto mb-2" />
-                        <MudText Typo="Typo.h4" Class="text-3xl font-bold">@totalPoints</MudText>
-                        <MudText Typo="Typo.body1" Class="text-sm opacity-90">Total Points</MudText>
-                    </MudCardContent>
-                </MudCard>
-                <MudCard>
-                    <MudCardContent Class="p-6 text-center bg-cyan-600 text-white">
-                        <MudIcon Icon="@Icons.Material.Filled.TrackChanges" Class="h-8 w-8 mx-auto mb-2" />
-                        <MudText Typo="Typo.h4" Class="text-3xl font-bold">@availableCount</MudText>
-                        <MudText Typo="Typo.body1" Class="text-sm opacity-90">Available</MudText>
-                    </MudCardContent>
-                </MudCard>
-                <MudCard>
-                    <MudCardContent Class="p-6 text-center bg-orange-600 text-white">
-                        <MudIcon Icon="@Icons.Material.Filled.BarChart" Class="h-8 w-8 mx-auto mb-2" />
-                        <MudText Typo="Typo.h4" Class="text-3xl font-bold">#@userRank</MudText>
-                        <MudText Typo="Typo.body1" Class="text-sm opacity-90">Rank</MudText>
-                    </MudCardContent>
-                </MudCard>
-            </div>
-            <MudTabs @bind-ActivePanelIndex="@currentTab" Elevation="2" Rounded="true" Class="space-y-6">
-            <MudTabPanel Text="Leaderboard">
-                <MudCard>
-                    <MudCardHeader>
-                        <MudText Typo="Typo.h5" Class="flex items-center space-x-2">
-                            <MudIcon Icon="@Icons.Material.Filled.BarChart" Class="h-5 w-5" />
-                            <span>Achievement Leaderboard</span>
-                        </MudText>
-                    </MudCardHeader>
-                    <MudCardContent>
-                        @if (leaderboardEntries?.Any() == true)
-                        {
-                            <div class="overflow-x-auto">
-                                <table class="min-w-full divide-y divide-gray-200">
-                                    <thead class="bg-gray-50">
-                                        <tr>
-                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Rank</th>
-                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User</th>
-                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Points</th>
-                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Achievements</th>
-                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Latest Achievement</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody class="bg-white divide-y divide-gray-200">
-                                        @foreach (var entry in leaderboardEntries)
-                                        {
-                                            <tr>
-                                                <td class="px-6 py-4 whitespace-nowrap">
-                                                    <div class="flex items-center space-x-2">
-                                                        <span class="font-bold">#@entry.Rank</span>
-                                                        @if (entry.Rank <= 3)
-                                                        {
-                                                            <MudIcon Icon="@Icons.Material.Filled.EmojiEvents" Class=$"h-4 w-4 {GetRankIconClass(entry.Rank)}" />
-                                                        }
-                                                    </div>
-                                                </td>
-                                                <td class="px-6 py-4 whitespace-nowrap">
-                                                    <div class="flex items-center space-x-3">
-                                                        @if (!string.IsNullOrEmpty(entry.ProfilePictureUrl))
-                                                        {
-                                                            <MudAvatar Image="@entry.ProfilePictureUrl" Class="h-8 w-8" />
-                                                        }
-                                                        else
-                                                        {
-                                                            <MudAvatar Color="Color.Secondary" Class="h-8 w-8">
-                                                                <MudIcon Icon="@Icons.Material.Filled.Person" Class="h-4 w-4" />
-                                                            </MudAvatar>
-                                                        }
-                                                        <div class="flex items-center space-x-2">
-                                                            <span>@entry.UserName</span>
-                                                            @if (entry.UserId == currentUserId)
-                                                            {
-                                                                <MudChip T="string" Color="Color.Primary" Size="Size.Small" Class="text-xs">You</MudChip>
-                                                            }
-                                                        </div>
-                                                    </div>
-                                                </td>
-                                                <td class="px-6 py-4 whitespace-nowrap font-medium">@entry.TotalPoints</td>
-                                                <td class="px-6 py-4 whitespace-nowrap">@entry.AchievementCount</td>
-                                                <td class="px-6 py-4 whitespace-nowrap text-gray-500">@entry.LastUpdated.ToString("MMM dd, yyyy")</td>
-                                            </tr>
-                                        }
-                                    </tbody>
-                                </table>
-                            </div>
-                        }
-                        else
-                        {
-                            <div class="text-center py-12">
-                                <MudIcon Icon="@Icons.Material.Filled.BarChart" Class="h-16 w-16 text-gray-400 mx-auto mb-4" />
-                                <MudText Typo="Typo.h4" Class="text-xl font-semibold text-gray-900 mb-2">No leaderboard data available</MudText>
-                                <MudText Typo="Typo.body1" Class="text-gray-600">Start earning achievements to appear on the leaderboard!</MudText>
-                            </div>
-                        }
-                    </MudCardContent>
-                </MudCard>
-            </MudTabPanel>
-        </MudTabs>
+@inject ISnackbar Snackbar
+
+<PageTitle>Achievements - LMS</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="min-h-screen bg-gradient-to-br from-yellow-50 to-orange-50 dark:from-yellow-950/20 dark:to-orange-950/20 py-8">
+    <!-- Header Section -->
+    <MudGrid AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Class="mb-8">
+        <MudItem xs="12" md="8">
+            <MudStack>
+                <MudText Typo="Typo.h4" Class="font-bold text-gray-900 dark:text-white">Achievements</MudText>
+                <MudText Typo="Typo.body1" Class="text-gray-500 dark:text-gray-300">Track your progress and celebrate your accomplishments</MudText>
+            </MudStack>
+        </MudItem>
+        <MudItem xs="12" md="4">
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="RefreshAchievements"
+                StartIcon="@Icons.Material.Filled.Refresh" Class="rounded" FullWidth="true">
+                Refresh Achievements
+            </MudButton>
+        </MudItem>
+    </MudGrid>
 
     @if (isLoading)
     {
-        <!-- Skeleton Loader -->
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-            @for (int i = 0; i < 4; i++)
-            {
-                <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="120px" Class="h-32" />
-            }
-        </div>
-        <MudTabs Elevation="2" Rounded="true" Class="space-y-6">
-            <MudTabPanel Text="Earned">
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-4">
-                    @for (int i = 0; i < 6; i++)
+        <!-- Loading State -->
+        <MudGrid Spacing="6">
+            <!-- Stats Cards Skeleton -->
+            <MudItem xs="12">
+                <MudGrid Spacing="4">
+                    @for (int i = 0; i < 4; i++)
                     {
-                        <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="220px" Class="h-64" />
+                        <MudItem xs="12" sm="6" lg="3">
+                            <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="120px" Class="rounded-2xl" />
+                        </MudItem>
                     }
-                </div>
-            </MudTabPanel>
-            <MudTabPanel Text="Available">
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-4">
-                    @for (int i = 0; i < 6; i++)
-                    {
-                        <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="220px" Class="h-64" />
-                    }
-                </div>
-            </MudTabPanel>
-            <MudTabPanel Text="Leaderboard">
-                <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="300px" Class="mt-4 h-80" />
-            </MudTabPanel>
-        </MudTabs>
+                </MudGrid>
+            </MudItem>
+            <!-- Tabs Skeleton -->
+            <MudItem xs="12">
+                <MudStack Spacing="4">
+                    <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="60px" Class="rounded" />
+                    <MudGrid Spacing="4">
+                        @for (int i = 0; i < 6; i++)
+                        {
+                            <MudItem xs="12" sm="6" lg="4">
+                                <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="220px" Class="rounded-2xl" />
+                            </MudItem>
+                        }
+                    </MudGrid>
+                </MudStack>
+            </MudItem>
+        </MudGrid>
     }
     else
     {
         <!-- Stats Cards -->
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-            <MudCard>
-                <MudCardContent Class="p-6 text-center bg-blue-600 text-white">
-                    <MudIcon Icon="@Icons.Material.Filled.EmojiEvents" Class="h-8 w-8 mx-auto mb-2" />
-                    <MudText Typo="Typo.h4" Class="text-3xl font-bold">@earnedCount</MudText>
-                    <MudText Typo="Typo.body1" Class="text-sm opacity-90">Earned</MudText>
-                </MudCardContent>
-            </MudCard>
-            <MudCard>
-                <MudCardContent Class="p-6 text-center bg-green-600 text-white">
-                    <MudIcon Icon="@Icons.Material.Filled.Star" Class="h-8 w-8 mx-auto mb-2" />
-                    <MudText Typo="Typo.h4" Class="text-3xl font-bold">@totalPoints</MudText>
-                    <MudText Typo="Typo.body1" Class="text-sm opacity-90">Total Points</MudText>
-                </MudCardContent>
-            </MudCard>
-            <MudCard>
-                <MudCardContent Class="p-6 text-center bg-cyan-600 text-white">
-                    <MudIcon Icon="@Icons.Material.Filled.TrackChanges" Class="h-8 w-8 mx-auto mb-2" />
-                    <MudText Typo="Typo.h4" Class="text-3xl font-bold">@availableCount</MudText>
-                    <MudText Typo="Typo.body1" Class="text-sm opacity-90">Available</MudText>
-                </MudCardContent>
-            </MudCard>
-            <MudCard>
-                <MudCardContent Class="p-6 text-center bg-orange-600 text-white">
-                    <MudIcon Icon="@Icons.Material.Filled.BarChart" Class="h-8 w-8 mx-auto mb-2" />
-                    <MudText Typo="Typo.h4" Class="text-3xl font-bold">#@userRank</MudText>
-                    <MudText Typo="Typo.body1" Class="text-sm opacity-90">Rank</MudText>
-                </MudCardContent>
-            </MudCard>
-        </div>
-    }
+        <MudGrid Spacing="4" Class="mb-8">
+            <!-- Earned Achievements Card -->
+            <MudItem xs="12" sm="6" lg="3">
+                <MudPaper Elevation="3" Class="rounded-2xl overflow-hidden bg-gradient-to-r from-blue-500 to-blue-600 text-white">
+                    <MudStack AlignItems="AlignItems.Center" Class="p-6">
+                        <MudIcon Icon="@Icons.Material.Filled.EmojiEvents" Size="Size.Large" />
+                        <MudText Typo="Typo.h4" Class="font-bold">@earnedCount</MudText>
+                        <MudText Typo="Typo.body2" Class="opacity-90">Earned</MudText>
+                    </MudStack>
+                </MudPaper>
+            </MudItem>
 
+            <!-- Total Points Card -->
+            <MudItem xs="12" sm="6" lg="3">
+                <MudPaper Elevation="3" Class="rounded-2xl overflow-hidden bg-gradient-to-r from-green-500 to-green-600 text-white">
+                    <MudStack AlignItems="AlignItems.Center" Class="p-6">
+                        <MudIcon Icon="@Icons.Material.Filled.Star" Size="Size.Large" />
+                        <MudText Typo="Typo.h4" Class="font-bold">@totalPoints</MudText>
+                        <MudText Typo="Typo.body2" Class="opacity-90">Total Points</MudText>
+                    </MudStack>
+                </MudPaper>
+            </MudItem>
+
+            <!-- Available Achievements Card -->
+            <MudItem xs="12" sm="6" lg="3">
+                <MudPaper Elevation="3" Class="rounded-2xl overflow-hidden bg-gradient-to-r from-cyan-500 to-cyan-600 text-white">
+                    <MudStack AlignItems="AlignItems.Center" Class="p-6">
+                        <MudIcon Icon="@Icons.Material.Filled.TrackChanges" Size="Size.Large" />
+                        <MudText Typo="Typo.h4" Class="font-bold">@availableCount</MudText>
+                        <MudText Typo="Typo.body2" Class="opacity-90">Available</MudText>
+                    </MudStack>
+                </MudPaper>
+            </MudItem>
+
+            <!-- User Rank Card -->
+            <MudItem xs="12" sm="6" lg="3">
+                <MudPaper Elevation="3" Class="rounded-2xl overflow-hidden bg-gradient-to-r from-orange-500 to-orange-600 text-white">
+                    <MudStack AlignItems="AlignItems.Center" Class="p-6">
+                        <MudIcon Icon="@Icons.Material.Filled.BarChart" Size="Size.Large" />
+                        <MudText Typo="Typo.h4" Class="font-bold">#@userRank</MudText>
+                        <MudText Typo="Typo.body2" Class="opacity-90">Rank</MudText>
+                    </MudStack>
+                </MudPaper>
+            </MudItem>
+        </MudGrid>
+
+        <!-- Achievements Tabs -->
+        <MudTabs @bind-ActivePanelIndex="@currentTab" Elevation="2" Rounded="true" Class="bg-white dark:bg-gray-800">
+            <!-- Earned Achievements Tab -->
+            <MudTabPanel Text="Earned Achievements" Icon="@Icons.Material.Filled.EmojiEvents">
+                <MudStack Spacing="4" Class="p-6">
+                    @if (earnedAchievements?.Any() == true)
+                    {
+                        <MudGrid Spacing="4">
+                            @foreach (var achievement in earnedAchievements)
+                            {
+                                <MudItem xs="12" sm="6" lg="4">
+                                    <MudPaper Elevation="3" Class="rounded-2xl p-6 border-l-4 border-l-green-500 bg-green-50 dark:bg-green-950/20">
+                                        <MudStack AlignItems="AlignItems.Center" Spacing="3">
+                                            <MudAvatar Size="Size.Large" Class="mud-elevation-4" Style="@($"background: {achievement.BadgeColor}")">
+                                                @if (!string.IsNullOrEmpty(achievement.AchievementIconUrl))
+                                                {
+                                                    <MudImage Src="@achievement.AchievementIconUrl" Alt="@achievement.AchievementName" 
+                                                        ObjectFit="ObjectFit.Cover" Height="40" Width="40" />
+                                                }
+                                                else
+                                                {
+                                                    <MudIcon Icon="@Icons.Material.Filled.EmojiEvents" Size="Size.Medium" Color="Color.Inherit" />
+                                                }
+                                            </MudAvatar>
+                                            
+                                            <MudStack AlignItems="AlignItems.Center" Spacing="1">
+                                                <MudText Typo="Typo.h6" Class="font-bold text-center">@achievement.AchievementName</MudText>
+                                                <MudText Typo="Typo.body2" Class="text-gray-600 dark:text-gray-300 text-center">
+                                                    @achievement.AchievementDescription
+                                                </MudText>
+                                            </MudStack>
+
+                                            <MudStack Row Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center" Class="w-full">
+                                                <MudChip T="string" Text="@($"{achievement.Points} pts")" Color="Color.Success" 
+                                                    Variant="Variant.Filled" Class="rounded" />
+                                                <MudText Typo="Typo.caption" Class="text-gray-500">
+                                                    @achievement.EarnedAt.ToString("MMM dd, yyyy")
+                                                </MudText>
+                                            </MudStack>
+                                        </MudStack>
+                                    </MudPaper>
+                                </MudItem>
+                            }
+                        </MudGrid>
+                    }
+                    else
+                    {
+                        <MudPaper Elevation="2" Class="rounded-2xl p-12">
+                            <MudStack Spacing="4" AlignItems="AlignItems.Center">
+                                <MudIcon Icon="@Icons.Material.Filled.EmojiEvents" Size="Size.Large" Class="text-gray-400" />
+                                <MudText Typo="Typo.h5" Class="font-bold text-gray-500">No achievements earned yet</MudText>
+                                <MudText Typo="Typo.body1" Class="text-gray-400 text-center">
+                                    Complete courses and activities to earn your first achievement!
+                                </MudText>
+                            </MudStack>
+                        </MudPaper>
+                    }
+                </MudStack>
+            </MudTabPanel>
+
+            <!-- Available Achievements Tab -->
+            <MudTabPanel Text="Available" Icon="@Icons.Material.Filled.TrackChanges">
+                <MudStack Spacing="4" Class="p-6">
+                    @if (availableAchievements?.Any() == true)
+                    {
+                        <MudGrid Spacing="4">
+                            @foreach (var achievement in availableAchievements)
+                            {
+                                <MudItem xs="12" sm="6" lg="4">
+                                    <MudPaper Elevation="2" Class="rounded-2xl p-6 border border-gray-200 dark:border-gray-700">
+                                        <MudStack AlignItems="AlignItems.Center" Spacing="3">
+                                            <MudAvatar Size="Size.Large" Class="opacity-50" Style="@($"background: {achievement.BadgeColor}")">
+                                                @if (!string.IsNullOrEmpty(achievement.IconUrl))
+                                                {
+                                                    <MudImage Src="@achievement.IconUrl" Alt="@achievement.Name" 
+                                                        ObjectFit="ObjectFit.Cover" Height="40" Width="40" />
+                                                }
+                                                else
+                                                {
+                                                    <MudIcon Icon="@Icons.Material.Filled.EmojiEvents" Size="Size.Medium" Color="Color.Inherit" />
+                                                }
+                                            </MudAvatar>
+                                            
+                                            <MudStack AlignItems="AlignItems.Center" Spacing="1">
+                                                <MudText Typo="Typo.h6" Class="font-bold text-center">@achievement.Name</MudText>
+                                                <MudText Typo="Typo.body2" Class="text-gray-600 dark:text-gray-300 text-center">
+                                                    @achievement.Description
+                                                </MudText>
+                                            </MudStack>
+
+                                            <MudStack Row Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center" Class="w-full">
+                                                <MudChip T="string" Text="@($"{achievement.Points} pts")" Color="Color.Primary" 
+                                                    Variant="Variant.Outlined" Class="rounded" />
+                                                <MudChip T="string" Text="@achievement.Type" Color="Color.Secondary" 
+                                                    Variant="Variant.Text" Class="rounded" />
+                                            </MudStack>
+
+                                            @if (achievement.Criteria?.Any() == true)
+                                            {
+                                                <MudStack Spacing="2" Class="w-full">
+                                                    <MudText Typo="Typo.subtitle2" Class="font-medium">Requirements:</MudText>
+                                                    @foreach (var criterion in achievement.Criteria)
+                                                    {
+                                                        <MudStack Row AlignItems="AlignItems.Center" Spacing="1">
+                                                            <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Size="Size.Small" Color="Color.Primary" />
+                                                            <MudText Typo="Typo.caption" Class="text-blue-600 dark:text-blue-400">
+                                                                @criterion.Type
+                                                            </MudText>
+                                                        </MudStack>
+                                                    }
+                                                </MudStack>
+                                            }
+                                        </MudStack>
+                                    </MudPaper>
+                                </MudItem>
+                            }
+                        </MudGrid>
+                    }
+                    else
+                    {
+                        <MudPaper Elevation="2" Class="rounded-2xl p-12">
+                            <MudStack Spacing="4" AlignItems="AlignItems.Center">
+                                <MudIcon Icon="@Icons.Material.Filled.TrackChanges" Size="Size.Large" Class="text-gray-400" />
+                                <MudText Typo="Typo.h5" Class="font-bold text-gray-500">No available achievements</MudText>
+                                <MudText Typo="Typo.body1" Class="text-gray-400 text-center">
+                                    All achievements have been earned! Great job!
+                                </MudText>
+                            </MudStack>
+                        </MudPaper>
+                    }
+                </MudStack>
+            </MudTabPanel>
+
+            <!-- Leaderboard Tab -->
+            <MudTabPanel Text="Leaderboard" Icon="@Icons.Material.Filled.BarChart">
+                <MudStack Spacing="4" Class="p-6">
+                    @if (leaderboardEntries?.Any() == true)
+                    {
+                        <MudTable Items="@leaderboardEntries" Hover="true" Striped="true" 
+                            Class="rounded-2xl overflow-hidden" Elevation="2">
+                            <HeaderContent>
+                                <MudTh><MudText Typo="Typo.subtitle2" Class="font-bold">Rank</MudText></MudTh>
+                                <MudTh><MudText Typo="Typo.subtitle2" Class="font-bold">User</MudText></MudTh>
+                                <MudTh><MudText Typo="Typo.subtitle2" Class="font-bold">Total Points</MudText></MudTh>
+                                <MudTh><MudText Typo="Typo.subtitle2" Class="font-bold">Achievements</MudText></MudTh>
+                                <MudTh><MudText Typo="Typo.subtitle2" Class="font-bold">Last Updated</MudText></MudTh>
+                            </HeaderContent>
+                            <RowTemplate>
+                                <MudTd>
+                                    <MudStack Row AlignItems="AlignItems.Center" Spacing="2">
+                                        <MudText Typo="Typo.body1" Class="font-bold">#@context.Rank</MudText>
+                                        @if (context.Rank <= 3)
+                                        {
+                                            <MudIcon Icon="@Icons.Material.Filled.EmojiEvents" 
+                                                Color="@GetRankIconColor(context.Rank)" Size="Size.Small" />
+                                        }
+                                    </MudStack>
+                                </MudTd>
+                                <MudTd>
+                                    <MudStack Row AlignItems="AlignItems.Center" Spacing="2">
+                                        <MudAvatar Size="Size.Small" Color="Color.Primary">
+                                            @context.UserName?.Substring(0, 1).ToUpper()
+                                        </MudAvatar>
+                                        <MudText Typo="Typo.body1">@context.UserName</MudText>
+                                    </MudStack>
+                                </MudTd>
+                                <MudTd>
+                                    <MudChip T="string" Text="@context.TotalPoints.ToString()" Color="Color.Success" 
+                                        Variant="Variant.Filled" Class="rounded" />
+                                </MudTd>
+                                <MudTd>
+                                    <MudText Typo="Typo.body1">@context.AchievementCount</MudText>
+                                </MudTd>
+                                <MudTd>
+                                    <MudText Typo="Typo.body2" Class="text-gray-600">
+                                        @context.LastUpdated.ToString("MMM dd, yyyy")
+                                    </MudText>
+                                </MudTd>
+                            </RowTemplate>
+                        </MudTable>
+                    }
+                    else
+                    {
+                        <MudPaper Elevation="2" Class="rounded-2xl p-12">
+                            <MudStack Spacing="4" AlignItems="AlignItems.Center">
+                                <MudIcon Icon="@Icons.Material.Filled.BarChart" Size="Size.Large" Class="text-gray-400" />
+                                <MudText Typo="Typo.h5" Class="font-bold text-gray-500">No leaderboard data available</MudText>
+                                <MudText Typo="Typo.body1" Class="text-gray-400 text-center">
+                                    Leaderboard will appear as users earn achievements.
+                                </MudText>
+                            </MudStack>
+                        </MudPaper>
+                    }
+                </MudStack>
+            </MudTabPanel>
+        </MudTabs>
+    }
+</MudContainer>
 
 @code {
     private int currentTab = 0;
@@ -443,31 +331,26 @@
         try
         {
             isLoading = true;
+            StateHasChanged();
+
             if (!string.IsNullOrEmpty(currentUserId))
             {
                 try
                 {
-                    // Load user achievements via repository
-                    var userAchievements = await AchievementRepository.GetUserAchievementsAsync(currentUserId);
-                    earnedAchievements = userAchievements ?? new List<UserAchievementModel>();
-                    earnedCount = earnedAchievements?.Count ?? 0;
-                    totalPoints = earnedAchievements?.Sum(a => a.Points) ?? 0;
-
-                    // Load all achievements to find available ones
-                    var allAchievements = await AchievementRepository.GetAllAchievementsAsync();
-                    var earnedIds = earnedAchievements?.Select(a => a.AchievementId).ToHashSet() ?? new HashSet<int>();
-                    availableAchievements = allAchievements?.Where(a => !earnedIds.Contains(a.Id)).ToList() ?? new List<AchievementModel>();
-                    availableCount = availableAchievements?.Count ?? 0;
-
-                    // Load leaderboard data via repository
-                    leaderboardEntries = await LeaderboardRepository.GetAchievementLeaderboardAsync();
-
-                    // Find user rank via repository
-                    userRank = await LeaderboardRepository.GetUserAchievementRankAsync(currentUserId);
+                    // Load user achievements data via repository
+                    var userAchievementsData = await AchievementRepository.GetUserAchievementsDataAsync(currentUserId);
+                    
+                    earnedAchievements = userAchievementsData.EarnedAchievements;
+                    availableAchievements = userAchievementsData.AvailableAchievements;
+                    leaderboardEntries = userAchievementsData.LeaderboardEntries;
+                    totalPoints = userAchievementsData.TotalPoints;
+                    earnedCount = userAchievementsData.EarnedCount;
+                    availableCount = userAchievementsData.AvailableCount;
+                    userRank = userAchievementsData.UserRank;
                 }
                 catch
                 {
-                    // If any repository calls fail, load dummy data
+                    // If repository call fails, load dummy data
                     LoadDummyData();
                 }
             }
@@ -477,15 +360,22 @@
                 LoadDummyData();
             }
         }
-        catch (Exception)
+        catch (Exception ex)
         {
-            // Snackbar.Add($"Error loading achievements"); // TODO: Fix ISnackbar integration if needed
+            Snackbar.Add($"Error loading achievements: {ex.Message}", Severity.Error);
             LoadDummyData(); // Fall back to dummy data on exception
         }
         finally
         {
             isLoading = false;
+            StateHasChanged();
         }
+    }
+
+    private async Task RefreshAchievements()
+    {
+        await LoadAchievementData();
+        Snackbar.Add("Achievements refreshed successfully", Severity.Success);
     }
 
     private void LoadDummyData()
@@ -548,57 +438,58 @@
     private void LoadDummyAvailableAchievements()
     {
         availableAchievements = new List<AchievementModel>
-    {
-        new AchievementModel
         {
-            Id = 104,
-            Name = "Course Creator",
-            Description = "Create your first course",
-            IconUrl = "/images/achievements/course-creator.png",
-            Points = 150,
-            BadgeColor = "#6f42c1",
-            Type = "Creation",
-            Criteria = new List<AchievementCriteria>
+            new AchievementModel
             {
-                new AchievementCriteria { Type = CriteriaType.CourseCompletion }
+                Id = 104,
+                Name = "Course Creator",
+                Description = "Create your first course",
+                IconUrl = "/images/achievements/course-creator.png",
+                Points = 150,
+                BadgeColor = "#6f42c1",
+                Type = "Creation",
+                Criteria = new List<LMS.Data.DTOs.AchievementCriteria>
+                {
+                    new LMS.Data.DTOs.AchievementCriteria { Type = LMS.Data.DTOs.CriteriaType.CourseCompletion }
+                },
+                IsActive = true
             },
-            IsActive = true
-        },
-        new AchievementModel
-        {
-            Id = 105,
-            Name = "Community Contributor",
-            Description = "Post 10 helpful comments in discussions",
-            IconUrl = "/images/achievements/contributor.png",
-            Points = 100,
-            BadgeColor = "#20c997",
-            Type = "Community",
-            Criteria = new List<AchievementCriteria>
+            new AchievementModel
             {
-                new AchievementCriteria { Type = CriteriaType.Participation },
-                new AchievementCriteria { Type = CriteriaType.Social }
+                Id = 105,
+                Name = "Community Contributor",
+                Description = "Post 10 helpful comments in discussions",
+                IconUrl = "/images/achievements/contributor.png",
+                Points = 100,
+                BadgeColor = "#20c997",
+                Type = "Community",
+                Criteria = new List<LMS.Data.DTOs.AchievementCriteria>
+                {
+                    new LMS.Data.DTOs.AchievementCriteria { Type = LMS.Data.DTOs.CriteriaType.Participation },
+                    new LMS.Data.DTOs.AchievementCriteria { Type = LMS.Data.DTOs.CriteriaType.Social }
+                },
+                IsActive = true
             },
-            IsActive = true
-        },
-        new AchievementModel
-        {
-            Id = 106,
-            Name = "Advanced Learner",
-            Description = "Complete 5 advanced courses",
-            IconUrl = null,
-            Points = 200,
-            BadgeColor = "#dc3545",
-            Type = "Learning",
-            Criteria = new List<AchievementCriteria>
+            new AchievementModel
             {
-                new AchievementCriteria { Type = CriteriaType.CourseCompletion }
-            },
-            IsActive = true
-        }
-    };
+                Id = 106,
+                Name = "Advanced Learner",
+                Description = "Complete 5 advanced courses",
+                IconUrl = null,
+                Points = 200,
+                BadgeColor = "#dc3545",
+                Type = "Learning",
+                Criteria = new List<LMS.Data.DTOs.AchievementCriteria>
+                {
+                    new LMS.Data.DTOs.AchievementCriteria { Type = LMS.Data.DTOs.CriteriaType.CourseCompletion }
+                },
+                IsActive = true
+            }
+        };
 
         availableCount = availableAchievements.Count;
     }
+
     private void LoadDummyLeaderboardEntries()
     {
         leaderboardEntries = new List<LeaderboardEntryModel>
@@ -635,40 +526,15 @@
                 TotalPoints = 225,
                 AchievementCount = 3,
                 LastUpdated = DateTime.Now.AddDays(-2)
-            },
-            new LeaderboardEntryModel
-            {
-                Rank = 4,
-                UserId = "user789",
-                UserName = "StudyBuddy",
-                UserEmail = "buddy@example.com",
-                ProfilePictureUrl = "/images/profiles/user3.jpg",
-                TotalPoints = 180,
-                AchievementCount = 3,
-                LastUpdated = DateTime.Now.AddDays(-5)
-            },
-            new LeaderboardEntryModel
-            {
-                Rank = 5,
-                UserId = "user321",
-                UserName = "CourseExplorer",
-                UserEmail = "explorer@example.com",
-                ProfilePictureUrl = null,
-                TotalPoints = 125,
-                AchievementCount = 2,
-                LastUpdated = DateTime.Now.AddDays(-7)
             }
         };
     }
 
-    private string GetRankIconClass(int rank)
+    private MudBlazor.Color GetRankIconColor(int rank) => rank switch
     {
-        return rank switch
-        {
-            1 => "text-warning ms-1",
-            2 => "text-secondary ms-1",
-            3 => "text-danger ms-1",
-            _ => "ms-1"
-        };
-    }
+        1 => MudBlazor.Color.Warning,  // Gold
+        2 => MudBlazor.Color.Default,  // Silver  
+        3 => MudBlazor.Color.Error,    // Bronze
+        _ => MudBlazor.Color.Default
+    };
 }

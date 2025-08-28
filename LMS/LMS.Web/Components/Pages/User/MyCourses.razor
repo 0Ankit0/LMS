@@ -13,36 +13,36 @@
 
 
 
-<div class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-950/20 dark:to-indigo-950/20 border-b border-border py-8">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6">
-        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
-            <div class="flex items-center gap-3">
-                <div class="p-3 bg-blue-500 rounded-xl shadow-lg">
-                    <MudIcon Icon="@Icons.Material.Filled.Book" Class="h-6 w-6 text-white" />
-                </div>
-                <h1 class="text-2xl font-bold text-gray-900 dark:text-white">My Courses</h1>
-            </div>
-            <MudButtonGroup Color="Color.Primary" Variant="Variant.Outlined" Class="flex gap-2">
-                <MudButton OnClick='() => FilterCourses("all")' Variant="@(currentFilter == "all" ? Variant.Filled : Variant.Outlined)" Class="rounded-md">All</MudButton>
-                <MudButton OnClick='() => FilterCourses("active")' Variant="@(currentFilter == "active" ? Variant.Filled : Variant.Outlined)" Class="rounded-md">Active</MudButton>
-                <MudButton OnClick='() => FilterCourses("completed")' Variant="@(currentFilter == "completed" ? Variant.Filled : Variant.Outlined)" Class="rounded-md">Completed</MudButton>
-            </MudButtonGroup>
-        </div>
+<MudContainer MaxWidth="MaxWidth.Large" Class="mx-auto px-4 sm:px-6 py-8 min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-950/20 dark:to-indigo-950/20 border-b border-border">
+    <MudStack Direction="Row" Spacing="3" Class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
+        <MudStack Direction="Row" Spacing="2" Class="flex items-center gap-3">
+            <MudAvatar Icon="@Icons.Material.Filled.Book" Size="Size.Large" Class="bg-blue-500 text-white shadow-lg" />
+            <MudText Typo="Typo.h4" Class="font-bold text-gray-900 dark:text-white">My Courses</MudText>
+        </MudStack>
+        <MudButtonGroup Color="Color.Primary" Variant="Variant.Outlined" Class="flex gap-2">
+            <MudButton OnClick='() => FilterCourses("all")' Variant="@(currentFilter == "all" ? Variant.Filled : Variant.Outlined)" Class="rounded-md">All</MudButton>
+            <MudButton OnClick='() => FilterCourses("active")' Variant="@(currentFilter == "active" ? Variant.Filled : Variant.Outlined)" Class="rounded-md">Active</MudButton>
+            <MudButton OnClick='() => FilterCourses("completed")' Variant="@(currentFilter == "completed" ? Variant.Filled : Variant.Outlined)" Class="rounded-md">Completed</MudButton>
+        </MudButtonGroup>
+    </MudStack>
 
-        @if (isLoading)
-        {
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                @for (int i = 0; i < 6; i++)
-                {
+    @if (isLoading)
+    {
+        <MudGrid GutterSize="24">
+            @for (int i = 0; i < 6; i++)
+            {
+                <MudItem xs="12" md="6" lg="4">
                     <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="350px" Class="h-80 w-full rounded-2xl bg-gray-200 dark:bg-gray-700" />
-                }
-            </div>
-        }
-        else if (filteredEnrollments?.Any() == true)
-        {
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                @foreach (var enrollment in filteredEnrollments)
-                {
+                </MudItem>
+            }
+        </MudGrid>
+    }
+    else if (filteredEnrollments?.Any() == true)
+    {
+        <MudGrid GutterSize="24">
+            @foreach (var enrollment in filteredEnrollments)
+            {
+                <MudItem xs="12" md="6" lg="4">
                     <MudCard Elevation="2" Class="flex flex-col h-full rounded-2xl shadow-lg bg-white dark:bg-gray-900">
                         <MudCardMedia Image="@enrollment.CourseThumbnailUrl" Style="height: 200px; object-fit: cover;" Alt="@enrollment.CourseTitle" Class="rounded-t-2xl" />
                         <MudCardContent Class="flex-1 flex flex-col p-6">
@@ -98,19 +98,19 @@
                             }
                         </MudCardActions>
                     </MudCard>
-                }
-            </div>
-        }
-        else
-        {
-            <div class="flex flex-col items-center justify-center py-16">
-                <MudIcon Icon="@Icons.Material.Filled.Book" Size="Size.Large" Class="text-gray-400 mb-3" />
-                <MudText Typo="Typo.h5" Class="text-gray-500">No courses found</MudText>
-                <MudText Typo="Typo.body1" Class="text-gray-400 mb-4">@GetEmptyStateMessage()</MudText>
-                <MudButton Color="Color.Primary" Href="/courses" StartIcon="@Icons.Material.Filled.Search" Class="rounded">Browse Courses</MudButton>
-            </div>
-        }
-    </div>
+                </MudItem>
+            }
+        </MudGrid>
+    }
+    else
+    {
+        <MudStack Spacing="2" Class="flex flex-col items-center justify-center py-16">
+            <MudIcon Icon="@Icons.Material.Filled.Book" Size="Size.Large" Class="text-gray-400 mb-3" />
+            <MudText Typo="Typo.h5" Class="text-gray-500">No courses found</MudText>
+            <MudText Typo="Typo.body1" Class="text-gray-400 mb-4">@GetEmptyStateMessage()</MudText>
+            <MudButton Color="Color.Primary" Href="/courses" StartIcon="@Icons.Material.Filled.Search" Class="rounded">Browse Courses</MudButton>
+        </MudStack>
+    }
 
     <!-- Unenroll Confirmation Modal -->
     <MudDialog @bind-IsVisible="@isUnenrollModalVisible" Options="@dialogOptions">
@@ -129,12 +129,10 @@
         </DialogContent>
         <DialogActions>
             <MudButton Color="Color.Secondary" OnClick="HideUnenrollModal" Class="rounded">Cancel</MudButton>
-            <MudButton Color="Color.Error" OnClick="ConfirmUnenroll" Class="rounded">
-                Unenroll
-            </MudButton>
+            <MudButton Color="Color.Error" OnClick="ConfirmUnenroll" Class="rounded">Unenroll</MudButton>
         </DialogActions>
     </MudDialog>
-</div>
+</MudContainer>
 
 
 

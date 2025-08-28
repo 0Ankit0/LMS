@@ -12,101 +12,98 @@
 <PageTitle>Messages - LMS</PageTitle>
 
 
-<div class="min-h-screen bg-gradient-to-br from-indigo-50 to-blue-50 dark:from-indigo-950/20 dark:to-blue-950/20 border-b border-border">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 py-8">
-        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
-            <div class="flex items-center gap-3">
-                <div class="p-3 bg-indigo-500 rounded-xl shadow-lg">
-                    <MudIcon Icon="@Icons.Material.Filled.Mail" Class="h-6 w-6 text-white" />
-                </div>
-                <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Messages</h1>
-            </div>
-            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="ShowComposeModal" Class="rounded flex items-center gap-2">
-                <MudIcon Icon="@Icons.Material.Filled.Add" Class="mr-1" />Compose
-            </MudButton>
-        </div>
+<MudContainer MaxWidth="MaxWidth.Large" Class="mx-auto px-4 sm:px-6 py-8 min-h-screen bg-gradient-to-br from-indigo-50 to-blue-50 dark:from-indigo-950/20 dark:to-blue-950/20 border-b border-border">
+    <MudStack Direction="Row" Spacing="3" Class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
+        <MudStack Direction="Row" Spacing="2" Class="flex items-center gap-3">
+            <MudAvatar Icon="@Icons.Material.Filled.Mail" Size="Size.Large" Class="bg-indigo-500 text-white shadow-lg" />
+            <MudText Typo="Typo.h4" Class="font-bold text-gray-900 dark:text-white">Messages</MudText>
+        </MudStack>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="ShowComposeModal" Class="rounded flex items-center gap-2">
+            <MudIcon Icon="@Icons.Material.Filled.Add" Class="mr-1" />Compose
+        </MudButton>
+    </MudStack>
 
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <!-- Message List -->
-            <div class="md:col-span-1">
-                <MudPaper Elevation="2" Class="rounded-2xl shadow-lg bg-white dark:bg-gray-900 p-4">
-                    <MudButtonGroup Color="Color.Primary" Variant="Variant.Outlined" FullWidth="true" Class="mb-4 flex gap-2">
-                        <MudButton OnClick='() => SwitchFolder("inbox")' Variant="@(currentFolder == "inbox" ? Variant.Filled : Variant.Outlined)" Class="rounded flex items-center gap-2">
-                            <MudIcon Icon="@Icons.Material.Filled.Inbox" Class="mr-1" />Inbox (@unreadCount)
-                        </MudButton>
-                        <MudButton OnClick='() => SwitchFolder("sent")' Variant="@(currentFolder == "sent" ? Variant.Filled : Variant.Outlined)" Class="rounded flex items-center gap-2">
-                            <MudIcon Icon="@Icons.Material.Filled.Send" Class="mr-1" />Sent
-                        </MudButton>
-                    </MudButtonGroup>
+    <MudGrid GutterSize="24">
+        <!-- Message List -->
+        <MudItem xs="12" md="4">
+            <MudCard Elevation="2" Class="rounded-2xl shadow-lg bg-white dark:bg-gray-900 p-4">
+                <MudButtonGroup Color="Color.Primary" Variant="Variant.Outlined" FullWidth="true" Class="mb-4 flex gap-2">
+                    <MudButton OnClick='() => SwitchFolder("inbox")' Variant="@(currentFolder == "inbox" ? Variant.Filled : Variant.Outlined)" Class="rounded flex items-center gap-2">
+                        <MudIcon Icon="@Icons.Material.Filled.Inbox" Class="mr-1" />Inbox (@unreadCount)
+                    </MudButton>
+                    <MudButton OnClick='() => SwitchFolder("sent")' Variant="@(currentFolder == "sent" ? Variant.Filled : Variant.Outlined)" Class="rounded flex items-center gap-2">
+                        <MudIcon Icon="@Icons.Material.Filled.Send" Class="mr-1" />Sent
+                    </MudButton>
+                </MudButtonGroup>
 
-                    @if (isLoadingMessages)
-                    {
-                        <div class="flex justify-center items-center py-6">
-                            <MudProgressCircular Indeterminate="true" Color="Color.Primary" />
-                        </div>
-                    }
-                    else if (filteredMessages?.Any() == true)
-                    {
-                        <MudList T="MessageModel" Class="divide-y divide-gray-100 dark:divide-gray-800">
-                            @foreach (var message in filteredMessages)
-                            {
-                                var itemClass = "px-2 py-3 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 rounded transition-all ";
-                                if (selectedMessage?.Id == message.Id)
-                                    itemClass += "bg-indigo-100 dark:bg-indigo-900 ";
-                                else if (!message.IsRead && currentFolder == "inbox")
-                                    itemClass += "font-bold text-indigo-600 ";
-                                <MudListItem T="MessageModel" OnClick="() => SelectMessage(message)" Class="@itemClass">
-                                    <div class="flex justify-between items-center">
-                                        <MudText Typo="Typo.subtitle1" Class="truncate">
-                                            @if (currentFolder == "inbox")
-                                            {
-                                                @message.FromUserName
-                                            }
-                                            else
-                                            {
-                                                @message.ToUserName
-                                            }
-                                        </MudText>
-                                        <MudText Typo="Typo.caption" Class="text-xs text-gray-400">@message.SentAt.ToString("MMM dd")</MudText>
-                                    </div>
-                                    <MudText Typo="Typo.body2" Class="truncate">@message.Subject</MudText>
-                                    <MudText Typo="Typo.caption" Class="text-gray-400 truncate">
-                                        @if (message.Content.Length > 60)
+                @if (isLoadingMessages)
+                {
+                    <MudStack Spacing="2" Class="flex justify-center items-center py-6">
+                        <MudProgressCircular Indeterminate="true" Color="Color.Primary" />
+                    </MudStack>
+                }
+                else if (filteredMessages?.Any() == true)
+                {
+                    <MudList T="MessageModel" Class="divide-y divide-gray-100 dark:divide-gray-800">
+                        @foreach (var message in filteredMessages)
+                        {
+                            var itemClass = "px-2 py-3 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 rounded transition-all ";
+                            if (selectedMessage?.Id == message.Id)
+                                itemClass += "bg-indigo-100 dark:bg-indigo-900 ";
+                            else if (!message.IsRead && currentFolder == "inbox")
+                                itemClass += "font-bold text-indigo-600 ";
+                            <MudListItem T="MessageModel" OnClick="() => SelectMessage(message)" Class="@itemClass">
+                                <MudStack Direction="Row" Spacing="2" Class="flex justify-between items-center">
+                                    <MudText Typo="Typo.subtitle1" Class="truncate">
+                                        @if (currentFolder == "inbox")
                                         {
-                                            @(message.Content.Substring(0, 60) + "...")
+                                            @message.FromUserName
                                         }
                                         else
                                         {
-                                            @message.Content
+                                            @message.ToUserName
                                         }
                                     </MudText>
-                                    <div class="flex items-center gap-2 mt-1">
-                                        @if (!message.IsRead && currentFolder == "inbox")
-                                        {
-                                            <MudChip T="string" Color="Color.Primary" Size="Size.Small" Class="rounded">New</MudChip>
-                                        }
-                                        @if (GetMessagePriorityIconName(message.Priority) is string iconName)
-                                        {
-                                            <MudIcon Icon="@iconName" Class="text-gray-400" />
-                                        }
-                                    </div>
-                                </MudListItem>
-                            }
-                        </MudList>
-                    }
-                    else
-                    {
-                        <div class="flex flex-col items-center justify-center py-16">
-                            <MudIcon Icon="@Icons.Material.Filled.Inbox" Size="Size.Large" Class="text-gray-400 mb-3" />
-                            <MudText Typo="Typo.h5" Class="text-gray-500">No messages in @currentFolder</MudText>
-                        </div>
-                    }
-                </MudPaper>
-            </div>
+                                    <MudText Typo="Typo.caption" Class="text-xs text-gray-400">@message.SentAt.ToString("MMM dd")</MudText>
+                                </MudStack>
+                                <MudText Typo="Typo.body2" Class="truncate">@message.Subject</MudText>
+                                <MudText Typo="Typo.caption" Class="text-gray-400 truncate">
+                                    @if (message.Content.Length > 60)
+                                    {
+                                        @(message.Content.Substring(0, 60) + "...")
+                                    }
+                                    else
+                                    {
+                                        @message.Content
+                                    }
+                                </MudText>
+                                <MudStack Direction="Row" Spacing="1" Class="flex items-center gap-2 mt-1">
+                                    @if (!message.IsRead && currentFolder == "inbox")
+                                    {
+                                        <MudChip T="string" Color="Color.Primary" Size="Size.Small" Class="rounded">New</MudChip>
+                                    }
+                                    @if (GetMessagePriorityIconName(message.Priority) is string iconName)
+                                    {
+                                        <MudIcon Icon="@iconName" Class="text-gray-400" />
+                                    }
+                                </MudStack>
+                            </MudListItem>
+                        }
+                    </MudList>
+                }
+                else
+                {
+                    <MudStack Spacing="2" Class="flex flex-col items-center justify-center py-16">
+                        <MudIcon Icon="@Icons.Material.Filled.Inbox" Size="Size.Large" Class="text-gray-400 mb-3" />
+                        <MudText Typo="Typo.h5" Class="text-gray-500">No messages in @currentFolder</MudText>
+                    </MudStack>
+                }
+            </MudCard>
+        </MudItem>
 
-            <!-- Message Content -->
-            <div class="md:col-span-2">
-                <MudPaper Elevation="2" Class="rounded-2xl shadow-lg bg-white dark:bg-gray-900 p-6 h-full min-h-[400px] flex flex-col">
+        <!-- Message Content -->
+        <MudItem xs="12" md="8">
+            <MudPaper Elevation="2" Class="rounded-2xl shadow-lg bg-white dark:bg-gray-900 p-6 h-full min-h-[400px] flex flex-col">
                     @if (selectedMessage != null)
                     {
                         <MudChat Style="height: 100%;" Class="flex flex-col gap-4">
@@ -178,9 +175,9 @@
                         </div>
                     }
                 </MudPaper>
-            </div>
-        </div>
-    </div>
+        </MudItem>
+    </MudGrid>
+</MudContainer>
 
     <!-- Compose Message Modal -->
     <!-- Compose Message Modal -->
@@ -229,7 +226,6 @@
         </EditForm>
     </DialogContent>
 </MudDialog>
-</div>
 
 @code {
     private bool isLoadingMessages = true;

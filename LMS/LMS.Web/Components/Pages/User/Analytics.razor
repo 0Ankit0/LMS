@@ -1,269 +1,332 @@
 @page "/user/lms/analytics"
 @using System.Security.Claims
+@using MudBlazor
+@using LMS.Repositories
 @inject AuthenticationStateProvider AuthenticationStateProvider
-@inject IEnrollmentRepository EnrollmentRepository
+@inject IAnalyticsRepository AnalyticsRepository
 @inject ISnackbar Snackbar
-<div class="px-4 py-8 md:px-8 bg-gray-50 dark:bg-gray-900 min-h-screen">
-    <div class="max-w-7xl mx-auto">
-        <!-- Header -->
-        <div class="flex items-center justify-between mb-8">
-            <div>
-                <h1 class="text-3xl font-bold text-gray-900">Learning Analytics</h1>
-                <p class="text-gray-600 mt-1">Track your learning progress and performance</p>
-            </div>
-            <div class="flex items-center space-x-4">
-                <MudButton Variant="Variant.Outlined" Color="Color.Primary" OnClick="RefreshAnalytics" Class="flex items-center">
-                    <MudIcon Icon="@Icons.Material.Filled.Refresh" Class="h-4 w-4 mr-2" />
-                    Refresh
-                </MudButton>
-                <MudButton Variant="Variant.Outlined" Color="Color.Primary" OnClick="OnShowOffcanvasClick" Class="flex items-center">
-                    <MudIcon Icon="@Icons.Material.Filled.Menu" Class="h-4 w-4 mr-2" />
-                    Filters
-                </MudButton>
-            </div>
-        </div>
 
-        @if (isLoading)
-        {
-            <!-- Skeleton Loader: KPI Cards -->
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-                @for (int i = 0; i < 4; i++)
-                {
-                    <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="130px" Class="h-32 rounded-2xl w-full" />
-                }
-            </div>
-            <!-- Skeleton Loader: Main Content -->
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="384px" Class="h-96 rounded-2xl w-full lg:col-span-2" />
-                <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="384px" Class="h-96 rounded-2xl w-full" />
-            </div>
-        }
-        else
-        {
-            <!-- KPI Cards -->
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-                <MudCard>
-                    <MudCardContent Class="p-6 bg-blue-600 text-white">
-                        <div class="flex items-center space-x-4">
-                            <MudIcon Icon="@Icons.Material.Filled.TrendingUp" Class="h-8 w-8" />
-                            <div>
-                                <div class="text-3xl font-bold">@overallProgress.ToString("F1")%</div>
-                                <div class="text-sm opacity-90">Overall Progress</div>
-                            </div>
-                        </div>
-                    </MudCardContent>
-                </MudCard>
-                <MudCard>
-                    <MudCardContent Class="p-6 bg-green-600 text-white">
-                        <div class="flex items-center space-x-4">
-                            <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Class="h-8 w-8" />
-                            <div>
-                                <div class="text-3xl font-bold">@completedCourses</div>
-                                <div class="text-sm opacity-90">Completed Courses</div>
-                            </div>
-                        </div>
-                    </MudCardContent>
-                </MudCard>
-                <MudCard>
-                    <MudCardContent Class="p-6 bg-cyan-600 text-white">
-                        <div class="flex items-center space-x-4">
-                            <MudIcon Icon="@Icons.Material.Filled.AccessTime" Class="h-8 w-8" />
-                            <div>
-                                <div class="text-3xl font-bold">@totalStudyHours</div>
-                                <div class="text-sm opacity-90">Study Hours</div>
-                            </div>
-                        </div>
-                    </MudCardContent>
-                </MudCard>
-                <MudCard>
-                    <MudCardContent Class="p-6 bg-orange-600 text-white">
-                        <div class="flex items-center space-x-4">
-                            <MudIcon Icon="@Icons.Material.Filled.Star" Class="h-8 w-8" />
-                            <div>
-                                <div class="text-3xl font-bold">@averageScore.ToString("F1")%</div>
-                                <div class="text-sm opacity-90">Average Score</div>
-                            </div>
-                        </div>
-                    </MudCardContent>
-                </MudCard>
-            </div>
+<PageTitle>Learning Analytics - LMS</PageTitle>
 
-            <!-- Content based on selected view -->
-            @if (selectedView == "overview")
-            {
-                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                    <!-- Course Progress -->
-                    <MudCard Class="lg:col-span-2">
-                        <MudCardHeader>
-                            <MudText Typo="Typo.h6" Class="flex items-center space-x-2">
-                                <MudIcon Icon="@Icons.Material.Filled.BarChart" Class="h-5 w-5" />
-                                <span>Course Progress Overview</span>
-                            </MudText>
-                        </MudCardHeader>
-                        <MudCardContent>
+<MudContainer MaxWidth="MaxWidth.ExtraLarge"
+    Class="min-h-screen bg-gradient-to-br from-indigo-50 to-blue-50 dark:from-indigo-950/20 dark:to-blue-950/20 py-8">
+    <!-- Header Section -->
+    <MudGrid AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Class="mb-8">
+        <MudItem xs="12" md="6">
+            <MudStack>
+                <MudText Typo="Typo.h4" Class="font-bold text-gray-900 dark:text-white">Learning Analytics</MudText>
+                <MudText Typo="Typo.body1" Class="text-gray-500 dark:text-gray-300">Track your learning progress and
+                    performance</MudText>
+            </MudStack>
+        </MudItem>
+        <MudItem xs="12" md="6">
+            <MudStack Row Spacing="3" AlignItems="AlignItems.Center" Justify="Justify.FlexEnd">
+                <MudButtonGroup Variant="Variant.Outlined" Color="Color.Primary">
+                    <MudButton OnClick='@(() => SelectView("overview"))'
+                        Variant="@(selectedView == "overview" ? Variant.Filled : Variant.Outlined)" Class="rounded">
+                        Overview</MudButton>
+                    <MudButton OnClick='@(() => SelectView("activity"))'
+                        Variant="@(selectedView == "activity" ? Variant.Filled : Variant.Outlined)" Class="rounded">
+                        Activity</MudButton>
+                    <MudButton OnClick='@(() => SelectView("performance"))'
+                        Variant="@(selectedView == "performance" ? Variant.Filled : Variant.Outlined)" Class="rounded">
+                        Performance</MudButton>
+                </MudButtonGroup>
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="RefreshAnalytics"
+                    StartIcon="@Icons.Material.Filled.Refresh" Class="rounded">Refresh</MudButton>
+            </MudStack>
+        </MudItem>
+    </MudGrid>
+
+    @if (isLoading)
+    {
+        <!-- Loading State -->
+        <MudGrid Spacing="6">
+            <!-- KPI Cards Skeleton -->
+            <MudItem xs="12">
+                <MudGrid Spacing="4">
+                    @for (int i = 0; i < 4; i++)
+                    {
+                        <MudItem xs="12" sm="6" lg="3">
+                            <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="130px" Class="rounded-2xl" />
+                        </MudItem>
+                    }
+                </MudGrid>
+            </MudItem>
+            <!-- Main Content Skeleton -->
+            <MudItem xs="12" lg="8">
+                <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="400px" Class="rounded-2xl" />
+            </MudItem>
+            <MudItem xs="12" lg="4">
+                <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="400px" Class="rounded-2xl" />
+            </MudItem>
+        </MudGrid>
+    }
+    else
+    {
+        <!-- KPI Cards -->
+        <MudGrid Spacing="4" Class="mb-8">
+            <!-- Overall Progress Card -->
+            <MudItem xs="12" sm="6" lg="3">
+                <MudPaper Elevation="3"
+                    Class="rounded-2xl overflow-hidden bg-gradient-to-r from-blue-500 to-blue-600 text-white">
+                    <MudStack Row AlignItems="AlignItems.Center" Class="p-6">
+                        <MudIcon Icon="@Icons.Material.Filled.TrendingUp" Size="Size.Large" />
+                        <MudStack Spacing="1">
+                            <MudText Typo="Typo.h4" Class="font-bold">@overallProgress.ToString("F1")%</MudText>
+                            <MudText Typo="Typo.body2" Class="opacity-90">Overall Progress</MudText>
+                        </MudStack>
+                    </MudStack>
+                </MudPaper>
+            </MudItem>
+
+            <!-- Completed Courses Card -->
+            <MudItem xs="12" sm="6" lg="3">
+                <MudPaper Elevation="3"
+                    Class="rounded-2xl overflow-hidden bg-gradient-to-r from-green-500 to-green-600 text-white">
+                    <MudStack Row AlignItems="AlignItems.Center" Class="p-6">
+                        <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Size="Size.Large" />
+                        <MudStack Spacing="1">
+                            <MudText Typo="Typo.h4" Class="font-bold">@completedCourses</MudText>
+                            <MudText Typo="Typo.body2" Class="opacity-90">Completed Courses</MudText>
+                        </MudStack>
+                    </MudStack>
+                </MudPaper>
+            </MudItem>
+
+            <!-- Study Hours Card -->
+            <MudItem xs="12" sm="6" lg="3">
+                <MudPaper Elevation="3"
+                    Class="rounded-2xl overflow-hidden bg-gradient-to-r from-cyan-500 to-cyan-600 text-white">
+                    <MudStack Row AlignItems="AlignItems.Center" Class="p-6">
+                        <MudIcon Icon="@Icons.Material.Filled.AccessTime" Size="Size.Large" />
+                        <MudStack Spacing="1">
+                            <MudText Typo="Typo.h4" Class="font-bold">@totalStudyHours</MudText>
+                            <MudText Typo="Typo.body2" Class="opacity-90">Study Hours</MudText>
+                        </MudStack>
+                    </MudStack>
+                </MudPaper>
+            </MudItem>
+
+            <!-- Average Score Card -->
+            <MudItem xs="12" sm="6" lg="3">
+                <MudPaper Elevation="3"
+                    Class="rounded-2xl overflow-hidden bg-gradient-to-r from-orange-500 to-orange-600 text-white">
+                    <MudStack Row AlignItems="AlignItems.Center" Class="p-6">
+                        <MudIcon Icon="@Icons.Material.Filled.Star" Size="Size.Large" />
+                        <MudStack Spacing="1">
+                            <MudText Typo="Typo.h4" Class="font-bold">@averageScore.ToString("F1")%</MudText>
+                            <MudText Typo="Typo.body2" Class="opacity-90">Average Score</MudText>
+                        </MudStack>
+                    </MudStack>
+                </MudPaper>
+            </MudItem>
+        </MudGrid>
+
+        <!-- Content based on selected view -->
+        @if (selectedView == "overview")
+        {
+            <MudGrid Spacing="6">
+                <!-- Course Progress -->
+                <MudItem xs="12" lg="8">
+                    <MudPaper Elevation="2" Class="rounded-2xl p-6">
+                        <MudStack Spacing="4">
+                            <MudStack Row AlignItems="AlignItems.Center" Spacing="2">
+                                <MudIcon Icon="@Icons.Material.Filled.BarChart" />
+                                <MudText Typo="Typo.h6" Class="font-bold">Course Progress Overview</MudText>
+                            </MudStack>
+
                             @if (enrollments?.Any() == true)
                             {
-                                <div class="space-y-6">
+                                <MudStack Spacing="4">
                                     @foreach (var enrollment in enrollments.Take(5))
                                     {
                                         var courseProgress = GetCourseProgress(enrollment.Id);
-                                        <div class="space-y-2">
-                                            <div class="flex items-center justify-between">
-                                                <span class="font-medium">@enrollment.CourseTitle</span>
-                                                <span class="text-sm font-medium">@courseProgress.ToString("F1")%</span>
-                                            </div>
-                                            <MudProgressLinear Value="@(courseProgress)" Color="@GetProgressColor(courseProgress)" Class="h-2" />
-                                            <div class="flex items-center justify-between text-xs text-gray-500">
-                                                <span>@GetCompletedModules(enrollment.Id) / @GetTotalModules(enrollment.Id) modules</span>
-                                                <span>Enrolled: @enrollment.EnrolledAt.ToString("MMM dd, yyyy")</span>
-                                            </div>
-                                        </div>
+                                        <MudStack Spacing="2">
+                                            <MudGrid AlignItems="AlignItems.Center">
+                                                <MudItem xs="8">
+                                                    <MudText Typo="Typo.body1" Class="font-medium">@enrollment.CourseTitle</MudText>
+                                                </MudItem>
+                                                <MudItem xs="4">
+                                                    <MudText Typo="Typo.body2" Class="font-medium text-right">
+                                                        @courseProgress.ToString("F1")%</MudText>
+                                                </MudItem>
+                                            </MudGrid>
+                                            <MudProgressLinear Value="@courseProgress" Color="@GetProgressColor(courseProgress)"
+                                                Size="Size.Medium" Class="rounded" />
+                                            <MudGrid>
+                                                <MudItem xs="6">
+                                                    <MudText Typo="Typo.caption" Class="text-gray-500">
+                                                        @GetCompletedModules(enrollment.Id) / @GetTotalModules(enrollment.Id) modules
+                                                    </MudText>
+                                                </MudItem>
+                                                <MudItem xs="6">
+                                                    <MudText Typo="Typo.caption" Class="text-gray-500 text-right">
+                                                        Enrolled: @enrollment.EnrolledAt.ToString("MMM dd, yyyy")
+                                                    </MudText>
+                                                </MudItem>
+                                            </MudGrid>
+                                        </MudStack>
                                     }
-                                </div>
+                                </MudStack>
                             }
                             else
                             {
-                                <div class="text-center py-8">
-                                    <MudIcon Icon="@Icons.Material.Filled.Book" Class="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                                    <p class="text-gray-500 mb-4">No course enrollments found.</p>
-                                    <MudButton Variant="Variant.Filled" Color="Color.Primary" Href="/user/lms/courses/catalog">Browse Courses</MudButton>
-                                </div>
+                                <MudStack Spacing="4" AlignItems="AlignItems.Center" Class="py-8">
+                                    <MudIcon Icon="@Icons.Material.Filled.Book" Size="Size.Large" Class="text-gray-400" />
+                                    <MudText Typo="Typo.h6" Class="text-gray-500">No course enrollments found</MudText>
+                                    <MudButton Variant="Variant.Filled" Color="Color.Primary" Href="/user/lms/courses/catalog"
+                                        Class="rounded">
+                                        Browse Courses
+                                    </MudButton>
+                                </MudStack>
                             }
-                        </MudCardContent>
-                    </MudCard>
+                        </MudStack>
+                    </MudPaper>
+                </MudItem>
 
-                    <!-- Activity Summary -->
-                    <MudCard>
-                        <MudCardHeader>
-                            <MudText Typo="Typo.h6" Class="flex items-center space-x-2">
-                                <MudIcon Icon="@Icons.Material.Filled.LocalActivity" Class="h-5 w-5" />
-                                <span>Activity Summary</span>
-                            </MudText>
-                        </MudCardHeader>
-                        <MudCardContent Class="text-center">
-                            <div class="mb-6">
-                                <MudProgressCircular Value="@((double)overallProgress)" Size="Size.Large" Class="mud-text-primary w-32 h-32" />
-                                <div class="text-sm text-gray-600 mt-2">Overall Progress</div>
-                            </div>
-                            <div class="grid grid-cols-2 gap-4 text-center">
-                                <div>
-                                    <div class="text-2xl font-bold text-blue-600">@totalLessonsCompleted</div>
-                                    <div class="text-xs text-gray-500">Lessons</div>
-                                </div>
-                                <div>
-                                    <div class="text-2xl font-bold text-green-600">@totalModulesCompleted</div>
-                                    <div class="text-xs text-gray-500">Modules</div>
-                                </div>
-                                <div>
-                                    <div class="text-2xl font-bold text-orange-600">@currentStreak</div>
-                                    <div class="text-xs text-gray-500">Day Streak</div>
-                                </div>
-                                <div>
-                                    <div class="text-2xl font-bold text-purple-600">@activeDays</div>
-                                    <div class="text-xs text-gray-500">Active Days</div>
-                                </div>
-                            </div>
-                        </MudCardContent>
-                    </MudCard>
-                </div>
-            }
+                <!-- Activity Summary -->
+                <MudItem xs="12" lg="4">
+                    <MudPaper Elevation="2" Class="rounded-2xl p-6">
+                        <MudStack Spacing="4" AlignItems="AlignItems.Center">
+                            <MudStack Row AlignItems="AlignItems.Center" Spacing="2">
+                                <MudIcon Icon="@Icons.Material.Filled.LocalActivity" />
+                                <MudText Typo="Typo.h6" Class="font-bold">Activity Summary</MudText>
+                            </MudStack>
 
-            @if (selectedView == "activity")
-            {
-                <MudCard>
-                    <MudCardHeader>
-                        <MudText Typo="Typo.h6" Class="flex items-center space-x-2">
-                            <MudIcon Icon="@Icons.Material.Filled.History" Class="h-5 w-5" />
-                            <span>Recent Activity</span>
-                        </MudText>
-                    </MudCardHeader>
-                    <MudCardContent>
-                        @if (recentActivities?.Any() == true)
-                        {
-                            <div class="space-y-4">
-                                @foreach (var activity in recentActivities.Take(10))
-                                {
-                                    <div class="flex items-start space-x-4">
-                                        <div class="w-3 h-3 rounded-full mt-2 @GetActivityColor(activity.Type)" />
-                                        <div class="flex-1">
-                                            <div class="flex items-center justify-between">
-                                                <p class="font-medium">@activity.Description</p>
-                                                <span class="text-xs text-gray-500">@activity.Timestamp.ToString("MMM dd, HH:mm")</span>
-                                            </div>
-                                            <p class="text-sm text-gray-600">@activity.CourseTitle</p>
-                                        </div>
-                                    </div>
-                                }
-                            </div>
-                        }
-                        else
-                        {
-                            <div class="text-center py-8">
-                                <MudIcon Icon="@Icons.Material.Filled.History" Class="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                                <p class="text-gray-500">No recent activity found.</p>
-                            </div>
-                        }
-                    </MudCardContent>
-                </MudCard>
-            }
+                            <MudProgressCircular Value="@overallProgress" Size="Size.Large" Color="Color.Primary"
+                                Class="mud-elevation-4" StrokeWidth="6">
+                                <MudText Typo="Typo.h6" Class="font-bold">@overallProgress.ToString("F0")%</MudText>
+                            </MudProgressCircular>
 
-            @if (selectedView == "performance")
-            {
-                <MudCard>
-                    <MudCardHeader>
-                        <MudText Typo="Typo.h6" Class="flex items-center space-x-2">
-                            <MudIcon Icon="@Icons.Material.Filled.TrendingUp" Class="h-5 w-5" />
-                            <span>Performance Metrics</span>
-                        </MudText>
-                    </MudCardHeader>
-                    <MudCardContent>
-                        @if (performanceMetrics?.Any() == true)
-                        {
-                            <div class="space-y-6">
-                                @foreach (var metric in performanceMetrics)
-                                {
-                                    <div class="space-y-2">
-                                        <div class="flex items-center justify-between">
-                                            <span class="font-medium">@metric.Name</span>
-                                            <MudChip T="string" Color="@GetMetricBadgeColor(metric.Value)" Class="text-xs">@metric.Value.ToString("F1")@metric.Unit</MudChip>
-                                        </div>
-                                        <MudProgressLinear Value="@((double)GetMetricPercentage(metric.Value, metric.MaxValue))" Color="@GetMetricProgressBarColor(metric.Value)" Class="h-2" />
-                                        <p class="text-sm text-gray-600">@metric.Description</p>
-                                    </div>
-                                }
-                            </div>
-                        }
-                        else
-                        {
-                            <div class="text-center py-8">
-                                <MudIcon Icon="@Icons.Material.Filled.TrendingUp" Class="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                                <p class="text-gray-500">Performance data will appear as you progress through courses.</p>
-                            </div>
-                        }
-                    </MudCardContent>
-                </MudCard>
-            }
+                            <MudGrid Spacing="3">
+                                <MudItem xs="6">
+                                    <MudStack AlignItems="AlignItems.Center">
+                                        <MudText Typo="Typo.h5" Class="font-bold text-blue-600">@totalLessonsCompleted</MudText>
+                                        <MudText Typo="Typo.caption" Class="text-gray-500">Lessons</MudText>
+                                    </MudStack>
+                                </MudItem>
+                                <MudItem xs="6">
+                                    <MudStack AlignItems="AlignItems.Center">
+                                        <MudText Typo="Typo.h5" Class="font-bold text-green-600">@totalModulesCompleted
+                                        </MudText>
+                                        <MudText Typo="Typo.caption" Class="text-gray-500">Modules</MudText>
+                                    </MudStack>
+                                </MudItem>
+                                <MudItem xs="6">
+                                    <MudStack AlignItems="AlignItems.Center">
+                                        <MudText Typo="Typo.h5" Class="font-bold text-orange-600">@currentStreak</MudText>
+                                        <MudText Typo="Typo.caption" Class="text-gray-500">Day Streak</MudText>
+                                    </MudStack>
+                                </MudItem>
+                                <MudItem xs="6">
+                                    <MudStack AlignItems="AlignItems.Center">
+                                        <MudText Typo="Typo.h5" Class="font-bold text-purple-600">@activeDays</MudText>
+                                        <MudText Typo="Typo.caption" Class="text-gray-500">Active Days</MudText>
+                                    </MudStack>
+                                </MudItem>
+                            </MudGrid>
+                        </MudStack>
+                    </MudPaper>
+                </MudItem>
+            </MudGrid>
         }
-    </div>
-</div>
+
+        @if (selectedView == "activity")
+        {
+            <MudPaper Elevation="2" Class="rounded-2xl p-6">
+                <MudStack Spacing="4">
+                    <MudStack Row AlignItems="AlignItems.Center" Spacing="2">
+                        <MudIcon Icon="@Icons.Material.Filled.History" />
+                        <MudText Typo="Typo.h6" Class="font-bold">Recent Activity</MudText>
+                    </MudStack>
+
+                    @if (recentActivities?.Any() == true)
+                    {
+                        <MudStack Spacing="3">
+                            @foreach (var activity in recentActivities.Take(10))
+                            {
+                                <MudPaper Elevation="1" Class="@($"p-4 rounded-xl border-l-4 {GetActivityBorderColor(activity.Type)}")">
+                                    <MudGrid AlignItems="AlignItems.Center">
+                                        <MudItem xs="1">
+                                            <MudIcon Icon="@GetActivityIcon(activity.Type)"
+                                                Color="@GetActivityIconColor(activity.Type)" />
+                                        </MudItem>
+                                        <MudItem xs="8">
+                                            <MudStack Spacing="1">
+                                                <MudText Typo="Typo.body1" Class="font-medium">@activity.Description</MudText>
+                                                <MudText Typo="Typo.body2" Class="text-gray-600">@activity.CourseTitle</MudText>
+                                            </MudStack>
+                                        </MudItem>
+                                        <MudItem xs="3">
+                                            <MudText Typo="Typo.caption" Class="text-gray-500 text-right">
+                                                @activity.Timestamp.ToString("MMM dd, HH:mm")
+                                            </MudText>
+                                        </MudItem>
+                                    </MudGrid>
+                                </MudPaper>
+                            }
+                        </MudStack>
+                    }
+                    else
+                    {
+                        <MudStack Spacing="4" AlignItems="AlignItems.Center" Class="py-8">
+                            <MudIcon Icon="@Icons.Material.Filled.History" Size="Size.Large" Class="text-gray-400" />
+                            <MudText Typo="Typo.h6" Class="text-gray-500">No recent activity found</MudText>
+                        </MudStack>
+                    }
+                </MudStack>
+            </MudPaper>
+        }
+
+        @if (selectedView == "performance")
+        {
+            <MudPaper Elevation="2" Class="rounded-2xl p-6">
+                <MudStack Spacing="4">
+                    <MudStack Row AlignItems="AlignItems.Center" Spacing="2">
+                        <MudIcon Icon="@Icons.Material.Filled.TrendingUp" />
+                        <MudText Typo="Typo.h6" Class="font-bold">Performance Metrics</MudText>
+                    </MudStack>
+
+                    @if (performanceMetrics?.Any() == true)
+                    {
+                        <MudStack Spacing="4">
+                            @foreach (var metric in performanceMetrics)
+                            {
+                                <MudStack Spacing="2">
+                                    <MudGrid AlignItems="AlignItems.Center">
+                                        <MudItem xs="8">
+                                            <MudText Typo="Typo.body1" Class="font-medium">@metric.Name</MudText>
+                                        </MudItem>
+                                        <MudItem xs="4">
+                                            <MudChip T="string" Text="@($"{metric.Value:F1}{metric.Unit}")"
+                                                Color="@GetMetricBadgeColor(metric.Value)" Variant="Variant.Filled" Class="rounded" />
+                                        </MudItem>
+                                    </MudGrid>
+                                    <MudProgressLinear Value="@GetMetricPercentage(metric.Value, metric.MaxValue)"
+                                        Color="@GetMetricProgressBarColor(metric.Value)" Size="Size.Medium" Class="rounded" />
+                                    <MudText Typo="Typo.body2" Class="text-gray-600">@metric.Description</MudText>
+                                </MudStack>
+                            }
+                        </MudStack>
+                    }
+                    else
+                    {
+                        <MudStack Spacing="4" AlignItems="AlignItems.Center" Class="py-8">
+                            <MudIcon Icon="@Icons.Material.Filled.TrendingUp" Size="Size.Large" Class="text-gray-400" />
+                            <MudText Typo="Typo.h6" Class="text-gray-500">Performance data will appear as you progress</MudText>
+                        </MudStack>
+                    }
+                </MudStack>
+            </MudPaper>
+        }
+    }
+</MudContainer>
 
 @code {
-    private MudDrawer? drawer;
-    private bool isDrawerOpen = false;
-
-    private void OnShowOffcanvasClick()
-    {
-        isDrawerOpen = true;
-    }
-
-    private void OnHideOffcanvasClick()
-    {
-        isDrawerOpen = false;
-    }
-
-    private List<EnrollmentModel>? enrollments;
     private List<ActivityModel> recentActivities = new();
     private List<MetricModel> performanceMetrics = new();
+    private List<EnrollmentModel> enrollments = new();
     private bool isLoading = true;
     private string selectedPeriod = "month";
     private string selectedView = "overview";
@@ -275,52 +338,48 @@
     private int totalModulesCompleted = 0;
     private int currentStreak = 0;
     private int activeDays = 0;
+    private string? currentUserId;
 
     protected override async Task OnInitializedAsync()
     {
         var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
-        var userId = authState.User?.FindFirstValue(ClaimTypes.NameIdentifier);
+        currentUserId = authState.User?.FindFirstValue(ClaimTypes.NameIdentifier);
 
-        if (!string.IsNullOrEmpty(userId))
+        if (!string.IsNullOrEmpty(currentUserId))
         {
-            // Load user enrollments via repository
-            enrollments = await EnrollmentRepository.GetUserEnrollmentsAsync(userId);
-
-            // Calculate analytics
-            await CalculateAnalytics(userId);
-
-            // Load recent activities (mock data for now)
-            LoadRecentActivities();
-
-            // Load performance metrics (mock data for now)
-            LoadPerformanceMetrics();
+            await LoadAnalytics(currentUserId);
+        }
+        else
+        {
+            isLoading = false;
+            StateHasChanged();
         }
     }
 
-
-
-    private async Task LoadAnalytics()
+    private async Task LoadAnalytics(string userId)
     {
         try
         {
             isLoading = true;
-            var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
-            var user = authState.User;
-            var currentUserId = user?.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (!string.IsNullOrEmpty(currentUserId))
-            {
-                // Load user enrollments via repository
-                enrollments = await EnrollmentRepository.GetUserEnrollmentsAsync(currentUserId);
+            StateHasChanged();
 
-                // Calculate analytics
-                await CalculateAnalytics(currentUserId);
+            // Load analytics using repository
+            var analyticsData = await AnalyticsRepository.GetUserAnalyticsAsync(userId);
 
-                // Load recent activities (mock data for now)
-                LoadRecentActivities();
+            // Update properties from analytics data
+            overallProgress = analyticsData.OverallProgress;
+            completedCourses = analyticsData.CompletedCourses;
+            totalStudyHours = analyticsData.TotalStudyHours;
+            averageScore = analyticsData.AverageScore;
+            totalLessonsCompleted = analyticsData.TotalLessonsCompleted;
+            totalModulesCompleted = analyticsData.TotalModulesCompleted;
+            currentStreak = analyticsData.CurrentStreak;
+            activeDays = analyticsData.ActiveDays;
+            recentActivities = analyticsData.RecentActivities;
+            performanceMetrics = analyticsData.PerformanceMetrics;
 
-                // Load performance metrics (mock data for now)
-                LoadPerformanceMetrics();
-            }
+            // Load enrollments separately (placeholder for now)
+            enrollments = new List<EnrollmentModel>();
         }
         catch (Exception ex)
         {
@@ -329,90 +388,31 @@
         finally
         {
             isLoading = false;
+            StateHasChanged();
         }
-    }
-
-    private Task CalculateAnalytics(string userId)
-    {
-        if (enrollments == null) return Task.CompletedTask;
-
-        var completedEnrollments = enrollments.Where(e => e.ProgressPercentage >= 100).ToList();
-        completedCourses = completedEnrollments.Count;
-
-        if (enrollments.Any())
-        {
-            overallProgress = enrollments.Average(e => e.ProgressPercentage);
-            averageScore = enrollments.Where(e => e.FinalGrade.HasValue).Any() 
-                ? enrollments.Where(e => e.FinalGrade.HasValue).Average(e => e.FinalGrade!.Value) 
-                : 0;
-        }
-
-        // Calculate study hours and other metrics (mock calculation)
-        totalStudyHours = enrollments.Count * 10; // Mock: 10 hours per enrollment
-        totalLessonsCompleted = enrollments.Sum(e => (int)(e.ProgressPercentage / 100 * 20)); // Mock: 20 lessons per course
-        totalModulesCompleted = enrollments.Sum(e => (int)(e.ProgressPercentage / 100 * 5)); // Mock: 5 modules per course
-        currentStreak = 7; // Mock data
-        activeDays = 45; // Mock data
-        
-        return Task.CompletedTask;
-    }
-
-    private void LoadRecentActivities()
-    {
-        // Mock recent activities
-        recentActivities = new List<ActivityModel>
-        {
-            new() { Type = "lesson", Description = "Completed lesson: Introduction to Programming", CourseTitle = "Programming Basics", Timestamp = DateTime.Now.AddHours(-2) },
-            new() { Type = "quiz", Description = "Passed quiz with 85%", CourseTitle = "Data Structures", Timestamp = DateTime.Now.AddHours(-5) },
-            new() { Type = "module", Description = "Finished module: Web Development Fundamentals", CourseTitle = "Full Stack Development", Timestamp = DateTime.Now.AddDays(-1) },
-            new() { Type = "certificate", Description = "Earned certificate", CourseTitle = "JavaScript Essentials", Timestamp = DateTime.Now.AddDays(-2) },
-            new() { Type = "enrollment", Description = "Enrolled in new course", CourseTitle = "Machine Learning Basics", Timestamp = DateTime.Now.AddDays(-3) }
-        };
-    }
-
-    private void LoadPerformanceMetrics()
-    {
-        // Mock performance metrics
-        performanceMetrics = new List<MetricModel>
-        {
-            new() { Name = "Completion Rate", Value = overallProgress, Unit = "%", MaxValue = 100, Description = "Average course completion" },
-            new() { Name = "Quiz Average", Value = averageScore, Unit = "%", MaxValue = 100, Description = "Average quiz score" },
-            new() { Name = "Study Consistency", Value = 85, Unit = "%", MaxValue = 100, Description = "Daily learning consistency" },
-            new() { Name = "Engagement Score", Value = 78, Unit = "%", MaxValue = 100, Description = "Course interaction level" }
-        };
     }
 
     private async Task RefreshAnalytics()
     {
-        await LoadAnalytics();
+        if (!string.IsNullOrEmpty(currentUserId))
+        {
+            await LoadAnalytics(currentUserId);
+            Snackbar.Add("Analytics refreshed successfully", Severity.Success);
+        }
     }
 
     private async Task SelectPeriod(string period)
     {
         selectedPeriod = period;
-        await LoadAnalytics();
+        if (!string.IsNullOrEmpty(currentUserId))
+        {
+            await LoadAnalytics(currentUserId);
+        }
     }
 
     private void SelectView(string view)
     {
         selectedView = view;
-    }
-
-    private double GetCourseProgress(int enrollmentId)
-    {
-        var enrollment = enrollments?.FirstOrDefault(e => e.Id == enrollmentId);
-        return enrollment?.ProgressPercentage ?? 0;
-    }
-
-    private int GetCompletedModules(int enrollmentId)
-    {
-        var progress = GetCourseProgress(enrollmentId);
-        return (int)(progress / 100 * 5); // Mock: 5 modules per course
-    }
-
-    private int GetTotalModules(int enrollmentId)
-    {
-        return 5; // Mock: 5 modules per course
     }
 
     private MudBlazor.Color GetProgressColor(double progress) => progress switch
@@ -431,6 +431,36 @@
         "certificate" => "warning",
         "enrollment" => "secondary",
         _ => "muted"
+    };
+
+    private string GetActivityIcon(string type) => type switch
+    {
+        "lesson" => Icons.Material.Filled.PlayCircle,
+        "quiz" => Icons.Material.Filled.Quiz,
+        "module" => Icons.Material.Filled.CheckCircle,
+        "certificate" => Icons.Material.Filled.WorkspacePremium,
+        "enrollment" => Icons.Material.Filled.PersonAdd,
+        _ => Icons.Material.Filled.Circle
+    };
+
+    private MudBlazor.Color GetActivityIconColor(string type) => type switch
+    {
+        "lesson" => MudBlazor.Color.Primary,
+        "quiz" => MudBlazor.Color.Success,
+        "module" => MudBlazor.Color.Info,
+        "certificate" => MudBlazor.Color.Warning,
+        "enrollment" => MudBlazor.Color.Secondary,
+        _ => MudBlazor.Color.Default
+    };
+
+    private string GetActivityBorderColor(string type) => type switch
+    {
+        "lesson" => "border-l-blue-500",
+        "quiz" => "border-l-green-500",
+        "module" => "border-l-cyan-500",
+        "certificate" => "border-l-yellow-500",
+        "enrollment" => "border-l-purple-500",
+        _ => "border-l-gray-500"
     };
 
     private MudBlazor.Color GetMetricBadgeColor(double value) => value switch
@@ -454,21 +484,24 @@
         return maxValue > 0 ? (value / maxValue) * 100 : 0;
     }
 
-    // Helper models for analytics
-    public class ActivityModel
+    private double GetCourseProgress(int enrollmentId)
     {
-        public string Type { get; set; } = string.Empty;
-        public string Description { get; set; } = string.Empty;
-        public string CourseTitle { get; set; } = string.Empty;
-        public DateTime Timestamp { get; set; }
+        // This should return the actual progress from the enrollment
+        // For now, return a placeholder value
+        return new Random().NextDouble() * 100;
     }
 
-    public class MetricModel
+    private int GetCompletedModules(int enrollmentId)
     {
-        public string Name { get; set; } = string.Empty;
-        public double Value { get; set; }
-        public string Unit { get; set; } = string.Empty;
-        public double MaxValue { get; set; }
-        public string Description { get; set; } = string.Empty;
+        // This should return the actual completed modules count from the enrollment
+        // For now, return a placeholder value
+        return new Random().Next(1, 8);
+    }
+
+    private int GetTotalModules(int enrollmentId)
+    {
+        // This should return the total modules count for the course
+        // For now, return a placeholder value
+        return new Random().Next(8, 12);
     }
 }

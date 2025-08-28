@@ -4,91 +4,122 @@
 @inject ICourseRepository CourseRepository
 @inject NavigationManager NavigationManager
 
+<PageTitle>Course Catalog - LMS</PageTitle>
 
-
-<div class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-950/20 dark:to-indigo-950/20 py-8">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 grid grid-cols-1 md:grid-cols-4 gap-8">
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-950/20 dark:to-indigo-950/20 py-8">
+    <MudGrid Spacing="6">
         <!-- Sidebar -->
-        <aside class="md:col-span-1">
-            <div class="bg-white dark:bg-gray-900 rounded-2xl shadow-lg p-6 sticky top-8">
-                <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-4">Categories</h2>
-                <nav class="flex flex-col gap-2 mb-6">
-                    <MudNavMenu>
-                        <MudNavLink Href="javascript:void(0)" OnClick='@(() => SelectCategory("all"))'
-                            Icon="@Icons.Material.Filled.AllInclusive">All Courses</MudNavLink>
-                        <MudNavLink Href="javascript:void(0)" OnClick='@(() => SelectCategory("development"))'
-                            Icon="@Icons.Material.Filled.Code">Development</MudNavLink>
-                        <MudNavLink Href="javascript:void(0)" OnClick='@(() => SelectCategory("business"))'
-                            Icon="@Icons.Material.Filled.BusinessCenter">Business</MudNavLink>
-                        <MudNavLink Href="javascript:void(0)" OnClick='@(() => SelectCategory("design"))'
-                            Icon="@Icons.Material.Filled.Palette">Design</MudNavLink>
-                        <MudNavLink Href="javascript:void(0)" OnClick='@(() => SelectCategory("security"))'
-                            Icon="@Icons.Material.Filled.Security">Security</MudNavLink>
-                    </MudNavMenu>
-                </nav>
-                <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">Filters</h3>
-                <div class="mb-4">
-                    <div class="text-sm font-medium text-gray-500 mb-1">Level</div>
-                    <div class="flex flex-col gap-2">
-                        <MudCheckBox T="bool" @bind-Checked="filters.Beginner" Label="Beginner" Color="Color.Primary"
-                            OnChange="ApplyFilters" />
-                        <MudCheckBox T="bool" @bind-Checked="filters.Intermediate" Label="Intermediate"
-                            Color="Color.Primary" OnChange="ApplyFilters" />
-                        <MudCheckBox T="bool" @bind-Checked="filters.Advanced" Label="Advanced" Color="Color.Primary"
-                            OnChange="ApplyFilters" />
-                    </div>
-                </div>
-            </div>
-        </aside>
+        <MudItem xs="12" md="3">
+            <MudPaper Elevation="2" Class="rounded-2xl shadow-lg p-6 sticky top-8">
+                <MudText Typo="Typo.h5" Class="font-bold text-gray-900 dark:text-white mb-4">Categories</MudText>
+                
+                <MudStack Spacing="2" Class="mb-6">
+                    <MudButton Variant="@(selectedCategory == "all" ? Variant.Filled : Variant.Text)" 
+                        Color="Color.Primary" OnClick='@(() => SelectCategory("all"))'
+                        StartIcon="@Icons.Material.Filled.AllInclusive" FullWidth="true" Class="justify-start rounded">
+                        All Courses
+                    </MudButton>
+                    <MudButton Variant="@(selectedCategory == "development" ? Variant.Filled : Variant.Text)" 
+                        Color="Color.Primary" OnClick='@(() => SelectCategory("development"))'
+                        StartIcon="@Icons.Material.Filled.Code" FullWidth="true" Class="justify-start rounded">
+                        Development
+                    </MudButton>
+                    <MudButton Variant="@(selectedCategory == "business" ? Variant.Filled : Variant.Text)" 
+                        Color="Color.Primary" OnClick='@(() => SelectCategory("business"))'
+                        StartIcon="@Icons.Material.Filled.BusinessCenter" FullWidth="true" Class="justify-start rounded">
+                        Business
+                    </MudButton>
+                    <MudButton Variant="@(selectedCategory == "design" ? Variant.Filled : Variant.Text)" 
+                        Color="Color.Primary" OnClick='@(() => SelectCategory("design"))'
+                        StartIcon="@Icons.Material.Filled.Palette" FullWidth="true" Class="justify-start rounded">
+                        Design
+                    </MudButton>
+                    <MudButton Variant="@(selectedCategory == "security" ? Variant.Filled : Variant.Text)" 
+                        Color="Color.Primary" OnClick='@(() => SelectCategory("security"))'
+                        StartIcon="@Icons.Material.Filled.Security" FullWidth="true" Class="justify-start rounded">
+                        Security
+                    </MudButton>
+                </MudStack>
+
+                <MudText Typo="Typo.h6" Class="font-semibold text-gray-900 dark:text-white mb-3">Filters</MudText>
+                <MudStack Spacing="2">
+                    <MudText Typo="Typo.body2" Class="font-medium text-gray-500 mb-1">Level</MudText>
+                    <MudCheckBox T="bool" Value="filters.Beginner" ValueChanged="@((bool value) => { filters.Beginner = value; ApplyFilters(); })" 
+                        Label="Beginner" Color="Color.Primary" />
+                    <MudCheckBox T="bool" Value="filters.Intermediate" ValueChanged="@((bool value) => { filters.Intermediate = value; ApplyFilters(); })" 
+                        Label="Intermediate" Color="Color.Primary" />
+                    <MudCheckBox T="bool" Value="filters.Advanced" ValueChanged="@((bool value) => { filters.Advanced = value; ApplyFilters(); })" 
+                        Label="Advanced" Color="Color.Primary" />
+                </MudStack>
+            </MudPaper>
+        </MudItem>
+
         <!-- Main Content -->
-        <main class="md:col-span-3">
-            <div class="bg-white dark:bg-gray-900 rounded-2xl shadow-lg p-8">
-                <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
-                    <div>
-                        <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Course Catalog</h1>
-                        <p class="text-gray-500 dark:text-gray-300">Discover and learn new skills</p>
-                    </div>
-                    <div class="flex flex-col sm:flex-row gap-4 items-center">
-                        <MudTextField @bind-Value="searchQuery" Placeholder="Search courses, instructors, topics..."
-                            Variant="Variant.Outlined" Clearable="true" Adornment="Adornment.Start"
-                            AdornmentIcon="@Icons.Material.Filled.Search" Class="w-full sm:w-64" />
-                        <MudSelect T="string" Label="Sort By" Variant="Variant.Outlined" @bind-Value="sortBy"
-                            TextChanged="SetSort" Class="w-full sm:w-40">
-                            <MudSelectItem Value='@("popular")'>Most Popular</MudSelectItem>
-                            <MudSelectItem Value='@("newest")'>Newest</MudSelectItem>
-                            <MudSelectItem Value='@("alphabetical")'>A-Z</MudSelectItem>
-                            <MudSelectItem Value='@("level")'>By Level</MudSelectItem>
-                        </MudSelect>
-                    </div>
-                </div>
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        <MudItem xs="12" md="9">
+            <MudPaper Elevation="2" Class="rounded-2xl shadow-lg p-8">
+                <!-- Header Section -->
+                <MudGrid AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Class="mb-8">
+                    <MudItem xs="12" md="6">
+                        <MudStack>
+                            <MudText Typo="Typo.h4" Class="font-bold text-gray-900 dark:text-white">Course Catalog</MudText>
+                            <MudText Typo="Typo.body1" Class="text-gray-500 dark:text-gray-300">Discover and learn new skills</MudText>
+                        </MudStack>
+                    </MudItem>
+                    <MudItem xs="12" md="6">
+                        <MudStack Row Spacing="4" AlignItems="AlignItems.Center">
+                            <MudTextField Value="searchQuery" ValueChanged="@((string value) => { searchQuery = value; ApplyFilters(); })"
+                                Placeholder="Search courses, instructors, topics..."
+                                Variant="Variant.Outlined" Clearable="true" Adornment="Adornment.Start"
+                                AdornmentIcon="@Icons.Material.Filled.Search" Class="flex-1 rounded" />
+                            <MudSelect T="string" Label="Sort By" Variant="Variant.Outlined" Value="sortBy"
+                                ValueChanged="SetSort" Class="min-w-40 rounded">
+                                <MudSelectItem Value='@("popular")'>Most Popular</MudSelectItem>
+                                <MudSelectItem Value='@("newest")'>Newest</MudSelectItem>
+                                <MudSelectItem Value='@("alphabetical")'>A-Z</MudSelectItem>
+                                <MudSelectItem Value='@("level")'>By Level</MudSelectItem>
+                            </MudSelect>
+                        </MudStack>
+                    </MudItem>
+                </MudGrid>
+
+                <!-- Course Grid -->
+                <MudGrid Spacing="4">
                     @if (isLoading)
                     {
                         @for (int i = 0; i < 6; i++)
                         {
-                            <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="250px" Class="rounded-2xl w-full" />
+                            <MudItem xs="12" sm="6" lg="4">
+                                <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="300px" Class="rounded-2xl w-full" />
+                            </MudItem>
                         }
                     }
                     else if (filteredCourses.Any())
                     {
                         @foreach (var course in filteredCourses)
                         {
-                            <CourseCard Course="course"
-                                OnClick="@(c => NavigationManager.NavigateTo($"/user/lms/course/{c.Id}"))" />
+                            <MudItem xs="12" sm="6" lg="4">
+                                <CourseCard Course="course"
+                                    OnClick="@(c => NavigationManager.NavigateTo($"/user/lms/course/{c.Id}"))" />
+                            </MudItem>
                         }
                     }
                     else
                     {
-                        <MudAlert Severity="Severity.Info" Icon="@Icons.Material.Filled.SearchOff" Class="col-span-full">
-                            <MudText Typo="Typo.h5">No courses found</MudText>
-                            <MudText>Try adjusting your search criteria or filters.</MudText>
-                        </MudAlert>
+                        <MudItem xs="12">
+                            <MudStack Spacing="3" AlignItems="AlignItems.Center" Class="py-12">
+                                <MudIcon Icon="@Icons.Material.Filled.SearchOff" Size="Size.Large" Class="text-gray-400" />
+                                <MudText Typo="Typo.h5" Class="text-gray-500">No courses found</MudText>
+                                <MudText Typo="Typo.body1" Class="text-gray-400">Try adjusting your search criteria or filters.</MudText>
+                                <MudButton Color="Color.Primary" OnClick="@(() => { searchQuery = ""; selectedCategory = "all"; filters = new(); ApplyFilters(); })"
+                                    Class="rounded mt-2">Clear All Filters</MudButton>
+                            </MudStack>
+                        </MudItem>
                     }
-                </div>
-            </div>
-        </main>
-    </div>
-</div>
+                </MudGrid>
+            </MudPaper>
+        </MudItem>
+    </MudGrid>
+</MudContainer>
 
 
 @code {
