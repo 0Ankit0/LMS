@@ -95,3 +95,19 @@ While not an admin report, this is a critical reporting feature for the end-user
     -   A list of all earned achievements with the date they were awarded.
     -   A list of all earned certificates with links to download them.
 -   **Data Sources**: `Enrollments`, `UserAchievements`, `Certificates`.
+
+## 4. User-Facing Report: Competency Profile
+
+**Name**: My Competency Profile / Skills Dashboard
+
+**Location**: User Profile page (`/user/profile`) or a dedicated skills page.
+
+**Description**: Shows a single user their demonstrated mastery of various competencies.
+
+**Content**:
+
+-   A list of all competencies the user has demonstrated mastery in.
+-   For each competency: `MasteryLevel`, `AchievedDate`, and the `AssessedBy` method (e.g., "Assessment: Final Exam", "Course: Advanced Algorithms").
+-   Visual representation (e.g., a radar chart or bar chart) showing the user's mastery levels across different competency categories.
+
+**Data Sources**: `UserCompetencies`, `Competencies`.

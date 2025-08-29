@@ -1,6 +1,6 @@
 # 13. Student Management System (SMS) Features
 
-This document details features that are central to the Student Management System aspect of the application, focusing on user roles, profiles, and instructor tools.
+This document details features that are central to the Student Management System aspect of the application, focusing on user roles, profiles, and instructor tools, all contributing to the comprehensive student lifecycle management.
 
 ## 1. Core User Roles
 
@@ -9,8 +9,40 @@ The system is designed around three primary user roles, which are managed using 
 -   **`Student`**: The standard user role. Can enroll in courses, consume content, take assessments, and view their own progress, grades, and attendance.
 -   **`Instructor`**: Can do everything a Student can, but also has ownership of their assigned courses. For their own courses, they can manage content, view the roster, take attendance, grade assessments, and view reports.
 -   **`Admin`**: Has full system-wide permissions. Can manage all users, all courses, all settings, and view all reports.
+-   **`Parent`**: A special role for parents or guardians. Can view the progress, grades, attendance, and calendar for their linked children, but cannot interact with course content directly.
 
-## 2. Enhanced User Profile
+## 2. Parent/Guardian Portal
+
+To support parents and guardians, the system will provide a dedicated portal. This requires linking parent accounts to student accounts.
+
+**Data Model: `ParentStudentLinks`**
+
+A new junction table is required to create the many-to-many relationship between parent users and student users.
+
+| Field | Type | Description |
+| --- | --- | --- |
+| `ParentId` | `string` | Foreign key to the `Users` table (for the parent). |
+| `StudentId` | `string` | Foreign key to the `Users` table (for the student). |
+
+**Admin Workflow: Linking a Parent to a Student**
+
+1.  **Navigation**: An administrator navigates to a student's profile page in the admin dashboard.
+2.  **Action**: The admin clicks on a "Manage Parent/Guardian Links" tab or button.
+3.  **UI**: The interface shows a list of currently linked parents and provides a searchable dropdown to find and add another user as a parent.
+4.  **API Call**: The admin selects a user and clicks "Add Link". The frontend calls an endpoint like `POST /api/admin/students/{studentId}/parent-links` with the `parentId`.
+
+**Parent Workflow: Viewing a Child's Dashboard**
+
+1.  **Navigation**: A user with the `Parent` role logs in.
+2.  **UI**: Their main dashboard displays a list of their linked children.
+3.  **Action**: The parent clicks on a child's name.
+4.  **Dashboard View**: They are taken to a read-only "student dashboard" view for that child, which includes:
+    -   A summary of enrolled courses and overall progress.
+    -   A view of the student's gradebook.
+    -   A view of the student's attendance records.
+    -   A combined calendar showing the student's deadlines and events.
+
+## 3. Enhanced User Profile
 
 To function as a proper SMS, the `User` profile must be expanded to hold more than just a name and bio. The `Users` table will include additional, optional fields for administrators and instructors to manage student information.
 
@@ -24,7 +56,7 @@ To function as a proper SMS, the `User` profile must be expanded to hold more th
 
 *(These fields will be added to the `02-Database-Schema.md` document.)*
 
-## 3. Enrollment Management (Course Roster)
+## 4. Enrollment Management (Course Roster)
 
 Instructors and Admins need to be able to view and manage the list of students enrolled in a course.
 
@@ -37,7 +69,7 @@ Instructors and Admins need to be able to view and manage the list of students e
 5.  **Manual Un-enrollment**: The admin/instructor clicks a "Remove" icon next to a student in the roster.
 6.  **API Call (Remove)**: After a confirmation dialog, the frontend calls `DELETE /api/enrollments/{id}`.
 
-## 4. Instructor Gradebook
+## 5. Instructor Gradebook
 
 The Gradebook provides a comprehensive matrix view of all student grades for all gradable items within a single course.
 

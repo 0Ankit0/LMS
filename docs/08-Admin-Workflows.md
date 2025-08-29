@@ -1,6 +1,6 @@
 # 8. Detailed Admin Workflows
 
-This document provides detailed, step-by-step guides for complex administrative tasks within the LMS.
+This document provides detailed, step-by-step guides for complex administrative tasks within the LMS, many of which are crucial for managing the student lifecycle.
 
 ## 1. Workflow: End-to-End Course Creation
 
@@ -103,3 +103,34 @@ This document provides detailed, step-by-step guides for complex administrative 
 3.  **Action**: The course `Status` is currently "Draft". The admin clicks a "Publish" button.
 4.  **API Call**: The frontend calls `PUT /api/courses/123` with a request body indicating the status change: `{ "status": "Published" }`.
 5.  **Confirmation**: The course is now live and will appear in the public course catalog for users to discover and enroll in.
+
+## 2. Workflow: Reviewing Admission Applications
+
+**Goal**: An administrator reviews a submitted application, views attached documents, and makes an admission decision.
+
+**Actor**: An Administrator.
+
+1.  **Navigation**: Admin navigates to the Admin Dashboard -> Admissions (`/admin/admissions`).
+2.  **UI**: The page displays a data grid of all submitted applications, fetched from `GET /api/admin/admissions/applications`. The admin can filter the list by status (e.g., "Submitted", "Under Review").
+3.  **Action**: The admin clicks on an application to review it.
+4.  **Redirect**: The admin is taken to the application detail page, e.g., `/admin/admissions/applications/123`.
+5.  **Review Details**: The page displays all the information submitted by the applicant and lists all attached documents. The admin can click to view each document.
+6.  **Make Decision**: After reviewing the application, the admin uses a set of buttons or a dropdown to change the application's status.
+7.  **API Call**: The admin selects "Accept" and adds some internal reviewer notes. The frontend calls `POST /api/admin/admissions/applications/123/decision` with the new status and notes.
+8.  **Confirmation**: The system updates the application status. An automated notification is sent to the applicant informing them of the decision.
+
+## 3. Workflow: Managing Competencies
+
+**Goal**: An administrator or instructor defines a new competency and links it to relevant course content and assessments.
+
+**Actor**: An Administrator or Instructor.
+
+1.  **Navigation**: Admin navigates to a new "Competency Management" area (`/admin/competencies`).
+2.  **Action**: Clicks "Create New Competency".
+3.  **Data Entry**: Fills in the form with the competency's `Title`, `Description`, and `Category`.
+4.  **API Call**: Saves the new competency, which calls `POST /api/competencies`.
+5.  **Navigation**: The admin/instructor navigates to a course's management page (`/admin/courses/edit/123`).
+6.  **Link to Course**: In a new "Competencies" tab, they can select from a list of existing competencies to associate with the course. This action calls `POST /api/courses/123/competencies`.
+7.  **Navigation**: The admin/instructor navigates to an assessment's management page (`/admin/assessments/edit/789`).
+8.  **Link to Assessment**: In a similar "Competencies" tab, they link the competencies that are measured by this specific assessment. This action calls `POST /api/assessments/789/competencies`.
+9.  **System Logic**: When a student passes this assessment, the system will automatically create or update a record in the `UserCompetencies` table, marking that the student has demonstrated mastery of the linked competencies.

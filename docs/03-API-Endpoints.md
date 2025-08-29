@@ -4,7 +4,7 @@ This document outlines the RESTful API endpoints for the LMS. The API is built u
 
 ## Authentication
 
-Authentication is handled by ASP.NET Core Identity endpoints. The key endpoints are:
+Authentication is handled by ASP.NET Core Identity endpoints. These endpoints are crucial for managing user access throughout the student lifecycle, from initial application to course enrollment and ongoing learning.
 
 -   `POST /register`: Registers a new user.
 -   `POST /login`: Authenticates a user and returns a token.
@@ -118,6 +118,83 @@ Authentication is handled by ASP.NET Core Identity endpoints. The key endpoints 
 -   **`DELETE /api/admin/users/{id}`**: Deletes a user.
     -   **Response**: `204 No Content`
 
+## Parent Portal
+
+-   **`GET /api/parent/my-children`**: Retrieves a list of students linked to the current parent user.
+    -   **Authorization**: Parent
+    -   **Response**: `List<StudentSummaryModel>`
+
+-   **`GET /api/parent/children/{studentId}/dashboard`**: Retrieves a summary dashboard for a specific linked student.
+    -   **Authorization**: Parent (must be linked to the `studentId`)
+    -   **Response**: `StudentDashboardModel`
+
+-   **`GET /api/parent/children/{studentId}/grades`**: Retrieves the gradebook for a specific linked student.
+    -   **Authorization**: Parent (must be linked to the `studentId`)
+    -   **Response**: `List<GradeModel>`
+
+-   **`GET /api/parent/children/{studentId}/attendance`**: Retrieves the attendance records for a specific linked student.
+    -   **Authorization**: Parent (must be linked to the `studentId`)
+    -   **Response**: `List<AttendanceRecordModel>`
+
+-   **`POST /api/admin/students/{studentId}/parent-links`**: Links a parent user to a student account.
+    -   **Authorization**: Admin
+    -   **Request Body**: `{ "parentId": "..." }`
+    -   **Response**: `204 No Content`
+
+-   **`DELETE /api/admin/students/{studentId}/parent-links/{parentId}`**: Removes the link between a parent and a student.
+    -   **Authorization**: Admin
+    -   **Response**: `204 No Content`
+
+## Admissions
+
+-   **`POST /api/admissions/apply`**: Submits a new application.
+    -   **Authorization**: Authenticated User
+    -   **Request Body**: `CreateApplicationRequest`
+    -   **Response**: `201 Created`
+
+-   **`GET /api/admissions/my-application`**: Retrieves the current user's application status.
+    -   **Authorization**: Authenticated User
+    -   **Response**: `ApplicationModel`
+
+-   **`GET /api/admin/admissions/applications`**: Retrieves a list of all applications.
+    -   **Authorization**: Admin
+    -   **Query Parameters**: `status`, `programId`
+    -   **Response**: `PaginatedResult<ApplicationModel>`
+
+-   **`GET /api/admin/admissions/applications/{id}`**: Retrieves a single application.
+    -   **Authorization**: Admin
+    -   **Response**: `ApplicationModel` (including submitted documents)
+
+-   **`POST /api/admin/admissions/applications/{id}/decision`**: Updates the status of an application (e.g., Accept, Reject).
+    -   **Authorization**: Admin
+    -   **Request Body**: `{ "status": "Accepted", "reviewerNotes": "..." }`
+    -   **Response**: `204 No Content`
+
+## Competency
+
+-   **`GET /api/competencies`**: Retrieves a list of all defined competencies.
+    -   **Authorization**: Admin, Instructor
+    -   **Response**: `List<CompetencyModel>`
+
+-   **`POST /api/competencies`**: Creates a new competency.
+    -   **Authorization**: Admin
+    -   **Request Body**: `CreateCompetencyRequest`
+    -   **Response**: `201 Created`
+
+-   **`POST /api/courses/{courseId}/competencies`**: Links a competency to a course.
+    -   **Authorization**: Admin, Instructor
+    -   **Request Body**: `{ "competencyId": ... }`
+    -   **Response**: `204 No Content`
+
+-   **`POST /api/assessments/{assessmentId}/competencies`**: Links a competency to an assessment.
+    -   **Authorization**: Admin, Instructor
+    -   **Request Body**: `{ "competencyId": ... }`
+    -   **Response**: `204 No Content`
+
+-   **`GET /api/users/{userId}/competency-profile`**: Retrieves the competency profile for a specific user.
+    -   **Authorization**: Admin, Instructor, or the user themselves
+    -   **Response**: `List<UserCompetencyModel>`
+
 ## Reports
 
 Authorization: Access to these endpoints is restricted. An `Admin` can access any report. A non-admin user (i.e., an `Instructor`) can only access a report if they are the instructor of the course specified in the `courseId` filter.
@@ -215,3 +292,28 @@ Authorization: Access to these endpoints is restricted. An `Admin` can access an
 
 -   **`GET /api/dropdown/users`**: Retrieves a list of users (e.g., for assigning instructors).
     -   **Response**: `List<DropdownOption>`
+
+## Notes
+
+-   **`GET /api/notes`**: Retrieves a list of notes for the current user.
+    -   **Authorization**: User
+    -   **Query Parameters**: `courseId`, `lessonId`, `searchTerm`, `tag`, `priority`, `isPinned`
+    -   **Response**: `List<NoteModel>`
+
+-   **`GET /api/lessons/{lessonId}/notes`**: Retrieves all notes for a specific lesson for the current user.
+    -   **Authorization**: User
+    -   **Response**: `List<NoteModel>`
+
+-   **`POST /api/notes`**: Creates a new note.
+    -   **Authorization**: User
+    -   **Request Body**: `CreateNoteRequest`
+    -   **Response**: `NoteModel`
+
+-   **`PUT /api/notes/{id}`**: Updates an existing note.
+    -   **Authorization**: User (owner of the note)
+    -   **Request Body**: `UpdateNoteRequest`
+    -   **Response**: `NoteModel`
+
+-   **`DELETE /api/notes/{id}`**: Deletes a note.
+    -   **Authorization**: User (owner of the note)
+    -   **Response**: `204 No Content`

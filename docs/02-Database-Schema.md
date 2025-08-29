@@ -20,9 +20,11 @@ A central library for all files uploaded by users.
 
 ## User Management
 
+This section details the database tables related to user accounts and their management throughout the student lifecycle, from initial registration to ongoing activity and relationships.
+
 ### `Users` (IdentityUser)
 
-Stores user account information, extending the default ASP.NET Core IdentityUser.
+Stores core user account information, extending the default ASP.NET Core IdentityUser. Role-specific properties are stored in dedicated tables (`Students`, `Instructors`, `Parents`).
 
 | Field | Type | Description | Validation Rules & Constraints |
 | --- | --- | --- | --- |
@@ -31,18 +33,48 @@ Stores user account information, extending the default ASP.NET Core IdentityUser
 | `LastName` | `string` | User's last name. | Required; Max Length: 100 |
 | `Bio` | `string` | A short biography of the user. | Max Length: 500 |
 | `ProfilePictureFileId` | `int?` | Foreign key to the `UserFiles` table for the user's profile picture. | On Delete: Set Null |
-| `DateOfBirth` | `DateTime` | User's date of birth. | Required |
 | `IsActive` | `bool` | Flags if the user account is active. | Required; Default: `true` |
 | `CreatedAt` | `DateTime` | Timestamp of account creation. | Required; Default: `Now()` |
 | `LastLoginAt` | `DateTime?` | Timestamp of the user's last login. | - |
-| `TotalPoints` | `int` | Total points earned through gamification. | Required; Default: 0; Range: >= 0 |
-| `Level` | `int` | User's current level in the gamification system. | Required; Default: 1; Range: >= 1 |
+| ... | ... | Other standard IdentityUser fields (UserName, Email, etc.) | `Email` is Required, Unique. `UserName` is Required, Unique. |
+
+### `Students`
+
+Stores properties specific to student users.
+
+| Field | Type | Description | Validation Rules & Constraints |
+| --- | --- | --- | --- |
+| `UserId` | `string` | Primary Key; Foreign key to `Users.Id`. | Required; On Delete: Cascade |
+| `DateOfBirth` | `DateTime` | Student's date of birth. | Required |
 | `StudentIdNumber` | `string?` | An official student ID number, for SMS integration. | Max Length: 50; Unique (if not null) |
 | `EnrollmentDate` | `DateTime?` | The date the student first enrolled in the institution. | - |
 | `GraduationDate` | `DateTime?` | The student's graduation date. | - |
 | `EmergencyContactName` | `string?` | Name of an emergency contact. | Max Length: 200 |
 | `EmergencyContactPhone` | `string?` | Phone number for an emergency contact. | Max Length: 50 |
-| ... | ... | Other standard IdentityUser fields (UserName, Email, etc.) | `Email` is Required, Unique. `UserName` is Required, Unique. |
+| `TotalPoints` | `int` | Total points earned through gamification. | Required; Default: 0; Range: >= 0 |
+| `Level` | `int` | Student's current level in the gamification system. | Required; Default: 1; Range: >= 1 |
+
+### `Instructors`
+
+Stores properties specific to instructor users.
+
+| Field | Type | Description | Validation Rules & Constraints |
+| --- | --- | --- | --- |
+| `UserId` | `string` | Primary Key; Foreign key to `Users.Id`. | Required; On Delete: Cascade |
+| `Department` | `string?` | The instructor's academic department. | Max Length: 100 |
+| `OfficeHours` | `string?` | Text description of office hours. | Max Length: 500 |
+| `HireDate` | `DateTime?` | The date the instructor was hired. | - |
+
+### `Parents`
+
+Stores properties specific to parent/guardian users.
+
+| Field | Type | Description | Validation Rules & Constraints |
+| --- | --- | --- | --- |
+| `UserId` | `string` | Primary Key; Foreign key to `Users.Id`. | Required; On Delete: Cascade |
+| `PreferredContactMethod` | `string?` | Parent's preferred method of contact (e.g., Email, Phone). | Max Length: 50 |
+
+### `UserSettings`
 
 ### `UserSettings`
 
@@ -70,6 +102,16 @@ Logs significant user actions within the system.
 | `Timestamp` | `DateTime` | When the activity occurred. | Required; Default: `Now()` |
 | `IpAddress` | `string` | IP address from which the activity originated. | Max Length: 50 |
 | `UserAgent` | `string` | The user agent string of the client. | Max Length: 500 |
+
+### `ParentStudentLinks`
+
+Junction table to create a many-to-many relationship between parents/guardians and students.
+
+| Field | Type | Description | Validation Rules & Constraints |
+| --- | --- | --- | --- |
+| `ParentId` | `string` | Foreign key to the `Parents.UserId`. | Required; On Delete: Cascade |
+| `StudentId` | `string` | Foreign key to the `Students.UserId`. | Required; On Delete: Cascade |
+| | | | **Primary Key on (`ParentId`, `StudentId`)** |
 
 ## Course Structure
 
@@ -305,3 +347,96 @@ Stores information about certificates issued to users upon course completion.
 | `IssuedAt` | `DateTime` | When the certificate was issued. | Required; Default: `Now()` |
 | `CertificateFileId` | `int?` | A foreign key to the `UserFiles` table for the generated certificate PDF. | On Delete: Set Null |
 | ... | ... | | Unique constraint on (`UserId`, `CourseId`) |
+
+## User Content
+
+### `Notes`
+
+Stores user-created notes, which can be linked to specific courses or lessons.
+
+| Field | Type | Description | Validation Rules & Constraints |
+| --- | --- | --- | --- |
+| `Id` | `int` | Primary Key. | - |
+| `Title` | `string` | The title of the note. | Required; Max Length: 200 |
+| `Content` | `string` | The body of the note. | Required |
+| `UserId` | `string` | Foreign key to the `Users` table. | Required; On Delete: Cascade |
+| `CourseId` | `int?` | Optional foreign key to the `Courses` table. | On Delete: Cascade |
+| `LessonId` | `int?` | Optional foreign key to the `Lessons` table. | On Delete: Cascade |
+| `IsPrivate` | `bool` | If true, the note is only visible to the owner. | Required; Default: `true` |
+| `IsPinned` | `bool` | If true, the note is pinned for quick access. | Required; Default: `false` |
+| `Tags` | `string?` | Comma-separated tags for organization. | Max Length: 500 |
+| `Type` | `NoteType` | The type of note (e.g., General, StudyNote). | Required; Default: `General` |
+| `Priority` | `NotePriority` | The priority of the note (e.g., Normal, High). | Required; Default: `Normal` |
+| `CreatedAt` | `DateTime` | Timestamp of when the note was created. | Required; Default: `Now()` |
+| `UpdatedAt` | `DateTime` | Timestamp of the last update. | Required; Default: `Now()` |
+
+## Admissions
+
+### `Applications`
+
+Stores admission applications from prospective students.
+
+| Field | Type | Description | Validation Rules & Constraints |
+| --- | --- | --- | --- |
+| `Id` | `int` | Primary Key. | - |
+| `ApplicantUserId` | `string` | Foreign key to the `Users` table for the prospective student. | Required; On Delete: Cascade |
+| `ProgramId` | `int` | Foreign key to the program or course they are applying for. | Required |
+| `Status` | `ApplicationStatus` | The current status of the application (e.g., Submitted, UnderReview, Accepted). | Required; Default: `Submitted` |
+| `ApplicationDate` | `DateTime` | When the application was submitted. | Required; Default: `Now()` |
+| `DecisionDate` | `DateTime?` | When a decision was made. | - |
+| `ReviewerId` | `string?` | Foreign key to the `Users` table for the admin who reviewed it. | On Delete: Set Null |
+| `ReviewerNotes` | `string?` | Internal notes from the reviewer. | - |
+
+### `ApplicationDocuments`
+
+Stores documents submitted as part of an application (e.g., transcripts, essays).
+
+| Field | Type | Description | Validation Rules & Constraints |
+| --- | --- | --- | --- |
+| `Id` | `int` | Primary Key. | - |
+| `ApplicationId` | `int` | Foreign key to the `Applications` table. | Required; On Delete: Cascade |
+| `DocumentType` | `string` | The type of document (e.g., "Transcript", "Letter of Recommendation"). | Required; Max Length: 100 |
+| `FileId` | `int` | Foreign key to the `UserFiles` table. | Required; On Delete: Restrict |
+
+## Competency
+
+### `Competencies`
+
+Defines the individual skills or competencies that can be taught and assessed.
+
+| Field | Type | Description | Validation Rules & Constraints |
+| --- | --- | --- | --- |
+| `Id` | `int` | Primary Key. | - |
+| `Title` | `string` | The name of the competency (e.g., "C# Programming"). | Required; Max Length: 200 |
+| `Description` | `string` | A detailed description of the competency. | Required; Max Length: 4000 |
+| `Category` | `string` | A category for grouping competencies (e.g., "Programming Languages"). | Max Length: 100 |
+
+### `CourseCompetencies`
+
+Junction table linking competencies that are taught or reinforced in a course.
+
+| Field | Type | Description | Validation Rules & Constraints |
+| --- | --- | --- | --- |
+| `CourseId` | `int` | Foreign key to the `Courses` table. | Required; On Delete: Cascade |
+| `CompetencyId` | `int` | Foreign key to the `Competencies` table. | Required; On Delete: Cascade |
+
+### `AssessmentCompetencies`
+
+Junction table linking competencies that are measured by an assessment.
+
+| Field | Type | Description | Validation Rules & Constraints |
+| --- | --- | --- | --- |
+| `AssessmentId` | `int` | Foreign key to the `Assessments` table. | Required; On Delete: Cascade |
+| `CompetencyId` | `int` | Foreign key to the `Competencies` table. | Required; On Delete: Cascade |
+
+### `UserCompetencies`
+
+Tracks a user's demonstrated mastery of a competency.
+
+| Field | Type | Description | Validation Rules & Constraints |
+| --- | --- | --- | --- |
+| `UserId` | `string` | Foreign key to the `Users` table. | Required; On Delete: Cascade |
+| `CompetencyId` | `int` | Foreign key to the `Competencies` table. | Required; On Delete: Cascade |
+| `MasteryLevel` | `int` | A score or level indicating the degree of mastery (e.g., 1-5). | Required |
+| `AchievedDate` | `DateTime` | The date the competency was demonstrated. | Required; Default: `Now()` |
+| `AssessedBy` | `string?` | How the competency was assessed (e.g., "Assessment: Final Exam"). | Max Length: 200 |
