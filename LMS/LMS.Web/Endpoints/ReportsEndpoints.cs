@@ -47,7 +47,7 @@ namespace LMS.Web.Endpoints
                 var isAdmin = user.IsInRole("Admin");
                 var userId = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
-                if (!isAdmin && parameters.CourseId.HasValue)
+                if (!isAdmin && parameters.CourseId.HasValue && !string.IsNullOrEmpty(userId))
                 {
                     // Check if instructor owns the course
                     var isInstructor = await reportRepository.IsInstructorOfCourseAsync(userId, parameters.CourseId.Value);
@@ -77,7 +77,7 @@ namespace LMS.Web.Endpoints
                 var isAdmin = user.IsInRole("Admin");
                 var userId = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
-                if (!isAdmin && parameters.CourseId.HasValue)
+                if (!isAdmin && parameters.CourseId.HasValue && !string.IsNullOrEmpty(userId))
                 {
                     // Check if instructor owns the course
                     var isInstructor = await reportRepository.IsInstructorOfCourseAsync(userId, parameters.CourseId.Value);
@@ -102,7 +102,7 @@ namespace LMS.Web.Endpoints
         {
             try
             {
-                var userId = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                var userId = user.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? string.Empty;
                 var isAdmin = user.IsInRole("Admin");
 
                 var dashboard = await reportRepository.GetAnalyticsDashboardAsync(userId, isAdmin);

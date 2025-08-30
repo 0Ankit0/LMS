@@ -260,7 +260,7 @@ namespace LMS.Repositories
                 UserName = enrollment.User?.UserName ?? "",
                 CourseId = enrollment.CourseId,
                 CourseTitle = enrollment.Course?.Title ?? "",
-                CourseThumbnailUrl = enrollment.Course?.ThumbnailFile?.FilePath ?? "",
+                CourseThumbnailUrl = "",
                 EnrolledAt = enrollment.EnrolledAt,
                 StartedAt = enrollment.StartedAt,
                 CompletedAt = enrollment.CompletedAt,
@@ -295,7 +295,6 @@ namespace LMS.Repositories
                 var enrollments = await _context.Enrollments
                     .Include(e => e.User)
                     .Include(e => e.Course)
-                    .ThenInclude(c => c.ThumbnailFile)
                     .Where(e => e.CourseId == courseId)
                     .OrderByDescending(e => e.EnrolledAt)
                     .ToListAsync();

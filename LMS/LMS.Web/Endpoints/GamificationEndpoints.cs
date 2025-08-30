@@ -48,7 +48,6 @@ public static class GamificationEndpoints
                     u.Id,
                     u.FirstName,
                     u.LastName,
-                    u.ProfilePictureFileId,
                     TotalPoints = u.Achievements.Sum(ua => ua.Achievement.Points),
                     AchievementCount = u.Achievements.Count()
                 })
@@ -187,7 +186,6 @@ public static class GamificationEndpoints
                     e.User.Id,
                     e.User.FirstName,
                     e.User.LastName,
-                    e.User.ProfilePictureFileId,
                     e.LastUpdated
                 })
                 .ToList();

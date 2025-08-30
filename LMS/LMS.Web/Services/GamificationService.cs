@@ -109,12 +109,12 @@ namespace LMS.Web.Services
             return enrollment != null && enrollment.CompletedAt.HasValue;
         }
 
-        private async Task<bool> CheckAssessmentScore(string userId, int? assessmentId, double minScore, double? actualScore)
+        private Task<bool> CheckAssessmentScore(string userId, int? assessmentId, double minScore, double? actualScore)
         {
             if (!assessmentId.HasValue || !actualScore.HasValue)
-                return false;
+                return Task.FromResult(false);
 
-            return actualScore.Value >= minScore;
+            return Task.FromResult(actualScore.Value >= minScore);
         }
 
         private async Task<bool> CheckParticipation(ApplicationDbContext context, string userId, int requiredCount, int? courseId)

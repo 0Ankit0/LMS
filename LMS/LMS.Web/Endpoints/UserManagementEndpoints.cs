@@ -91,7 +91,6 @@ namespace LMS.Web.Endpoints
         {
             var student = await context.Students
                 .Include(s => s.User)
-                .ThenInclude(u => u.ProfilePictureFile)
                 .FirstOrDefaultAsync(s => s.UserId == userId);
 
             if (student == null)
@@ -112,7 +111,7 @@ namespace LMS.Web.Endpoints
                 LastName = student.User.LastName,
                 Email = student.User.Email ?? string.Empty,
                 Bio = student.User.Bio,
-                ProfilePictureUrl = student.User.ProfilePictureFile?.FilePath
+                ProfilePictureUrl = string.Empty // TODO: Implement profile picture file support when database schema is ready
             };
 
             return Results.Ok(model);
@@ -195,7 +194,6 @@ namespace LMS.Web.Endpoints
         {
             var instructor = await context.Instructors
                 .Include(i => i.User)
-                .ThenInclude(u => u.ProfilePictureFile)
                 .FirstOrDefaultAsync(i => i.UserId == userId);
 
             if (instructor == null)
@@ -211,7 +209,7 @@ namespace LMS.Web.Endpoints
                 LastName = instructor.User.LastName,
                 Email = instructor.User.Email ?? string.Empty,
                 Bio = instructor.User.Bio,
-                ProfilePictureUrl = instructor.User.ProfilePictureFile?.FilePath
+                ProfilePictureUrl = string.Empty // TODO: Implement profile picture file support when database schema is ready
             };
 
             return Results.Ok(model);
@@ -253,7 +251,6 @@ namespace LMS.Web.Endpoints
         {
             var parent = await context.Parents
                 .Include(p => p.User)
-                .ThenInclude(u => u.ProfilePictureFile)
                 .Include(p => p.StudentLinks)
                 .ThenInclude(sl => sl.Student)
                 .ThenInclude(s => s.User)
@@ -270,7 +267,7 @@ namespace LMS.Web.Endpoints
                 LastName = parent.User.LastName,
                 Email = parent.User.Email ?? string.Empty,
                 Bio = parent.User.Bio,
-                ProfilePictureUrl = parent.User.ProfilePictureFile?.FilePath,
+                ProfilePictureUrl = string.Empty, // TODO: Implement profile picture file support when database schema is ready
                 LinkedStudents = parent.StudentLinks.Select(sl => new StudentProfileModel
                 {
                     UserId = sl.Student.UserId,

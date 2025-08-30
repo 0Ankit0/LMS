@@ -372,7 +372,7 @@ namespace LMS.Web.Repositories
                 Id = course.Id,
                 Title = course.Title,
                 Description = course.Description,
-                ThumbnailUrl = course.ThumbnailFile?.FilePath ?? "/images/default-course.png",
+                ThumbnailUrl = "/images/default-course.png",
                 InstructorName = course.Instructor?.FullName ?? "Unknown",
                 InstructorId = course.InstructorId,
                 Level = course.Level.ToString(),

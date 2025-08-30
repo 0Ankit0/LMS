@@ -51,6 +51,7 @@ namespace LMS.Repositories
                 using var context = _contextFactory.CreateDbContext();
                 var courses = await context.Courses
                     .Include(c => c.Instructor)
+                    .Include(c => c.ThumbnailFile)
                     .Include(c => c.Modules)
                     .Include(c => c.Enrollments)
                     .Include(c => c.CourseCategories)
@@ -75,6 +76,7 @@ namespace LMS.Repositories
 
                 var query = context.Courses
                     .Include(c => c.Instructor)
+                    .Include(c => c.ThumbnailFile)
                     .Include(c => c.CourseCategories)
                         .ThenInclude(cc => cc.Category)
                     .Include(c => c.CourseTags)
@@ -150,6 +152,7 @@ namespace LMS.Repositories
                 using var context = _contextFactory.CreateDbContext();
                 var query = context.Courses
                     .Include(c => c.Instructor)
+                    .Include(c => c.ThumbnailFile)
                     .Include(c => c.Modules)
                     .Include(c => c.Enrollments)
                     .Include(c => c.CourseCategories)
@@ -184,6 +187,7 @@ namespace LMS.Repositories
                 using var context = _contextFactory.CreateDbContext();
                 var course = await context.Courses
                     .Include(c => c.Instructor)
+                    .Include(c => c.ThumbnailFile)
                     .Include(c => c.Modules)
                         .ThenInclude(m => m.Lessons)
                     .Include(c => c.Enrollments)
@@ -639,8 +643,8 @@ namespace LMS.Repositories
                 var courses = await context.Courses
                     .Include(c => c.CourseCategories)
                         .ThenInclude(cc => cc.Category)
-                    .Include(c => c.Instructor)
                     .Include(c => c.ThumbnailFile)
+                    .Include(c => c.Instructor)
                     .Where(c => c.CourseCategories.Any(cc => cc.CategoryId == categoryId) && c.IsActive)
                     .OrderBy(c => c.Title)
                     .ToListAsync();
@@ -662,8 +666,8 @@ namespace LMS.Repositories
                 var courses = await context.Courses
                     .Include(c => c.CourseCategories)
                         .ThenInclude(cc => cc.Category)
-                    .Include(c => c.Instructor)
                     .Include(c => c.ThumbnailFile)
+                    .Include(c => c.Instructor)
                     .Include(c => c.Enrollments)
                     .Where(c => c.Status == CourseStatus.Published && c.IsActive)
                     .OrderByDescending(c => c.Enrollments.Count) // Order by popularity as a proxy for "featured"
@@ -687,8 +691,8 @@ namespace LMS.Repositories
                 var courses = await context.Courses
                     .Include(c => c.CourseCategories)
                         .ThenInclude(cc => cc.Category)
-                    .Include(c => c.Instructor)
                     .Include(c => c.ThumbnailFile)
+                    .Include(c => c.Instructor)
                     .Include(c => c.Enrollments)
                     .Where(c => c.IsActive)
                     .OrderByDescending(c => c.Enrollments.Count)
@@ -774,8 +778,6 @@ namespace LMS.Repositories
                 var enrollments = await context.Enrollments
                     .Include(e => e.Course)
                         .ThenInclude(c => c.Instructor)
-                    .Include(e => e.Course)
-                        .ThenInclude(c => c.ThumbnailFile)
                     .Include(e => e.Course)
                         .ThenInclude(c => c.CourseCategories)
                             .ThenInclude(cc => cc.Category)

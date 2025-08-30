@@ -41,7 +41,7 @@ namespace LMS.Web.Endpoints
                 .WithSummary("Get tags for dropdowns");
         }
 
-        private static async Task<IResult> GetCategoriesDropdown(IDashboardRepository dashboardRepository)
+        private static Task<IResult> GetCategoriesDropdown(IDashboardRepository dashboardRepository)
         {
             try
             {
@@ -55,15 +55,15 @@ namespace LMS.Web.Endpoints
                     new() { Value = "5", Text = "Data Science" }
                 };
 
-                return Results.Ok(dropdownOptions);
+                return Task.FromResult(Results.Ok(dropdownOptions));
             }
             catch (Exception ex)
             {
-                return Results.Problem($"Error retrieving categories dropdown: {ex.Message}");
+                return Task.FromResult(Results.Problem($"Error retrieving categories dropdown: {ex.Message}"));
             }
         }
 
-        private static async Task<IResult> GetCourseLevelsDropdown()
+        private static Task<IResult> GetCourseLevelsDropdown()
         {
             try
             {
@@ -75,15 +75,15 @@ namespace LMS.Web.Endpoints
                     new() { Value = "Expert", Text = "Expert" }
                 };
 
-                return Results.Ok(dropdownOptions);
+                return Task.FromResult(Results.Ok(dropdownOptions));
             }
             catch (Exception ex)
             {
-                return Results.Problem($"Error retrieving course levels dropdown: {ex.Message}");
+                return Task.FromResult(Results.Problem($"Error retrieving course levels dropdown: {ex.Message}"));
             }
         }
 
-        private static async Task<IResult> GetUsersDropdown(
+        private static Task<IResult> GetUsersDropdown(
             IDashboardRepository dashboardRepository,
             ClaimsPrincipal user,
             string? role = null)
@@ -98,15 +98,15 @@ namespace LMS.Web.Endpoints
                     new() { Value = "user3", Text = "Bob Johnson (Admin)" }
                 };
 
-                return Results.Ok(dropdownOptions);
+                return Task.FromResult(Results.Ok(dropdownOptions));
             }
             catch (Exception ex)
             {
-                return Results.Problem($"Error retrieving users dropdown: {ex.Message}");
+                return Task.FromResult(Results.Problem($"Error retrieving users dropdown: {ex.Message}"));
             }
         }
 
-        private static async Task<IResult> GetInstructorsDropdown(IDashboardRepository dashboardRepository)
+        private static Task<IResult> GetInstructorsDropdown(IDashboardRepository dashboardRepository)
         {
             try
             {
@@ -118,11 +118,11 @@ namespace LMS.Web.Endpoints
                     new() { Value = "instructor3", Text = "Mr. Robert Brown" }
                 };
 
-                return Results.Ok(dropdownOptions);
+                return Task.FromResult(Results.Ok(dropdownOptions));
             }
             catch (Exception ex)
             {
-                return Results.Problem($"Error retrieving instructors dropdown: {ex.Message}");
+                return Task.FromResult(Results.Problem($"Error retrieving instructors dropdown: {ex.Message}"));
             }
         }
 
@@ -153,7 +153,7 @@ namespace LMS.Web.Endpoints
             }
         }
 
-        private static async Task<IResult> GetTagsDropdown()
+        private static Task<IResult> GetTagsDropdown()
         {
             try
             {
@@ -167,11 +167,11 @@ namespace LMS.Web.Endpoints
                     new() { Value = "5", Text = "UI/UX Design" }
                 };
 
-                return Results.Ok(dropdownOptions);
+                return Task.FromResult(Results.Ok(dropdownOptions));
             }
             catch (Exception ex)
             {
-                return Results.Problem($"Error retrieving tags dropdown: {ex.Message}");
+                return Task.FromResult(Results.Problem($"Error retrieving tags dropdown: {ex.Message}"));
             }
         }
     }

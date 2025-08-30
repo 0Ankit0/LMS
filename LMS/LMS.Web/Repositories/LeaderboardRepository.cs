@@ -42,6 +42,7 @@ namespace LMS.Repositories
                     .Include(l => l.Course)
                     .Include(l => l.Entries)
                     .ThenInclude(e => e.User)
+                        .ThenInclude(u => u.ProfilePictureFile)
                     .OrderBy(l => l.Name)
                     .ToListAsync();
 
@@ -62,6 +63,7 @@ namespace LMS.Repositories
                     .Include(l => l.Course)
                     .Include(l => l.Entries.OrderByDescending(e => e.Score).Take(50))
                     .ThenInclude(e => e.User)
+                        .ThenInclude(u => u.ProfilePictureFile)
                     .FirstOrDefaultAsync(l => l.Id == id);
 
                 return leaderboard != null ? MapToLeaderboardModel(leaderboard) : null;
@@ -81,6 +83,7 @@ namespace LMS.Repositories
                     .Include(l => l.Course)
                     .Include(l => l.Entries.OrderByDescending(e => e.Score).Take(50))
                     .ThenInclude(e => e.User)
+                        .ThenInclude(u => u.ProfilePictureFile)
                     .FirstOrDefaultAsync(l => l.CourseId == courseId);
 
                 return leaderboard != null ? MapToLeaderboardModel(leaderboard) : null;
@@ -98,6 +101,7 @@ namespace LMS.Repositories
             {
                 var entries = await _context.LeaderboardEntries
                     .Include(e => e.User)
+                        .ThenInclude(u => u.ProfilePictureFile)
                     .Where(e => e.LeaderboardId == leaderboardId)
                     .OrderByDescending(e => e.Score)
                     .Take(limit)
@@ -119,6 +123,7 @@ namespace LMS.Repositories
                 // Get global leaderboard based on total achievement points
                 var userScores = await _context.UserAchievements
                     .Include(ua => ua.User)
+                        .ThenInclude(u => u.ProfilePictureFile)
                     .Include(ua => ua.Achievement)
                     .GroupBy(ua => ua.UserId)
                     .Select(g => new
@@ -137,7 +142,7 @@ namespace LMS.Repositories
                     Rank = index + 1,
                     UserId = score.UserId,
                     UserName = score.User?.UserName ?? "",
-                    ProfilePictureUrl = score.User?.ProfilePictureFile?.FilePath,
+                    ProfilePictureUrl = score.User?.ProfilePictureFile?.FilePath ?? string.Empty,
                     Score = score.TotalScore,
                     LastUpdated = score.LastUpdated
                 }).ToList();
@@ -156,6 +161,7 @@ namespace LMS.Repositories
                 // Get course-specific leaderboard based on course progress and achievements
                 var courseScores = await _context.Enrollments
                     .Include(e => e.User)
+                        .ThenInclude(u => u.ProfilePictureFile)
                     .Where(e => e.CourseId == courseId)
                     .Select(e => new
                     {
@@ -186,7 +192,7 @@ namespace LMS.Repositories
                     Rank = index + 1,
                     UserId = score.UserId,
                     UserName = score.User?.UserName ?? "",
-                    ProfilePictureUrl = score.User?.ProfilePictureFile?.FilePath,
+                    ProfilePictureUrl = score.User?.ProfilePictureFile?.FilePath ?? string.Empty,
                     Score = score.TotalScore,
                     LastUpdated = score.LastUpdated
                 }).ToList();
@@ -291,6 +297,7 @@ namespace LMS.Repositories
 
                 var entries = await _context.LeaderboardEntries
                     .Include(e => e.User)
+                        .ThenInclude(u => u.ProfilePictureFile)
                     .Where(e => e.LastUpdated >= weekAgo)
                     .GroupBy(e => e.UserId)
                     .Select(g => new { UserId = g.Key, TotalScore = g.Sum(e => e.Score), User = g.First().User, LastUpdated = g.Max(e => e.LastUpdated) })
@@ -303,7 +310,7 @@ namespace LMS.Repositories
                     Rank = index + 1,
                     UserId = entry.UserId,
                     UserName = entry.User?.UserName ?? "",
-                    ProfilePictureUrl = entry.User?.ProfilePictureFile?.FilePath,
+                    ProfilePictureUrl = entry.User?.ProfilePictureFile?.FilePath ?? string.Empty,
                     TotalPoints = (int)entry.TotalScore,
                     Score = entry.TotalScore,
                     LastUpdated = entry.LastUpdated
@@ -324,6 +331,7 @@ namespace LMS.Repositories
 
                 var entries = await _context.LeaderboardEntries
                     .Include(e => e.User)
+                        .ThenInclude(u => u.ProfilePictureFile)
                     .Where(e => e.LastUpdated >= monthAgo)
                     .GroupBy(e => e.UserId)
                     .Select(g => new { UserId = g.Key, TotalScore = g.Sum(e => e.Score), User = g.First().User, LastUpdated = g.Max(e => e.LastUpdated) })
@@ -336,7 +344,7 @@ namespace LMS.Repositories
                     Rank = index + 1,
                     UserId = entry.UserId,
                     UserName = entry.User?.UserName ?? "",
-                    ProfilePictureUrl = entry.User?.ProfilePictureFile?.FilePath,
+                    ProfilePictureUrl = entry.User?.ProfilePictureFile?.FilePath ?? string.Empty,
                     TotalPoints = (int)entry.TotalScore,
                     Score = entry.TotalScore,
                     LastUpdated = entry.LastUpdated
@@ -356,6 +364,7 @@ namespace LMS.Repositories
                 // This is essentially the same as GetGlobalLeaderboardAsync but with additional properties
                 var entries = await _context.LeaderboardEntries
                     .Include(e => e.User)
+                        .ThenInclude(u => u.ProfilePictureFile)
                     .GroupBy(e => e.UserId)
                     .Select(g => new { UserId = g.Key, TotalScore = g.Sum(e => e.Score), User = g.First().User, LastUpdated = g.Max(e => e.LastUpdated) })
                     .OrderByDescending(e => e.TotalScore)
@@ -367,7 +376,7 @@ namespace LMS.Repositories
                     Rank = index + 1,
                     UserId = entry.UserId,
                     UserName = entry.User?.UserName ?? "",
-                    ProfilePictureUrl = entry.User?.ProfilePictureFile?.FilePath,
+                    ProfilePictureUrl = entry.User?.ProfilePictureFile?.FilePath ?? string.Empty,
                     TotalPoints = (int)entry.TotalScore,
                     Score = entry.TotalScore,
                     LastUpdated = entry.LastUpdated
@@ -385,6 +394,7 @@ namespace LMS.Repositories
             // Use GetGlobalLeaderboardAsync and enrich with achievement count and total points
             var userScores = await _context.UserAchievements
                 .Include(ua => ua.User)
+                    .ThenInclude(u => u.ProfilePictureFile)
                 .Include(ua => ua.Achievement)
                 .GroupBy(ua => ua.UserId)
                 .Select(g => new
@@ -404,7 +414,7 @@ namespace LMS.Repositories
                 Rank = index + 1,
                 UserId = score.UserId,
                 UserName = score.User?.UserName ?? "",
-                ProfilePictureUrl = score.User?.ProfilePictureFile?.FilePath,
+                ProfilePictureUrl = score.User?.ProfilePictureFile?.FilePath ?? string.Empty,
                 TotalPoints = score.TotalPoints,
                 AchievementCount = score.AchievementCount,
                 LastUpdated = score.LastUpdated
@@ -441,7 +451,7 @@ namespace LMS.Repositories
                 Rank = rank,
                 UserId = entry.UserId,
                 UserName = entry.User?.UserName ?? "",
-                ProfilePictureUrl = entry.User?.ProfilePictureFile?.FilePath,
+                ProfilePictureUrl = entry.User?.ProfilePictureFile?.FilePath ?? string.Empty,
                 Score = entry.Score,
                 LastUpdated = entry.LastUpdated
             };

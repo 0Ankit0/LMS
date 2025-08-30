@@ -406,7 +406,7 @@ namespace LMS.Repositories
                 UserName = enrollment.User?.UserName ?? string.Empty,
                 CourseId = enrollment.CourseId,
                 CourseTitle = enrollment.Course?.Title ?? string.Empty,
-                CourseThumbnailUrl = enrollment.Course?.ThumbnailFile?.FilePath ?? string.Empty,
+                CourseThumbnailUrl = string.Empty, // TODO: Implement thumbnail file support when database schema is ready
                 EnrolledAt = enrollment.EnrolledAt,
                 StartedAt = enrollment.StartedAt,
                 CompletedAt = enrollment.CompletedAt,

@@ -1983,7 +1983,7 @@ namespace LMS.Repositories
                 {
                     TeacherId = teacherId,
                     TeacherName = teacher.FullName,
-                    Email = teacher.Email,
+                    Email = teacher.Email ?? string.Empty,
                     TotalCoursesTeaching = teacherCourses.Count,
                     TotalStudentsTeaching = totalStudents,
                     LastLoginDate = teacher.LastLoginAt ?? DateTime.MinValue,

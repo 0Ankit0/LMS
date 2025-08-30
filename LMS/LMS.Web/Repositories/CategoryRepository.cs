@@ -36,7 +36,9 @@ namespace LMS.Repositories
             {
                 var categories = await _context.Categories
                     .Include(c => c.ParentCategory)
+                    .Include(c => c.IconFile)
                     .Include(c => c.SubCategories)
+                        .ThenInclude(sc => sc.IconFile)
                     .Include(c => c.CourseCategories)
                     .OrderBy(c => c.Name)
                     .ToListAsync();
@@ -55,7 +57,9 @@ namespace LMS.Repositories
             request.Validate();
             var query = _context.Categories
                 .Include(c => c.ParentCategory)
+                .Include(c => c.IconFile)
                 .Include(c => c.SubCategories)
+                    .ThenInclude(sc => sc.IconFile)
                 .Include(c => c.CourseCategories)
                 .OrderBy(c => c.Name);
 
@@ -75,7 +79,9 @@ namespace LMS.Repositories
         public async Task<List<CategoryModel>> GetRootCategoriesAsync()
         {
             var categories = await _context.Categories
+                .Include(c => c.IconFile)
                 .Include(c => c.SubCategories)
+                    .ThenInclude(sc => sc.IconFile)
                 .Include(c => c.CourseCategories)
                 .Where(c => c.IsActive && c.ParentCategoryId == null)
                 .OrderBy(c => c.Name)
@@ -88,7 +94,9 @@ namespace LMS.Repositories
         {
             var category = await _context.Categories
                 .Include(c => c.ParentCategory)
+                .Include(c => c.IconFile)
                 .Include(c => c.SubCategories)
+                    .ThenInclude(sc => sc.IconFile)
                 .Include(c => c.CourseCategories)
                 .FirstOrDefaultAsync(c => c.Id == id && c.IsActive);
 
@@ -99,7 +107,9 @@ namespace LMS.Repositories
         {
             var categories = await _context.Categories
                 .Include(c => c.ParentCategory)
+                .Include(c => c.IconFile)
                 .Include(c => c.SubCategories)
+                    .ThenInclude(sc => sc.IconFile)
                 .Include(c => c.CourseCategories)
                 .Where(c => c.ParentCategoryId == parentCategoryId && c.IsActive)
                 .OrderBy(c => c.Name)
@@ -166,6 +176,7 @@ namespace LMS.Repositories
         {
             var categories = await _context.Categories
                 .Include(c => c.ParentCategory)
+                .Include(c => c.IconFile)
                 .Include(c => c.CourseCategories)
                 .Where(c => c.CourseCategories.Any(cc => cc.CourseId == courseId) && c.IsActive)
                 .OrderBy(c => c.Name)
@@ -181,7 +192,7 @@ namespace LMS.Repositories
                 Id = category.Id,
                 Name = category.Name,
                 Description = category.Description,
-                IconUrl = category.IconFile?.FilePath,
+                IconUrl = category.IconFile?.FilePath ?? string.Empty,
                 Color = category.Color,
                 IsActive = category.IsActive,
                 ParentCategoryId = category.ParentCategoryId,
@@ -191,7 +202,7 @@ namespace LMS.Repositories
                     Id = sc.Id,
                     Name = sc.Name,
                     Description = sc.Description,
-                    IconUrl = sc.IconFile?.FilePath,
+                    IconUrl = sc.IconFile?.FilePath ?? string.Empty,
                     Color = sc.Color,
                     IsActive = sc.IsActive,
                     ParentCategoryId = sc.ParentCategoryId,

@@ -591,7 +591,7 @@ namespace LMS.Web.Data
             builder.Entity<Student>()
                 .HasIndex(s => s.StudentIdNumber)
                 .IsUnique()
-                .HasFilter("[StudentIdNumber] IS NOT NULL")
+                .HasFilter("\"StudentIdNumber\" IS NOT NULL")
                 .HasDatabaseName("IX_Student_StudentIdNumber");
 
             builder.Entity<UserActivity>()
