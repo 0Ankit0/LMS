@@ -363,12 +363,14 @@
         await LoadAssessments();
     }
 
+#pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
     private async Task<IEnumerable<CourseModel>> SearchCourses(string value, CancellationToken token)
     {
         if (string.IsNullOrEmpty(value))
             return availableCourses;
         return availableCourses.Where(x => x.Title.Contains(value, StringComparison.InvariantCultureIgnoreCase));
     }
+#pragma warning restore CS1998
 
     private async Task LoadAssessments()
     {
@@ -583,3 +585,5 @@ new AssessmentAttemptModel { AssessmentId = 3, UserId = userId, Score = 75, Comp
         public DateTime? CompletedAt { get; set; }
     }
 }
+
+

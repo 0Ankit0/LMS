@@ -1,4 +1,4 @@
-﻿@page "/admin/courses/create"
+@page "/admin/courses/create"
 @page "/admin/courses/edit/{id:int}"
 @rendermode @(new InteractiveServerRenderMode())
 @using LMS.Repositories
@@ -102,7 +102,7 @@ else
                     Placeholder="List any prerequisites..." />
                 <MudTextField @bind-Value="Course.LearningObjectives" Label="Learning Objectives" Variant="Variant.Text"
                     Lines="3" Placeholder="What will students learn..." />
-                <MudCheckBox T="bool" @bind-Checked="Course.IsActive" Label="Is Active" Color="Color.Primary" />
+                <MudCheckBox T="bool" @bind-Value="Course.IsActive" Label="Is Active" Color="Color.Primary" />
                 <MudStack Direction="Row" Spacing="2" Class="my-2">
                     <MudText Typo="Typo.subtitle2">Course Icon</MudText>
                     <MudIconPicker T="string" Value="@Course.IconName" ValueChanged="ValueChangedCourseIcon"
@@ -270,3 +270,5 @@ else
 
     private void ValueChangedCourseIcon(string v) => Course.IconName = v;
 }
+
+

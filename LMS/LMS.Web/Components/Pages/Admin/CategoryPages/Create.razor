@@ -1,4 +1,4 @@
-﻿@page "/admin/categories/create"
+@page "/admin/categories/create"
 @page "/admin/categories/edit/{id:int}"
 @using LMS.Repositories
 @using LMS.Web.Components.Shared
@@ -68,7 +68,7 @@ else
                         <MudIcon Icon="@Category.IconName" Class="ms-2" />
                     }
                 </MudStack>
-                <MudCheckBox T="bool" @bind-Checked="Category.IsActive" Label="Is Active" Color="Color.Primary" />
+                <MudCheckBox T="bool" @bind-Value="Category.IsActive" Label="Is Active" Color="Color.Primary" />
                 <div class="d-flex gap-2">
                     <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Disabled="@isSubmitting">
                         <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Class="me-2" />
@@ -193,3 +193,5 @@ else
         return Task.FromResult(result);
     }
 }
+
+

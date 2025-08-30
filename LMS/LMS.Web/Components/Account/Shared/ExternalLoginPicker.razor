@@ -1,4 +1,4 @@
-﻿@using LMS.Data.Entities
+@using LMS.Data.Entities
 @using LMS.Web.Components.Account
 @using Microsoft.AspNetCore.Authentication
 @using Microsoft.AspNetCore.Identity
@@ -44,3 +44,6 @@ else
         externalLogins = (await SignInManager.GetExternalAuthenticationSchemesAsync()).ToArray();
     }
 }
+
+
+

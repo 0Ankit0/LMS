@@ -31,16 +31,16 @@
 }
 else
 {
-    <div class="d-flex" style="min-height: 100vh; background: #36393f;">
+    <MudStack Row="true" Class="min-h-screen bg-gray-800">
         <!-- Discord-like Sidebar (Only visible when Forum tab is active) -->
         @if (activeTab == "Forum")
         {
-            <MudNavMenu Class="sidebar bg-dark text-white p-3" Style="width: 260px; min-height: 100vh;">
+            <MudNavMenu Class="sidebar bg-gray-900 text-white p-3 w-64 min-h-screen">
                 <MudNavGroup Title="Course Forums" Expanded="true">
-                    <MudNavLink OnClick="@(() => SelectForumChannel("general"))" Icon="@Icons.Material.Filled.Tag" Active="@(selectedForumChannel == "general")">general</MudNavLink>
-                    <MudNavLink OnClick="@(() => SelectForumChannel("announcements"))" Icon="@Icons.Material.Filled.Campaign" Active="@(selectedForumChannel == "announcements")">announcements</MudNavLink>
-                    <MudNavLink OnClick="@(() => SelectForumChannel("questions"))" Icon="@Icons.Material.Filled.Help" Active="@(selectedForumChannel == "questions")">questions</MudNavLink>
-                    <MudNavLink OnClick="@(() => SelectForumChannel("assignments"))" Icon="@Icons.Material.Filled.Assignment" Active="@(selectedForumChannel == "assignments")">assignments</MudNavLink>
+                    <MudNavLink OnClick="@(() => SelectForumChannel("general"))" Icon="@Icons.Material.Filled.Tag" active="@(selectedForumChannel == "general")">general</MudNavLink>
+                    <MudNavLink OnClick="@(() => SelectForumChannel("announcements"))" Icon="@Icons.Material.Filled.Campaign" active="@(selectedForumChannel == "announcements")">announcements</MudNavLink>
+                    <MudNavLink OnClick="@(() => SelectForumChannel("questions"))" Icon="@Icons.Material.Filled.Help" active="@(selectedForumChannel == "questions")">questions</MudNavLink>
+                    <MudNavLink OnClick="@(() => SelectForumChannel("assignments"))" Icon="@Icons.Material.Filled.Assignment" active="@(selectedForumChannel == "assignments")">assignments</MudNavLink>
                 </MudNavGroup>
                 <MudNavGroup Title="Study Groups" Expanded="true">
                     <MudNavLink Icon="@Icons.Material.Filled.People">Study Group 1</MudNavLink>
@@ -197,7 +197,7 @@ else
                 }
             </div>
         </div>
-    </div>
+    </MudStack>
 }
 
 @code {
@@ -243,6 +243,9 @@ else
         // Optionally, filter forumPosts by channel if needed
     }
 }
+
+
+
 
 
 

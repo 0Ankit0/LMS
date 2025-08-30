@@ -1,4 +1,4 @@
-﻿@page "/admin/certificates"
+@page "/admin/certificates"
 @attribute [OutputCache(Duration = 60)]
 @rendermode @(new InteractiveServerRenderMode())
 
@@ -69,7 +69,7 @@
 </MudCard>
 
 <!-- Delete Confirmation Modal -->
-<MudDialog @bind-IsVisible="@showDeleteConfirm" Options="@dialogOptions">
+<MudDialog @bind-Visible="@showDeleteConfirm" Options="@dialogOptions">
     <TitleContent>
         <MudText Typo="Typo.h6" Class="text-danger">
             <MudIcon Icon="@Icons.Material.Filled.Warning" /> Confirm Delete
@@ -145,6 +145,7 @@
         certificateToDelete = null;
     }
 
+#pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
     private async Task DeleteCertificate()
     {
         if (certificateToDelete != null)
@@ -165,6 +166,7 @@
             }
         }
     }
+#pragma warning restore CS1998
 
     private MudBlazor.Color GetGradeBadgeColor(double grade) => grade switch
     {
@@ -175,3 +177,5 @@
     };
 }
 }
+
+

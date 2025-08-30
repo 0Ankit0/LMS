@@ -121,7 +121,7 @@ else
                             <MudNumericField @bind-Value="Lesson.OrderIndex" Label="Order Index" Variant="Variant.Text" Placeholder="1" />
                         </MudItem>
                     </MudStack>
-                    <MudCheckBox T="bool" @bind-Checked="Lesson.IsRequired" Label="Is Required" Color="Color.Primary" />
+                    <MudCheckBox T="bool" @bind-Value="Lesson.IsRequired" Label="Is Required" Color="Color.Primary" />
                     <MudStack Direction="Row" Spacing="2">
                         <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Disabled="@isSubmitting">
                             <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Class="me-2" />
@@ -252,3 +252,6 @@ else
         return Task.FromResult(result);
     }
 }
+
+
+

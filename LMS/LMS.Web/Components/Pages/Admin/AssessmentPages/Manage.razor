@@ -3,32 +3,32 @@
 @inject ISnackbar Snackbar
 @if (isLoading)
 {
-    <div class="d-flex justify-content-between align-items-center mb-4">
+    <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center" Class="mb-4">
         <MudSkeleton SkeletonType="SkeletonType.Text" Width="300px" Height="40px" />
         <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="180px" Height="40px" />
-    </div>
+    </MudStack>
 
-    <div class="row">
-        <div class="col-md-4">
+    <MudGrid>
+        <MudItem xs="12" md="4">
             <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="300px" />
-        </div>
-        <div class="col-md-8">
+        </MudItem>
+        <MudItem xs="12" md="8">
             <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="300px" />
-        </div>
-    </div>
+        </MudItem>
+    </MudGrid>
 }
 else if (assessment != null)
 {
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1 class="mb-0">Manage Assessment: @assessment.Title</h1>
+    <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center" Class="mb-4">
+        <MudText Typo="Typo.h1" Class="mb-0">Manage Assessment: @assessment.Title</MudText>
         <MudButton Variant="Variant.Text" Color="Color.Secondary" Href="/admin/assessments">
             <MudIcon Icon="@Icons.Material.Filled.ArrowBack" Class="me-2" />
             Back to Assessments
         </MudButton>
-    </div>
+    </MudStack>
 
-    <div class="row">
-        <div class="col-md-4">
+    <MudGrid>
+        <MudItem xs="12" md="4">
             <MudCard Elevation="2">
                 <MudCardHeader>
                     <MudText Typo="Typo.h6">Add New Question</MudText>
@@ -49,8 +49,8 @@ else if (assessment != null)
                     </EditForm>
                 </MudCardContent>
             </MudCard>
-        </div>
-        <div class="col-md-8">
+        </MudItem>
+        <MudItem xs="12" md="8">
             <MudCard Elevation="2">
                 <MudCardHeader>
                     <MudText Typo="Typo.h6">Questions</MudText>
@@ -71,12 +71,12 @@ else if (assessment != null)
                     }
                 </MudCardContent>
             </MudCard>
-        </div>
-    </div>
+        </MudItem>
+    </MudGrid>
 }
 else
 {
-    <p>Assessment not found.</p>
+    <MudText>Assessment not found.</MudText>
 }
 
 @code {
@@ -117,3 +117,5 @@ else
         }
     }
 }
+
+

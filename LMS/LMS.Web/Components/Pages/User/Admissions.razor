@@ -11,414 +11,508 @@
 
 <PageTitle>Apply for Admission</PageTitle>
 
-<div class="max-w-4xl mx-auto p-8">
-    <div class="text-center mb-12">
-        <h1 class="text-4xl font-bold text-gray-900 mb-2">Apply for Admission</h1>
-        <p class="text-gray-600">Join our learning community by completing your application below</p>
-    </div>
+<MudContainer MaxWidth="MaxWidth.Large" Class="py-8">
+    <MudStack AlignItems="AlignItems.Center" Spacing="3" Class="mb-12">
+        <MudText Typo="Typo.h3" Class="font-bold text-center">Apply for Admission</MudText>
+        <MudText Typo="Typo.body1" Class="text-center text-gray-600 dark:text-gray-400">Join our learning community by completing your application below</MudText>
+    </MudStack>
 
     @if (showSuccess)
     {
-        <div class="bg-green-100 border border-green-400 text-green-700 px-6 py-4 rounded-lg mb-6">
-            <i class="fas fa-check-circle mr-2"></i>
-            <strong>Application Submitted Successfully!</strong>
-            <p class="mt-2">Thank you for your application. We will review it and get back to you within 5-7 business days.</p>
-        </div>
+        <MudAlert Severity="Severity.Success" Class="mb-6">
+            <MudStack Row AlignItems="AlignItems.Center" Spacing="2">
+                <MudIcon Icon="@Icons.Material.Filled.CheckCircle" />
+                <MudText><strong>Application Submitted Successfully!</strong></MudText>
+            </MudStack>
+            <MudText Class="mt-2">Thank you for your application. We will review it and get back to you within 5-7 business days.</MudText>
+        </MudAlert>
     }
     else if (myApplication != null && myApplication.Status != "Draft")
     {
         <!-- Existing Application Status -->
-        <div class="mb-8">
-            <div class="bg-white border border-gray-200 rounded-lg p-6 shadow-sm">
-                <h3 class="text-xl font-semibold text-gray-900 mb-4">Your Application Status</h3>
-                <div class="mb-4">
-                    <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium 
-                        @(myApplication.Status == "Accepted" ? "bg-green-100 text-green-800" : 
-                          myApplication.Status == "Rejected" ? "bg-red-100 text-red-800" : 
-                          myApplication.Status == "UnderReview" ? "bg-yellow-100 text-yellow-800" : 
-                          "bg-blue-100 text-blue-800")">
+        <MudCard Class="mb-8" Elevation="2">
+            <MudCardHeader>
+                <MudText Typo="Typo.h6">Your Application Status</MudText>
+            </MudCardHeader>
+            <MudCardContent>
+                <MudStack Spacing="4">
+                    <MudChip T="string" 
+                           Color="@(myApplication.Status == "Accepted" ? Color.Success : 
+                                     myApplication.Status == "Rejected" ? Color.Error : 
+                                     myApplication.Status == "UnderReview" ? Color.Warning : 
+                                     Color.Info)">
                         @myApplication.Status
-                    </span>
-                    <p class="text-gray-600 mt-2">Submitted on @myApplication.SubmittedAt?.ToString("MMMM dd, yyyy")</p>
-                </div>
-                
-                @if (!string.IsNullOrEmpty(myApplication.ReviewerNotes))
-                {
-                    <div class="bg-gray-50 p-4 rounded-lg">
-                        <h5 class="font-medium text-gray-900 mb-2">Notes from Admissions Office:</h5>
-                        <p class="text-gray-700">@myApplication.ReviewerNotes</p>
-                    </div>
-                }
-                
-                <div class="flex flex-wrap gap-3 mt-6">
-                    <button class="px-4 py-2 border border-blue-600 text-blue-600 rounded-lg hover:bg-blue-50 transition-colors" @onclick="EditApplication">
-                        <i class="fas fa-edit mr-2"></i> Edit Application
-                    </button>
-                    <button class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors" @onclick="ViewFullApplication">
-                        <i class="fas fa-eye mr-2"></i> View Full Application
-                    </button>
-                </div>
-            </div>
-        </div>
+                    </MudChip>
+                    <MudText Typo="Typo.body2" Class="text-gray-600 dark:text-gray-400">
+                        Submitted on @myApplication.SubmittedAt?.ToString("MMMM dd, yyyy")
+                    </MudText>
+                    
+                    @if (!string.IsNullOrEmpty(myApplication.ReviewerNotes))
+                    {
+                        <MudPaper Class="p-4 bg-gray-50 dark:bg-gray-800" Elevation="0">
+                            <MudText Typo="Typo.subtitle2" Class="mb-2">Notes from Admissions Office:</MudText>
+                            <MudText Typo="Typo.body2">@myApplication.ReviewerNotes</MudText>
+                        </MudPaper>
+                    }
+                    
+                    <MudStack Row Spacing="3" Class="mt-6">
+                        <MudButton Variant="Variant.Outlined" 
+                                 Color="Color.Primary" 
+                                 StartIcon="@Icons.Material.Filled.Edit"
+                                 OnClick="EditApplication">
+                            Edit Application
+                        </MudButton>
+                        <MudButton Variant="Variant.Outlined" 
+                                 Color="Color.Secondary" 
+                                 StartIcon="@Icons.Material.Filled.RemoveRedEye"
+                                 OnClick="ViewFullApplication">
+                            View Full Application
+                        </MudButton>
+                    </MudStack>
+                </MudStack>
+            </MudCardContent>
+        </MudCard>
     }
     else
     {
         <!-- Application Form -->
-        <div class="bg-white rounded-lg shadow-sm">
-            <EditForm Model="applicationModel" OnValidSubmit="SubmitApplication">
-                <DataAnnotationsValidator />
+        <MudCard Elevation="2">
+            <MudCardContent>
+                <EditForm Model="applicationModel" OnValidSubmit="SubmitApplication">
+                    <DataAnnotationsValidator />
 
-                <!-- Progress Indicator -->
-                <div class="flex items-center justify-between mb-8 relative">
-                    <!-- Progress Line -->
-                    <div class="absolute top-6 left-0 right-0 h-0.5 bg-gray-200 z-0"></div>
-                    <div class="absolute top-6 left-0 h-0.5 bg-blue-600 z-10 transition-all duration-300" style="width: @((currentStep - 1) * 25)%"></div>
-                    
-                    <div class="flex items-center z-20 @(currentStep >= 1 ? "text-blue-600" : "text-gray-400")">
-                        <div class="w-12 h-12 rounded-full @(currentStep >= 1 ? "bg-blue-600 text-white" : "bg-gray-200 text-gray-500") flex items-center justify-center font-semibold">1</div>
-                        <div class="ml-2 text-sm font-medium">Personal Info</div>
-                    </div>
-                    <div class="flex items-center z-20 @(currentStep >= 2 ? "text-blue-600" : "text-gray-400")">
-                        <div class="w-12 h-12 rounded-full @(currentStep >= 2 ? "bg-blue-600 text-white" : "bg-gray-200 text-gray-500") flex items-center justify-center font-semibold">2</div>
-                        <div class="ml-2 text-sm font-medium">Academic History</div>
-                    </div>
-                    <div class="flex items-center z-20 @(currentStep >= 3 ? "text-blue-600" : "text-gray-400")">
-                        <div class="w-12 h-12 rounded-full @(currentStep >= 3 ? "bg-blue-600 text-white" : "bg-gray-200 text-gray-500") flex items-center justify-center font-semibold">3</div>
-                        <div class="ml-2 text-sm font-medium">Program Selection</div>
-                    </div>
-                    <div class="flex items-center z-20 @(currentStep >= 4 ? "text-blue-600" : "text-gray-400")">
-                        <div class="w-12 h-12 rounded-full @(currentStep >= 4 ? "bg-blue-600 text-white" : "bg-gray-200 text-gray-500") flex items-center justify-center font-semibold">4</div>
-                        <div class="ml-2 text-sm font-medium">Documents</div>
-                    </div>
-                    <div class="flex items-center z-20 @(currentStep >= 5 ? "text-blue-600" : "text-gray-400")">
-                        <div class="w-12 h-12 rounded-full @(currentStep >= 5 ? "bg-blue-600 text-white" : "bg-gray-200 text-gray-500") flex items-center justify-center font-semibold">5</div>
-                        <div class="ml-2 text-sm font-medium">Review & Submit</div>
-                    </div>
-                </div>
+                    <!-- Progress Indicator -->
+                    <MudStepper @ref="stepper" ActiveIndex="@(currentStep - 1)" Class="mb-8">
+                        <MudStep Title="Personal Info" Icon="@Icons.Material.Filled.Person" />
+                        <MudStep Title="Academic History" Icon="@Icons.Material.Filled.School" />
+                        <MudStep Title="Program Selection" Icon="@Icons.Material.Filled.Book" />
+                        <MudStep Title="Documents" Icon="@Icons.Material.Filled.AttachFile" />
+                        <MudStep Title="Review & Submit" Icon="@Icons.Material.Filled.CheckCircle" />
+                    </MudStepper>
 
                 <!-- Step 1: Personal Information -->
                 @if (currentStep == 1)
                 {
-                    <div class="p-6">
-                        <h3 class="text-xl font-semibold text-gray-900 mb-6">Personal Information</h3>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div class="form-group">
-                                <label>First Name *</label>
-                                <InputText @bind-Value="applicationModel.FirstName" class="form-control" />
-                                <ValidationMessage For="() => applicationModel.FirstName" />
-                            </div>
-                            <div class="form-group">
-                                <label>Last Name *</label>
-                                <InputText @bind-Value="applicationModel.LastName" class="form-control" />
-                                <ValidationMessage For="() => applicationModel.LastName" />
-                            </div>
-                        </div>
-                        
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label>Email Address *</label>
-                                <InputText @bind-Value="applicationModel.Email" class="form-control" type="email" />
-                                <ValidationMessage For="() => applicationModel.Email" />
-                            </div>
-                            <div class="form-group">
-                                <label>Phone Number</label>
-                                <InputText @bind-Value="applicationModel.PhoneNumber" class="form-control" />
-                            </div>
-                        </div>
-                        
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label>Date of Birth</label>
-                                <InputDate @bind-Value="applicationModel.DateOfBirth" class="form-control" />
-                            </div>
-                            <div class="form-group">
-                                <label>Gender</label>
-                                <InputSelect @bind-Value="applicationModel.Gender" class="form-control">
-                                    <option value="">Select Gender</option>
-                                    <option value="Male">Male</option>
-                                    <option value="Female">Female</option>
-                                    <option value="Other">Other</option>
-                                    <option value="PreferNotToSay">Prefer not to say</option>
-                                </InputSelect>
-                            </div>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label>Address</label>
-                            <InputTextArea @bind-Value="applicationModel.Address" class="form-control" rows="3" />
-                        </div>
-                    </div>
+                    <MudPaper Class="p-6" Elevation="0">
+                        <MudText Typo="Typo.h5" Class="font-semibold text-gray-900 dark:text-gray-100 mb-6">Personal Information</MudText>
+                        <MudGrid Spacing="4">
+                            <MudItem xs="12" md="6">
+                                <MudTextField @bind-Value="applicationModel.FirstName" 
+                                            Label="First Name" 
+                                            Variant="Variant.Outlined" 
+                                            Required="true"
+                                            For="@(() => applicationModel.FirstName)" />
+                            </MudItem>
+                            <MudItem xs="12" md="6">
+                                <MudTextField @bind-Value="applicationModel.LastName" 
+                                            Label="Last Name" 
+                                            Variant="Variant.Outlined" 
+                                            Required="true"
+                                            For="@(() => applicationModel.LastName)" />
+                            </MudItem>
+                            <MudItem xs="12" md="6">
+                                <MudTextField @bind-Value="applicationModel.Email" 
+                                            Label="Email Address" 
+                                            InputType="InputType.Email"
+                                            Variant="Variant.Outlined" 
+                                            Required="true"
+                                            For="@(() => applicationModel.Email)" />
+                            </MudItem>
+                            <MudItem xs="12" md="6">
+                                <MudTextField @bind-Value="applicationModel.PhoneNumber" 
+                                            Label="Phone Number" 
+                                            Variant="Variant.Outlined" />
+                            </MudItem>
+                            <MudItem xs="12" md="6">
+                                <MudDatePicker @bind-Date="applicationModel.DateOfBirth" 
+                                             Label="Date of Birth"
+                                             Variant="Variant.Outlined" />
+                            </MudItem>
+                            <MudItem xs="12" md="6">
+                                <MudSelect @bind-Value="applicationModel.Gender" 
+                                         Label="Gender" 
+                                         Variant="Variant.Outlined">
+                                    <MudSelectItem Value="@("")">Select Gender</MudSelectItem>
+                                    <MudSelectItem Value="@("Male")">Male</MudSelectItem>
+                                    <MudSelectItem Value="@("Female")">Female</MudSelectItem>
+                                    <MudSelectItem Value="@("Other")">Other</MudSelectItem>
+                                    <MudSelectItem Value="@("PreferNotToSay")">Prefer not to say</MudSelectItem>
+                                </MudSelect>
+                            </MudItem>
+                            <MudItem xs="12">
+                                <MudTextField @bind-Value="applicationModel.Address" 
+                                            Label="Address" 
+                                            Variant="Variant.Outlined" 
+                                            Lines="3" />
+                            </MudItem>
+                        </MudGrid>
+                    </MudPaper>
                 }
 
                 <!-- Step 2: Academic History -->
                 @if (currentStep == 2)
                 {
-                    <div class="form-step active">
-                        <h3>Academic History</h3>
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label>Highest Education Level *</label>
-                                <InputSelect @bind-Value="applicationModel.EducationLevel" class="form-control">
-                                    <option value="">Select Education Level</option>
-                                    <option value="HighSchool">High School</option>
-                                    <option value="Associate">Associate Degree</option>
-                                    <option value="Bachelor">Bachelor's Degree</option>
-                                    <option value="Master">Master's Degree</option>
-                                    <option value="Doctorate">Doctorate</option>
-                                </InputSelect>
+                    <MudPaper Class="p-6" Elevation="0">
+                        <MudText Typo="Typo.h5" Class="font-semibold text-gray-900 dark:text-gray-100 mb-6">Academic History</MudText>
+                        <MudGrid Spacing="4">
+                            <MudItem xs="12" md="6">
+                                <MudSelect @bind-Value="applicationModel.EducationLevel" 
+                                         Label="Highest Education Level" 
+                                         Variant="Variant.Outlined"
+                                         Required="true">
+                                    <MudSelectItem Value="@("")">Select Education Level</MudSelectItem>
+                                    <MudSelectItem Value="@("HighSchool")">High School</MudSelectItem>
+                                    <MudSelectItem Value="@("Associate")">Associate Degree</MudSelectItem>
+                                    <MudSelectItem Value="@("Bachelor")">Bachelor's Degree</MudSelectItem>
+                                    <MudSelectItem Value="@("Master")">Master's Degree</MudSelectItem>
+                                    <MudSelectItem Value="@("Doctorate")">Doctorate</MudSelectItem>
+                                </MudSelect>
                                 <ValidationMessage For="() => applicationModel.EducationLevel" />
-                            </div>
-                            <div class="form-group">
-                                <label>GPA (if applicable)</label>
-                                <InputNumber @bind-Value="applicationModel.GPA" class="form-control" step="0.01" min="0" max="4" />
-                            </div>
-                        </div>
-                        
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label>Previous Institution</label>
-                                <InputText @bind-Value="applicationModel.PreviousInstitution" class="form-control" />
-                            </div>
-                            <div class="form-group">
-                                <label>Field of Study</label>
-                                <InputText @bind-Value="applicationModel.FieldOfStudy" class="form-control" />
-                            </div>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label>Graduation Year</label>
-                            <InputNumber @bind-Value="applicationModel.GraduationYear" class="form-control" min="1950" max="2030" />
-                        </div>
-                    </div>
+                            </MudItem>
+                            <MudItem xs="12" md="6">
+                                <MudNumericField T="double?" @bind-Value="applicationModel.GPA" 
+                                               Label="GPA (if applicable)" 
+                                               Variant="Variant.Outlined"
+                                               Step="0.01" 
+                                               Min="0" 
+                                               Max="4" />
+                            </MudItem>
+                            <MudItem xs="12" md="6">
+                                <MudTextField @bind-Value="applicationModel.PreviousInstitution" 
+                                            Label="Previous Institution" 
+                                            Variant="Variant.Outlined" />
+                            </MudItem>
+                            <MudItem xs="12" md="6">
+                                <MudTextField @bind-Value="applicationModel.FieldOfStudy" 
+                                            Label="Field of Study" 
+                                            Variant="Variant.Outlined" />
+                            </MudItem>
+                            <MudItem xs="12">
+                                <MudNumericField @bind-Value="applicationModel.GraduationYear" 
+                                               Label="Graduation Year" 
+                                               Variant="Variant.Outlined"
+                                               Min="1950" 
+                                               Max="2030" />
+                            </MudItem>
+                        </MudGrid>
+                    </MudPaper>
                 }
 
                 <!-- Step 3: Program Selection -->
                 @if (currentStep == 3)
                 {
-                    <div class="form-step active">
-                        <h3>Program Selection</h3>
+                    <MudPaper Class="p-6" Elevation="0">
+                        <MudText Typo="Typo.h5" Class="font-semibold text-gray-900 dark:text-gray-100 mb-6">Program Selection</MudText>
                         
                         @if (availablePrograms?.Any() == true)
                         {
-                            <div class="programs-grid">
+                            <MudGrid Spacing="4" Class="mb-8">
                                 @foreach (var program in availablePrograms)
                                 {
-                                    <div class="program-card @(applicationModel.PreferredProgram == program.Id ? "selected" : "")"
-                                         @onclick="() => SelectProgram(program.Id)">
-                                        <h5>@program.Name</h5>
-                                        <p>@program.Description</p>
-                                        <div class="program-details">
-                                            <span class="program-department">@program.Department</span>
-                                            <span class="program-duration">@program.DurationMonths months</span>
-                                        </div>
-                                    </div>
+                                    <MudItem xs="12" md="6">
+                                        <MudCard Outlined="true" 
+                                               Class="@($"cursor-pointer transition-all duration-200 {(applicationModel.PreferredProgram == program.Id ? "border-2 border-primary bg-primary-50 dark:bg-primary-900/20" : "hover:shadow-md")}")"
+                                               @onclick="() => SelectProgram(program.Id)">
+                                            <MudCardContent>
+                                                <MudText Typo="Typo.h6" Class="font-semibold mb-2">@program.Name</MudText>
+                                                <MudText Typo="Typo.body2" Class="text-gray-600 dark:text-gray-400 mb-4">@program.Description</MudText>
+                                                <MudStack Row Spacing="4" Class="text-sm">
+                                                    <MudChip T="string" Color="Color.Info" Size="Size.Small">@program.Department</MudChip>
+                                                    <MudChip T="string" Color="Color.Secondary" Size="Size.Small">@program.DurationMonths months</MudChip>
+                                                </MudStack>
+                                            </MudCardContent>
+                                        </MudCard>
+                                    </MudItem>
                                 }
-                            </div>
+                            </MudGrid>
                         }
                         
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label>Intended Start Date *</label>
-                                <InputSelect @bind-Value="applicationModel.IntendedStartDate" class="form-control">
-                                    <option value="">Select Start Date</option>
-                                    <option value="Fall2024">Fall 2024</option>
-                                    <option value="Spring2025">Spring 2025</option>
-                                    <option value="Summer2025">Summer 2025</option>
-                                    <option value="Fall2025">Fall 2025</option>
-                                </InputSelect>
+                        <MudGrid Spacing="4">
+                            <MudItem xs="12" md="6">
+                                <MudSelect @bind-Value="applicationModel.IntendedStartDate" 
+                                         Label="Intended Start Date" 
+                                         Variant="Variant.Outlined"
+                                         Required="true">
+                                    <MudSelectItem Value="@("")">Select Start Date</MudSelectItem>
+                                    <MudSelectItem Value="@("Fall2024")">Fall 2024</MudSelectItem>
+                                    <MudSelectItem Value="@("Spring2025")">Spring 2025</MudSelectItem>
+                                    <MudSelectItem Value="@("Summer2025")">Summer 2025</MudSelectItem>
+                                    <MudSelectItem Value="@("Fall2025")">Fall 2025</MudSelectItem>
+                                </MudSelect>
                                 <ValidationMessage For="() => applicationModel.IntendedStartDate" />
-                            </div>
-                            <div class="form-group">
-                                <label>Study Mode *</label>
-                                <InputSelect @bind-Value="applicationModel.StudyMode" class="form-control">
-                                    <option value="">Select Study Mode</option>
-                                    <option value="FullTime">Full-time</option>
-                                    <option value="PartTime">Part-time</option>
-                                    <option value="Online">Online</option>
-                                    <option value="Hybrid">Hybrid</option>
-                                </InputSelect>
+                            </MudItem>
+                            <MudItem xs="12" md="6">
+                                <MudSelect @bind-Value="applicationModel.StudyMode" 
+                                         Label="Study Mode" 
+                                         Variant="Variant.Outlined"
+                                         Required="true">
+                                    <MudSelectItem Value="@("")">Select Study Mode</MudSelectItem>
+                                    <MudSelectItem Value="@("FullTime")">Full-time</MudSelectItem>
+                                    <MudSelectItem Value="@("PartTime")">Part-time</MudSelectItem>
+                                    <MudSelectItem Value="@("Online")">Online</MudSelectItem>
+                                    <MudSelectItem Value="@("Hybrid")">Hybrid</MudSelectItem>
+                                </MudSelect>
                                 <ValidationMessage For="() => applicationModel.StudyMode" />
-                            </div>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label>Personal Statement</label>
-                            <small class="form-text text-muted">Tell us about yourself, your goals, and why you want to join our program.</small>
-                            <InputTextArea @bind-Value="applicationModel.PersonalStatement" class="form-control" rows="6" 
-                                           placeholder="Share your story, motivations, and aspirations..." />
-                        </div>
-                    </div>
+                            </MudItem>
+                            <MudItem xs="12">
+                                <MudTextField @bind-Value="applicationModel.PersonalStatement" 
+                                            Label="Personal Statement" 
+                                            HelperText="Tell us about yourself, your goals, and why you want to join our program."
+                                            Variant="Variant.Outlined" 
+                                            Lines="6" 
+                                            Placeholder="Share your story, motivations, and aspirations..." />
+                            </MudItem>
+                        </MudGrid>
+                    </MudPaper>
                 }
 
                 <!-- Step 4: Documents -->
                 @if (currentStep == 4)
                 {
-                    <div class="form-step">
-                        <h3>Required Documents</h3>
-                        <p class="text-muted">Please upload the following documents to complete your application:</p>
+                    <MudPaper Class="p-6" Elevation="0">
+                        <MudText Typo="Typo.h5" Class="font-semibold mb-2">Required Documents</MudText>
+                        <MudText Typo="Typo.body2" Class="text-gray-600 dark:text-gray-400 mb-6">Please upload the following documents to complete your application:</MudText>
                         
-                        <div class="document-upload-section">
-                            <div class="document-item">
-                                <div class="document-info">
-                                    <h5>Official Transcript *</h5>
-                                    <p>Upload your official academic transcript</p>
-                                </div>
-                                <div class="document-upload">
-                                    <InputFile OnChange="@((e) => OnDocumentFileSelected(e, "Transcript"))" 
-                                               class="form-control" accept=".pdf,.doc,.docx" />
-                                    @if (uploadedDocuments.ContainsKey("Transcript"))
-                                    {
-                                        <div class="uploaded-file">
-                                            <i class="fas fa-check-circle text-success"></i>
-                                            @uploadedDocuments["Transcript"].OriginalFileName
-                                        </div>
-                                    }
-                                </div>
-                            </div>
+                        <MudStack Spacing="6">
+                            <MudCard Outlined="true">
+                                <MudCardContent>
+                                    <MudStack Row AlignItems="AlignItems.Center" Spacing="4">
+                                        <MudStack Class="flex-1" Spacing="1">
+                                            <MudText Typo="Typo.h6">Official Transcript *</MudText>
+                                            <MudText Typo="Typo.body2" Class="text-gray-600 dark:text-gray-400">Upload your official academic transcript</MudText>
+                                        </MudStack>
+                                        <MudStack AlignItems="AlignItems.End" Spacing="2">
+                                            <InputFile OnChange="@((e) => OnDocumentFileSelected(e, "Transcript"))" accept=".pdf,.doc,.docx" class="hidden" id="transcript-upload" />
+                                            <MudButton Variant="Variant.Outlined" 
+                                                     Color="Color.Primary" 
+                                                     StartIcon="@Icons.Material.Filled.Upload"
+                                                     HtmlTag="label"
+                                                     for="transcript-upload">
+                                                Choose File
+                                            </MudButton>
+                                            @if (uploadedDocuments.ContainsKey("Transcript"))
+                                            {
+                                                <MudChip T="string" Color="Color.Success" Icon="@Icons.Material.Filled.CheckCircle">
+                                                    @uploadedDocuments["Transcript"].OriginalFileName
+                                                </MudChip>
+                                            }
+                                        </MudStack>
+                                    </MudStack>
+                                </MudCardContent>
+                            </MudCard>
                             
-                            <div class="document-item">
-                                <div class="document-info">
-                                    <h5>Resume/CV</h5>
-                                    <p>Upload your current resume or curriculum vitae</p>
-                                </div>
-                                <div class="document-upload">
-                                    <InputFile OnChange="@((e) => OnDocumentFileSelected(e, "Resume"))" 
-                                               class="form-control" accept=".pdf,.doc,.docx" />
-                                    @if (uploadedDocuments.ContainsKey("Resume"))
-                                    {
-                                        <div class="uploaded-file">
-                                            <i class="fas fa-check-circle text-success"></i>
-                                            @uploadedDocuments["Resume"].OriginalFileName
-                                        </div>
-                                    }
-                                </div>
-                            </div>
+                            <MudCard Outlined="true">
+                                <MudCardContent>
+                                    <MudStack Row AlignItems="AlignItems.Center" Spacing="4">
+                                        <MudStack Class="flex-1" Spacing="1">
+                                            <MudText Typo="Typo.h6">Resume/CV</MudText>
+                                            <MudText Typo="Typo.body2" Class="text-gray-600 dark:text-gray-400">Upload your current resume or curriculum vitae</MudText>
+                                        </MudStack>
+                                        <MudStack AlignItems="AlignItems.End" Spacing="2">
+                                            <InputFile OnChange="@((e) => OnDocumentFileSelected(e, "Resume"))" accept=".pdf,.doc,.docx" class="hidden" id="resume-upload" />
+                                            <MudButton Variant="Variant.Outlined" 
+                                                     Color="Color.Primary" 
+                                                     StartIcon="@Icons.Material.Filled.Upload"
+                                                     HtmlTag="label"
+                                                     for="resume-upload">
+                                                Choose File
+                                            </MudButton>
+                                            @if (uploadedDocuments.ContainsKey("Resume"))
+                                            {
+                                                <MudChip T="string" Color="Color.Success" Icon="@Icons.Material.Filled.CheckCircle">
+                                                    @uploadedDocuments["Resume"].OriginalFileName
+                                                </MudChip>
+                                            }
+                                        </MudStack>
+                                    </MudStack>
+                                </MudCardContent>
+                            </MudCard>
                             
-                            <div class="document-item">
-                                <div class="document-info">
-                                    <h5>Letter of Recommendation</h5>
-                                    <p>Upload at least one letter of recommendation</p>
-                                </div>
-                                <div class="document-upload">
-                                    <InputFile OnChange="@((e) => OnDocumentFileSelected(e, "Recommendation"))" 
-                                               class="form-control" accept=".pdf,.doc,.docx" />
-                                    @if (uploadedDocuments.ContainsKey("Recommendation"))
-                                    {
-                                        <div class="uploaded-file">
-                                            <i class="fas fa-check-circle text-success"></i>
-                                            @uploadedDocuments["Recommendation"].OriginalFileName
-                                        </div>
-                                    }
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                            <MudCard Outlined="true">
+                                <MudCardContent>
+                                    <MudStack Row AlignItems="AlignItems.Center" Spacing="4">
+                                        <MudStack Class="flex-1" Spacing="1">
+                                            <MudText Typo="Typo.h6">Letter of Recommendation</MudText>
+                                            <MudText Typo="Typo.body2" Class="text-gray-600 dark:text-gray-400">Upload at least one letter of recommendation</MudText>
+                                        </MudStack>
+                                        <MudStack AlignItems="AlignItems.End" Spacing="2">
+                                            <InputFile OnChange="@((e) => OnDocumentFileSelected(e, "Recommendation"))" accept=".pdf,.doc,.docx" class="hidden" id="recommendation-upload" />
+                                            <MudButton Variant="Variant.Outlined" 
+                                                     Color="Color.Primary" 
+                                                     StartIcon="@Icons.Material.Filled.Upload"
+                                                     HtmlTag="label"
+                                                     for="recommendation-upload">
+                                                Choose File
+                                            </MudButton>
+                                            @if (uploadedDocuments.ContainsKey("Recommendation"))
+                                            {
+                                                <MudChip T="string" Color="Color.Success" Icon="@Icons.Material.Filled.CheckCircle">
+                                                    @uploadedDocuments["Recommendation"].OriginalFileName
+                                                </MudChip>
+                                            }
+                                        </MudStack>
+                                    </MudStack>
+                                </MudCardContent>
+                            </MudCard>
+                        </MudStack>
+                    </MudPaper>
                 }
 
                 <!-- Step 5: Review & Submit -->
                 @if (currentStep == 5)
                 {
-                    <div class="form-step active">
-                        <h3>Review Your Application</h3>
-                        <p class="text-muted">Please review all information before submitting your application.</p>
+                    <MudPaper Class="p-6" Elevation="0">
+                        <MudText Typo="Typo.h5" Class="font-semibold text-gray-900 dark:text-gray-100 mb-2">Review Your Application</MudText>
+                        <MudText Typo="Typo.body2" Class="text-gray-600 dark:text-gray-400 mb-6">Please review all information before submitting your application.</MudText>
                         
-                        <div class="review-section">
-                            <div class="review-card">
-                                <h5>Personal Information</h5>
-                                <div class="review-grid">
-                                    <div><strong>Name:</strong> @applicationModel.FirstName @applicationModel.LastName</div>
-                                    <div><strong>Email:</strong> @applicationModel.Email</div>
-                                    <div><strong>Phone:</strong> @applicationModel.PhoneNumber</div>
-                                    <div><strong>Date of Birth:</strong> @applicationModel.DateOfBirth?.ToString("MM/dd/yyyy")</div>
-                                </div>
-                            </div>
+                        <MudStack Spacing="4">
+                            <MudCard Outlined="true">
+                                <MudCardHeader>
+                                    <MudText Typo="Typo.h6" Class="font-semibold">Personal Information</MudText>
+                                </MudCardHeader>
+                                <MudCardContent>
+                                    <MudGrid Spacing="3">
+                                        <MudItem xs="12" md="6">
+                                            <MudText Typo="Typo.body2"><strong>Name:</strong> @applicationModel.FirstName @applicationModel.LastName</MudText>
+                                        </MudItem>
+                                        <MudItem xs="12" md="6">
+                                            <MudText Typo="Typo.body2"><strong>Email:</strong> @applicationModel.Email</MudText>
+                                        </MudItem>
+                                        <MudItem xs="12" md="6">
+                                            <MudText Typo="Typo.body2"><strong>Phone:</strong> @applicationModel.PhoneNumber</MudText>
+                                        </MudItem>
+                                        <MudItem xs="12" md="6">
+                                            <MudText Typo="Typo.body2"><strong>Date of Birth:</strong> @applicationModel.DateOfBirth?.ToString("MM/dd/yyyy")</MudText>
+                                        </MudItem>
+                                    </MudGrid>
+                                </MudCardContent>
+                            </MudCard>
                             
-                            <div class="review-card">
-                                <h5>Academic Background</h5>
-                                <div class="review-grid">
-                                    <div><strong>Education:</strong> @applicationModel.EducationLevel</div>
-                                    <div><strong>GPA:</strong> @applicationModel.GPA</div>
-                                    <div><strong>Institution:</strong> @applicationModel.PreviousInstitution</div>
-                                    <div><strong>Field:</strong> @applicationModel.FieldOfStudy</div>
-                                </div>
-                            </div>
+                            <MudCard Outlined="true">
+                                <MudCardHeader>
+                                    <MudText Typo="Typo.h6" Class="font-semibold">Academic Background</MudText>
+                                </MudCardHeader>
+                                <MudCardContent>
+                                    <MudGrid Spacing="3">
+                                        <MudItem xs="12" md="6">
+                                            <MudText Typo="Typo.body2"><strong>Education:</strong> @applicationModel.EducationLevel</MudText>
+                                        </MudItem>
+                                        <MudItem xs="12" md="6">
+                                            <MudText Typo="Typo.body2"><strong>GPA:</strong> @applicationModel.GPA</MudText>
+                                        </MudItem>
+                                        <MudItem xs="12" md="6">
+                                            <MudText Typo="Typo.body2"><strong>Institution:</strong> @applicationModel.PreviousInstitution</MudText>
+                                        </MudItem>
+                                        <MudItem xs="12" md="6">
+                                            <MudText Typo="Typo.body2"><strong>Field:</strong> @applicationModel.FieldOfStudy</MudText>
+                                        </MudItem>
+                                    </MudGrid>
+                                </MudCardContent>
+                            </MudCard>
                             
-                            <div class="review-card">
-                                <h5>Program Selection</h5>
-                                <div class="review-grid">
-                                    <div><strong>Program:</strong> @GetProgramName(applicationModel.PreferredProgram)</div>
-                                    <div><strong>Start Date:</strong> @applicationModel.IntendedStartDate</div>
-                                    <div><strong>Study Mode:</strong> @applicationModel.StudyMode</div>
-                                </div>
-                            </div>
+                            <MudCard Outlined="true">
+                                <MudCardHeader>
+                                    <MudText Typo="Typo.h6" Class="font-semibold">Program Selection</MudText>
+                                </MudCardHeader>
+                                <MudCardContent>
+                                    <MudGrid Spacing="3">
+                                        <MudItem xs="12" md="6">
+                                            <MudText Typo="Typo.body2"><strong>Program:</strong> @GetProgramName(applicationModel.PreferredProgram)</MudText>
+                                        </MudItem>
+                                        <MudItem xs="12" md="6">
+                                            <MudText Typo="Typo.body2"><strong>Start Date:</strong> @applicationModel.IntendedStartDate</MudText>
+                                        </MudItem>
+                                        <MudItem xs="12" md="6">
+                                            <MudText Typo="Typo.body2"><strong>Study Mode:</strong> @applicationModel.StudyMode</MudText>
+                                        </MudItem>
+                                    </MudGrid>
+                                </MudCardContent>
+                            </MudCard>
                             
-                            <div class="review-card">
-                                <h5>Uploaded Documents</h5>
-                                <div class="documents-review">
+                            <MudCard Outlined="true">
+                                <MudCardHeader>
+                                    <MudText Typo="Typo.h6" Class="font-semibold">Uploaded Documents</MudText>
+                                </MudCardHeader>
+                                <MudCardContent>
                                     @if (uploadedDocuments.Any())
                                     {
-                                        @foreach (var doc in uploadedDocuments)
-                                        {
-                                            <div class="document-review-item">
-                                                <i class="fas fa-file-alt"></i>
-                                                <span>@doc.Key: @doc.Value.OriginalFileName</span>
-                                            </div>
-                                        }
+                                        <MudStack Spacing="2">
+                                            @foreach (var doc in uploadedDocuments)
+                                            {
+                                                <MudChip T="string" Color="Color.Info" Icon="@Icons.Material.Filled.AttachFile">
+                                                    @doc.Key: @doc.Value.OriginalFileName
+                                                </MudChip>
+                                            }
+                                        </MudStack>
                                     }
                                     else
                                     {
-                                        <p class="text-muted">No documents uploaded</p>
+                                        <MudText Typo="Typo.body2" Class="text-gray-500 dark:text-gray-400">No documents uploaded</MudText>
                                     }
-                                </div>
-                            </div>
-                        </div>
+                                </MudCardContent>
+                            </MudCard>
+                        </MudStack>
                         
-                        <div class="terms-section">
-                            <label class="checkbox-container">
-                                <InputCheckbox @bind-Value="agreeToTerms" />
-                                <span class="checkmark"></span>
-                                I agree to the <a href="/terms" target="_blank">Terms and Conditions</a> and 
-                                <a href="/privacy" target="_blank">Privacy Policy</a>
-                            </label>
-                        </div>
-                    </div>
+                        <MudPaper Class="p-4 mt-6 bg-gray-50 dark:bg-gray-800" Elevation="0">
+                            <MudCheckBox @bind-Value="agreeToTerms" Color="Color.Primary">
+                                I agree to the <MudLink Href="/terms" Target="_blank">Terms and Conditions</MudLink> and 
+                                <MudLink Href="/privacy" Target="_blank">Privacy Policy</MudLink>
+                            </MudCheckBox>
+                        </MudPaper>
+                    </MudPaper>
                 }
 
                 <!-- Navigation Buttons -->
-                <div class="form-navigation">
-                    @if (currentStep > 1)
-                    {
-                        <button type="button" class="btn btn-outline-secondary" @onclick="PreviousStep">
-                            <i class="fas fa-arrow-left"></i> Previous
-                        </button>
-                    }
-                    
-                    @if (currentStep < 5)
-                    {
-                        <button type="button" class="btn btn-primary" @onclick="NextStep">
-                            Next <i class="fas fa-arrow-right"></i>
-                        </button>
-                    }
-                    else
-                    {
-                        <button type="submit" class="btn btn-success" disabled="@(!agreeToTerms || isSubmitting)">
-                            @if (isSubmitting)
-                            {
-                                <span class="spinner-border spinner-border-sm" role="status"></span>
-                                <span>Submitting...</span>
-                            }
-                            else
-                            {
-                                <i class="fas fa-paper-plane"></i>
-                                <span>Submit Application</span>
-                            }
-                        </button>
-                    }
-                </div>
+                <MudPaper Class="p-6 mt-6" Elevation="0">
+                    <MudStack Row AlignItems="AlignItems.Center" JustifyContent="Justify.SpaceBetween">
+                        @if (currentStep > 1)
+                        {
+                            <MudButton Variant="Variant.Outlined" 
+                                     Color="Color.Secondary" 
+                                     StartIcon="@Icons.Material.Filled.ArrowBack"
+                                     OnClick="PreviousStep">
+                                Previous
+                            </MudButton>
+                        }
+                        else
+                        {
+                            <MudSpacer />
+                        }
+                        
+                        @if (currentStep < 5)
+                        {
+                            <MudButton Variant="Variant.Filled" 
+                                     Color="Color.Primary" 
+                                     EndIcon="@Icons.Material.Filled.ArrowForward"
+                                     OnClick="NextStep">
+                                Next
+                            </MudButton>
+                        }
+                        else
+                        {
+                            <MudButton ButtonType="ButtonType.Submit" 
+                                     Variant="Variant.Filled" 
+                                     Color="Color.Success"
+                                     StartIcon="@(isSubmitting ? null : Icons.Material.Filled.Send)"
+                                     Disabled="@(!agreeToTerms || isSubmitting)">
+                                @if (isSubmitting)
+                                {
+                                    <MudProgressCircular Color="Color.Default" Size="Size.Small" Indeterminate="true" Class="mr-2" />
+                                    <MudText>Submitting...</MudText>
+                                }
+                                else
+                                {
+                                    <MudText>Submit Application</MudText>
+                                }
+                            </MudButton>
+                        }
+                    </MudStack>
+                </MudPaper>
             </EditForm>
-        </div>
+        </MudCardContent>
+        </MudCard>
     }
-</div>
+</MudContainer>
 
 @code {
     private AdmissionApplicationDto applicationModel = new();
@@ -430,6 +524,7 @@
     private bool agreeToTerms = false;
     private bool isSubmitting = false;
     private bool showSuccess = false;
+    private MudStepper? stepper;
 
     protected override async Task OnInitializedAsync()
     {
@@ -456,16 +551,18 @@
         }
     }
 
-    private async Task LoadExistingApplication()
+    private Task LoadExistingApplication()
     {
         try
         {
             // This would need to be implemented in the repository
             // myApplication = await AdmissionsRepository.GetMyApplicationAsync();
+            return Task.CompletedTask;
         }
         catch (Exception ex)
         {
             Console.WriteLine($"Error loading application: {ex.Message}");
+            return Task.FromException(ex);
         }
     }
 
@@ -591,3 +688,6 @@
         };
     }
 }
+
+
+

@@ -45,7 +45,7 @@
     private void ToggleDrawer() => _drawerOpen = !_drawerOpen;
 
     private record NavLink(string Href, string Icon, string Title);
-    private List<NavLink> NavLinks;
+    private List<NavLink> NavLinks = new();
 
     protected override void OnInitialized()
     {
@@ -65,3 +65,6 @@
         };
     }
 }
+
+
+

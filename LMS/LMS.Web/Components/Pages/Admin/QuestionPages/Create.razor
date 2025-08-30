@@ -95,7 +95,7 @@ else
                         </MudItem>
                     </MudStack>
                     <MudTextField @bind-Value="Question.Explanation" Label="Explanation" Variant="Variant.Text" Lines="3" Placeholder="Provide an explanation for the correct answer (optional)" />
-                    <MudCheckBox T="bool" @bind-Checked="Question.IsRequired" Label="Is Required" Color="Color.Primary" />
+                    <MudCheckBox T="bool" @bind-Value="Question.IsRequired" Label="Is Required" Color="Color.Primary" />
                     <MudStack Direction="Row" Spacing="2" Class="mt-3">
                         <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Disabled="@isSubmitting">
                             <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Class="me-2" />
@@ -205,3 +205,6 @@ else
         }
     }
 }
+
+
+

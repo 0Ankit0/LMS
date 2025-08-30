@@ -3,11 +3,11 @@
 
 <PageTitle>Test Error Boundary</PageTitle>
 
-<div class="container mt-4">
-    <div class="row">
-        <div class="col-md-8">
-            <h2>Error Boundary Test Page</h2>
-            <p class="text-muted">This page is for testing the custom error boundary functionality.</p>
+<MudContainer MaxWidth="MaxWidth.Large" Class="mt-4">
+    <MudGrid>
+        <MudItem xs="12" md="8">
+            <MudText Typo="Typo.h2">Error Boundary Test Page</MudText>
+            <MudText Typo="Typo.body2" Class="text-muted mb-4">This page is for testing the custom error boundary functionality.</MudText>
 
             <MudCard Elevation="2">
                 <MudCardHeader>
@@ -37,20 +37,19 @@
                 </MudCardContent>
             </MudCard>
 
-            <div class="mt-4">
-                <h5>How it works:</h5>
-                <ul>
-                    <li>✅ <strong>Error Boundary Wrapper:</strong> All layouts now use <code>CustomErrorBoundary</code>
-                    </li>
-                    <li>✅ <strong>Detailed Error Display:</strong> Shows exception type, message, and stack trace</li>
-                    <li>✅ <strong>User-Friendly Actions:</strong> Try Again, Go Home, Reload Page buttons</li>
-                    <li>✅ <strong>Error Logging:</strong> Exceptions are logged automatically</li>
-                    <li>✅ <strong>Development vs Production:</strong> More details shown in development mode</li>
-                </ul>
-            </div>
-        </div>
-    </div>
-</div>
+            <MudPaper Class="mt-4" Elevation="0">
+                <MudText Typo="Typo.h5">How it works:</MudText>
+                <MudStack Spacing="1" Class="mt-2">
+                    <MudText>✅ <strong>Error Boundary Wrapper:</strong> All layouts now use <code>CustomErrorBoundary</code></MudText>
+                    <MudText>✅ <strong>Detailed Error Display:</strong> Shows exception type, message, and stack trace</MudText>
+                    <MudText>✅ <strong>User-Friendly Actions:</strong> Try Again, Go Home, Reload Page buttons</MudText>
+                    <MudText>✅ <strong>Error Logging:</strong> Exceptions are logged automatically</MudText>
+                    <MudText>✅ <strong>Development vs Production:</strong> More details shown in development mode</MudText>
+                </MudStack>
+            </MudPaper>
+        </MudItem>
+    </MudGrid>
+</MudContainer>
 
 @code {
     private void ThrowNullReferenceException()
@@ -83,3 +82,5 @@
         }
     }
 }
+
+

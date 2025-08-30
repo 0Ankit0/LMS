@@ -1,4 +1,4 @@
-﻿@page "/Error"
+@page "/Error"
 @rendermode @(new InteractiveServerRenderMode(prerender: false))
 @using System.Diagnostics
 @inject IWebHostEnvironment Environment
@@ -123,3 +123,6 @@
         await JSRuntime.InvokeVoidAsync("eval", $"navigator.clipboard.writeText('{RequestId}')") ;
     }
 }
+
+
+

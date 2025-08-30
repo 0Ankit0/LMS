@@ -20,10 +20,10 @@
         <MudTable T="LessonModel" ServerData="@LessonsDataProvider" Hover="true" Breakpoint="Breakpoint.Sm" Loading="@_loading">
             <HeaderContent>
                 <MudTh><MudTableSortLabel T="LessonModel" SortBy="new Func<LessonModel, object>(x => x.Title)">Title</MudTableSortLabel></MudTh>
-                <MudTh><MudTableSortLabel T="LessonModel" SortBy="new Func<LessonModel, object>(x => x.Description)">Description</MudTableSortLabel></MudTh>
-                <MudTh><MudTableSortLabel T="LessonModel" SortBy="new Func<LessonModel, object>(x => x.ModuleId)">Module ID</MudTableSortLabel></MudTh>
+                <MudTh><MudTableSortLabel T="LessonModel" SortBy="new Func<LessonModel, object>(x => x.Description ?? string.Empty)">Description</MudTableSortLabel></MudTh>
+                <MudTh><MudTableSortLabel T="LessonModel" SortBy="new Func<LessonModel, object>(x => x.ModuleId ?? 0)">Module ID</MudTableSortLabel></MudTh>
                 <MudTh><MudTableSortLabel T="LessonModel" SortBy="new Func<LessonModel, object>(x => x.Type)">Type</MudTableSortLabel></MudTh>
-                <MudTh><MudTableSortLabel T="LessonModel" SortBy="new Func<LessonModel, object>(x => x.EstimatedDuration)">Duration</MudTableSortLabel></MudTh>
+                <MudTh><MudTableSortLabel T="LessonModel" SortBy="new Func<LessonModel, object>(x => x.EstimatedDuration ?? 0)">Duration</MudTableSortLabel></MudTh>
                 <MudTh><MudTableSortLabel T="LessonModel" SortBy="new Func<LessonModel, object>(x => x.OrderIndex)">Order</MudTableSortLabel></MudTh>
                 <MudTh><MudTableSortLabel T="LessonModel" SortBy="new Func<LessonModel, object>(x => x.IsRequired)">Required</MudTableSortLabel></MudTh>
                 <MudTh>Actions</MudTh>
@@ -64,7 +64,7 @@
 </MudCard>
 
 <!-- Delete Confirmation Modal -->
-<MudDialog @bind-IsVisible="@showDeleteConfirm" Options="@dialogOptions">
+<MudDialog @bind-Visible="@showDeleteConfirm" Options="@dialogOptions">
     <TitleContent>
         <MudText Typo="Typo.h6" Class="text-danger">
             <MudIcon Icon="@Icons.Material.Filled.Warning" /> Confirm Delete
@@ -138,10 +138,11 @@
         };
     }
 
-    private async Task ConfirmDelete(LessonModel lesson)
+    private Task ConfirmDelete(LessonModel lesson)
     {
         lessonToDelete = lesson;
         showDeleteConfirm = true;
+        return Task.CompletedTask;
     }
 
     private void CancelDelete()
@@ -177,3 +178,6 @@
         await InvokeAsync(StateHasChanged);
     }
 }
+
+
+

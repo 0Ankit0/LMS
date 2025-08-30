@@ -9,74 +9,74 @@
 @inject IServiceProvider ServiceProvider
 @inject IConfiguration Configuration
 
-<div class="container mt-4">
-    <h3>🔍 Diagnostic Information</h3>
-    <div class="row">
-        <div class="col-md-6">
+<MudContainer MaxWidth="MaxWidth.Large" Class="mt-4">
+    <MudText Typo="Typo.h3">🔍 Diagnostic Information</MudText>
+    <MudGrid>
+        <MudItem xs="12" md="6">
             <MudCard Elevation="2">
                 <MudCardHeader>
                     <MudText Typo="Typo.h6">Environment</MudText>
                 </MudCardHeader>
                 <MudCardContent>
-                    <p><strong>Environment:</strong> @Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT")</p>
-                    <p><strong>Machine Name:</strong> @Environment.MachineName</p>
-                    <p><strong>OS Version:</strong> @Environment.OSVersion</p>
-                    <p><strong>Current Directory:</strong> @Environment.CurrentDirectory</p>
+                    <MudText><strong>Environment:</strong> @Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT")</MudText>
+                    <MudText><strong>Machine Name:</strong> @Environment.MachineName</MudText>
+                    <MudText><strong>OS Version:</strong> @Environment.OSVersion</MudText>
+                    <MudText><strong>Current Directory:</strong> @Environment.CurrentDirectory</MudText>
                 </MudCardContent>
             </MudCard>
-        </div>
+        </MudItem>
 
-        <div class="col-md-6">
+        <MudItem xs="12" md="6">
             <MudCard Elevation="2">
                 <MudCardHeader>
                     <MudText Typo="Typo.h6">Database Connection</MudText>
                 </MudCardHeader>
                 <MudCardContent>
-                    <p><strong>Connection String:</strong> @(DatabaseStatus?.ConnectionString ?? "Not available")</p>
-                    <p><strong>Status:</strong>
+                    <MudText><strong>Connection String:</strong> @(DatabaseStatus?.ConnectionString ?? "Not available")</MudText>
+                    <MudText><strong>Status:</strong>
                         <MudChip T="bool" Color="@(DatabaseStatus?.IsConnected == true ? Color.Success : Color.Error)">
                             @(DatabaseStatus?.IsConnected == true ? "Connected" : "Disconnected")
                         </MudChip>
-                    </p>
+                    </MudText>
                     @if (!string.IsNullOrEmpty(DatabaseStatus?.Error))
                     {
-                        <p><strong>Error:</strong> <span class="text-danger">@DatabaseStatus.Error</span></p>
+                        <MudText><strong>Error:</strong> <span class="text-danger">@DatabaseStatus.Error</span></MudText>
                     }
                 </MudCardContent>
             </MudCard>
-        </div>
-    </div>
+        </MudItem>
+    </MudGrid>
 
-    <div class="row mt-3">
-        <div class="col-12">
+    <MudGrid Class="mt-3">
+        <MudItem xs="12">
             <MudCard Elevation="2">
                 <MudCardHeader>
                     <MudText Typo="Typo.h6">Registered Services</MudText>
                 </MudCardHeader>
                 <MudCardContent>
-                    <div class="row">
+                    <MudGrid>
                         @foreach (var service in ServiceStatuses)
                         {
-                            <div class="col-md-4 mb-2">
+                            <MudItem xs="12" md="4" Class="mb-2">
                                 <MudChip T="bool" Color="@(service.IsRegistered ? Color.Success : Color.Error)">
                                 @(service.IsRegistered ? "✓" : "✗")
                             </MudChip>
                                 @service.ServiceName
-                            </div>
+                            </MudItem>
                         }
-                    </div>
+                    </MudGrid>
                 </MudCardContent>
             </MudCard>
-        </div>
-    </div>
+        </MudItem>
+    </MudGrid>
 
-    <div class="mt-3">
+    <MudPaper Class="mt-3" Elevation="0">
         <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="RefreshDiagnostics">
             <MudIcon Icon="@Icons.Material.Filled.Refresh" Class="me-2" />
             Refresh
         </MudButton>
-    </div>
-</div>
+    </MudPaper>
+</MudContainer>
 
 @code {
     private DatabaseStatusInfo? DatabaseStatus { get; set; }
@@ -190,3 +190,6 @@ typeof(AuthenticationStateProvider)
         public bool IsRegistered { get; set; }
     }
 }
+
+
+

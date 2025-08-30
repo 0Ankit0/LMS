@@ -71,7 +71,7 @@
 </MudCard>
 
 <!-- Delete Confirmation Modal -->
-<MudDialog @bind-IsVisible="@showDeleteConfirm" Options="@dialogOptions">
+<MudDialog @bind-Visible="@showDeleteConfirm" Options="@dialogOptions">
     <TitleContent>
         <MudText Typo="Typo.h6" Class="text-danger">
             <MudIcon Icon="@Icons.Material.Filled.Warning" /> Confirm Delete
@@ -167,4 +167,7 @@
         }
     }
 }
+
+
+
 

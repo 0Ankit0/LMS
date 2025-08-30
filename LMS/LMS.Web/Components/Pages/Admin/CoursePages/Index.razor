@@ -1,4 +1,4 @@
-﻿@page "/admin/courses"
+@page "/admin/courses"
 @attribute [OutputCache(Duration = 60)]
 @rendermode @(new InteractiveServerRenderMode())
 @using LMS.Repositories
@@ -92,7 +92,7 @@
 </MudCard>
 
 <!-- Delete Confirmation Modal -->
-<MudDialog @bind-IsVisible="@showDeleteConfirm" Options="@dialogOptions">
+<MudDialog @bind-Visible="@showDeleteConfirm" Options="@dialogOptions">
     <TitleContent>
         <MudText Typo="Typo.h6" Class="text-danger">
             <MudIcon Icon="@Icons.Material.Filled.Warning" /> Confirm Delete
@@ -211,3 +211,5 @@
         };
     }
 }
+
+

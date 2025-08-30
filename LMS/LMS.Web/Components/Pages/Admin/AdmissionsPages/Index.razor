@@ -12,11 +12,12 @@
 
 <PageTitle>Admissions Management</PageTitle>
 
-<div class="admissions-admin">
-    <div class="page-header">
-        <h1>Admissions Management</h1>
-        <p class="text-muted">Review and manage admission applications</p>
-    </div>
+<MudContainer MaxWidth="MaxWidth.False" Class="admissions-admin">
+    <MudStack Spacing="4">
+        <MudStack Spacing="2">
+            <MudText Typo="Typo.h4">Admissions Management</MudText>
+            <MudText Typo="Typo.body2" Color="Color.Secondary">Review and manage admission applications</MudText>
+        </MudStack>
 
     @if (ApplicationId.HasValue)
     {
@@ -24,17 +25,17 @@
         @if (selectedApplication != null)
         {
             <div class="application-detail">
-                <div class="detail-header">
-                    <button class="btn btn-secondary" @onclick="BackToApplications">
-                        <i class="fas fa-arrow-left"></i> Back to Applications
-                    </button>
-                    <div class="application-info">
-                        <h2>Application #@selectedApplication.Id</h2>
-                        <span class="badge badge-@GetStatusClass(selectedApplication.Status)">
+                <MudStack Row Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center" Class="mb-4">
+                    <MudButton StartIcon="@Icons.Material.Filled.ArrowBack" Variant="Variant.Outlined" Color="Color.Secondary" OnClick="BackToApplications">
+                        Back to Applications
+                    </MudButton>
+                    <MudStack Row AlignItems="AlignItems.Center" Spacing="3">
+                        <MudText Typo="Typo.h4">Application #@selectedApplication.Id</MudText>
+                        <MudChip T="string" Color="@GetStatusColor(selectedApplication.Status)" Variant="Variant.Filled">
                             @selectedApplication.Status
-                        </span>
-                    </div>
-                </div>
+                        </MudChip>
+                    </MudStack>
+                </MudStack>
 
                 <div class="application-sections">
                     <!-- Personal Information -->
@@ -127,42 +128,45 @@
                         <div class="review-form">
                             @if (selectedApplication.Status == "Submitted" || selectedApplication.Status == "UnderReview")
                             {
-                                <div class="decision-form">
-                                    <h5>Make Decision</h5>
-                                    <div class="form-group">
-                                        <label>Decision</label>
-                                        <select @bind="decisionStatus" class="form-control">
-                                            <option value="">Select Decision</option>
-                                            <option value="UnderReview">Under Review</option>
-                                            <option value="Accepted">Accept</option>
-                                            <option value="Rejected">Reject</option>
-                                            <option value="Waitlisted">Waitlist</option>
-                                        </select>
-                                    </div>
-                                    <div class="form-group">
-                                        <label>Reviewer Notes</label>
-                                        <textarea @bind="reviewerNotes" class="form-control" rows="4" 
-                                                placeholder="Add notes about your decision..."></textarea>
-                                    </div>
-                                    <div class="decision-actions">
-                                        <button class="btn btn-primary" @onclick="SubmitDecision" disabled="@(string.IsNullOrEmpty(decisionStatus))">
-                                            Submit Decision
-                                        </button>
-                                    </div>
-                                </div>
+                                <MudCard Class="pa-4">
+                                    <MudCardContent>
+                                        <MudText Typo="Typo.h6" Class="mb-4">Make Decision</MudText>
+                                        <MudStack Spacing="4">
+                                            <MudSelect T="string" @bind-Value="decisionStatus" Label="Decision" Variant="Variant.Outlined" Placeholder="Select Decision">
+                                                <MudSelectItem T="string" Value="@("UnderReview")">Under Review</MudSelectItem>
+                                                <MudSelectItem T="string" Value="@("Accepted")">Accept</MudSelectItem>
+                                                <MudSelectItem T="string" Value="@("Rejected")">Reject</MudSelectItem>
+                                                <MudSelectItem T="string" Value="@("Waitlisted")">Waitlist</MudSelectItem>
+                                            </MudSelect>
+                                            <MudTextField @bind-Value="reviewerNotes" Label="Reviewer Notes" Variant="Variant.Outlined" 
+                                                    Lines="4" Placeholder="Add notes about your decision..." />
+                                            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SubmitDecision" 
+                                                    Disabled="@(string.IsNullOrEmpty(decisionStatus))">
+                                                Submit Decision
+                                            </MudButton>
+                                        </MudStack>
+                                    </MudCardContent>
+                                </MudCard>
                             }
                             else
                             {
-                                <div class="current-status">
-                                    <h5>Current Status: <span class="badge badge-@GetStatusClass(selectedApplication.Status)">@selectedApplication.Status</span></h5>
-                                    @if (!string.IsNullOrEmpty(selectedApplication.ReviewerNotes))
-                                    {
-                                        <div class="reviewer-notes">
-                                            <strong>Reviewer Notes:</strong>
-                                            <p>@selectedApplication.ReviewerNotes</p>
-                                        </div>
-                                    }
-                                </div>
+                                <MudCard Class="pa-4">
+                                    <MudCardContent>
+                                        <MudStack Row AlignItems="AlignItems.Center" Spacing="2" Class="mb-4">
+                                            <MudText Typo="Typo.h6">Current Status:</MudText>
+                                            <MudChip T="string" Color="@GetStatusColor(selectedApplication.Status)" Variant="Variant.Filled">
+                                                @selectedApplication.Status
+                                            </MudChip>
+                                        </MudStack>
+                                        @if (!string.IsNullOrEmpty(selectedApplication.ReviewerNotes))
+                                        {
+                                            <MudStack Spacing="2">
+                                                <MudText Typo="Typo.subtitle1">Reviewer Notes:</MudText>
+                                                <MudText Typo="Typo.body1">@selectedApplication.ReviewerNotes</MudText>
+                                            </MudStack>
+                                        }
+                                    </MudCardContent>
+                                </MudCard>
                             }
                         </div>
                     </div>
@@ -174,91 +178,85 @@
     {
         <!-- Applications List View -->
         <div class="applications-list">
-            <div class="list-controls">
-                <div class="filters">
-                    <select @bind="statusFilter" @bind:after="FilterApplications" class="form-control">
-                        <option value="">All Status</option>
-                        <option value="Submitted">Submitted</option>
-                        <option value="UnderReview">Under Review</option>
-                        <option value="Accepted">Accepted</option>
-                        <option value="Rejected">Rejected</option>
-                        <option value="Waitlisted">Waitlisted</option>
-                    </select>
-                    <input type="text" @bind="searchTerm" @bind:after="FilterApplications" 
-                           placeholder="Search by name or email..." class="form-control" />
-                </div>
-                <div class="list-actions">
-                    <button class="btn btn-success" @onclick="ExportApplications">
-                        <i class="fas fa-download"></i> Export
-                    </button>
-                </div>
-            </div>
+            <MudStack Row Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center" Class="mb-4">
+                <MudStack Row Spacing="4" AlignItems="AlignItems.Center">
+                    <MudSelect T="string" @bind-Value="statusFilter" @bind-Value:after="FilterApplications" Label="Status Filter" Variant="Variant.Outlined" Placeholder="All Status">
+                        <MudSelectItem T="string" Value="@("")">All Status</MudSelectItem>
+                        <MudSelectItem T="string" Value="@("Submitted")">Submitted</MudSelectItem>
+                        <MudSelectItem T="string" Value="@("UnderReview")">Under Review</MudSelectItem>
+                        <MudSelectItem T="string" Value="@("Accepted")">Accepted</MudSelectItem>
+                        <MudSelectItem T="string" Value="@("Rejected")">Rejected</MudSelectItem>
+                        <MudSelectItem T="string" Value="@("Waitlisted")">Waitlisted</MudSelectItem>
+                    </MudSelect>
+                    <MudTextField @bind-Value="searchTerm" @bind-Value:after="FilterApplications" 
+                                Label="Search" Placeholder="Search by name or email..." Variant="Variant.Outlined" />
+                </MudStack>
+                <MudButton StartIcon="@Icons.Material.Filled.Download" Variant="Variant.Filled" Color="Color.Success" OnClick="ExportApplications">
+                    Export
+                </MudButton>
+            </MudStack>
 
             @if (filteredApplications?.Any() == true)
             {
-                <div class="applications-table">
-                    <table class="table">
-                        <thead>
-                            <tr>
-                                <th>Application ID</th>
-                                <th>Applicant Name</th>
-                                <th>Email</th>
-                                <th>Program</th>
-                                <th>Submitted Date</th>
-                                <th>Status</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach (var application in filteredApplications)
-                            {
-                                <tr class="application-row" @onclick="() => ViewApplication(application.Id)">
-                                    <td>@("#" + application.Id)</td>
-                                    <td>@application.FirstName @application.LastName</td>
-                                    <td>@application.Email</td>
-                                    <td>@GetProgramName(application.PreferredProgram)</td>
-                                    <td>@application.SubmittedAt?.ToString("MMM dd, yyyy")</td>
-                                    <td>
-                                        <span class="badge badge-@GetStatusClass(application.Status)">
-                                            @application.Status
-                                        </span>
-                                    </td>
-                                    <td>
-                                        <div class="action-buttons" @onclick:stopPropagation="true">
-                                            <button class="btn btn-sm btn-primary" @onclick="() => ViewApplication(application.Id)">
-                                                <i class="fas fa-eye"></i>
-                                            </button>
-                                            @if (application.Status == "Submitted")
-                                            {
-                                                <button class="btn btn-sm btn-warning" @onclick="() => QuickReview(application.Id)">
-                                                    <i class="fas fa-clipboard-check"></i>
-                                                </button>
-                                            }
-                                        </div>
-                                    </td>
-                                </tr>
-                            }
-                        </tbody>
-                    </table>
-                </div>
+                <MudPaper Class="applications-table">
+                    <MudTable Items="@filteredApplications" T="AdmissionApplicationModel" Hover="true" RowClass="cursor-pointer">
+                        <HeaderContent>
+                            <MudTh>Application ID</MudTh>
+                            <MudTh>Applicant Name</MudTh>
+                            <MudTh>Email</MudTh>
+                            <MudTh>Program</MudTh>
+                            <MudTh>Submitted Date</MudTh>
+                            <MudTh>Status</MudTh>
+                            <MudTh>Actions</MudTh>
+                        </HeaderContent>
+                        <RowTemplate>
+                            <MudTd DataLabel="Application ID">@("#" + context.Id)</MudTd>
+                            <MudTd DataLabel="Applicant Name">@context.FirstName @context.LastName</MudTd>
+                            <MudTd DataLabel="Email">@context.Email</MudTd>
+                            <MudTd DataLabel="Program">@GetProgramName(context.PreferredProgram)</MudTd>
+                            <MudTd DataLabel="Submitted Date">@context.SubmittedAt?.ToString("MMM dd, yyyy")</MudTd>
+                            <MudTd DataLabel="Status">
+                                <MudChip T="string" Color="@GetStatusColor(context.Status)">
+                                    @context.Status
+                                </MudChip>
+                            </MudTd>
+                            <MudTd DataLabel="Actions">
+                                <MudStack Row="true" Spacing="1">
+                                    <MudIconButton Icon="@Icons.Material.Filled.RemoveRedEye" 
+                                                   Color="Color.Primary" 
+                                                   Size="Size.Small" 
+                                                   OnClick="@(() => ViewApplication(context.Id))" />
+                                    @if (context.Status == "Submitted")
+                                    {
+                                        <MudIconButton Icon="@Icons.Material.Filled.Assessment" 
+                                                       Color="Color.Warning" 
+                                                       Size="Size.Small" 
+                                                       OnClick="@(() => QuickReview(context.Id))" />
+                                    }
+                                </MudStack>
+                            </MudTd>
+                        </RowTemplate>
+                    </MudTable>
+                </MudPaper>
             }
             else if (isLoading)
             {
-                <div class="loading-state">
-                    <p>Loading applications...</p>
-                </div>
+                <MudPaper Class="loading-state p-4">
+                    <MudText>Loading applications...</MudText>
+                </MudPaper>
             }
             else
             {
-                <div class="empty-state">
-                    <i class="fas fa-inbox"></i>
-                    <h3>No Applications Found</h3>
-                    <p>No applications have been submitted yet.</p>
-                </div>
+                <MudStack Justify="Justify.Center" AlignItems="AlignItems.Center" Class="empty-state">
+                    <MudIcon Icon="fas fa-inbox" Size="Size.Large" Class="mb-4" />
+                    <MudText Typo="Typo.h5">No Applications Found</MudText>
+                    <MudText>No applications have been submitted yet.</MudText>
+                </MudStack>
             }
         </div>
     }
-</div>
+    </MudStack>
+</MudContainer>
 
 @code {
     [Parameter] public int? ApplicationId { get; set; }
@@ -451,6 +449,19 @@
         };
     }
 
+    private Color GetStatusColor(string status)
+    {
+        return status switch
+        {
+            "Submitted" => Color.Primary,
+            "UnderReview" => Color.Warning,
+            "Accepted" => Color.Success,
+            "Rejected" => Color.Error,
+            "Waitlisted" => Color.Info,
+            _ => Color.Default
+        };
+    }
+
     // Admission application management methods are connected to AdmissionsRepository
     // Note: Full data model implementation is pending - currently returns placeholder data
 
@@ -486,5 +497,8 @@
         public string Description { get; set; } = "";
     }
 }
+
+
+
 
 

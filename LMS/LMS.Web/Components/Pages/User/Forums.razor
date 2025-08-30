@@ -100,24 +100,24 @@
 <div class="forum-list-sidebar">
     @if (!string.IsNullOrEmpty(selectedGroup))
     {
-        <div class="forum-header">
-            <h4 class="forum-title">
+        <MudStack Row="true" AlignItems="AlignItems.Center" Class="forum-header">
+            <MudText Typo="Typo.h6" Class="forum-title">
                 @if (selectedGroup == "general")
                 {
                     <MudIcon Icon="@Icons.Material.Filled.Public" Class="me-2" />
-                    <span>General Discussion</span>
+                    <MudText>General Discussion</MudText>
                 }
                 else
                 {
                     <MudIcon Icon="@Icons.Material.Filled.School" Class="me-2" />
-                    <span>@selectedGroup</span>
+                    <MudText>@selectedGroup</MudText>
                 }
-            </h4>
+            </MudText>
             <!-- Search Box -->
             <div class="forum-search-container">
                 <MudTextField @bind-Value="searchQuery" Placeholder="Search forums & topics..." Variant="Variant.Text" Clearable="true" Adornment="Adornment.End" AdornmentIcon="@Icons.Material.Filled.Search" />
             </div>
-        </div>
+        </MudStack>
 
         <div class="forum-list">
             @if (selectedGroupForums != null)
@@ -249,12 +249,12 @@
                                        Origin="@(currentUserId == post.AuthorId ? MudBlazor.Origin.TopRight : MudBlazor.Origin.TopLeft)"
                                        Color="@(currentUserId == post.AuthorId ? Color.Primary : Color.Secondary)">
                             <ChildContent>
-                                <div class="d-flex align-items-center mb-2">
+                                <MudStack Row AlignItems="AlignItems.Center" Class="mb-2">
                                     <MudAvatar Color="Color.Dark" Variant="Variant.Outlined" Class="me-2">
                                         <MudText Typo="Typo.h6">@post.AuthorName?.FirstOrDefault()</MudText>
                                     </MudAvatar>
                                     <MudText Typo="Typo.subtitle1">@(post.AuthorName ?? "Unknown")</MudText>
-                                </div>
+                                </MudStack>
                                 @if (post.UpdatedAt.HasValue && post.UpdatedAt != post.CreatedAt)
                                 {
                                     <MudText Typo="Typo.caption" Class="text-muted">(edited @post.UpdatedAt.Value.ToString("MMM dd, HH:mm"))</MudText>
@@ -285,14 +285,14 @@
             <!-- Quick Reply - Sticky Bottom -->
             @if (selectedTopic?.IsLocked != true)
             {
-                <div class="input-area d-flex align-items-center pa-2">
+                <MudStack Row AlignItems="AlignItems.Center" Class="pa-2">
                     @if (!string.IsNullOrEmpty(quotedText))
                     {
                         <MudPaper Elevation="2" Class="quoted-text w-full mb-2">
-                            <div class="quote-header d-flex justify-content-between align-items-center">
+                            <MudStack Row Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center" Class="quote-header">
                                 <MudText Typo="Typo.subtitle2">Replying to @quotedAuthor:</MudText>
                                 <MudIconButton Icon="@Icons.Material.Filled.Close" Size="Size.Small" OnClick="ClearQuote" />
-                            </div>
+                            </MudStack>
                             <MudText Typo="Typo.body2" Class="quote-content">@quotedText</MudText>
                         </MudPaper>
                     }
@@ -303,7 +303,7 @@
                     <MudButton Variant="Variant.Filled" Color="Color.Primary" Class="ml-2" OnClick="SendTopicReply" Disabled="@string.IsNullOrWhiteSpace(newTopicReply)">
                         <MudIcon Icon="@Icons.Material.Filled.Send" />
                     </MudButton>
-                </div>
+                </MudStack>
             }
         }
         else
@@ -418,7 +418,7 @@
            
 
 <!-- New Topic Modal -->
-<MudDialog @bind-IsVisible="@isNewTopicModalVisible" Options="@dialogOptions">
+<MudDialog @bind-Visible="@isNewTopicModalVisible" Options="@dialogOptions">
     <TitleContent>
         <MudText Typo="Typo.h6">Create New Topic</MudText>
     </TitleContent>
@@ -449,7 +449,7 @@
 </MudDialog>
 
 <!-- New Post Modal -->
-<MudDialog @bind-IsVisible="@isNewPostModalVisible" Options="@dialogOptions">
+<MudDialog @bind-Visible="@isNewPostModalVisible" Options="@dialogOptions">
     <TitleContent>
         <MudText Typo="Typo.h6">@($"Reply to: {selectedTopic?.Title}")</MudText>
     </TitleContent>
@@ -488,7 +488,7 @@
 </MudDialog>
 
 <!-- Create Forum Modal -->
-<MudDialog @bind-IsVisible="@isCreateForumModalVisible" Options="@dialogOptions">
+<MudDialog @bind-Visible="@isCreateForumModalVisible" Options="@dialogOptions">
     <TitleContent>
         <MudText Typo="Typo.h6">Create New Forum</MudText>
     </TitleContent>
@@ -929,3 +929,6 @@
         return availableCourses?.Where(x => x.Title.Contains(value, StringComparison.InvariantCultureIgnoreCase)) ?? new List<CourseModel>();
     }
 }
+
+
+

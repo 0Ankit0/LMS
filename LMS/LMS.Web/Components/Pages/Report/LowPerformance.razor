@@ -7,20 +7,20 @@
 @inject UserManager<User> UserManager
 @attribute [Authorize]
 
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <div>
-        <h2 class="mb-1">⚠️ Low Performance Students Report</h2>
-        <p class="text-muted mb-0">Identify students who need additional support and intervention</p>
-    </div>
-    <div class="export-buttons">
+<MudStack Row Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center" Class="mb-4">
+    <MudStack Spacing="1">
+        <MudText Typo="Typo.h4" Class="mb-1">⚠️ Low Performance Students Report</MudText>
+        <MudText Color="Color.Secondary" Class="mb-0">Identify students who need additional support and intervention</MudText>
+    </MudStack>
+    <MudStack Row Spacing="2" Class="export-buttons">
         <MudButton Variant="Variant.Outlined" Color="Color.Primary" OnClick="ExportToPdf">
-            <MudIcon Icon="@Icons.Material.Filled.PictureAsPdf" Class="me-2" /> Export PDF
+            <MudIcon Icon="@Icons.Material.Filled.PictureAsPdf" Class="mr-2" /> Export PDF
         </MudButton>
         <MudButton Variant="Variant.Outlined" Color="Color.Primary" OnClick="ExportToExcel">
-            <MudIcon Icon="@Icons.Material.Filled.Description" Class="me-2" /> Export Excel
+            <MudIcon Icon="@Icons.Material.Filled.Description" Class="mr-2" /> Export Excel
         </MudButton>
-    </div>
-</div>
+    </MudStack>
+</MudStack>
 
 <!-- Filters -->
 <MudGrid Class="report-filters">
@@ -50,10 +50,10 @@
 
 @if (loading)
 {
-    <div class="report-loading d-flex flex-column align-items-center justify-content-center py-5">
+    <MudStack AlignItems="AlignItems.Center" Justify="Justify.Center" Class="py-5">
         <MudProgressCircular Indeterminate="true" Color="Color.Primary" Size="Size.Large" />
         <MudText Class="mt-2">Loading low performance students data...</MudText>
-    </div>
+    </MudStack>
 }
 else if (reports?.Any() == true)
 {
@@ -139,75 +139,71 @@ else if (reports?.Any() == true)
     </MudGrid>
 
     <!-- Data Table -->
-    <div class="report-table">
-        <table class="table table-hover">
-            <thead>
-                <tr>
-                    <th>Student</th>
-                    <th>Email</th>
-                    <th>Course</th>
-                    <th>Progress</th>
-                    <th>Avg Score</th>
-                    <th>Risk Level</th>
-                    <th>Time Spent</th>
-                    <th>Status</th>
-                    <th>Last Activity</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach (var report in reports.OrderBy(r => r.AverageAssessmentScore))
-                {
-                    <MudTr>
-                        <MudTd DataLabel="Student">
-                            <div class="d-flex align-items-center">
-                                <MudAvatar Color="Color.Primary" Variant="Variant.Filled" Class="me-2">
-                                    <MudText Typo="Typo.h6">@report.StudentName.Substring(0, 1).ToUpper()</MudText>
-                                </MudAvatar>
-                                <MudText Typo="Typo.body2"><strong>@report.StudentName</strong></MudText>
-                            </div>
-                        </MudTd>
-                        <MudTd DataLabel="Email">@report.Email</MudTd>
-                        <MudTd DataLabel="Course">@report.CourseName</MudTd>
-                        <MudTd DataLabel="Progress">
-                            <MudProgressLinear Value="@(report.ProgressPercentage)" Color="@GetProgressBarColor(report.ProgressPercentage)" Class="my-2 h-1.5" />
-                            <MudText Typo="Typo.caption">@($"{report.ProgressPercentage:F1}%")</MudText>
-                        </MudTd>
-                        <MudTd DataLabel="Avg Score">
-                            <MudChip T="string" Color="@GetScoreBadgeColor(report.AverageAssessmentScore)">
-                                @($"{report.AverageAssessmentScore:F1}%")
-                            </MudChip>
-                        </MudTd>
-                        <MudTd DataLabel="Risk Level">
-                            <MudChip T="string" Color="@GetRiskBadgeColor(report.AverageAssessmentScore)">
-                                @GetRiskLevel(report.AverageAssessmentScore)
-                            </MudChip>
-                        </MudTd>
-                        <MudTd DataLabel="Time Spent">@report.TimeSpent.ToString(@"hh\:mm")</MudTd>
-                        <MudTd DataLabel="Status">
-                            <MudChip T="string" Color="@GetStatusBadgeColor(report.Status)">
-                                @report.Status
-                            </MudChip>
-                        </MudTd>
-                        <MudTd DataLabel="Last Activity">@(report.EnrolledAt.ToString("MMM dd, yyyy"))</MudTd>
-                        <MudTd DataLabel="Actions">
-                            <MudButtonGroup>
-                                <MudButton Variant="Variant.Outlined" Color="Color.Primary" Size="Size.Small" Title="Contact Student">
-                                    <MudIcon Icon="@Icons.Material.Filled.Email" />
-                                </MudButton>
-                                <MudButton Variant="Variant.Outlined" Color="Color.Info" Size="Size.Small" Title="View Details">
-                                    <MudIcon Icon="@Icons.Material.Filled.Visibility" />
-                                </MudButton>
-                                <MudButton Variant="Variant.Outlined" Color="Color.Warning" Size="Size.Small" Title="Add Note">
-                                    <MudIcon Icon="@Icons.Material.Filled.NoteAdd" />
-                                </MudButton>
-                            </MudButtonGroup>
-                        </MudTd>
-                    </MudTr>
-                }
-            </tbody>
-        </table>
-    </div>
+    <MudTable Items="@reports.OrderBy(r => r.AverageAssessmentScore)" 
+              Hover="true" 
+              Dense="true" 
+              FixedHeader="true" 
+              Elevation="2"
+              Class="rounded-lg">
+        <HeaderContent>
+            <MudTh>Student</MudTh>
+            <MudTh>Email</MudTh>
+            <MudTh>Course</MudTh>
+            <MudTh>Progress</MudTh>
+            <MudTh>Avg Score</MudTh>
+            <MudTh>Risk Level</MudTh>
+            <MudTh>Time Spent</MudTh>
+            <MudTh>Status</MudTh>
+            <MudTh>Last Activity</MudTh>
+            <MudTh>Actions</MudTh>
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd DataLabel="Student">
+                <MudStack Row AlignItems="AlignItems.Center" Spacing="2">
+                    <MudAvatar Color="Color.Primary" Variant="Variant.Filled">
+                        <MudText Typo="Typo.h6">@context.StudentName.Substring(0, 1).ToUpper()</MudText>
+                    </MudAvatar>
+                    <MudText Typo="Typo.body2"><strong>@context.StudentName</strong></MudText>
+                </MudStack>
+            </MudTd>
+            <MudTd DataLabel="Email">@context.Email</MudTd>
+            <MudTd DataLabel="Course">@context.CourseName</MudTd>
+            <MudTd DataLabel="Progress">
+                <MudProgressLinear Value="@(context.ProgressPercentage)" Color="@GetProgressBarColor(context.ProgressPercentage)" Class="my-2 h-1.5" />
+                <MudText Typo="Typo.caption">@($"{context.ProgressPercentage:F1}%")</MudText>
+            </MudTd>
+            <MudTd DataLabel="Avg Score">
+                <MudChip T="string" Color="@GetScoreBadgeColor(context.AverageAssessmentScore)">
+                    @($"{context.AverageAssessmentScore:F1}%")
+                </MudChip>
+            </MudTd>
+            <MudTd DataLabel="Risk Level">
+                <MudChip T="string" Color="@GetRiskBadgeColor(context.AverageAssessmentScore)">
+                    @GetRiskLevel(context.AverageAssessmentScore)
+                </MudChip>
+            </MudTd>
+            <MudTd DataLabel="Time Spent">@context.TimeSpent.ToString(@"hh\:mm")</MudTd>
+            <MudTd DataLabel="Status">
+                <MudChip T="string" Color="@GetStatusBadgeColor(context.Status)">
+                    @context.Status
+                </MudChip>
+            </MudTd>
+            <MudTd DataLabel="Last Activity">@(context.EnrolledAt.ToString("MMM dd, yyyy"))</MudTd>
+            <MudTd DataLabel="Actions">
+                <MudButtonGroup>
+                    <MudButton Variant="Variant.Outlined" Color="Color.Primary" Size="Size.Small" Title="Contact Student">
+                        <MudIcon Icon="@Icons.Material.Filled.Email" />
+                    </MudButton>
+                    <MudButton Variant="Variant.Outlined" Color="Color.Info" Size="Size.Small" Title="View Details">
+                        <MudIcon Icon="@Icons.Material.Filled.Visibility" />
+                    </MudButton>
+                    <MudButton Variant="Variant.Outlined" Color="Color.Warning" Size="Size.Small" Title="Add Note">
+                        <MudIcon Icon="@Icons.Material.Filled.NoteAdd" />
+                    </MudButton>
+                </MudButtonGroup>
+            </MudTd>
+        </RowTemplate>
+    </MudTable>
 
     <!-- Intervention Recommendations -->
     <MudCard Elevation="2" Class="mt-4">
@@ -419,3 +415,5 @@ else
         }
     }
 }
+
+

@@ -63,7 +63,7 @@
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div class="space-y-4">
-                    <MudSwitch @bind-Checked="model.IsPrivate"
+                    <MudSwitch @bind-Value="model.IsPrivate"
                               Color="Color.Primary"
                               Label="Private Note"
                               T="bool"
@@ -74,7 +74,7 @@
                 </div>
 
                 <div class="space-y-4">
-                    <MudSwitch @bind-Checked="model.IsPinned"
+                    <MudSwitch @bind-Value="model.IsPinned"
                               Color="Color.Warning"
                               Label="Pin This Note"
                               T="bool"
@@ -205,3 +205,6 @@
         _ => "bg-blue-500"
     };
 }
+
+
+

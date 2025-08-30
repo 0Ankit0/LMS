@@ -73,7 +73,7 @@
         {
             return string.Empty; // Invalid format
         }
-        Type iconType = null;
+        Type? iconType = null;
         if (parts[0] == "Filled")
         {
             iconType = typeof(MudBlazor.Icons.Material.Filled);
@@ -82,7 +82,7 @@
         {
             return string.Empty;
         }
-        object iconValue = null;
+        object? iconValue = null;
         if (parts.Length == 2)
         {
             var prop = iconType.GetProperty(parts[1], BindingFlags.Public | BindingFlags.Static);
@@ -122,3 +122,6 @@
         return iconValue?.ToString() ?? string.Empty;
     }
 }
+
+
+

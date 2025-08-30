@@ -1,4 +1,4 @@
-﻿@page "/home"
+@page "/home"
 @page "/"
 
 @layout LMS.Web.Components.Pages.User.Shared.SharedPagesLayout
@@ -77,7 +77,7 @@ else
             <!-- Middle Section - Announcements -->
             <MudItem xs="12" lg="5">
                 <MudStack Spacing="2">
-                    <MudStack Row="true" AlignItems="AlignItems.End" JustifyContent="SpaceBetween">
+                    <MudStack Direction="true" AlignItems="AlignItems.End" JustifyContent="SpaceBetween">
                         <MudText Typo="Typo.h6">Announcements</MudText>
                         <MudBadge Color="Color.Info" Variant="Variant.Filled" Class="mr-2">New</MudBadge>
                         <MudButton Ripple="true" Variant="Variant.Outlined" Color="Color.Primary" Size="Size.Small"
@@ -120,3 +120,5 @@ else
         isLoading = false;
     }
 }
+
+

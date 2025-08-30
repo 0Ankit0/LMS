@@ -49,7 +49,7 @@
                     <MudNumericField @bind-Value="Module.OrderIndex" Label="Order Index" Variant="Variant.Text" Placeholder="1" />
                 </MudItem>
             </MudStack>
-            <MudCheckBox T="bool" @bind-Checked="Module.IsRequired" Label="Is Required" Color="Color.Primary" />
+            <MudCheckBox T="bool" @bind-Value="Module.IsRequired" Label="Is Required" Color="Color.Primary" />
 
             <!-- Image Upload Button -->
             <MudStack Direction="Row" Spacing="2" Class="my-2">
@@ -173,3 +173,5 @@
 
     private void ValueChangedModuleIcon(string v) => Module.IconName = v;
 }
+
+

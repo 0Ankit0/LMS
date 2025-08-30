@@ -218,7 +218,7 @@
                         {
                             <div class="flex items-center mb-3 text-sm text-blue-600">
                                 <MudIcon Icon="@Icons.Material.Filled.School" Size="Size.Small" Class="mr-1" />
-                                <span class="truncate">@note.CourseTitle</span>
+                                <MudText Typo="Typo.body2" Class="truncate">@note.CourseTitle</MudText>
                             </div>
                         }
 
@@ -326,11 +326,11 @@
             <MudText Typo="Typo.body1" Class="text-gray-500 mb-6">
                 @if (hasActiveFilters)
                 {
-                    <span>Try adjusting your filters or</span>
+                    <MudText>Try adjusting your filters or</MudText>
                 }
                 else
                 {
-                    <span>Start by creating your first note to organize your learning</span>
+                    <MudText>Start by creating your first note to organize your learning</MudText>
                 }
             </MudText>
             <MudButton Variant="Variant.Filled" 
@@ -563,3 +563,6 @@
         ? "text-orange-600 hover:bg-orange-50 rounded-lg" 
         : "text-gray-600 hover:bg-gray-100 rounded-lg";
 }
+
+
+

@@ -45,7 +45,7 @@
                 ToStringFunc="@(id => Courses.FirstOrDefault(c => c.Value == id)?.Text ?? string.Empty)"
                 SearchFunc="SearchCourses" />
 
-            <MudCheckBox T="bool" @bind-Checked="Forum.IsGeneral" Label="Is General Forum" Color="Color.Primary" />
+            <MudCheckBox T="bool" @bind-Value="Forum.IsGeneral" Label="Is General Forum" Color="Color.Primary" />
 
             <!-- Image Upload Button -->
             <MudStack Direction="Row" Spacing="2" Class="my-2">
@@ -170,3 +170,5 @@
         return Task.FromResult(result);
     }
 }
+
+

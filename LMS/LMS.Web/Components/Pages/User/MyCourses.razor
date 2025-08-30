@@ -113,7 +113,7 @@
     }
 
     <!-- Unenroll Confirmation Modal -->
-    <MudDialog @bind-IsVisible="@isUnenrollModalVisible" Options="@dialogOptions">
+    <MudDialog @bind-Visible="@isUnenrollModalVisible" Options="@dialogOptions">
         <TitleContent>
             <MudText Typo="Typo.h6">Confirm Unenrollment</MudText>
         </TitleContent>
@@ -137,7 +137,7 @@
 
 
 <!-- Unenroll Confirmation Modal -->
-<MudDialog @bind-IsVisible="@isUnenrollModalVisible" Options="@dialogOptions">
+<MudDialog @bind-Visible="@isUnenrollModalVisible" Options="@dialogOptions">
     <TitleContent>
         <MudText Typo="Typo.h6">Confirm Unenrollment</MudText>
     </TitleContent>
@@ -269,3 +269,5 @@
         Snackbar.Add("Certificate download functionality will be implemented soon", Severity.Info);
     }
 }
+
+

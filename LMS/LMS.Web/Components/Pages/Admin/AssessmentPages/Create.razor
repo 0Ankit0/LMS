@@ -81,17 +81,17 @@ else
                 </MudGrid>
                 <MudGrid>
                     <MudItem xs="12" md="6">
-                        <MudCheckBox T="bool" @bind-Checked="Assessment.IsRandomized" Label="Randomize Questions"
+                        <MudCheckBox T="bool" @bind-Value="Assessment.IsRandomized" Label="Randomize Questions"
                             Color="Color.Primary" />
                     </MudItem>
                     <MudItem xs="12" md="6">
-                        <MudCheckBox T="bool" @bind-Checked="Assessment.ShowCorrectAnswers" Label="Show Correct Answers"
+                        <MudCheckBox T="bool" @bind-Value="Assessment.ShowCorrectAnswers" Label="Show Correct Answers"
                             Color="Color.Primary" />
                     </MudItem>
                 </MudGrid>
                 <MudGrid>
                     <MudItem xs="12" md="6">
-                        <MudCheckBox T="bool" @bind-Checked="Assessment.ShowScoreImmediately" Label="Show Score Immediately"
+                        <MudCheckBox T="bool" @bind-Value="Assessment.ShowScoreImmediately" Label="Show Score Immediately"
                             Color="Color.Primary" />
                     </MudItem>
                 </MudGrid>
@@ -242,3 +242,5 @@ else
         return Task.FromResult(result);
     }
 }
+
+

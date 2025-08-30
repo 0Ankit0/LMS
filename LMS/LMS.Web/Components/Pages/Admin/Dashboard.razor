@@ -12,7 +12,7 @@
         </MudItem>
     </MudGrid>
 
-    <MudGrid GutterSize="4">
+    <MudGrid>
         @for (int i = 0; i < 4; i++)
         {
             <MudItem lg="3" md="6" xs="12">
@@ -21,7 +21,7 @@
         }
     </MudGrid>
 
-    <MudGrid GutterSize="4" Class="mt-2">
+    <MudGrid Class="mt-4">
         <MudItem lg="8" xs="12">
             <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="350px" />
         </MudItem>
@@ -30,7 +30,7 @@
         </MudItem>
     </MudGrid>
 
-    <MudGrid GutterSize="4" Class="mt-2">
+    <MudGrid Class="mt-4">
         <MudItem lg="6" xs="12">
             <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="350px" />
         </MudItem>
@@ -39,7 +39,7 @@
         </MudItem>
     </MudGrid>
 
-    <MudGrid GutterSize="4" Class="mt-2">
+    <MudGrid Class="mt-4">
         <MudItem md="6" xs="12">
             <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="250px" />
         </MudItem>
@@ -50,166 +50,166 @@
 }
 else
 {
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="d-flex justify-content-between align-items-center">
-                <div>
-                    <h1 class="mb-0">Admin Dashboard</h1>
-                    <p class="text-muted">Welcome to the LMS Administration Panel</p>
-                </div>
-                <div>
+    <MudGrid Class="mb-6">
+        <MudItem xs="12">
+            <MudStack Row Justify="Justify.SpaceBetween" Class="align-items-center">
+                <MudStack>
+                    <MudText Typo="Typo.h3" Class="mb-2 font-bold text-gray-900 dark:text-gray-100">Admin Dashboard</MudText>
+                    <MudText Typo="Typo.body1" Class="text-gray-600 dark:text-gray-400">Welcome to the LMS Administration Panel</MudText>
+                </MudStack>
+                <MudStack>
                     <MudButton Variant="Variant.Filled" Color="Color.Primary" Href="/admin/analytics">
-                        <MudIcon Icon="@Icons.Material.Filled.BarChart" Class="me-2" />
+                        <MudIcon Icon="@Icons.Material.Filled.BarChart" Class="mr-2" />
                         View Detailed Analytics
                     </MudButton>
-                </div>
-            </div>
-        </div>
-    </div>
+                </MudStack>
+            </MudStack>
+        </MudItem>
+    </MudGrid>
 
-    <div class="row g-4">
-        <div class="col-lg-3 col-md-6">
-            <MudCard Elevation="2">
+    <MudGrid>
+        <MudItem lg="3" md="6" xs="12">
+            <MudCard Elevation="2" Class="card-modern h-full">
                 <MudCardContent>
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <MudText Typo="Typo.h5">Courses</MudText>
-                            <MudText Typo="Typo.h3">@totalCourses</MudText>
-                        </div>
-                        <MudIcon Icon="@Icons.Material.Filled.Book" Class="fs-1 opacity-75" />
-                    </div>
-                    <MudButton Variant="Variant.Text" Color="Color.Primary" Class="mt-2" Href="/admin/courses">Manage Courses</MudButton>
+                    <MudStack Row Justify="Justify.SpaceBetween" Class="align-items-center">
+                        <MudStack>
+                            <MudText Typo="Typo.h6" Class="text-gray-600 dark:text-gray-400 mb-1">Courses</MudText>
+                            <MudText Typo="Typo.h3" Class="font-bold text-gray-900 dark:text-gray-100">@totalCourses</MudText>
+                        </MudStack>
+                        <MudIcon Icon="@Icons.Material.Filled.Book" Class="text-4xl text-gray-400 dark:text-gray-500" />
+                    </MudStack>
+                    <MudButton Variant="Variant.Text" Color="Color.Primary" Class="mt-3" Href="/admin/courses">Manage Courses</MudButton>
                 </MudCardContent>
             </MudCard>
-        </div>
+        </MudItem>
 
-        <div class="col-lg-3 col-md-6">
-            <MudCard Elevation="2">
+        <MudItem lg="3" md="6" xs="12">
+            <MudCard Elevation="2" Class="card-modern h-full">
                 <MudCardContent>
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <MudText Typo="Typo.h5">Categories</MudText>
-                            <MudText Typo="Typo.h3">@totalCategories</MudText>
-                        </div>
-                        <MudIcon Icon="@Icons.Material.Filled.Category" Class="fs-1 opacity-75" />
-                    </div>
-                    <MudButton Variant="Variant.Text" Color="Color.Primary" Class="mt-2" Href="/admin/categories">Manage Categories</MudButton>
+                    <MudStack Row Justify="Justify.SpaceBetween" Class="align-items-center">
+                        <MudStack>
+                            <MudText Typo="Typo.h6" Class="text-gray-600 dark:text-gray-400 mb-1">Categories</MudText>
+                            <MudText Typo="Typo.h3" Class="font-bold text-gray-900 dark:text-gray-100">@totalCategories</MudText>
+                        </MudStack>
+                        <MudIcon Icon="@Icons.Material.Filled.Category" Class="text-4xl text-gray-400 dark:text-gray-500" />
+                    </MudStack>
+                    <MudButton Variant="Variant.Text" Color="Color.Primary" Class="mt-3" Href="/admin/categories">Manage Categories</MudButton>
                 </MudCardContent>
             </MudCard>
-        </div>
+        </MudItem>
 
-        <div class="col-lg-3 col-md-6">
-            <MudCard Elevation="2">
+        <MudItem lg="3" md="6" xs="12">
+            <MudCard Elevation="2" Class="card-modern h-full">
                 <MudCardContent>
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <MudText Typo="Typo.h5">Assessments</MudText>
-                            <MudText Typo="Typo.h3">@totalAssessments</MudText>
-                        </div>
-                        <MudIcon Icon="@Icons.Material.Filled.AssignmentTurnedIn" Class="fs-1 opacity-75" />
-                    </div>
-                    <MudButton Variant="Variant.Text" Color="Color.Primary" Class="mt-2" Href="/admin/assessments">Manage Assessments</MudButton>
+                    <MudStack Row Justify="Justify.SpaceBetween" Class="align-items-center">
+                        <MudStack>
+                            <MudText Typo="Typo.h6" Class="text-gray-600 dark:text-gray-400 mb-1">Assessments</MudText>
+                            <MudText Typo="Typo.h3" Class="font-bold text-gray-900 dark:text-gray-100">@totalAssessments</MudText>
+                        </MudStack>
+                        <MudIcon Icon="@Icons.Material.Filled.AssignmentTurnedIn" Class="text-4xl text-gray-400 dark:text-gray-500" />
+                    </MudStack>
+                    <MudButton Variant="Variant.Text" Color="Color.Primary" Class="mt-3" Href="/admin/assessments">Manage Assessments</MudButton>
                 </MudCardContent>
             </MudCard>
-        </div>
+        </MudItem>
 
-        <div class="col-lg-3 col-md-6">
-            <MudCard Elevation="2">
+        <MudItem lg="3" md="6" xs="12">
+            <MudCard Elevation="2" Class="card-modern h-full">
                 <MudCardContent>
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <MudText Typo="Typo.h5">Enrollments</MudText>
-                            <MudText Typo="Typo.h3">@totalEnrollments</MudText>
-                        </div>
-                        <MudIcon Icon="@Icons.Material.Filled.PersonAdd" Class="fs-1 opacity-75" />
-                    </div>
-                    <MudButton Variant="Variant.Text" Color="Color.Primary" Class="mt-2" Href="/admin/enrollments">Manage Enrollments</MudButton>
+                    <MudStack Row Justify="Justify.SpaceBetween" Class="align-items-center">
+                        <MudStack>
+                            <MudText Typo="Typo.h6" Class="text-gray-600 dark:text-gray-400 mb-1">Enrollments</MudText>
+                            <MudText Typo="Typo.h3" Class="font-bold text-gray-900 dark:text-gray-100">@totalEnrollments</MudText>
+                        </MudStack>
+                        <MudIcon Icon="@Icons.Material.Filled.PersonAdd" Class="text-4xl text-gray-400 dark:text-gray-500" />
+                    </MudStack>
+                    <MudButton Variant="Variant.Text" Color="Color.Primary" Class="mt-3" Href="/admin/enrollments">Manage Enrollments</MudButton>
                 </MudCardContent>
             </MudCard>
-        </div>
-    </div>
+        </MudItem>
+    </MudGrid>
 
     <!-- Charts Section -->
-    <div class="row g-4 mt-2">
-        <div class="col-lg-8">
-            <MudCard Elevation="2">
+    <MudGrid Class="mt-6">
+        <MudItem lg="8" xs="12">
+            <MudCard Elevation="2" Class="card-modern h-full">
                 <MudCardHeader>
-                    <MudText Typo="Typo.h6">Course Enrollment Trends</MudText>
+                    <MudText Typo="Typo.h6" Class="font-semibold text-gray-900 dark:text-gray-100">Course Enrollment Trends</MudText>
                 </MudCardHeader>
                 <MudCardContent>
                     <!-- Placeholder for Line Chart -->
-                    <div style="height: 300px; background-color: #f0f0f0; display: flex; align-items: center; justify-content: center;">
-                        <MudText Typo="Typo.h6" Class="text-muted">Line Chart Placeholder</MudText>
-                    </div>
+                    <MudPaper Class="h-72 flex items-center justify-center rounded-lg" Elevation="0" Style="background-color: var(--mud-palette-grey-light); height: 18rem;">
+                        <MudText Typo="Typo.h6" Class="text-gray-500 dark:text-gray-400">Line Chart Placeholder</MudText>
+                    </MudPaper>
                 </MudCardContent>
             </MudCard>
-        </div>
-        <div class="col-lg-4">
-            <MudCard Elevation="2">
+        </MudItem>
+        <MudItem lg="4" xs="12">
+            <MudCard Elevation="2" Class="card-modern h-full">
                 <MudCardHeader>
-                    <MudText Typo="Typo.h6">Course Categories</MudText>
+                    <MudText Typo="Typo.h6" Class="font-semibold text-gray-900 dark:text-gray-100">Course Categories</MudText>
                 </MudCardHeader>
                 <MudCardContent>
                     <!-- Placeholder for Pie Chart -->
-                    <div style="height: 300px; background-color: #f0f0f0; display: flex; align-items: center; justify-content: center;">
-                        <MudText Typo="Typo.h6" Class="text-muted">Pie Chart Placeholder</MudText>
-                    </div>
+                    <MudPaper Class="h-72 flex items-center justify-center rounded-lg" Elevation="0" Style="background-color: var(--mud-palette-grey-light); height: 18rem;">
+                        <MudText Typo="Typo.h6" Class="text-gray-500 dark:text-gray-400">Pie Chart Placeholder</MudText>
+                    </MudPaper>
                 </MudCardContent>
             </MudCard>
-        </div>
-    </div>
+        </MudItem>
+    </MudGrid>
 
-    <div class="row g-4 mt-2">
-        <div class="col-lg-6">
-            <MudCard Elevation="2">
+    <MudGrid Class="mt-6">
+        <MudItem lg="6" xs="12">
+            <MudCard Elevation="2" Class="card-modern h-full">
                 <MudCardHeader>
-                    <MudText Typo="Typo.h6">Assessment Completion Rate</MudText>
+                    <MudText Typo="Typo.h6" Class="font-semibold text-gray-900 dark:text-gray-100">Assessment Completion Rate</MudText>
                 </MudCardHeader>
                 <MudCardContent>
                     <!-- Placeholder for Bar Chart -->
-                    <div style="height: 300px; background-color: #f0f0f0; display: flex; align-items: center; justify-content: center;">
-                        <MudText Typo="Typo.h6" Class="text-muted">Bar Chart Placeholder</MudText>
-                    </div>
+                    <MudPaper Class="h-72 flex items-center justify-center rounded-lg" Elevation="0" Style="background-color: var(--mud-palette-grey-light); height: 18rem;">
+                        <MudText Typo="Typo.h6" Class="text-gray-500 dark:text-gray-400">Bar Chart Placeholder</MudText>
+                    </MudPaper>
                 </MudCardContent>
             </MudCard>
-        </div>
-        <div class="col-lg-6">
-            <MudCard Elevation="2">
+        </MudItem>
+        <MudItem lg="6" xs="12">
+            <MudCard Elevation="2" Class="card-modern h-full">
                 <MudCardHeader>
-                    <MudText Typo="Typo.h6">Monthly Student Activity</MudText>
+                    <MudText Typo="Typo.h6" Class="font-semibold text-gray-900 dark:text-gray-100">Monthly Student Activity</MudText>
                 </MudCardHeader>
                 <MudCardContent>
                     <!-- Placeholder for Doughnut Chart -->
-                    <div style="height: 300px; background-color: #f0f0f0; display: flex; align-items: center; justify-content: center;">
-                        <MudText Typo="Typo.h6" Class="text-muted">Doughnut Chart Placeholder</MudText>
-                    </div>
+                    <MudPaper Class="h-72 flex items-center justify-center rounded-lg" Elevation="0" Style="background-color: var(--mud-palette-grey-light); height: 18rem;">
+                        <MudText Typo="Typo.h6" Class="text-gray-500 dark:text-gray-400">Doughnut Chart Placeholder</MudText>
+                    </MudPaper>
                 </MudCardContent>
             </MudCard>
-        </div>
-    </div>
+        </MudItem>
+    </MudGrid>
 
-    <div class="row g-4 mb-4">
-        <div class="col-12">
-            <MudCard Elevation="2">
+    <MudGrid Class="mt-6 mb-6">
+        <MudItem xs="12">
+            <MudCard Elevation="2" Class="card-modern">
                 <MudCardHeader>
-                    <MudText Typo="Typo.h6">Course Categories Performance Matrix</MudText>
+                    <MudText Typo="Typo.h6" Class="font-semibold text-gray-900 dark:text-gray-100">Course Categories Performance Matrix</MudText>
                 </MudCardHeader>
                 <MudCardContent>
                     <!-- Placeholder for Bar Chart -->
-                    <div style="height: 350px; background-color: #f0f0f0; display: flex; align-items: center; justify-content: center;">
-                        <MudText Typo="Typo.h6" Class="text-muted">Bar Chart Placeholder</MudText>
-                    </div>
+                    <MudPaper Class="h-80 flex items-center justify-center rounded-lg" Elevation="0" Style="background-color: var(--mud-palette-grey-light); height: 20rem;">
+                        <MudText Typo="Typo.h6" Class="text-gray-500 dark:text-gray-400">Bar Chart Placeholder</MudText>
+                    </MudPaper>
                 </MudCardContent>
             </MudCard>
-        </div>
-    </div>
+        </MudItem>
+    </MudGrid>
 
     <!-- Recent Activity Table -->
-    <div class="row g-4">
-        <div class="col-12">
-            <MudCard Elevation="2">
+    <MudGrid>
+        <MudItem xs="12">
+            <MudCard Elevation="2" Class="card-modern">
                 <MudCardHeader>
-                    <MudText Typo="Typo.h6">Recent Student Activity</MudText>
+                    <MudText Typo="Typo.h6" Class="font-semibold text-gray-900 dark:text-gray-100">Recent Student Activity</MudText>
                 </MudCardHeader>
                 <MudCardContent>
                     <MudTable T="StudentActivity" Items="@recentActivities" Hover="true" Breakpoint="Breakpoint.Sm">
@@ -223,18 +223,18 @@ else
                         </HeaderContent>
                         <RowTemplate>
                             <MudTd DataLabel="Student">
-                                <div class="d-flex align-items-center">
-                                    <MudAvatar Color="Color.Primary" Variant="Variant.Filled" Class="me-2">
+                                <div style="display: flex; align-items: center; gap: 12px;">
+                                    <MudAvatar Color="Color.Primary" Variant="Variant.Filled">
                                         <MudText Typo="Typo.h6">@context.StudentName.Substring(0, 1)</MudText>
                                     </MudAvatar>
-                                    @context.StudentName
+                                    <MudText>@context.StudentName</MudText>
                                 </div>
                             </MudTd>
                             <MudTd DataLabel="Course">@context.CourseName</MudTd>
                             <MudTd DataLabel="Activity">@context.Activity</MudTd>
                             <MudTd DataLabel="Progress">
                                 <MudProgressLinear Value="@((double)context.Progress)" Color="Color.Primary" Class="my-2" Style="height: 6px;" />
-                                <MudText Typo="Typo.caption" Class="text-muted">@context.Progress%</MudText>
+                                <MudText Typo="Typo.caption" Class="text-gray-500 dark:text-gray-400">@context.Progress%</MudText>
                             </MudTd>
                             <MudTd DataLabel="Last Active">@context.LastActive.ToString("MMM dd, HH:mm")</MudTd>
                             <MudTd DataLabel="Status">
@@ -244,14 +244,14 @@ else
                     </MudTable>
                 </MudCardContent>
             </MudCard>
-        </div>
-    </div>
+        </MudItem>
+    </MudGrid>
 
-    <div class="row g-4 mt-2">
-        <div class="col-md-6">
-            <MudCard Elevation="2">
+    <MudGrid Class="mt-6">
+        <MudItem md="6" xs="12">
+            <MudCard Elevation="2" Class="card-modern h-full">
                 <MudCardHeader>
-                    <MudText Typo="Typo.h6">Quick Actions</MudText>
+                    <MudText Typo="Typo.h6" Class="font-semibold text-gray-900 dark:text-gray-100">Quick Actions</MudText>
                 </MudCardHeader>
                 <MudCardContent>
                     <MudList T="string" Clickable="true">
@@ -262,12 +262,12 @@ else
                     </MudList>
                 </MudCardContent>
             </MudCard>
-        </div>
+        </MudItem>
 
-        <div class="col-md-6">
-            <MudCard Elevation="2">
+        <MudItem md="6" xs="12">
+            <MudCard Elevation="2" Class="card-modern h-full">
                 <MudCardHeader>
-                    <MudText Typo="Typo.h6">Management Tools</MudText>
+                    <MudText Typo="Typo.h6" Class="font-semibold text-gray-900 dark:text-gray-100">Management Tools</MudText>
                 </MudCardHeader>
                 <MudCardContent>
                     <MudList T="string" Clickable="true">
@@ -278,8 +278,8 @@ else
                     </MudList>
                 </MudCardContent>
             </MudCard>
-        </div>
-    </div>
+        </MudItem>
+    </MudGrid>
 }
 
 @code {
@@ -331,3 +331,5 @@ else
         };
     }
 }
+
+

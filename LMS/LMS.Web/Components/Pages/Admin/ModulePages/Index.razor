@@ -31,24 +31,26 @@
             </HeaderContent>
             <RowTemplate>
                 <MudTd DataLabel="Title">
-                    <div class="d-flex align-items-center">
+                    <MudStack Row AlignItems="AlignItems.Center" Spacing="2">
                         @if (!string.IsNullOrEmpty(context.ImageUrl))
                         {
-                            <img src="@context.ImageUrl" alt="@context.Title" style="width: 32px; height: 32px; object-fit: cover; border-radius: 4px; margin-right: 8px;" />
+                            <MudAvatar Square="true" Size="Size.Small">
+                                <MudImage Src="@context.ImageUrl" Alt="@context.Title" Class="w-8 h-8 object-cover rounded" />
+                            </MudAvatar>
                         }
                         else if (!string.IsNullOrEmpty(context.IconName))
                         {
-                            <MudIcon Icon="@context.IconName" Class="me-2" />
+                            <MudIcon Icon="@context.IconName" />
                         }
                         else
                         {
-                            <MudIcon Icon="@Icons.Material.Filled.Book" Class="me-2" />
+                            <MudIcon Icon="@Icons.Material.Filled.Book" />
                         }
-                        <div>
+                        <MudStack Spacing="0">
                             <MudText Typo="Typo.body1">@context.Title</MudText>
-                            <MudText Typo="Typo.caption" Class="text-muted">Module @context.OrderIndex</MudText>
-                        </div>
-                    </div>
+                            <MudText Typo="Typo.caption" Class="text-gray-500 dark:text-gray-400">Module @context.OrderIndex</MudText>
+                        </MudStack>
+                    </MudStack>
                 </MudTd>
                 <MudTd DataLabel="Description">
                     <div style="max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
@@ -96,7 +98,7 @@
 </MudCard>
 
 <!-- Delete Confirmation Modal -->
-<MudDialog @bind-IsVisible="@showDeleteConfirm" Options="@dialogOptions">
+<MudDialog @bind-Visible="@showDeleteConfirm" Options="@dialogOptions">
     <TitleContent>
         <MudText Typo="Typo.h6" Class="text-danger">
             <MudIcon Icon="@Icons.Material.Filled.Warning" /> Confirm Delete
@@ -185,3 +187,6 @@
         }
     }
 }
+
+
+

@@ -1,4 +1,4 @@
-﻿@page "/questions/details"
+@page "/questions/details"
 @rendermode @(new InteractiveServerRenderMode())
 @using LMS.Data.Entities
 @inject IAssessmentRepository AssessmentRepository
@@ -6,44 +6,83 @@
 
 <PageTitle>Details</PageTitle>
 
-<h1>Details</h1>
+<MudText Typo="Typo.h4" Class="mb-4">Details</MudText>
 
-<div>
-    <h2>Question</h2>
-    <hr />
-</div>
+<MudStack Spacing="2" Class="mb-4">
+    <MudText Typo="Typo.h5">Question</MudText>
+    <MudDivider />
+</MudStack>
 @if (isLoading)
 {
     <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="300px" />
 }
 else if (question is not null)
 {
-    <dl class="row">
-        <dt class="col-sm-2">Text</dt>
-        <dd class="col-sm-10">@question.Text</dd>
-        <dt class="col-sm-2">AssessmentId</dt>
-        <dd class="col-sm-10">@question.AssessmentId</dd>
-        <dt class="col-sm-2">Type</dt>
-        <dd class="col-sm-10">@question.Type</dd>
-        <dt class="col-sm-2">Points</dt>
-        <dd class="col-sm-10">@question.Points</dd>
-        <dt class="col-sm-2">OrderIndex</dt>
-        <dd class="col-sm-10">@question.OrderIndex</dd>
-        <dt class="col-sm-2">Explanation</dt>
-        <dd class="col-sm-10">@question.Explanation</dd>
-        <dt class="col-sm-2">IsRequired</dt>
-        <dd class="col-sm-10">@question.IsRequired</dd>
-        <dt class="col-sm-2">CreatedAt</dt>
-        <dd class="col-sm-10">@question.CreatedAt</dd>
-    </dl>
-    <div>
-        <MudLink Href="@($"/admin/questions/edit?id={question.Id}")">Edit</MudLink> |
-        <MudLink Href="@($"/admin/questions")">Back to List</MudLink>
-    </div>
+    <MudCard Elevation="2">
+        <MudCardHeader>
+            <MudText Typo="Typo.h6">Question Details</MudText>
+        </MudCardHeader>
+        <MudCardContent>
+            <MudGrid>
+                <MudItem xs="12" sm="3">
+                    <MudText Typo="Typo.subtitle2">Text</MudText>
+                </MudItem>
+                <MudItem xs="12" sm="9">
+                    <MudText>@question.Text</MudText>
+                </MudItem>
+                <MudItem xs="12" sm="3">
+                    <MudText Typo="Typo.subtitle2">Assessment ID</MudText>
+                </MudItem>
+                <MudItem xs="12" sm="9">
+                    <MudText>@question.AssessmentId</MudText>
+                </MudItem>
+                <MudItem xs="12" sm="3">
+                    <MudText Typo="Typo.subtitle2">Type</MudText>
+                </MudItem>
+                <MudItem xs="12" sm="9">
+                    <MudText>@question.Type</MudText>
+                </MudItem>
+                <MudItem xs="12" sm="3">
+                    <MudText Typo="Typo.subtitle2">Points</MudText>
+                </MudItem>
+                <MudItem xs="12" sm="9">
+                    <MudText>@question.Points</MudText>
+                </MudItem>
+                <MudItem xs="12" sm="3">
+                    <MudText Typo="Typo.subtitle2">Order Index</MudText>
+                </MudItem>
+                <MudItem xs="12" sm="9">
+                    <MudText>@question.OrderIndex</MudText>
+                </MudItem>
+                <MudItem xs="12" sm="3">
+                    <MudText Typo="Typo.subtitle2">Explanation</MudText>
+                </MudItem>
+                <MudItem xs="12" sm="9">
+                    <MudText>@question.Explanation</MudText>
+                </MudItem>
+                <MudItem xs="12" sm="3">
+                    <MudText Typo="Typo.subtitle2">Is Required</MudText>
+                </MudItem>
+                <MudItem xs="12" sm="9">
+                    <MudText>@question.IsRequired</MudText>
+                </MudItem>
+                <MudItem xs="12" sm="3">
+                    <MudText Typo="Typo.subtitle2">Created At</MudText>
+                </MudItem>
+                <MudItem xs="12" sm="9">
+                    <MudText>@question.CreatedAt</MudText>
+                </MudItem>
+            </MudGrid>
+        </MudCardContent>
+        <MudCardActions>
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" Href="@($"/admin/questions/edit?id={question.Id}")">Edit</MudButton>
+            <MudButton Variant="Variant.Text" Color="Color.Secondary" Href="/admin/questions">Back to List</MudButton>
+        </MudCardActions>
+    </MudCard>
 }
 else
 {
-    <p>Question not found.</p>
+    <MudText>Question not found.</MudText>
 }
 
 @code {
@@ -70,3 +109,6 @@ else
         }
     }
 }
+
+
+
