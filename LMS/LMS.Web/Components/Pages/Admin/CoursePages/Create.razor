@@ -37,12 +37,13 @@ else
         </MudCardHeader>
         <MudCardContent>
             <EditForm EditContext="@editContext" OnValidSubmit="SaveCourse">
-                <MudAlert Severity="Severity.Error" Class="mb-3" >
+                <MudAlert Severity="Severity.Error" Class="mb-3">
                     <MudText>Please correct the errors below.</MudText>
                 </MudAlert>
                 <MudGrid>
                     <MudItem xs="12" md="8">
-                        <MudTextField @bind-Value="Course.Title" Label="Title" Variant="Variant.Text" Required="true" RequiredError="Title is required!" />
+                        <MudTextField @bind-Value="Course.Title" Label="Title" Variant="Variant.Text" Required="true"
+                            RequiredError="Title is required!" />
                     </MudItem>
                     <MudItem xs="12" md="4">
                         <MudSelect @bind-Value="Course.Level" Label="Level" Variant="Variant.Text">
@@ -53,18 +54,22 @@ else
                         </MudSelect>
                     </MudItem>
                 </MudGrid>
-                <MudTextField @bind-Value="Course.Description" Label="Description" Variant="Variant.Text" Lines="4" Required="true" RequiredError="Description is required!" Placeholder="Enter course description" />
+                <MudTextField @bind-Value="Course.Description" Label="Description" Variant="Variant.Text" Lines="4"
+                    Required="true" RequiredError="Description is required!" Placeholder="Enter course description" />
                 <MudGrid>
                     <MudItem xs="12" md="6">
                         <MudStack Direction="Row" Spacing="2" Class="my-2">
                             <MudText Typo="Typo.subtitle2">Course Image</MudText>
-                            <FileUpload ImageUrl="@Course.ThumbnailUrl" ImageUrlChanged="@(url => Course.ThumbnailUrl = url)" ButtonText="Upload Image" />
+                            <FileUpload ImageUrl="@Course.ThumbnailUrl"
+                                ImageUrlChanged="@(url => Course.ThumbnailUrl = url)" ButtonText="Upload Image" />
                         </MudStack>
                     </MudItem>
                     <MudItem xs="12" md="6">
-                        <MudAutocomplete T="string" @bind-Value="Course.InstructorId" Label="Instructor" Variant="Variant.Text" Required="true" RequiredError="Instructor is required!" Placeholder="Search instructor..."
-                                        ToStringFunc="@(id => instructors.FirstOrDefault(i => i.Value == id)?.Text ?? string.Empty)"
-                                        SearchFunc="SearchInstructors" />
+                        <MudAutocomplete T="string" @bind-Value="Course.InstructorId" Label="Instructor"
+                            Variant="Variant.Text" Required="true" RequiredError="Instructor is required!"
+                            Placeholder="Search instructor..."
+                            ToStringFunc="@(id => instructors.FirstOrDefault(i => i.Value == id)?.Text ?? string.Empty)"
+                            SearchFunc="SearchInstructors" />
                     </MudItem>
                 </MudGrid>
                 <MudGrid>
@@ -77,10 +82,12 @@ else
                         </MudSelect>
                     </MudItem>
                     <MudItem xs="12" md="4">
-                        <MudNumericField @bind-Value="Course.MaxEnrollments" Label="Max Enrollments" Variant="Variant.Text" Placeholder="100" />
+                        <MudNumericField @bind-Value="Course.MaxEnrollments" Label="Max Enrollments" Variant="Variant.Text"
+                            Placeholder="100" />
                     </MudItem>
                     <MudItem xs="12" md="4">
-                        <MudNumericField @bind-Value="EstimatedDurationHours" Label="Duration (hours)" Variant="Variant.Text" Placeholder="40" />
+                        <MudNumericField @bind-Value="EstimatedDurationHours" Label="Duration (hours)"
+                            Variant="Variant.Text" Placeholder="40" />
                     </MudItem>
                 </MudGrid>
                 <MudGrid>
@@ -91,19 +98,23 @@ else
                         <MudDatePicker Date="@Course.EndDate" Label="End Date" Variant="Variant.Text" />
                     </MudItem>
                 </MudGrid>
-                <MudTextField @bind-Value="Course.Prerequisites" Label="Prerequisites" Variant="Variant.Text" Lines="3" Placeholder="List any prerequisites..." />
-                <MudTextField @bind-Value="Course.LearningObjectives" Label="Learning Objectives" Variant="Variant.Text" Lines="3" Placeholder="What will students learn..." />
+                <MudTextField @bind-Value="Course.Prerequisites" Label="Prerequisites" Variant="Variant.Text" Lines="3"
+                    Placeholder="List any prerequisites..." />
+                <MudTextField @bind-Value="Course.LearningObjectives" Label="Learning Objectives" Variant="Variant.Text"
+                    Lines="3" Placeholder="What will students learn..." />
                 <MudCheckBox T="bool" @bind-Checked="Course.IsActive" Label="Is Active" Color="Color.Primary" />
                 <MudStack Direction="Row" Spacing="2" Class="my-2">
                     <MudText Typo="Typo.subtitle2">Course Icon</MudText>
-                    <MudIconPicker T="string" Value="@Course.IconName" ValueChanged="ValueChangedCourseIcon" Label="Course Icon" />
+                    <MudIconPicker T="string" Value="@Course.IconName" ValueChanged="ValueChangedCourseIcon"
+                        Label="Course Icon" />
                     @if (!string.IsNullOrEmpty(Course.IconName))
                     {
                         <MudIcon Icon="@Course.IconName" Class="ms-2" />
                     }
                 </MudStack>
                 <div class="d-flex gap-2">
-                    <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Disabled="@isSubmitting">
+                    <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary"
+                        Disabled="@isSubmitting">
                         <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Class="me-2" />
                         @(IsEdit ? "Update Course" : "Create Course")
                     </MudButton>
@@ -132,7 +143,7 @@ else
         await Task.Delay(500);
         instructors = (await LoadInstructorsAsync()).ToList();
         allMudIcons = typeof(Icons.Material.Filled).GetFields(BindingFlags.Public | BindingFlags.Static)
-            .Select(f => f.GetValue(null)?.ToString()).Where(x => !string.IsNullOrEmpty(x)).ToList();
+        .Select(f => f.GetValue(null)?.ToString()).Where(x => !string.IsNullOrEmpty(x)).ToList();
         editContext = new EditContext(Course);
         if (IsEdit)
         {
@@ -145,8 +156,8 @@ else
                     Description = course.Description,
                     ThumbnailUrl = course.ThumbnailUrl,
                     InstructorId = course.InstructorId,
-                    Level = (int)Enum.Parse(typeof(CourseLevel), course.Level),
-                    Status = (int)Enum.Parse(typeof(CourseStatus), course.Status),
+                    Level = course.Level,
+                    Status = course.Status,
                     MaxEnrollments = course.MaxEnrollments,
                     StartDate = course.StartDate,
                     EndDate = course.EndDate,
@@ -154,8 +165,8 @@ else
                     Prerequisites = course.Prerequisites,
                     LearningObjectives = course.LearningObjectives,
                     IsActive = true, // Default to true or map if available
-                    CategoryIds = new List<int>(), // Map if available
-                    TagIds = new List<int>(), // Map if available
+                    CategoryIds = new List<string>(), // Map if available
+                    TagIds = new List<string>(), // Map if available
                     IconName = course.IconName
                 };
                 editContext = new EditContext(Course);
@@ -172,8 +183,8 @@ else
 
     private int EstimatedDurationHours
     {
-        get => (int)Course.EstimatedDuration.TotalHours;
-        set => Course.EstimatedDuration = TimeSpan.FromHours(value);
+        get => Course.EstimatedDuration.HasValue ? Course.EstimatedDuration.Value / 60 : 0;
+        set => Course.EstimatedDuration = value * 60;
     }
 
     private async Task<IEnumerable<DropdownOption<string>>> LoadInstructorsAsync()
@@ -193,8 +204,8 @@ else
     private Task<IEnumerable<string>> SearchInstructors(string value, CancellationToken token)
     {
         IEnumerable<string> result = string.IsNullOrWhiteSpace(value)
-            ? instructors.Select(i => i.Value)
-            : instructors.Where(i => i.Text.Contains(value, StringComparison.OrdinalIgnoreCase)).Select(i => i.Value);
+        ? instructors.Select(i => i.Value)
+        : instructors.Where(i => i.Text.Contains(value, StringComparison.OrdinalIgnoreCase)).Select(i => i.Value);
         return Task.FromResult(result);
     }
 
@@ -206,7 +217,23 @@ else
         {
             if (IsEdit)
             {
-                var result = await CourseRepository.UpdateCourseAsync(id.Value, Course);
+                var updateRequest = new UpdateCourseRequest(
+                    Course.Title,
+                    Course.Description,
+                    Course.ShortDescription,
+                    Course.ThumbnailUrl,
+                    Course.Level,
+                    Course.Price,
+                    Course.IsFree,
+                    Course.CategoryId,
+                    Course.InstructorId,
+                    Course.Tags,
+                    Course.Prerequisites,
+                    Course.LearningObjectives,
+                    Course.IsActive,
+                    Course.IsFeatured
+                );
+                var result = await CourseRepository.UpdateCourseAsync(id.Value, updateRequest);
                 if (result != null)
                 {
                     Snackbar.Add("Course updated successfully!", Severity.Success);

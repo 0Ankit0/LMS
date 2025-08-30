@@ -1,5 +1,11 @@
 @page "/admin/analytics"
 @layout AdminLayout
+@inject IAnalyticsRepository AnalyticsRepository
+@inject IReportRepository ReportRepository
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject UserManager<User> UserManager
+@inject ISnackbar Snackbar
+@inject IJSRuntime JSRuntime
 
 <PageTitle>Analytics - Admin</PageTitle>
 
@@ -262,10 +268,65 @@ else
     {
         if (firstRender)
         {
-            GenerateDummyData();
+            await LoadAnalyticsData();
             GenerateChartData();
             isLoading = false;
             StateHasChanged();
+        }
+    }
+
+    private async Task LoadAnalyticsData()
+    {
+        try
+        {
+            // Get the current user
+            var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+            var user = await UserManager.GetUserAsync(authState.User);
+
+            if (user != null)
+            {
+                // Load analytics data from repository
+                var userAnalytics = await AnalyticsRepository.GetUserAnalyticsAsync(user.Id);
+
+                if (userAnalytics != null)
+                {
+                    totalRevenue = 0; // Revenue tracking not implemented yet
+                    activeStudents = userAnalytics.CompletedCourses; // Use completed courses as a proxy
+                    completionRate = (int)userAnalytics.OverallProgress;
+                    avgSessionTime = userAnalytics.TotalStudyHours;
+                    
+                    // Load recent activities
+                    var activities = await AnalyticsRepository.GetRecentActivitiesAsync(user.Id, 10);
+                    recentActivities = activities?.Select(a => new StudentActivity
+                    {
+                        StudentName = a.CourseTitle ?? "Unknown Student",
+                        CourseName = a.CourseTitle ?? "Unknown Course",
+                        Activity = a.Type ?? "Activity",
+                        Progress = 75, // Default progress
+                        LastActive = a.Timestamp,
+                        Status = "Active"
+                    }).ToList() ?? new List<StudentActivity>();
+                }
+                else
+                {
+                    // Initialize with default values if no data
+                    totalRevenue = 0;
+                    activeStudents = 0;
+                    completionRate = 0;
+                    avgSessionTime = 0;
+                    recentActivities = new List<StudentActivity>();
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading analytics data: {ex.Message}");
+            // Initialize with default values on error
+            totalRevenue = 0;
+            activeStudents = 0;
+            completionRate = 0;
+            avgSessionTime = 0;
+            recentActivities = new List<StudentActivity>();
         }
     }
 
@@ -330,7 +391,7 @@ else
         };
     }
 
-    private async Task ChangeTimeRange(string range)
+    private void ChangeTimeRange(string range)
     {
         selectedTimeRange = range;
         GenerateChartData();
@@ -339,32 +400,52 @@ else
 
     private async Task RefreshData()
     {
-        GenerateDummyData();
+        isLoading = true;
+        StateHasChanged();
+        
+        await LoadAnalyticsData();
         GenerateChartData();
+        
+        isLoading = false;
         StateHasChanged();
     }
 
     private async Task ExportReport()
     {
-        await Task.Delay(1000);
-    }
-
-    private void GenerateDummyData()
-    {
-        var random = new Random();
-        totalRevenue = random.Next(35000, 65000);
-        activeStudents = random.Next(1000, 1500);
-        completionRate = random.Next(70, 85);
-        avgSessionTime = random.Next(35, 55);
-
-        recentActivities = new List<StudentActivity>
+        try
         {
-            new() { StudentName = "John Doe", CourseName = "Advanced C#", Activity = "Completed Module 3", Progress = 75, LastActive = DateTime.Now.AddMinutes(-15), Status = "Active" },
-            new() { StudentName = "Jane Smith", CourseName = "UI/UX Design", Activity = "Started Assessment", Progress = 60, LastActive = DateTime.Now.AddHours(-2), Status = "Active" },
-            new() { StudentName = "Mike Johnson", CourseName = "Data Science", Activity = "Watched Video", Progress = 45, LastActive = DateTime.Now.AddHours(-5), Status = "Active" },
-            new() { StudentName = "Sarah Wilson", CourseName = "Digital Marketing", Activity = "Submitted Assignment", Progress = 90, LastActive = DateTime.Now.AddMinutes(-30), Status = "Completed" },
-            new() { StudentName = "David Brown", CourseName = "Python Basics", Activity = "Failed Quiz", Progress = 25, LastActive = DateTime.Now.AddDays(-1), Status = "Struggling" }
-        };
+            // Get the current user
+            var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+            var user = await UserManager.GetUserAsync(authState.User);
+
+            if (user != null)
+            {
+                // Create report parameters
+                var parameters = new
+                {
+                    UserId = user.Id,
+                    TimeRange = selectedTimeRange,
+                    TotalRevenue = totalRevenue,
+                    ActiveStudents = activeStudents,
+                    CompletionRate = completionRate,
+                    AvgSessionTime = avgSessionTime,
+                    GeneratedAt = DateTime.Now
+                };
+
+                // Export as CSV for now
+                var csvContent = await ReportRepository.ExportReportToCsvAsync(user, "Analytics Dashboard", parameters);
+                
+                // Trigger download (you might need to implement actual file download logic)
+                await JSRuntime.InvokeVoidAsync("downloadFile", $"analytics-report-{DateTime.Now:yyyyMMdd}.csv", csvContent);
+                
+                Snackbar.Add("Analytics report exported successfully!", Severity.Success);
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error exporting analytics report: {ex.Message}");
+            Snackbar.Add("Failed to export analytics report.", Severity.Error);
+        }
     }
 
     private MudBlazor.Color GetStatusBadgeColor(string status) => status switch

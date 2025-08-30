@@ -133,22 +133,10 @@
             };
             var result = await AssessmentRepository.GetAssessmentsPaginatedAsync(paginationRequest);
 
-            // Fallback data if repository returns null or empty
-            if (result == null || !result.Items.Any())
-            {
-                result = new PaginatedResult<AssessmentModel>
-                {
-                    Items = GetSampleAssessments(),
-                    TotalCount = 3,
-                    PageNumber = pageNumber,
-                    PageSize = pageSize
-                };
-            }
-
             return new TableData<AssessmentModel>()
             {
-                TotalItems = result.TotalCount,
-                Items = result.Items
+                TotalItems = result?.TotalCount ?? 0,
+                Items = result?.Items ?? new List<AssessmentModel>()
             };
         }
         catch (Exception ex)
@@ -156,8 +144,8 @@
             Snackbar.Add($"Error loading assessments: {ex.Message}", Severity.Error);
             return new TableData<AssessmentModel>()
             {
-                TotalItems = 3,
-                Items = GetSampleAssessments()
+                TotalItems = 0,
+                Items = new List<AssessmentModel>()
             };
         }
         finally
@@ -165,64 +153,6 @@
             _loading = false;
             StateHasChanged();
         }
-    }
-
-    private List<AssessmentModel> GetSampleAssessments()
-    {
-        return new List<AssessmentModel>
-        {
-            new AssessmentModel
-            {
-                Id = 1,
-                Title = "Programming Fundamentals Quiz",
-                Description = "Test your knowledge of basic programming concepts",
-                CourseId = 1,
-                Type = "Quiz",
-                MaxAttempts = 3,
-                TimeLimit = TimeSpan.FromMinutes(30),
-                PassingScore = 70.0,
-                IsRandomized = true,
-                ShowCorrectAnswers = true,
-                ShowScoreImmediately = true,
-                AvailableFrom = DateTime.Now.AddDays(-7),
-                AvailableUntil = DateTime.Now.AddDays(30),
-                CreatedAt = DateTime.Now.AddDays(-10)
-            },
-            new AssessmentModel
-            {
-                Id = 2,
-                Title = "Web Development Final Exam",
-                Description = "Comprehensive assessment covering all course topics",
-                CourseId = 2,
-                Type = "Exam",
-                MaxAttempts = 1,
-                TimeLimit = TimeSpan.FromMinutes(120),
-                PassingScore = 75.0,
-                IsRandomized = false,
-                ShowCorrectAnswers = false,
-                ShowScoreImmediately = false,
-                AvailableFrom = DateTime.Now.AddDays(5),
-                AvailableUntil = DateTime.Now.AddDays(10),
-                CreatedAt = DateTime.Now.AddDays(-5)
-            },
-            new AssessmentModel
-            {
-                Id = 3,
-                Title = "Data Science Assignment",
-                Description = "Practical assignment using real-world datasets",
-                CourseId = 3,
-                Type = "Assignment",
-                MaxAttempts = 2,
-                TimeLimit = TimeSpan.Zero,
-                PassingScore = 80.0,
-                IsRandomized = false,
-                ShowCorrectAnswers = true,
-                ShowScoreImmediately = true,
-                AvailableFrom = DateTime.Now,
-                AvailableUntil = DateTime.Now.AddDays(14),
-                CreatedAt = DateTime.Now.AddDays(-3)
-            }
-        };
     }
 
     private void ConfirmDelete(AssessmentModel assessment)

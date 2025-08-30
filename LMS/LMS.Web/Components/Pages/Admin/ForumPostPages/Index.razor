@@ -66,30 +66,27 @@
                 PageSize = pageSize
             };
             var paginatedResult = await ForumRepository.GetAllForumPostsPaginatedAsync(request);
-            var items = paginatedResult?.Items ?? GetMockForumPosts();
             
-            return new MudBlazor.TableData<ForumPostModel> { TotalItems = paginatedResult?.TotalCount ?? items.Count(), Items = items };
+            return new MudBlazor.TableData<ForumPostModel> 
+            { 
+                TotalItems = paginatedResult?.TotalCount ?? 0, 
+                Items = paginatedResult?.Items ?? new List<ForumPostModel>() 
+            };
         }
         catch (Exception ex)
         {
             Console.WriteLine($"Error loading forum posts: {ex.Message}");
-            return new MudBlazor.TableData<ForumPostModel> { TotalItems = 0, Items = GetMockForumPosts() };
+            return new MudBlazor.TableData<ForumPostModel> 
+            { 
+                TotalItems = 0, 
+                Items = new List<ForumPostModel>() 
+            };
         }
         finally
         {
             _loading = false;
             StateHasChanged();
         }
-    }
-
-    private IEnumerable<ForumPostModel> GetMockForumPosts()
-    {
-        return new List<ForumPostModel>
-        {
-            new ForumPostModel { Id = 1, Content = "This is the first post in the general discussion forum.", TopicTitle = "Welcome to the Forum!", AuthorName = "Admin", CreatedAt = DateTime.Now.AddDays(-10) },
-            new ForumPostModel { Id = 2, Content = "I have a question about C# generics.", TopicTitle = "C# Generics", AuthorName = "John Doe", CreatedAt = DateTime.Now.AddDays(-5) },
-            new ForumPostModel { Id = 3, Content = "Reply to John Doe: You can use `List<T>` for generic lists.", TopicTitle = "C# Generics", AuthorName = "Jane Smith", ParentPostId = 2, CreatedAt = DateTime.Now.AddDays(-4) }
-        };
     }
 }
 

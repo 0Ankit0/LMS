@@ -110,23 +110,20 @@
                 // Sorting logic commented out
             };
             var result = await CertificateRepository.GetCertificatesPaginatedAsync(paginationRequest);
-            var data = result?.Items ?? GetMockCertificates();
-            var totalCount = result?.TotalCount ?? data.Count();
             
             return new TableData<CertificateModel>
             {
-                Items = data,
-                TotalItems = totalCount
+                Items = result?.Items ?? new List<CertificateModel>(),
+                TotalItems = result?.TotalCount ?? 0
             };
         }
         catch (Exception ex)
         {
             Snackbar.Add($"Error loading certificates: {ex.Message}", Severity.Error);
-            var dummy = GetMockCertificates();
             return new TableData<CertificateModel>
             {
-                Items = dummy,
-                TotalItems = dummy.Count()
+                Items = new List<CertificateModel>(),
+                TotalItems = 0
             };
         }
         finally
@@ -176,14 +173,5 @@
         >= 70 => MudBlazor.Color.Warning,
         _ => MudBlazor.Color.Error
     };
-
-    private IEnumerable<CertificateModel> GetMockCertificates()
-    {
-        return new List<CertificateModel>
-        {
-            new CertificateModel { Id = 1, UserId = "user1", UserName = "John Doe", CourseId = 101, CourseTitle = "Introduction to Blazor", CertificateNumber = "CERT-001-BLZ", IssuedAt = DateTime.Now.AddMonths(-3), ExpiresAt = DateTime.Now.AddYears(1), FinalGrade = 92.5, IsValid = true },
-            new CertificateModel { Id = 2, UserId = "user2", UserName = "Jane Smith", CourseId = 102, CourseTitle = "Advanced C#", CertificateNumber = "CERT-002-CSH", IssuedAt = DateTime.Now.AddMonths(-6), ExpiresAt = DateTime.Now.AddYears(1), FinalGrade = 88.0, IsValid = true },
-            new CertificateModel { Id = 3, UserId = "user1", UserName = "John Doe", CourseId = 103, CourseTitle = "Azure Fundamentals", CertificateNumber = "CERT-003-AZR", IssuedAt = DateTime.Now.AddMonths(-1), ExpiresAt = DateTime.Now.AddYears(1), FinalGrade = 95.0, IsValid = true }
-        };
-    }
+}
 }

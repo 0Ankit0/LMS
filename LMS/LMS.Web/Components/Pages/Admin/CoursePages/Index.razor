@@ -48,9 +48,9 @@
                         }
                         <div>
                             <MudText Typo="Typo.body1">@context.Title</MudText>
-                            @if (context.EstimatedDuration.TotalHours > 0)
+                            @if (context.EstimatedDuration.HasValue && context.EstimatedDuration > 0)
                             {
-                                <MudText Typo="Typo.caption" Class="text-muted">@((int)context.EstimatedDuration.TotalHours)h duration</MudText>
+                                <MudText Typo="Typo.caption" Class="text-muted">@(context.EstimatedDuration/60)h duration</MudText>
                             }
                         </div>
                     </div>
@@ -67,7 +67,7 @@
                     <MudChip T="string" Color="@GetStatusBadgeColor(context.Status)" Size="Size.Small">@context.Status</MudChip>
                 </MudTd>
                 <MudTd DataLabel="Max Enrollments">@context.MaxEnrollments</MudTd>
-                <MudTd DataLabel="Start Date">@context.StartDate.ToString("MMM dd, yyyy")</MudTd>
+                <MudTd DataLabel="Start Date">@(context.StartDate?.ToString("MMM dd, yyyy") ?? "N/A")</MudTd>
                 <MudTd DataLabel="End Date">@(context.EndDate?.ToString("MMM dd, yyyy") ?? "N/A")</MudTd>
                 <MudTd DataLabel="Instructor">@context.InstructorName</MudTd>
                 <MudTd DataLabel="Actions">
@@ -131,7 +131,7 @@
             };
             var result = await CourseRepository.GetCoursesPaginatedAsync(paginationRequest);
 
-            var data = (result.Items == null || !result.Items.Any()) ? GetSampleCourses() : result.Items;
+            var data = result.Items ?? new List<CourseModel>();
             var totalCount = (result.Items == null || !result.Items.Any()) ? data.Count() : result.TotalCount;
 
             return new TableData<CourseModel>
@@ -143,11 +143,11 @@
         catch (Exception ex)
         {
             Snackbar.Add($"Error loading courses: {ex.Message}", Severity.Error);
-            var dummy = GetSampleCourses();
+            var empty = new List<CourseModel>();
             return new TableData<CourseModel>
             {
-                Items = dummy,
-                TotalItems = dummy.Count()
+                Items = empty,
+                TotalItems = empty.Count()
             };
         }
         finally
@@ -155,55 +155,6 @@
             _loading = false;
             StateHasChanged();
         }
-    }
-
-    private List<CourseModel> GetSampleCourses()
-    {
-        return new List<CourseModel>
-        {
-            new CourseModel
-            {
-                Id = 1,
-                Title = "Introduction to Programming",
-                Description = "Learn the basics of programming with hands-on exercises and real-world examples",
-                Level = "Beginner",
-                Status = "Published",
-                MaxEnrollments = 100,
-                StartDate = DateTime.Now.AddDays(7),
-                EndDate = DateTime.Now.AddDays(67),
-                InstructorName = "John Doe",
-                EstimatedDuration = TimeSpan.FromHours(40),
-                IconName = Icons.Material.Filled.Code
-            },
-            new CourseModel
-            {
-                Id = 2,
-                Title = "Modern Web Development",
-                Description = "Master modern web development techniques using the latest frameworks and tools",
-                Level = "Advanced",
-                Status = "Published",
-                MaxEnrollments = 50,
-                StartDate = DateTime.Now.AddDays(14),
-                EndDate = DateTime.Now.AddDays(104),
-                InstructorName = "Jane Smith",
-                EstimatedDuration = TimeSpan.FromHours(60),
-                IconName = Icons.Material.Filled.Web
-            },
-            new CourseModel
-            {
-                Id = 3,
-                Title = "Data Science Essentials",
-                Description = "An comprehensive introduction to data science and analytics with Python",
-                Level = "Intermediate",
-                Status = "Draft",
-                MaxEnrollments = 75,
-                StartDate = DateTime.Now.AddDays(21),
-                EndDate = DateTime.Now.AddDays(81),
-                InstructorName = "Dr. Robert Johnson",
-                EstimatedDuration = TimeSpan.FromHours(50),
-                IconName = Icons.Material.Filled.Analytics
-            }
-        };
     }
 
     private void ConfirmDelete(CourseModel course)

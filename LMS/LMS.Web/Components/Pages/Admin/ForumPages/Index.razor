@@ -121,11 +121,11 @@
         catch (Exception ex)
         {
             Snackbar.Add($"Error loading forums: {ex.Message}", Severity.Error);
-            var dummy = new List<ForumModel>();
+            var emptyList = new List<ForumModel>();
             return new TableData<ForumModel>
             {
-                Items = dummy,
-                TotalItems = dummy.Count
+                Items = emptyList,
+                TotalItems = emptyList.Count
             };
         }
         finally

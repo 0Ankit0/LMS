@@ -136,7 +136,7 @@
                 PageSize = pageSize
             });
 
-            var data = (result.Items == null || !result.Items.Any()) ? GetSampleCategories() : result.Items;
+            var data = (result.Items == null || !result.Items.Any()) ? new List<CategoryModel>() : result.Items;
             var totalCount = (result.Items == null || !result.Items.Any()) ? data.Count() : result.TotalCount;
 
             return new TableData<CategoryModel>
@@ -148,11 +148,11 @@
         catch (Exception ex)
         {
             Snackbar.Add($"Error loading categories: {ex.Message}", Severity.Error);
-            var sample = GetSampleCategories();
+            var categories = new List<CategoryModel>();
             return new TableData<CategoryModel>
             {
-                Items = sample,
-                TotalItems = sample.Count()
+                Items = categories,
+                TotalItems = categories.Count()
             };
         }
         finally
@@ -162,64 +162,7 @@
         }
     }
 
-    private List<CategoryModel> GetSampleCategories()
-    {
-        return new List<CategoryModel>
-        {
-            new CategoryModel
-            {
-                Id = 1,
-                Name = "Programming",
-                Description = "All programming and software development related courses",
-                Color = "#007bff",
-                IsActive = true,
-                ParentCategoryId = null,
-                ParentCategoryName = null,
-                SubCategories = new List<CategoryModel>(),
-                CourseCount = 15,
-                IconName = Icons.Material.Filled.Code
-            },
-            new CategoryModel
-            {
-                Id = 2,
-                Name = "Design",
-                Description = "Design, UI/UX, and creative courses",
-                Color = "#28a745",
-                IsActive = true,
-                ParentCategoryId = null,
-                ParentCategoryName = null,
-                SubCategories = new List<CategoryModel>(),
-                CourseCount = 8,
-                IconName = Icons.Material.Filled.Palette
-            },
-            new CategoryModel
-            {
-                Id = 3,
-                Name = "Web Development",
-                Description = "Modern web development techniques and frameworks",
-                Color = "#17a2b8",
-                IsActive = true,
-                ParentCategoryId = 1,
-                ParentCategoryName = "Programming",
-                SubCategories = new List<CategoryModel>(),
-                CourseCount = 12,
-                IconName = Icons.Material.Filled.Web
-            },
-            new CategoryModel
-            {
-                Id = 4,
-                Name = "Business",
-                Description = "Business and management courses",
-                Color = "#ffc107",
-                IsActive = false,
-                ParentCategoryId = null,
-                ParentCategoryName = null,
-                SubCategories = new List<CategoryModel>(),
-                CourseCount = 3,
-                IconName = Icons.Material.Filled.Business
-            }
-        };
-    }
+    // Category management methods are implemented and connected to CategoryRepository
 
     private void ConfirmDelete(CategoryModel category)
     {

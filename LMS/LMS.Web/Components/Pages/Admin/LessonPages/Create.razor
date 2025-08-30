@@ -174,12 +174,12 @@ else
                     Title = lesson.Title,
                     Description = lesson.Description,
                     Content = lesson.Content,
-                    ModuleId = lesson.ModuleId,
-                    Type = (int)Enum.Parse(typeof(LessonType), lesson.Type),
+                    ModuleId = lesson.ModuleId ?? 0,
+                    Type = lesson.Type == "Video" ? 1 : lesson.Type == "Interactive" ? 2 : 3,
                     VideoUrl = lesson.VideoUrl,
                     DocumentUrl = lesson.DocumentUrl,
                     ExternalUrl = lesson.ExternalUrl,
-                    EstimatedDuration = lesson.EstimatedDuration,
+                    EstimatedDuration = lesson.EstimatedDuration.HasValue ? TimeSpan.FromMinutes(lesson.EstimatedDuration.Value) : TimeSpan.Zero,
                     OrderIndex = lesson.OrderIndex,
                     IsRequired = lesson.IsRequired
                 };

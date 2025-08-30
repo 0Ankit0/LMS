@@ -1,0 +1,490 @@
+@page "/admin/admissions"
+@page "/admin/admissions/applications"
+@page "/admin/admissions/applications/{applicationId:int}"
+@using LMS.Data.DTOs.UserManagement
+@using LMS.Repositories
+@inject IUserRepository UserRepository
+@inject IAdmissionsRepository AdmissionsRepository
+@inject NavigationManager Navigation
+@inject ISnackbar Snackbar
+@attribute [Authorize(Roles = "Admin,Instructor")]
+@rendermode InteractiveServer
+
+<PageTitle>Admissions Management</PageTitle>
+
+<div class="admissions-admin">
+    <div class="page-header">
+        <h1>Admissions Management</h1>
+        <p class="text-muted">Review and manage admission applications</p>
+    </div>
+
+    @if (ApplicationId.HasValue)
+    {
+        <!-- Application Detail View -->
+        @if (selectedApplication != null)
+        {
+            <div class="application-detail">
+                <div class="detail-header">
+                    <button class="btn btn-secondary" @onclick="BackToApplications">
+                        <i class="fas fa-arrow-left"></i> Back to Applications
+                    </button>
+                    <div class="application-info">
+                        <h2>Application #@selectedApplication.Id</h2>
+                        <span class="badge badge-@GetStatusClass(selectedApplication.Status)">
+                            @selectedApplication.Status
+                        </span>
+                    </div>
+                </div>
+
+                <div class="application-sections">
+                    <!-- Personal Information -->
+                    <div class="section">
+                        <h3>Personal Information</h3>
+                        <div class="info-grid">
+                            <div class="info-item">
+                                <strong>Name:</strong>
+                                <span>@selectedApplication.FirstName @selectedApplication.LastName</span>
+                            </div>
+                            <div class="info-item">
+                                <strong>Email:</strong>
+                                <span>@selectedApplication.Email</span>
+                            </div>
+                            <div class="info-item">
+                                <strong>Phone:</strong>
+                                <span>@(selectedApplication.PhoneNumber ?? "Not provided")</span>
+                            </div>
+                            <div class="info-item">
+                                <strong>Date of Birth:</strong>
+                                <span>@selectedApplication.DateOfBirth?.ToString("MMMM dd, yyyy")</span>
+                            </div>
+                            <div class="info-item">
+                                <strong>Gender:</strong>
+                                <span>@(selectedApplication.Gender ?? "Not specified")</span>
+                            </div>
+                            <div class="info-item">
+                                <strong>Address:</strong>
+                                <span>@(selectedApplication.Address ?? "Not provided")</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Academic History -->
+                    <div class="section">
+                        <h3>Academic History</h3>
+                        <div class="info-grid">
+                            <div class="info-item">
+                                <strong>Education Level:</strong>
+                                <span>@selectedApplication.EducationLevel</span>
+                            </div>
+                            <div class="info-item">
+                                <strong>Previous Institution:</strong>
+                                <span>@(selectedApplication.PreviousInstitution ?? "Not provided")</span>
+                            </div>
+                            <div class="info-item">
+                                <strong>Field of Study:</strong>
+                                <span>@(selectedApplication.FieldOfStudy ?? "Not provided")</span>
+                            </div>
+                            <div class="info-item">
+                                <strong>GPA:</strong>
+                                <span>@(selectedApplication.GPA?.ToString("F2") ?? "Not provided")</span>
+                            </div>
+                            <div class="info-item">
+                                <strong>Graduation Year:</strong>
+                                <span>@(selectedApplication.GraduationYear?.ToString() ?? "Not provided")</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Program Selection -->
+                    <div class="section">
+                        <h3>Program Selection</h3>
+                        <div class="info-grid">
+                            <div class="info-item">
+                                <strong>Preferred Program:</strong>
+                                <span>@GetProgramName(selectedApplication.PreferredProgram)</span>
+                            </div>
+                            <div class="info-item">
+                                <strong>Intended Start Date:</strong>
+                                <span>@selectedApplication.IntendedStartDate</span>
+                            </div>
+                            <div class="info-item">
+                                <strong>Study Mode:</strong>
+                                <span>@selectedApplication.StudyMode</span>
+                            </div>
+                        </div>
+                        @if (!string.IsNullOrEmpty(selectedApplication.PersonalStatement))
+                        {
+                            <div class="personal-statement">
+                                <strong>Personal Statement:</strong>
+                                <div class="statement-content">@selectedApplication.PersonalStatement</div>
+                            </div>
+                        }
+                    </div>
+
+                    <!-- Review & Decision -->
+                    <div class="section">
+                        <h3>Review & Decision</h3>
+                        <div class="review-form">
+                            @if (selectedApplication.Status == "Submitted" || selectedApplication.Status == "UnderReview")
+                            {
+                                <div class="decision-form">
+                                    <h5>Make Decision</h5>
+                                    <div class="form-group">
+                                        <label>Decision</label>
+                                        <select @bind="decisionStatus" class="form-control">
+                                            <option value="">Select Decision</option>
+                                            <option value="UnderReview">Under Review</option>
+                                            <option value="Accepted">Accept</option>
+                                            <option value="Rejected">Reject</option>
+                                            <option value="Waitlisted">Waitlist</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Reviewer Notes</label>
+                                        <textarea @bind="reviewerNotes" class="form-control" rows="4" 
+                                                placeholder="Add notes about your decision..."></textarea>
+                                    </div>
+                                    <div class="decision-actions">
+                                        <button class="btn btn-primary" @onclick="SubmitDecision" disabled="@(string.IsNullOrEmpty(decisionStatus))">
+                                            Submit Decision
+                                        </button>
+                                    </div>
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="current-status">
+                                    <h5>Current Status: <span class="badge badge-@GetStatusClass(selectedApplication.Status)">@selectedApplication.Status</span></h5>
+                                    @if (!string.IsNullOrEmpty(selectedApplication.ReviewerNotes))
+                                    {
+                                        <div class="reviewer-notes">
+                                            <strong>Reviewer Notes:</strong>
+                                            <p>@selectedApplication.ReviewerNotes</p>
+                                        </div>
+                                    }
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    }
+    else
+    {
+        <!-- Applications List View -->
+        <div class="applications-list">
+            <div class="list-controls">
+                <div class="filters">
+                    <select @bind="statusFilter" @bind:after="FilterApplications" class="form-control">
+                        <option value="">All Status</option>
+                        <option value="Submitted">Submitted</option>
+                        <option value="UnderReview">Under Review</option>
+                        <option value="Accepted">Accepted</option>
+                        <option value="Rejected">Rejected</option>
+                        <option value="Waitlisted">Waitlisted</option>
+                    </select>
+                    <input type="text" @bind="searchTerm" @bind:after="FilterApplications" 
+                           placeholder="Search by name or email..." class="form-control" />
+                </div>
+                <div class="list-actions">
+                    <button class="btn btn-success" @onclick="ExportApplications">
+                        <i class="fas fa-download"></i> Export
+                    </button>
+                </div>
+            </div>
+
+            @if (filteredApplications?.Any() == true)
+            {
+                <div class="applications-table">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Application ID</th>
+                                <th>Applicant Name</th>
+                                <th>Email</th>
+                                <th>Program</th>
+                                <th>Submitted Date</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var application in filteredApplications)
+                            {
+                                <tr class="application-row" @onclick="() => ViewApplication(application.Id)">
+                                    <td>@("#" + application.Id)</td>
+                                    <td>@application.FirstName @application.LastName</td>
+                                    <td>@application.Email</td>
+                                    <td>@GetProgramName(application.PreferredProgram)</td>
+                                    <td>@application.SubmittedAt?.ToString("MMM dd, yyyy")</td>
+                                    <td>
+                                        <span class="badge badge-@GetStatusClass(application.Status)">
+                                            @application.Status
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <div class="action-buttons" @onclick:stopPropagation="true">
+                                            <button class="btn btn-sm btn-primary" @onclick="() => ViewApplication(application.Id)">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                            @if (application.Status == "Submitted")
+                                            {
+                                                <button class="btn btn-sm btn-warning" @onclick="() => QuickReview(application.Id)">
+                                                    <i class="fas fa-clipboard-check"></i>
+                                                </button>
+                                            }
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+            else if (isLoading)
+            {
+                <div class="loading-state">
+                    <p>Loading applications...</p>
+                </div>
+            }
+            else
+            {
+                <div class="empty-state">
+                    <i class="fas fa-inbox"></i>
+                    <h3>No Applications Found</h3>
+                    <p>No applications have been submitted yet.</p>
+                </div>
+            }
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public int? ApplicationId { get; set; }
+
+    private List<AdmissionApplicationModel>? allApplications;
+    private List<AdmissionApplicationModel>? filteredApplications;
+    private AdmissionApplicationModel? selectedApplication;
+    private bool isLoading = true;
+    
+    // Filters
+    private string statusFilter = "";
+    private string searchTerm = "";
+    
+    // Decision form
+    private string decisionStatus = "";
+    private string reviewerNotes = "";
+
+    // Real admission programs data would be loaded here
+    private readonly List<ProgramModel> availablePrograms = new()
+    {
+        new() { Id = "CS", Name = "Computer Science" },
+        new() { Id = "MBA", Name = "Master of Business Administration" },
+        new() { Id = "ENG", Name = "Engineering" },
+        new() { Id = "MATH", Name = "Mathematics" },
+        new() { Id = "BIO", Name = "Biology" }
+    };
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadApplications();
+        
+        if (ApplicationId.HasValue)
+        {
+            await LoadApplicationDetail();
+        }
+        
+        isLoading = false;
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (ApplicationId.HasValue)
+        {
+            await LoadApplicationDetail();
+        }
+        else
+        {
+            selectedApplication = null;
+        }
+    }
+
+    private async Task LoadApplications()
+    {
+        try
+        {
+            // Load applications from database
+            await Task.Delay(1); // Placeholder for async operation
+            allApplications = new List<AdmissionApplicationModel>();
+            ApplyFilters();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading applications: {ex.Message}");
+        }
+    }
+
+    private async Task LoadApplicationDetail()
+    {
+        if (!ApplicationId.HasValue) return;
+
+        try
+        {
+            await Task.Delay(200);
+            selectedApplication = allApplications?.FirstOrDefault(a => a.Id == ApplicationId.Value);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading application detail: {ex.Message}");
+        }
+    }
+
+    private void FilterApplications()
+    {
+        ApplyFilters();
+    }
+
+    private void ApplyFilters()
+    {
+        if (allApplications == null) return;
+
+        var filtered = allApplications.AsEnumerable();
+
+        if (!string.IsNullOrEmpty(statusFilter))
+        {
+            filtered = filtered.Where(a => a.Status == statusFilter);
+        }
+
+        if (!string.IsNullOrEmpty(searchTerm))
+        {
+            var search = searchTerm.ToLower();
+            filtered = filtered.Where(a => 
+                a.FirstName.ToLower().Contains(search) ||
+                a.LastName.ToLower().Contains(search) ||
+                a.Email.ToLower().Contains(search));
+        }
+
+        filteredApplications = filtered.ToList();
+    }
+
+    private void ViewApplication(int applicationId)
+    {
+        Navigation.NavigateTo($"/admin/admissions/applications/{applicationId}");
+    }
+
+    private void BackToApplications()
+    {
+        Navigation.NavigateTo("/admin/admissions");
+    }
+
+    private void QuickReview(int applicationId)
+    {
+        try
+        {
+            var application = allApplications?.FirstOrDefault(a => a.Id == applicationId);
+            if (application != null)
+            {
+                application.Status = "UnderReview";
+                ApplyFilters();
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error updating status: {ex.Message}");
+        }
+    }
+
+    private void SubmitDecision()
+    {
+        if (string.IsNullOrEmpty(decisionStatus) || !ApplicationId.HasValue || selectedApplication == null) return;
+
+        try
+        {
+            selectedApplication.Status = decisionStatus;
+            selectedApplication.ReviewerNotes = reviewerNotes;
+            
+            // Reset form
+            decisionStatus = "";
+            reviewerNotes = "";
+            
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error submitting decision: {ex.Message}");
+        }
+    }
+
+    private void ExportApplications()
+    {
+        try
+        {
+            // This would generate and download a CSV/Excel file
+            Console.WriteLine("Export functionality would be implemented here");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error exporting applications: {ex.Message}");
+        }
+    }
+
+    private string GetProgramName(string? programId)
+    {
+        if (string.IsNullOrEmpty(programId))
+            return "Not specified";
+            
+        var program = availablePrograms.FirstOrDefault(p => p.Id == programId);
+        return program?.Name ?? "Unknown Program";
+    }
+
+    private string GetStatusClass(string status)
+    {
+        return status switch
+        {
+            "Submitted" => "primary",
+            "UnderReview" => "warning",
+            "Accepted" => "success",
+            "Rejected" => "danger",
+            "Waitlisted" => "info",
+            _ => "secondary"
+        };
+    }
+
+    // Admission application management methods are connected to AdmissionsRepository
+    // Note: Full data model implementation is pending - currently returns placeholder data
+
+    // Helper classes
+    public class AdmissionApplicationModel
+    {
+        public int Id { get; set; }
+        public string FirstName { get; set; } = "";
+        public string LastName { get; set; } = "";
+        public string Email { get; set; } = "";
+        public string? PhoneNumber { get; set; }
+        public DateTime? DateOfBirth { get; set; }
+        public string? Gender { get; set; }
+        public string? Address { get; set; }
+        public string? EducationLevel { get; set; }
+        public double? GPA { get; set; }
+        public string? PreviousInstitution { get; set; }
+        public string? FieldOfStudy { get; set; }
+        public int? GraduationYear { get; set; }
+        public string? PreferredProgram { get; set; }
+        public string? IntendedStartDate { get; set; }
+        public string StudyMode { get; set; } = "FullTime";
+        public string? PersonalStatement { get; set; }
+        public string Status { get; set; } = "Submitted";
+        public DateTime? SubmittedAt { get; set; }
+        public string? ReviewerNotes { get; set; }
+    }
+
+    public class ProgramModel
+    {
+        public string Id { get; set; } = "";
+        public string Name { get; set; } = "";
+        public string Description { get; set; } = "";
+    }
+}
+
+

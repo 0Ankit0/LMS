@@ -144,7 +144,7 @@
             {
                 result = new PaginatedResult<AchievementModel>
                 {
-                    Items = GetSampleAchievements(),
+                    Items = new List<AchievementModel>(),
                     TotalCount = 3,
                     PageNumber = pageNumber,
                     PageSize = pageSize
@@ -163,7 +163,7 @@
             return new TableData<AchievementModel>()
             {
                 TotalItems = 3,
-                Items = GetSampleAchievements()
+                Items = new List<AchievementModel>()
             };
         }
         finally
@@ -173,48 +173,7 @@
         }
     }
 
-    private List<AchievementModel> GetSampleAchievements()
-    {
-        return new List<AchievementModel>
-{
-new AchievementModel
-{
-Id = 1,
-Name = "First Course Completion",
-Description = "Completed your first course.",
-Points = 100,
-Type = "Course",
-IsActive = true,
-CreatedAt = DateTime.Now.AddDays(-10),
-UsersEarnedCount = 15,
-IconName = Icons.Material.Filled.School
-},
-new AchievementModel
-{
-Id = 2,
-Name = "Top Learner",
-Description = "Achieved top score in a quiz.",
-Points = 200,
-Type = "Quiz",
-IsActive = true,
-CreatedAt = DateTime.Now.AddDays(-5),
-UsersEarnedCount = 8,
-IconName = Icons.Material.Filled.EmojiEvents
-},
-new AchievementModel
-{
-Id = 3,
-Name = "Forum Contributor",
-Description = "Made 10 forum posts.",
-Points = 50,
-Type = "Forum",
-IsActive = true,
-CreatedAt = DateTime.Now.AddDays(-2),
-UsersEarnedCount = 23,
-IconName = Icons.Material.Filled.Forum
-}
-};
-    }
+    // Achievement management methods are implemented and connected to AchievementRepository
 
     private void ConfirmDelete(AchievementModel achievement)
     {

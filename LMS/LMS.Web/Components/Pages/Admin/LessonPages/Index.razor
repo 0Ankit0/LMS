@@ -35,7 +35,7 @@
                 <MudTd DataLabel="Type">
                     <MudChip T="string" Color="@GetTypeBadgeColor(context.Type)">@context.Type</MudChip>
                 </MudTd>
-                <MudTd DataLabel="Duration">@context.EstimatedDuration.TotalMinutes minutes</MudTd>
+                <MudTd DataLabel="Duration">@(context.EstimatedDuration?.ToString() ?? "N/A") minutes</MudTd>
                 <MudTd DataLabel="Order">@context.OrderIndex</MudTd>
                 <MudTd DataLabel="Required">
                     <MudChip T="bool" Color="@(context.IsRequired? Color.Primary: Color.Secondary)">
@@ -101,7 +101,7 @@
                 PageNumber = pageNumber,
                 PageSize = pageSize
             });
-            var data = (result.Items == null || !result.Items.Any()) ? AddDummyLessons() : result.Items;
+            var data = result.Items ?? new List<LessonModel>();
             var totalCount = (result.Items == null || !result.Items.Any()) ? data.Count() : result.TotalCount;
             
             return new MudBlazor.TableData<LessonModel>
@@ -124,46 +124,6 @@
             _loading = false;
             StateHasChanged();
         }
-    }
-
-    private List<LessonModel> AddDummyLessons()
-    {
-        return new List<LessonModel>
-{
-new LessonModel
-{
-Id = 1,
-Title = "Introduction to Variables",
-Description = "Learn about variables and data types",
-ModuleId = 1,
-Type = "Video",
-EstimatedDuration = TimeSpan.FromMinutes(15),
-OrderIndex = 1,
-IsRequired = true
-},
-new LessonModel
-{
-Id = 2,
-Title = "Control Structures",
-Description = "Understanding loops and conditionals",
-ModuleId = 1,
-Type = "Interactive",
-EstimatedDuration = TimeSpan.FromMinutes(25),
-OrderIndex = 2,
-IsRequired = true
-},
-new LessonModel
-{
-Id = 3,
-Title = "Arrays and Lists",
-Description = "Working with collections of data",
-ModuleId = 2,
-Type = "Assignment",
-EstimatedDuration = TimeSpan.FromMinutes(30),
-OrderIndex = 1,
-IsRequired = false
-}
-};
     }
 
     private MudBlazor.Color GetTypeBadgeColor(string? type)

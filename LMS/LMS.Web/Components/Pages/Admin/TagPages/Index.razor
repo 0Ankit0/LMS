@@ -94,13 +94,11 @@
                 PageNumber = pageNumber,
                 PageSize = pageSize
             });
-            var data = (result.Items == null || !result.Items.Any()) ? AddDummyTags() : result.Items;
-            var totalCount = (result.Items == null || !result.Items.Any()) ? data.Count() : result.TotalCount;
             
             return new MudBlazor.TableData<TagModel>
             {
-                Items = data,
-                TotalItems = totalCount
+                Items = result?.Items ?? new List<TagModel>(),
+                TotalItems = result?.TotalCount ?? 0
             };
         }
         catch (Exception ex)
@@ -108,7 +106,7 @@
             Snackbar.Add($"Error loading tags: {ex.Message}", Severity.Error);
             return new MudBlazor.TableData<TagModel>
             {
-                Items = Enumerable.Empty<TagModel>(),
+                Items = new List<TagModel>(),
                 TotalItems = 0
             };
         }
@@ -117,18 +115,6 @@
             _loading = false;
             StateHasChanged();
         }
-    }
-
-    private List<TagModel> AddDummyTags()
-    {
-        return new List<TagModel>
-{
-new TagModel { Id = 1, Name = "Programming", Color = "#007bff" },
-new TagModel { Id = 2, Name = "Web Development", Color = "#28a745" },
-new TagModel { Id = 3, Name = "Data Science", Color = "#dc3545" },
-new TagModel { Id = 4, Name = "Beginner", Color = "#ffc107" },
-new TagModel { Id = 5, Name = "Advanced", Color = "#6f42c1" }
-};
     }
 
     private async Task ConfirmDelete(TagModel tag)

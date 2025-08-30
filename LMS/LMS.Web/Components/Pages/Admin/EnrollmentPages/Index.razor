@@ -123,11 +123,11 @@
         catch (Exception ex)
         {
             Snackbar.Add($"Error loading enrollments: {ex.Message}", Severity.Error);
-            var dummy = new List<EnrollmentModel>();
+            var emptyList = new List<EnrollmentModel>();
             return new TableData<EnrollmentModel>
             {
-                Items = dummy,
-                TotalItems = dummy.Count
+                Items = emptyList,
+                TotalItems = emptyList.Count
             };
         }
         finally
