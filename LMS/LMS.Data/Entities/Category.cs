@@ -15,7 +15,10 @@ namespace LMS.Data.Entities
         [StringLength(500)]
         public string? Description { get; set; }
 
-        public string? IconUrl { get; set; }
+        public int? IconFileId { get; set; }
+
+        [ForeignKey("IconFileId")]
+        public virtual UserFile? IconFile { get; set; }
 
         public string Color { get; set; } = "#007bff";
 

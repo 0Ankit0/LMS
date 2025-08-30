@@ -16,7 +16,10 @@ namespace LMS.Data.Entities
         [StringLength(1000)]
         public string Description { get; set; } = string.Empty;
 
-        public string? ThumbnailUrl { get; set; }
+        public int? ThumbnailFileId { get; set; }
+
+        [ForeignKey("ThumbnailFileId")]
+        public virtual UserFile? ThumbnailFile { get; set; }
 
         [Required]
         public string InstructorId { get; set; } = string.Empty;

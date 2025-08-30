@@ -1,6 +1,7 @@
 using LMS.Data.Entities;
 using Microsoft.AspNetCore.Identity;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace LMS.Data.Entities
 {
@@ -18,9 +19,10 @@ namespace LMS.Data.Entities
         [StringLength(500)]
         public string? Bio { get; set; }
 
-        public string? ProfilePictureUrl { get; set; }
+        public int? ProfilePictureFileId { get; set; }
 
-        public DateTime DateOfBirth { get; set; }
+        [ForeignKey("ProfilePictureFileId")]
+        public virtual UserFile? ProfilePictureFile { get; set; }
 
         public bool IsActive { get; set; } = true;
 
@@ -33,6 +35,12 @@ namespace LMS.Data.Entities
         public int Level { get; set; } = 1;
 
         // Navigation Properties
+        public virtual Student? StudentProfile { get; set; }
+        public virtual Instructor? InstructorProfile { get; set; }
+        public virtual Parent? ParentProfile { get; set; }
+        public virtual UserSettings? Settings { get; set; }
+        public virtual ICollection<UserActivity> Activities { get; set; } = new List<UserActivity>();
+        public virtual ICollection<UserFile> UploadedFiles { get; set; } = new List<UserFile>();
         public virtual ICollection<Enrollment> Enrollments { get; set; } = new List<Enrollment>();
         public virtual ICollection<Course> CreatedCourses { get; set; } = new List<Course>();
         public virtual ICollection<Assessment> Assessments { get; set; } = new List<Assessment>();

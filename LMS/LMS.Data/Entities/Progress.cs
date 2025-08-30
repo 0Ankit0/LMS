@@ -132,6 +132,7 @@ namespace LMS.Data.Entities
         InProgress = 1,
         Completed = 2,
         Abandoned = 3,
-        TimedOut = 4
+        TimedOut = 4,
+        PendingManualGrading = 5
     }
 }
