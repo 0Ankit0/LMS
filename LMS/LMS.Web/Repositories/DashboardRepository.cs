@@ -18,6 +18,18 @@ namespace LMS.Web.Repositories
         Task<List<ProgressCourseModel>> GetProgressCoursesAsync(string userId);
         Task<CourseModel?> GetContinueCourseAsync(string userId);
         Task<List<NoteQuickAccessDTO>> GetUserNotesAsync(string userId, int limit = 5);
+
+        // Notification methods
+        Task<List<NotificationModel>> GetUserNotificationsAsync(string userId, int page, int pageSize);
+        Task<bool> MarkNotificationAsReadAsync(int notificationId, string userId);
+        Task MarkAllNotificationsAsReadAsync(string userId);
+        Task<int> GetUnreadNotificationsCountAsync(string userId);
+
+        // Calendar methods
+        Task<List<CalendarEventModel>> GetUserCalendarEventsAsync(string userId, DateTime startDate, DateTime endDate);
+        Task<CalendarEventModel> CreateCalendarEventAsync(CreateCalendarEventRequest request, string userId);
+        Task<CalendarEventModel> UpdateCalendarEventAsync(int eventId, UpdateCalendarEventRequest request, string userId);
+        Task<bool> DeleteCalendarEventAsync(int eventId, string userId);
     }
 
     public class DashboardRepository : IDashboardRepository
@@ -360,7 +372,7 @@ namespace LMS.Web.Repositories
                 Id = course.Id,
                 Title = course.Title,
                 Description = course.Description,
-                ThumbnailUrl = course.ThumbnailUrl ?? "/images/default-course.png",
+                ThumbnailUrl = course.ThumbnailFile?.FilePath ?? "/images/default-course.png",
                 InstructorName = course.Instructor?.FullName ?? "Unknown",
                 InstructorId = course.InstructorId,
                 Level = course.Level.ToString(),
@@ -368,14 +380,13 @@ namespace LMS.Web.Repositories
                 MaxEnrollments = course.MaxEnrollments,
                 StartDate = course.StartDate,
                 EndDate = course.EndDate,
-                EstimatedDuration = course.EstimatedDuration,
-                Prerequisites = course.Prerequisites,
-                LearningObjectives = course.LearningObjectives,
+                EstimatedDuration = (int)course.EstimatedDuration.TotalMinutes,
+                Prerequisites = course.Prerequisites?.Split(',').ToList() ?? new List<string>(),
+                LearningObjectives = course.LearningObjectives?.Split(',').ToList() ?? new List<string>(),
                 EnrollmentCount = course.Enrollments?.Count ?? 0,
-                AverageRating = 0, // TODO: Calculate from ratings
+                AverageRating = 0, // No rating system implemented yet
                 Categories = course.CourseCategories?.Select(cc => cc.Category.Name).ToList() ?? new List<string>(),
-                Tags = new List<string>(), // TODO: Implement tags
-                Modules = new List<ModuleModel>(), // Not needed for dashboard
+                Tags = course.CourseTags?.Select(ct => ct.Tag.Name).ToList() ?? new List<string>(),
                 Assessments = new List<AssessmentModel>() // Not needed for dashboard
             };
         }
@@ -390,7 +401,7 @@ namespace LMS.Web.Repositories
                 AuthorId = announcement.AuthorId,
                 AuthorName = announcement.Author?.FullName ?? "System",
                 Type = MapAnnouncementType(announcement.Type),
-                IsPinned = false, // TODO: Add to entity
+                IsPinned = false, // No pinning feature implemented yet
                 CourseId = announcement.CourseId,
                 CourseName = announcement.Course?.Title,
                 CourseTitle = announcement.Course?.Title,
@@ -437,6 +448,232 @@ namespace LMS.Web.Repositories
             }
 
             return streak;
+        }
+
+        // Notification methods
+        public async Task<List<NotificationModel>> GetUserNotificationsAsync(string userId, int page, int pageSize)
+        {
+            using var context = await _contextFactory.CreateDbContextAsync();
+
+            var notifications = await context.Notifications
+                .Where(n => n.UserId == userId)
+                .OrderByDescending(n => n.CreatedAt)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+
+            return notifications.Select(n => new NotificationModel
+            {
+                Id = n.Id,
+                UserId = n.UserId,
+                Title = n.Title,
+                Message = n.Message,
+                Type = n.Type,
+                Category = n.Category,
+                ActionUrl = n.ActionUrl,
+                IsRead = n.IsRead,
+                CreatedAt = n.CreatedAt,
+                ReadAt = n.ReadAt,
+                Metadata = string.IsNullOrEmpty(n.Metadata) ? new Dictionary<string, object>() : System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, object>>(n.Metadata) ?? new Dictionary<string, object>()
+            }).ToList();
+        }
+
+        public async Task<bool> MarkNotificationAsReadAsync(int notificationId, string userId)
+        {
+            using var context = await _contextFactory.CreateDbContextAsync();
+
+            var notification = await context.Notifications
+                .FirstOrDefaultAsync(n => n.Id == notificationId && n.UserId == userId);
+
+            if (notification == null) return false;
+
+            notification.IsRead = true;
+            notification.ReadAt = DateTime.UtcNow;
+
+            await context.SaveChangesAsync();
+            return true;
+        }
+
+        public async Task MarkAllNotificationsAsReadAsync(string userId)
+        {
+            using var context = await _contextFactory.CreateDbContextAsync();
+
+            await context.Notifications
+                .Where(n => n.UserId == userId && !n.IsRead)
+                .ExecuteUpdateAsync(setters => setters
+                    .SetProperty(n => n.IsRead, true)
+                    .SetProperty(n => n.ReadAt, DateTime.UtcNow));
+        }
+
+        public async Task<int> GetUnreadNotificationsCountAsync(string userId)
+        {
+            using var context = await _contextFactory.CreateDbContextAsync();
+
+            return await context.Notifications
+                .CountAsync(n => n.UserId == userId && !n.IsRead);
+        }
+
+        // Calendar methods
+        public async Task<List<CalendarEventModel>> GetUserCalendarEventsAsync(string userId, DateTime startDate, DateTime endDate)
+        {
+            using var context = await _contextFactory.CreateDbContextAsync();
+
+            var events = await context.CalendarEvents
+                .Where(e => e.CreatedBy == userId &&
+                           e.StartDate >= startDate &&
+                           e.StartDate <= endDate)
+                .Include(e => e.Course)
+                .Include(e => e.Creator)
+                .ToListAsync();
+
+            return events.Select(e => new CalendarEventModel
+            {
+                Id = e.Id,
+                Title = e.Title,
+                Description = e.Description,
+                StartDate = e.StartDate,
+                EndDate = e.EndDate,
+                IsAllDay = e.IsAllDay,
+                Location = e.Location,
+                Type = e.Type,
+                Color = e.Color,
+                CourseId = e.CourseId,
+                CourseName = e.Course?.Title,
+                CreatedBy = e.CreatedBy,
+                CreatedByName = e.Creator != null ? $"{e.Creator.FirstName} {e.Creator.LastName}" : "Unknown",
+                CreatedAt = e.CreatedAt,
+                IsRecurring = e.IsRecurring,
+                RecurrencePattern = e.RecurrencePattern,
+                Attendees = string.IsNullOrEmpty(e.Attendees) ? new List<string>() : System.Text.Json.JsonSerializer.Deserialize<List<string>>(e.Attendees) ?? new List<string>()
+            }).ToList();
+        }
+
+        public async Task<CalendarEventModel> CreateCalendarEventAsync(CreateCalendarEventRequest request, string userId)
+        {
+            using var context = await _contextFactory.CreateDbContextAsync();
+
+            var calendarEvent = new CalendarEvent
+            {
+                Title = request.Title,
+                Description = request.Description,
+                StartDate = request.StartDate,
+                EndDate = request.EndDate,
+                IsAllDay = request.IsAllDay,
+                Location = request.Location,
+                Type = request.Type,
+                Color = request.Color,
+                CourseId = request.CourseId,
+                CreatedBy = userId,
+                CreatedAt = DateTime.UtcNow,
+                IsRecurring = request.IsRecurring,
+                RecurrencePattern = request.RecurrencePattern,
+                Attendees = request.AttendeeIds != null && request.AttendeeIds.Any() ?
+                           System.Text.Json.JsonSerializer.Serialize(request.AttendeeIds) : null
+            };
+
+            context.CalendarEvents.Add(calendarEvent);
+            await context.SaveChangesAsync();
+
+            // Reload with navigation properties
+            var savedEvent = await context.CalendarEvents
+                .Where(e => e.Id == calendarEvent.Id)
+                .Include(e => e.Course)
+                .Include(e => e.Creator)
+                .FirstAsync();
+
+            return new CalendarEventModel
+            {
+                Id = savedEvent.Id,
+                Title = savedEvent.Title,
+                Description = savedEvent.Description,
+                StartDate = savedEvent.StartDate,
+                EndDate = savedEvent.EndDate,
+                IsAllDay = savedEvent.IsAllDay,
+                Location = savedEvent.Location,
+                Type = savedEvent.Type,
+                Color = savedEvent.Color,
+                CourseId = savedEvent.CourseId,
+                CourseName = savedEvent.Course?.Title,
+                CreatedBy = savedEvent.CreatedBy,
+                CreatedByName = savedEvent.Creator != null ? $"{savedEvent.Creator.FirstName} {savedEvent.Creator.LastName}" : "Unknown",
+                CreatedAt = savedEvent.CreatedAt,
+                IsRecurring = savedEvent.IsRecurring,
+                RecurrencePattern = savedEvent.RecurrencePattern,
+                Attendees = string.IsNullOrEmpty(savedEvent.Attendees) ? new List<string>() : System.Text.Json.JsonSerializer.Deserialize<List<string>>(savedEvent.Attendees) ?? new List<string>()
+            };
+        }
+
+        public async Task<CalendarEventModel> UpdateCalendarEventAsync(int eventId, UpdateCalendarEventRequest request, string userId)
+        {
+            using var context = await _contextFactory.CreateDbContextAsync();
+
+            var calendarEvent = await context.CalendarEvents
+                .FirstOrDefaultAsync(e => e.Id == eventId && e.CreatedBy == userId);
+
+            if (calendarEvent == null)
+                throw new InvalidOperationException("Calendar event not found or access denied");
+
+            // Update properties
+            if (request.Title != null) calendarEvent.Title = request.Title;
+            if (request.Description != null) calendarEvent.Description = request.Description;
+            if (request.StartDate.HasValue) calendarEvent.StartDate = request.StartDate.Value;
+            if (request.EndDate.HasValue) calendarEvent.EndDate = request.EndDate.Value;
+            if (request.IsAllDay.HasValue) calendarEvent.IsAllDay = request.IsAllDay.Value;
+            if (request.Location != null) calendarEvent.Location = request.Location;
+            if (request.Type != null) calendarEvent.Type = request.Type;
+            if (request.Color != null) calendarEvent.Color = request.Color;
+            if (request.CourseId.HasValue) calendarEvent.CourseId = request.CourseId;
+            if (request.IsRecurring.HasValue) calendarEvent.IsRecurring = request.IsRecurring.Value;
+            if (request.RecurrencePattern != null) calendarEvent.RecurrencePattern = request.RecurrencePattern;
+            if (request.AttendeeIds != null)
+            {
+                calendarEvent.Attendees = request.AttendeeIds.Any() ?
+                                         System.Text.Json.JsonSerializer.Serialize(request.AttendeeIds) : null;
+            }
+
+            await context.SaveChangesAsync();
+
+            // Reload with navigation properties
+            var updatedEvent = await context.CalendarEvents
+                .Where(e => e.Id == calendarEvent.Id)
+                .Include(e => e.Course)
+                .Include(e => e.Creator)
+                .FirstAsync();
+
+            return new CalendarEventModel
+            {
+                Id = updatedEvent.Id,
+                Title = updatedEvent.Title,
+                Description = updatedEvent.Description,
+                StartDate = updatedEvent.StartDate,
+                EndDate = updatedEvent.EndDate,
+                IsAllDay = updatedEvent.IsAllDay,
+                Location = updatedEvent.Location,
+                Type = updatedEvent.Type,
+                Color = updatedEvent.Color,
+                CourseId = updatedEvent.CourseId,
+                CourseName = updatedEvent.Course?.Title,
+                CreatedBy = updatedEvent.CreatedBy,
+                CreatedByName = updatedEvent.Creator != null ? $"{updatedEvent.Creator.FirstName} {updatedEvent.Creator.LastName}" : "Unknown",
+                CreatedAt = updatedEvent.CreatedAt,
+                IsRecurring = updatedEvent.IsRecurring,
+                RecurrencePattern = updatedEvent.RecurrencePattern,
+                Attendees = string.IsNullOrEmpty(updatedEvent.Attendees) ? new List<string>() : System.Text.Json.JsonSerializer.Deserialize<List<string>>(updatedEvent.Attendees) ?? new List<string>()
+            };
+        }
+
+        public async Task<bool> DeleteCalendarEventAsync(int eventId, string userId)
+        {
+            using var context = await _contextFactory.CreateDbContextAsync();
+
+            var calendarEvent = await context.CalendarEvents
+                .FirstOrDefaultAsync(e => e.Id == eventId && e.CreatedBy == userId);
+
+            if (calendarEvent == null) return false;
+
+            context.CalendarEvents.Remove(calendarEvent);
+            await context.SaveChangesAsync();
+            return true;
         }
     }
 }

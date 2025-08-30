@@ -114,7 +114,7 @@ namespace LMS.Repositories
             {
                 Name = request.Name,
                 Description = request.Description,
-                IconUrl = request.IconUrl,
+                
                 Color = request.Color,
                 ParentCategoryId = request.ParentCategoryId,
                 IsActive = true
@@ -131,7 +131,7 @@ namespace LMS.Repositories
                 throw new ArgumentException("Category not found", nameof(id));
             category.Name = request.Name;
             category.Description = request.Description;
-            category.IconUrl = request.IconUrl;
+            
             category.Color = request.Color;
             category.ParentCategoryId = request.ParentCategoryId;
             await _context.SaveChangesAsync();
@@ -181,7 +181,7 @@ namespace LMS.Repositories
                 Id = category.Id,
                 Name = category.Name,
                 Description = category.Description,
-                IconUrl = category.IconUrl,
+                IconUrl = category.IconFile?.FilePath,
                 Color = category.Color,
                 IsActive = category.IsActive,
                 ParentCategoryId = category.ParentCategoryId,
@@ -191,7 +191,7 @@ namespace LMS.Repositories
                     Id = sc.Id,
                     Name = sc.Name,
                     Description = sc.Description,
-                    IconUrl = sc.IconUrl,
+                    IconUrl = sc.IconFile?.FilePath,
                     Color = sc.Color,
                     IsActive = sc.IsActive,
                     ParentCategoryId = sc.ParentCategoryId,

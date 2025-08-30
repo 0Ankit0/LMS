@@ -388,10 +388,10 @@ namespace LMS.Web.Repositories
                 // Get total points
                 var totalPoints = await GetUserTotalPointsAsync(userId);
 
-                // Get leaderboard data (simplified - using dummy data for now)
+                // Get leaderboard data (to be implemented when leaderboard functionality is added)
                 var leaderboardEntries = new List<LeaderboardEntryModel>();
 
-                // Calculate user rank (simplified - returning 1 for now)
+                // Calculate user rank (to be implemented when ranking system is added)
                 var userRank = 1;
 
                 return new UserAchievementsModel

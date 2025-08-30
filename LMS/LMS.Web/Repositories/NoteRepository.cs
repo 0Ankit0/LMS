@@ -20,6 +20,7 @@ namespace LMS.Web.Repositories
         Task<IEnumerable<NoteDTO>> SearchNotesAsync(string userId, string searchTerm);
         Task<IEnumerable<NoteDTO>> GetNotesForCourseAsync(string userId, int courseId);
         Task<IEnumerable<NoteDTO>> GetNotesForLessonAsync(string userId, int lessonId);
+        Task<IEnumerable<NoteDTO>> GetByLessonIdAsync(int lessonId); // Simplified version for CoursePlayer
     }
 
     public class NoteRepository : INoteRepository
@@ -334,6 +335,19 @@ namespace LMS.Web.Repositories
                 Type = note.Type,
                 Priority = note.Priority
             };
+        }
+
+        public async Task<IEnumerable<NoteDTO>> GetByLessonIdAsync(int lessonId)
+        {
+            // Simplified version that doesn't require userId - gets all notes for a lesson
+            var notes = await _context.Notes
+                .Include(n => n.Course)
+                .Include(n => n.Lesson)
+                .Include(n => n.User)
+                .Where(n => n.LessonId == lessonId)
+                .ToListAsync();
+
+            return notes.Select(MapToDTO);
         }
     }
 }

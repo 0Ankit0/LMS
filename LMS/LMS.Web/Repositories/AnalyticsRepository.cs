@@ -411,5 +411,80 @@ namespace LMS.Repositories
 
             return lastValue - firstValue;
         }
+
+        // Additional analytics methods
+        public async Task<object> GetSystemAnalyticsAsync()
+        {
+            try
+            {
+                var totalUsers = await _context.Users.CountAsync();
+                var totalCourses = await _context.Courses.CountAsync();
+                var totalEnrollments = await _context.Enrollments.CountAsync();
+                var activeUsers = await _context.Users.CountAsync(u => u.LastLoginAt >= DateTime.UtcNow.AddDays(-30));
+
+                var completedEnrollments = await _context.Enrollments
+                    .CountAsync(e => e.ProgressPercentage >= 100);
+
+                var overallCompletionRate = totalEnrollments > 0 ? 
+                    (double)completedEnrollments / totalEnrollments * 100 : 0;
+
+                var avgSessionTime = await _context.Enrollments
+                    .Where(e => e.TimeSpent.TotalMinutes > 0)
+                    .AverageAsync(e => e.TimeSpent.TotalMinutes);
+
+                return new
+                {
+                    TotalUsers = totalUsers,
+                    TotalCourses = totalCourses,
+                    TotalEnrollments = totalEnrollments,
+                    ActiveUsers = activeUsers,
+                    OverallCompletionRate = overallCompletionRate,
+                    AverageSessionTimeMinutes = avgSessionTime
+                };
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting system analytics");
+                return new
+                {
+                    TotalUsers = 0,
+                    TotalCourses = 0,
+                    TotalEnrollments = 0,
+                    ActiveUsers = 0,
+                    OverallCompletionRate = 0.0,
+                    AverageSessionTimeMinutes = 0.0
+                };
+            }
+        }
+
+        public async Task<List<object>> GetRecentActivitiesAsync(int limit = 10)
+        {
+            try
+            {
+                var recentEnrollments = await _context.Enrollments
+                    .Include(e => e.User)
+                    .Include(e => e.Course)
+                    .OrderByDescending(e => e.StartedAt ?? e.EnrolledAt)
+                    .Take(limit)
+                    .Select(e => new
+                    {
+                        StudentName = e.User.FullName,
+                        CourseName = e.Course.Title,
+                        Activity = e.CompletedAt.HasValue ? "Completed Course" : 
+                                  e.StartedAt.HasValue ? "Studying Course" : "Enrolled in Course",
+                        Progress = e.ProgressPercentage,
+                        LastActive = e.StartedAt ?? e.EnrolledAt,
+                        Status = e.Status.ToString()
+                    })
+                    .ToListAsync();
+
+                return recentEnrollments.Cast<object>().ToList();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting recent activities");
+                return new List<object>();
+            }
+        }
     }
 }

@@ -212,24 +212,22 @@ namespace LMS.Repositories
             return new MessageModel
             {
                 Id = message.Id,
-                Subject = message.Subject,
+                ConversationId = 0, // Set to 0 for now - implement conversation grouping later if needed
+                SenderId = message.FromUserId,
+                SenderName = message.FromUser?.UserName ?? "",
                 Content = message.Content,
-                FromUserId = message.FromUserId,
-                FromUserName = message.FromUser?.UserName ?? "",
-                ToUserId = message.ToUserId,
-                ToUserName = message.ToUser?.UserName ?? "",
-                ParentMessageId = message.ParentMessageId,
                 SentAt = message.SentAt,
+                IsRead = message.ReadAt.HasValue,
                 ReadAt = message.ReadAt,
-                Priority = message.Priority.ToString(),
+                IsEdited = false, // No editing tracking for now
+                EditedAt = null,
                 Attachments = message.Attachments?.Select(a => new MessageAttachmentModel
                 {
                     Id = a.Id,
                     FileName = a.FileName,
-                    FilePath = a.FilePath,
+                    FileUrl = a.FilePath, // Map FilePath to FileUrl
                     FileSize = a.FileSize,
-                    ContentType = a.ContentType,
-                    UploadedAt = a.UploadedAt
+                    ContentType = a.ContentType
                 }).ToList() ?? new List<MessageAttachmentModel>()
             };
         }

@@ -264,11 +264,14 @@ namespace LMS.Repositories
                     Id = l.Id,
                     Title = l.Title,
                     Description = l.Description,
-                    ModuleId = l.ModuleId,
-                    OrderIndex = l.OrderIndex,
+                    Type = l.Type.ToString(),
+                    ContentUrl = l.VideoUrl ?? l.DocumentUrl ?? l.ExternalUrl,
                     Content = l.Content,
-                    VideoUrl = l.VideoUrl,
-                    IsActive = l.IsActive
+                    OrderIndex = l.OrderIndex,
+                    Duration = (int)l.EstimatedDuration.TotalMinutes,
+                    IsActive = l.IsActive,
+                    IsCompleted = false, // This would need to be calculated based on user progress
+                    CompletedAt = null
                 }).ToList() ?? new List<LessonModel>()
             };
         }

@@ -11,11 +11,13 @@ namespace LMS.Repositories
         Task<List<LessonModel>> GetLessonsAsync();
         Task<PaginatedResult<LessonModel>> GetLessonsPaginatedAsync(PaginationRequest request);
         Task<LessonModel?> GetLessonByIdAsync(int id);
+        Task<LessonModel?> GetByIdAsync(int id); // Alias for GetLessonByIdAsync
         Task<List<LessonModel>> GetLessonsByModuleIdAsync(int moduleId);
         Task<LessonModel> CreateLessonAsync(CreateLessonRequest request);
         Task<LessonModel> UpdateLessonAsync(int id, CreateLessonRequest request);
         Task<bool> DeleteLessonAsync(int id);
         Task<bool> UpdateLessonOrderAsync(int lessonId, int newOrder);
+        Task<List<LessonModel>> GetCourseLessonsAsync(int courseId);
     }
 
     public class LessonRepository : ILessonRepository
@@ -209,22 +211,38 @@ namespace LMS.Repositories
                 VideoUrl = lesson.VideoUrl,
                 DocumentUrl = lesson.DocumentUrl,
                 ExternalUrl = lesson.ExternalUrl,
-                EstimatedDuration = lesson.EstimatedDuration,
+                EstimatedDuration = (int?)lesson.EstimatedDuration.TotalMinutes,
                 IsRequired = lesson.IsRequired,
                 IsActive = lesson.IsActive,
-                Resources = lesson.Resources?.Select(r => new LessonResourceModel
-                {
-                    Id = r.Id,
-                    Name = r.Name,
-                    Description = r.Description,
-                    Type = r.Type.ToString(),
-                    FilePath = r.FilePath,
-                    ExternalUrl = r.ExternalUrl,
-                    FileSize = r.FileSize,
-                    ContentType = r.ContentType,
-                    IsDownloadable = r.IsDownloadable
-                }).ToList() ?? new List<LessonResourceModel>()
+                Resources = lesson.Resources?.Select(r => r.Name).ToList()
             };
+        }
+
+        public async Task<List<LessonModel>> GetCourseLessonsAsync(int courseId)
+        {
+            try
+            {
+                var lessons = await _context.Lessons
+                    .Include(l => l.Module)
+                    .Include(l => l.Resources)
+                    .Where(l => l.Module.CourseId == courseId)
+                    .OrderBy(l => l.Module.OrderIndex)
+                    .ThenBy(l => l.OrderIndex)
+                    .ToListAsync();
+
+                return lessons.Select(MapToLessonModel).ToList();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting course lessons: {CourseId}", courseId);
+                throw;
+            }
+        }
+
+        public async Task<LessonModel?> GetByIdAsync(int id)
+        {
+            // Alias for GetLessonByIdAsync
+            return await GetLessonByIdAsync(id);
         }
     }
 }

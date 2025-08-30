@@ -65,13 +65,13 @@ namespace LMS.Repositories
     public class ReportRepository : IReportRepository
     {
         private readonly ILogger<ReportRepository> _logger;
-        private readonly IDbContextFactory<ApplicationDbContext> _contextFactory;
+        private readonly ApplicationDbContext _context;
         private readonly UserManager<User> _userManager;
 
-        public ReportRepository(ILogger<ReportRepository> logger, IDbContextFactory<ApplicationDbContext> contextFactory, UserManager<User> userManager)
+        public ReportRepository(ILogger<ReportRepository> logger, ApplicationDbContext context, UserManager<User> userManager)
         {
             _logger = logger;
-            _contextFactory = contextFactory;
+            _context = context;
             _userManager = userManager;
         }
 
@@ -87,8 +87,7 @@ namespace LMS.Repositories
 
         private async Task<List<int>> GetInstructorCourseIdsAsync(User user)
         {
-            using var context = await _contextFactory.CreateDbContextAsync();
-            return await context.Courses
+            return await _context.Courses
                 .Where(c => c.InstructorId == user.Id)
                 .Select(c => c.Id)
                 .ToListAsync();
@@ -174,13 +173,11 @@ namespace LMS.Repositories
         {
             try
             {
-                using var context = await _contextFactory.CreateDbContextAsync();
-
                 // Check user role and get instructor course restrictions
                 var isInstructor = await IsInstructorAsync(user);
                 var instructorCourseIds = isInstructor ? await GetInstructorCourseIdsAsync(user) : null;
 
-                var enrollmentsQuery = context.Enrollments
+                var enrollmentsQuery = _context.Enrollments
                     .Include(e => e.User)
                     .Include(e => e.Course)
                     .Include(e => e.AssessmentAttempts)
@@ -197,7 +194,7 @@ namespace LMS.Repositories
 
                 foreach (var enrollment in enrollments)
                 {
-                    var totalModules = await context.Modules.CountAsync();
+                    var totalModules = await _context.Modules.CountAsync();
                     var completedModules = enrollment.ModuleProgresses.Count(mp => mp.IsCompleted);
 
                     var totalLessons = enrollment.Course.Modules.SelectMany(m => m.Lessons).Count();
@@ -205,7 +202,7 @@ namespace LMS.Repositories
                         .SelectMany(mp => mp.LessonProgresses)
                         .Count(lp => lp.IsCompleted);
 
-                    var assessments = await context.Assessments
+                    var assessments = await _context.Assessments
                         .Where(a => a.CourseId == enrollment.CourseId)
                         .CountAsync();
 
@@ -259,13 +256,11 @@ namespace LMS.Repositories
         {
             try
             {
-                using var context = await _contextFactory.CreateDbContextAsync();
-
                 // Check user role and get instructor course restrictions
                 var isInstructor = await IsInstructorAsync(user);
                 var instructorCourseIds = isInstructor ? await GetInstructorCourseIdsAsync(user) : null;
 
-                var enrollmentsQuery = context.Enrollments
+                var enrollmentsQuery = _context.Enrollments
                     .Include(e => e.User)
                     .Include(e => e.Course)
                     .Include(e => e.AssessmentAttempts)
@@ -297,7 +292,7 @@ namespace LMS.Repositories
 
                 foreach (var enrollment in enrollments)
                 {
-                    var totalModules = await context.Modules.CountAsync();
+                    var totalModules = await _context.Modules.CountAsync();
                     var completedModules = enrollment.ModuleProgresses.Count(mp => mp.IsCompleted);
 
                     var totalLessons = enrollment.Course.Modules.SelectMany(m => m.Lessons).Count();
@@ -305,7 +300,7 @@ namespace LMS.Repositories
                         .SelectMany(mp => mp.LessonProgresses)
                         .Count(lp => lp.IsCompleted);
 
-                    var assessments = await context.Assessments
+                    var assessments = await _context.Assessments
                         .Where(a => a.CourseId == enrollment.CourseId)
                         .CountAsync();
 
@@ -359,8 +354,6 @@ namespace LMS.Repositories
         {
             try
             {
-                using var context = await _contextFactory.CreateDbContextAsync();
-
                 // Check user role and course access
                 var isInstructor = await IsInstructorAsync(user);
                 var instructorCourseIds = isInstructor ? await GetInstructorCourseIdsAsync(user) : null;
@@ -371,7 +364,7 @@ namespace LMS.Repositories
                     throw new UnauthorizedAccessException("You don't have access to this course's data");
                 }
 
-                var courseQuery = context.Courses
+                var courseQuery = _context.Courses
                     .Include(c => c.Instructor)
                     .Include(c => c.Enrollments)
                     .Where(c => c.Id == courseId);
@@ -439,8 +432,7 @@ namespace LMS.Repositories
                 var isInstructor = await IsInstructorAsync(user);
                 var instructorCourseIds = isInstructor ? await GetInstructorCourseIdsAsync(user) : null;
 
-                using var context = await _contextFactory.CreateDbContextAsync();
-                var coursesQuery = context.Courses
+                var coursesQuery = _context.Courses
                     .Include(c => c.Instructor)
                     .Include(c => c.Enrollments)
                     .Include(c => c.CourseCategories)
@@ -499,12 +491,11 @@ namespace LMS.Repositories
         {
             try
             {
-                using var context = await _contextFactory.CreateDbContextAsync();
                 // Check user role and assessment access
                 var isInstructor = await IsInstructorAsync(user);
                 var instructorCourseIds = isInstructor ? await GetInstructorCourseIdsAsync(user) : null;
 
-                var assessment = await context.Assessments
+                var assessment = await _context.Assessments
                     .Include(a => a.Course)
                     .Include(a => a.Attempts)
                     .FirstOrDefaultAsync(a => a.Id == assessmentId);
@@ -572,8 +563,6 @@ namespace LMS.Repositories
         {
             try
             {
-                using var context = await _contextFactory.CreateDbContextAsync();
-
                 // Check user role and course access
                 var isInstructor = await IsInstructorAsync(user);
                 var instructorCourseIds = isInstructor ? await GetInstructorCourseIdsAsync(user) : null;
@@ -584,7 +573,7 @@ namespace LMS.Repositories
                     throw new UnauthorizedAccessException("You don't have access to this course's data");
                 }
 
-                var assessments = await context.Assessments
+                var assessments = await _context.Assessments
                     .Include(a => a.Course)
                     .Include(a => a.Attempts)
                     .Where(a => a.CourseId == courseId)
@@ -647,12 +636,11 @@ namespace LMS.Repositories
         {
             try
             {
-                using var context = await _contextFactory.CreateDbContextAsync();
                 // Check user role and get instructor course restrictions
                 var isInstructor = await IsInstructorAsync(user);
                 var instructorCourseIds = isInstructor ? await GetInstructorCourseIdsAsync(user) : null;
 
-                var enrollmentsQuery = context.Enrollments
+                var enrollmentsQuery = _context.Enrollments
                     .Include(e => e.Course)
                     .Where(e => e.EnrolledAt >= startDate && e.EnrolledAt <= endDate)
                     .AsQueryable();
@@ -778,12 +766,11 @@ namespace LMS.Repositories
         {
             try
             {
-                using var context = await _contextFactory.CreateDbContextAsync();
                 // Check user role and forum access
                 var isInstructor = await IsInstructorAsync(user);
                 var instructorCourseIds = isInstructor ? await GetInstructorCourseIdsAsync(user) : null;
 
-                var forum = await context.Forums
+                var forum = await _context.Forums
                     .Include(f => f.Course)
                     .Include(f => f.Topics)
                         .ThenInclude(t => t.Posts)
@@ -860,12 +847,11 @@ namespace LMS.Repositories
         {
             try
             {
-                using var context = await _contextFactory.CreateDbContextAsync();
                 // Check user role and get instructor course restrictions
                 var isInstructor = await IsInstructorAsync(user);
                 var instructorCourseIds = isInstructor ? await GetInstructorCourseIdsAsync(user) : null;
 
-                var forumsQuery = context.Forums
+                var forumsQuery = _context.Forums
                     .Include(f => f.Course)
                     .Include(f => f.Topics)
                         .ThenInclude(t => t.Posts)
@@ -953,12 +939,11 @@ namespace LMS.Repositories
         {
             try
             {
-                using var context = await _contextFactory.CreateDbContextAsync();
                 // Check user role and get instructor course restrictions
                 var isInstructor = await IsInstructorAsync(user);
                 var instructorCourseIds = isInstructor ? await GetInstructorCourseIdsAsync(user) : null;
 
-                var enrollmentsQuery = context.Enrollments
+                var enrollmentsQuery = _context.Enrollments
                     .Include(e => e.User)
                     .Include(e => e.Course)
                     .Include(e => e.AssessmentAttempts)
@@ -1013,12 +998,11 @@ namespace LMS.Repositories
         {
             try
             {
-                using var context = await _contextFactory.CreateDbContextAsync();
                 // Check user role and get instructor course restrictions
                 var isInstructor = await IsInstructorAsync(user);
                 var instructorCourseIds = isInstructor ? await GetInstructorCourseIdsAsync(user) : null;
 
-                var coursesQuery = context.Courses
+                var coursesQuery = _context.Courses
                     .Include(c => c.Instructor)
                     .Include(c => c.Enrollments)
                     .Include(c => c.CourseCategories)
@@ -1073,12 +1057,11 @@ namespace LMS.Repositories
         {
             try
             {
-                using var context = await _contextFactory.CreateDbContextAsync();
                 // Check user role and get instructor course restrictions
                 var isInstructor = await IsInstructorAsync(user);
                 var instructorCourseIds = isInstructor ? await GetInstructorCourseIdsAsync(user) : null;
 
-                var assessmentsQuery = context.Assessments
+                var assessmentsQuery = _context.Assessments
                     .Include(a => a.Course)
                     .Include(a => a.Attempts)
                     .AsQueryable();
@@ -1160,7 +1143,6 @@ namespace LMS.Repositories
         {
             try
             {
-                using var context = await _contextFactory.CreateDbContextAsync();
                 // Check user role and course access
                 var isInstructor = await IsInstructorAsync(user);
                 var instructorCourseIds = isInstructor ? await GetInstructorCourseIdsAsync(user) : null;
@@ -1171,7 +1153,7 @@ namespace LMS.Repositories
                     throw new UnauthorizedAccessException("You don't have access to this course's data");
                 }
 
-                var courseQuery = context.Courses
+                var courseQuery = _context.Courses
                     .Include(c => c.Enrollments)
                         .ThenInclude(e => e.ModuleProgresses)
                     .Include(c => c.Modules)
@@ -1228,12 +1210,11 @@ namespace LMS.Repositories
         {
             try
             {
-                using var context = await _contextFactory.CreateDbContextAsync();
                 // Check user role and student access
                 var isInstructor = await IsInstructorAsync(user);
                 var instructorCourseIds = isInstructor ? await GetInstructorCourseIdsAsync(user) : null;
 
-                var studentQuery = context.Users
+                var studentQuery = _context.Users
                     .Include(u => u.Enrollments)
                         .ThenInclude(e => e.Course)
                     .Include(u => u.ForumPosts)
@@ -1308,12 +1289,11 @@ namespace LMS.Repositories
         {
             try
             {
-                using var context = await _contextFactory.CreateDbContextAsync();
                 // Check user role and get course restrictions
                 var isInstructor = await IsInstructorAsync(user);
                 var instructorCourseIds = isInstructor ? await GetInstructorCourseIdsAsync(user) : null;
 
-                var studentsQuery = context.Users
+                var studentsQuery = _context.Users
                     .Include(u => u.Enrollments)
                         .ThenInclude(e => e.Course)
                     .Include(u => u.ForumPosts)
@@ -1324,7 +1304,7 @@ namespace LMS.Repositories
                 // Apply role-based filtering if instructor
                 if (instructorCourseIds != null && instructorCourseIds.Any())
                 {
-                    studentsQuery = studentsQuery.Where(u =>
+                    studentsQuery = studentsQuery.Where(u => 
                         u.Enrollments.Any(e => instructorCourseIds.Contains(e.CourseId)));
                 }
 
@@ -1437,10 +1417,11 @@ namespace LMS.Repositories
         {
             try
             {
-                using var context = await _contextFactory.CreateDbContextAsync();
                 // Check user role and student access
                 var isInstructor = await IsInstructorAsync(user);
                 var instructorCourseIds = isInstructor ? await GetInstructorCourseIdsAsync(user) : null;
+
+                var context = _context;
 
                 var student = await context.Users
                     .Include(u => u.Enrollments)
@@ -1506,7 +1487,7 @@ namespace LMS.Repositories
                 var isInstructor = await IsInstructorAsync(user);
                 var instructorCourseIds = isInstructor ? await GetInstructorCourseIdsAsync(user) : null;
 
-                using var context = await _contextFactory.CreateDbContextAsync();
+                var context = _context;
 
                 var studentsQuery = context.Users
                     .Include(u => u.Enrollments)
@@ -1596,10 +1577,11 @@ namespace LMS.Repositories
         {
             try
             {
-                using var context = await _contextFactory.CreateDbContextAsync();
                 // Check user role and get instructor course restrictions
                 var isInstructor = await IsInstructorAsync(user);
                 var instructorCourseIds = isInstructor ? await GetInstructorCourseIdsAsync(user) : null;
+
+                var context = _context;
 
                 var isActive = status.ToLower() == "active";
                 var studentsQuery = context.Users
@@ -1678,7 +1660,6 @@ namespace LMS.Repositories
         {
             try
             {
-                using var context = await _contextFactory.CreateDbContextAsync();
                 // Check user role and course access
                 var isInstructor = await IsInstructorAsync(user);
                 var instructorCourseIds = isInstructor ? await GetInstructorCourseIdsAsync(user) : null;
@@ -1690,7 +1671,7 @@ namespace LMS.Repositories
                 }
 
                 // Query actual attendance records from the Attendance entity
-                var attendanceQuery = context.Attendances
+                var attendanceQuery = _context.Attendances
                     .Include(a => a.Student)
                     .Include(a => a.Class)
                     .Where(a => a.ClassId == classId && a.Date >= startDate && a.Date <= endDate)
@@ -1751,13 +1732,12 @@ namespace LMS.Repositories
         {
             try
             {
-                using var context = await _contextFactory.CreateDbContextAsync();
                 // Check user role and student access
                 var isInstructor = await IsInstructorAsync(user);
                 var instructorCourseIds = isInstructor ? await GetInstructorCourseIdsAsync(user) : null;
 
                 // Query actual attendance records from the Attendance entity
-                var attendanceQuery = context.Attendances
+                var attendanceQuery = _context.Attendances
                     .Include(a => a.Student)
                     .Include(a => a.Class)
                     .Where(a => a.StudentId == studentId && a.Date >= startDate && a.Date <= endDate)
@@ -1834,7 +1814,7 @@ namespace LMS.Repositories
                     throw new UnauthorizedAccessException("You don't have access to this course's data");
                 }
 
-                using var context = await _contextFactory.CreateDbContextAsync();
+                var context = _context;
 
                 var course = await context.Courses
                     .Include(c => c.Instructor)
@@ -1938,9 +1918,8 @@ namespace LMS.Repositories
         {
             try
             {
-                using var context = await _contextFactory.CreateDbContextAsync();
                 // Validate teacher access
-                var teacher = await context.Users.FirstOrDefaultAsync(u => u.Id == teacherId);
+                var teacher = await _context.Users.FirstOrDefaultAsync(u => u.Id == teacherId);
                 if (teacher == null)
                     throw new ArgumentException($"Teacher with ID {teacherId} not found");
 
@@ -1972,11 +1951,11 @@ namespace LMS.Repositories
 
                 // Calculate forum participation
                 var forumPosts = await context.ForumPosts
-                    .Where(fp => fp.AuthorId == teacherId && fp.CreatedAt >= start && fp.CreatedAt <= end)
+                    .Where(fp => fp.UserId == teacherId && fp.CreatedAt >= start && fp.CreatedAt <= end)
                     .CountAsync();
 
                 var messagesReplied = await context.Messages
-                    .Where(m => m.FromUserId == teacherId && m.SentAt >= start && m.SentAt <= end)
+                    .Where(m => m.SenderId == teacherId && m.SentAt >= start && m.SentAt <= end)
                     .CountAsync();
 
                 return new TeacherPerformanceReportDto
@@ -1997,7 +1976,7 @@ namespace LMS.Repositories
                     GradedAssignments = assessmentAttempts.Count(a => a.Score.HasValue),
                     AverageGradingTime = 1.5, // TODO: Track actual grading time
                     TotalTimeSpent = TimeSpan.FromHours(teacherCourses.Count * 40), // Estimate
-                    CoursesCompleted = teacherCourses.Count(c => c.Status == CourseStatus.Archived || (c.EndDate.HasValue && c.EndDate.Value < DateTime.UtcNow))
+                    CoursesCompleted = teacherCourses.Count(c => c.Status == CourseStatus.Completed)
                 };
             }
             catch (Exception ex)
@@ -2012,6 +1991,7 @@ namespace LMS.Repositories
             try
             {
                 using var context = await _contextFactory.CreateDbContextAsync();
+                
                 var end = endDate ?? DateTime.UtcNow;
                 var start = end.AddMonths(-months);
 
@@ -2029,8 +2009,8 @@ namespace LMS.Repositories
                         Date = new DateTime(g.Key.Year, g.Key.Month, 1),
                         AverageProgress = g.Average(e => e.ProgressPercentage),
                         CoursesEnrolled = g.Count(),
-                        AssessmentScore = g.SelectMany(e => e.AssessmentAttempts).Any()
-                            ? g.SelectMany(e => e.AssessmentAttempts).Average(a => a.Score ?? 0)
+                        AssessmentScore = g.SelectMany(e => e.AssessmentAttempts).Any() 
+                            ? g.SelectMany(e => e.AssessmentAttempts).Average(a => a.Score ?? 0) 
                             : 0
                     })
                     .OrderBy(x => x.Date)
@@ -2058,31 +2038,20 @@ namespace LMS.Repositories
             try
             {
                 using var context = await _contextFactory.CreateDbContextAsync();
+                
                 var start = startDate ?? DateTime.UtcNow.AddYears(-1);
                 var end = endDate ?? DateTime.UtcNow;
 
-                var allUsers = await context.Users.ToListAsync();
-                var studentIds = new List<string>();
-
-                foreach (var u in allUsers)
-                {
-                    var roles = await _userManager.GetRolesAsync(u);
-                    if (roles.Contains("Student"))
-                    {
-                        studentIds.Add(u.Id);
-                    }
-                }
-
-                var totalStudents = studentIds.Count;
+                var totalStudents = await context.Users.CountAsync(u => u.Roles.Any(r => r.Name == "Student"));
                 var totalCourses = await context.Courses.CountAsync(c => c.CreatedAt >= start && c.CreatedAt <= end);
                 var totalEnrollments = await context.Enrollments.CountAsync(e => e.EnrolledAt >= start && e.EnrolledAt <= end);
                 var completedEnrollments = await context.Enrollments.CountAsync(e => e.ProgressPercentage >= 100 && e.EnrolledAt >= start);
 
                 var retention = totalEnrollments > 0 ? (double)completedEnrollments / totalEnrollments * 100 : 0;
-
+                
                 var averageAssessmentScore = await context.AssessmentAttempts
                     .Where(a => a.CompletedAt >= start && a.CompletedAt <= end && a.Score.HasValue)
-                    .AverageAsync(a => a.Score!.Value);
+                    .AverageAsync(a => a.Score.Value);
 
                 return new
                 {
@@ -2122,6 +2091,7 @@ namespace LMS.Repositories
             try
             {
                 using var context = await _contextFactory.CreateDbContextAsync();
+                
                 var start = startDate ?? DateTime.UtcNow.AddMonths(-cohortMonths);
                 var end = endDate ?? DateTime.UtcNow;
 
@@ -2174,7 +2144,7 @@ namespace LMS.Repositories
             // For now, return a simple PDF placeholder
             // In a real implementation, you would use a PDF library like iTextSharp, PdfSharp, or QuestPDF
             await Task.CompletedTask;
-
+            
             var pdfContent = System.Text.Encoding.UTF8.GetBytes($"PDF Report: {reportType}\nGenerated: {DateTime.Now}\nUser: {user.UserName}\nData: Export functionality not fully implemented");
             return pdfContent;
         }
@@ -2184,7 +2154,7 @@ namespace LMS.Repositories
             // For now, return a simple Excel-like CSV content as bytes
             // In a real implementation, you would use a library like EPPlus or ClosedXML
             await Task.CompletedTask;
-
+            
             var csvContent = $"Report Type,{reportType}\nGenerated,{DateTime.Now}\nUser,{user.UserName}\nNote,Excel export functionality not fully implemented";
             return System.Text.Encoding.UTF8.GetBytes(csvContent);
         }
@@ -2193,7 +2163,7 @@ namespace LMS.Repositories
         {
             // For now, return a simple CSV content
             await Task.CompletedTask;
-
+            
             return $"Report Type,Generated,User,Note\n{reportType},{DateTime.Now},{user.UserName},CSV export functionality not fully implemented";
         }
 
@@ -2202,6 +2172,7 @@ namespace LMS.Repositories
             try
             {
                 using var context = await _contextFactory.CreateDbContextAsync();
+                
                 var start = startDate ?? DateTime.UtcNow.AddMonths(-6);
                 var end = endDate ?? DateTime.UtcNow;
 
@@ -2225,26 +2196,28 @@ namespace LMS.Repositories
                         .Where(a => a.CompletedAt.HasValue && a.Score.HasValue)
                         .ToList();
 
-                    var scores = attempts.Select(a => a.Score!.Value).ToList();
-
+                    var scores = attempts.Select(a => a.Score.Value).ToList();
+                    
                     return new GradeDistributionReportDto
                     {
-                        ClassId = course.Id,
-                        ClassName = course.Title,
+                        CourseId = course.Id,
+                        CourseTitle = course.Title,
                         InstructorName = course.Instructor?.FullName ?? "Unknown",
                         TotalStudents = course.Enrollments.Count,
+                        TotalAssessments = attempts.Count,
                         AverageGrade = scores.Any() ? scores.Average() : 0,
-                        HighestGrade = scores.Any() ? scores.Max() : 0,
-                        LowestGrade = scores.Any() ? scores.Min() : 0,
-                        MedianGrade = scores.Any() ? CalculateMedian(scores) : 0,
-                        StandardDeviation = scores.Any() ? CalculateStandardDeviation(scores) : 0,
-                        AGrades = scores.Count(s => s >= 90),
-                        BGrades = scores.Count(s => s >= 80 && s < 90),
-                        CGrades = scores.Count(s => s >= 70 && s < 80),
-                        DGrades = scores.Count(s => s >= 60 && s < 70),
-                        FGrades = scores.Count(s => s < 60),
-                        GradeRange = scores.Any() ? $"{scores.Min()}-{scores.Max()}" : "N/A",
-                        ReportGeneratedDate = DateTime.UtcNow
+                        MedianGrade = CalculateMedian(scores),
+                        StandardDeviation = CalculateStandardDeviation(scores),
+                        GradeDistribution = new Dictionary<string, int>
+                        {
+                            ["A (90-100)"] = scores.Count(s => s >= 90),
+                            ["B (80-89)"] = scores.Count(s => s >= 80 && s < 90),
+                            ["C (70-79)"] = scores.Count(s => s >= 70 && s < 80),
+                            ["D (60-69)"] = scores.Count(s => s >= 60 && s < 70),
+                            ["F (0-59)"] = scores.Count(s => s < 60)
+                        },
+                        PassingStudents = scores.Count(s => s >= 70),
+                        FailingStudents = scores.Count(s => s < 70)
                     };
                 }).ToList();
 
@@ -2262,17 +2235,10 @@ namespace LMS.Repositories
             try
             {
                 using var context = await _contextFactory.CreateDbContextAsync();
-                var teachers = await context.Users.ToListAsync();
-                var teacherIds = new List<string>();
-
-                foreach (var teacher in teachers)
-                {
-                    var roles = await _userManager.GetRolesAsync(teacher);
-                    if (roles.Contains("Instructor") || roles.Contains("Teacher"))
-                    {
-                        teacherIds.Add(teacher.Id);
-                    }
-                }
+                
+                var teachers = await context.Users
+                    .Where(u => u.Roles.Any(r => r.Name == "Instructor" || r.Name == "Teacher"))
+                    .ToListAsync();
 
                 var reports = new List<TeacherPerformanceReportDto>();
 
@@ -2303,6 +2269,7 @@ namespace LMS.Repositories
             try
             {
                 using var context = await _contextFactory.CreateDbContextAsync();
+                
                 var start = startDate ?? DateTime.UtcNow.AddMonths(-3);
                 var end = endDate ?? DateTime.UtcNow;
 
@@ -2325,16 +2292,14 @@ namespace LMS.Repositories
                         AverageProgress = g.Average(e => e.ProgressPercentage),
                         AverageAssessmentScore = g.SelectMany(e => e.AssessmentAttempts)
                             .Where(a => a.Score.HasValue)
-                            .Select(a => a.Score!.Value)
+                            .Select(a => a.Score.Value)
                             .DefaultIfEmpty(0)
                             .Average(),
-                        LastActivity = g.Max(e => e.EnrolledAt), // Use enrollment date as last activity
+                        LastActivity = g.Max(e => e.LastAccessedAt) ?? DateTime.MinValue,
                         CompletedCourses = g.Count(e => e.ProgressPercentage >= 100),
                         RiskFactors = new List<string>()
                     })
                     .ToList();
-
-                var results = new List<object>();
 
                 // Calculate risk factors
                 foreach (var student in riskStudents)
@@ -2371,7 +2336,7 @@ namespace LMS.Repositories
                     // Only include students who meet the risk threshold
                     if (riskScore >= threshold)
                     {
-                        results.Add(new
+                        yield return new
                         {
                             student.StudentId,
                             student.StudentName,
@@ -2383,11 +2348,9 @@ namespace LMS.Repositories
                             student.CompletedCourses,
                             RiskScore = riskScore,
                             student.RiskFactors
-                        });
+                        };
                     }
                 }
-
-                return results;
             }
             catch (Exception ex)
             {
@@ -2401,6 +2364,7 @@ namespace LMS.Repositories
             try
             {
                 using var context = await _contextFactory.CreateDbContextAsync();
+                
                 var start = startDate ?? DateTime.UtcNow.AddMonths(-6);
                 var end = endDate ?? DateTime.UtcNow;
 
@@ -2423,7 +2387,7 @@ namespace LMS.Repositories
 
                 var fileUtilization = await context.UserFiles
                     .Where(f => f.UploadedAt >= start && f.UploadedAt <= end)
-                    .GroupBy(f => f.ContentType)
+                    .GroupBy(f => f.FileType)
                     .Select(g => new
                     {
                         FileType = g.Key,
@@ -2463,8 +2427,7 @@ namespace LMS.Repositories
         #region Additional Methods for Endpoints
         public async Task<bool> IsInstructorOfCourseAsync(string userId, int courseId)
         {
-            using var context = await _contextFactory.CreateDbContextAsync();
-            return await context.Courses
+            return await _context.Courses
                 .AnyAsync(c => c.Id == courseId && c.InstructorId == userId);
         }
 
@@ -2511,38 +2474,6 @@ namespace LMS.Repositories
                 Parameters = parameters
             };
         }
-        #endregion
-
-        #region Helper Methods
-
-        private double CalculateMedian(List<double> scores)
-        {
-            if (!scores.Any()) return 0;
-
-            var sortedScores = scores.OrderBy(s => s).ToList();
-            var count = sortedScores.Count;
-            var mid = count / 2;
-
-            if (count % 2 == 0)
-            {
-                return (sortedScores[mid - 1] + sortedScores[mid]) / 2.0;
-            }
-            else
-            {
-                return sortedScores[mid];
-            }
-        }
-
-        private double CalculateStandardDeviation(List<double> scores)
-        {
-            if (!scores.Any()) return 0;
-
-            var average = scores.Average();
-            var sumOfSquaresOfDifferences = scores.Select(val => (val - average) * (val - average)).Sum();
-            var variance = sumOfSquaresOfDifferences / scores.Count;
-            return Math.Sqrt(variance);
-        }
-
         #endregion
 
         // --- END: Add missing interface method stubs for build success ---

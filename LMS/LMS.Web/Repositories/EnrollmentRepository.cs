@@ -22,6 +22,8 @@ namespace LMS.Repositories
         Task<bool> IsUserEnrolledInCourseAsync(string userId, int courseId);
         Task<int> GetCourseEnrollmentCountAsync(int courseId);
         Task<bool> EnrollUserAsync(string userId, int courseId);
+        Task<bool> IsInstructorOfCourseAsync(string userId, int courseId);
+        Task<List<EnrollmentModel>> GetCourseEnrollmentsAsync(int courseId);
     }
 
     public class EnrollmentRepository : IEnrollmentRepository
@@ -258,7 +260,7 @@ namespace LMS.Repositories
                 UserName = enrollment.User?.UserName ?? "",
                 CourseId = enrollment.CourseId,
                 CourseTitle = enrollment.Course?.Title ?? "",
-                CourseThumbnailUrl = enrollment.Course?.ThumbnailUrl ?? "",
+                CourseThumbnailUrl = enrollment.Course?.ThumbnailFile?.FilePath ?? "",
                 EnrolledAt = enrollment.EnrolledAt,
                 StartedAt = enrollment.StartedAt,
                 CompletedAt = enrollment.CompletedAt,
@@ -269,6 +271,42 @@ namespace LMS.Repositories
                 IsCertificateIssued = enrollment.IsCertificateIssued,
                 CertificateIssuedAt = enrollment.CertificateIssuedAt
             };
+        }
+
+        public async Task<bool> IsInstructorOfCourseAsync(string userId, int courseId)
+        {
+            try
+            {
+                var course = await _context.Courses
+                    .FirstOrDefaultAsync(c => c.Id == courseId && c.InstructorId == userId);
+                return course != null;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error checking if user is instructor of course: {UserId}, {CourseId}", userId, courseId);
+                throw;
+            }
+        }
+
+        public async Task<List<EnrollmentModel>> GetCourseEnrollmentsAsync(int courseId)
+        {
+            try
+            {
+                var enrollments = await _context.Enrollments
+                    .Include(e => e.User)
+                    .Include(e => e.Course)
+                    .ThenInclude(c => c.ThumbnailFile)
+                    .Where(e => e.CourseId == courseId)
+                    .OrderByDescending(e => e.EnrolledAt)
+                    .ToListAsync();
+
+                return enrollments.Select(MapToEnrollmentModel).ToList();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting course enrollments: {CourseId}", courseId);
+                throw;
+            }
         }
     }
 }

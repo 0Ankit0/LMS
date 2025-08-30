@@ -17,12 +17,12 @@ namespace LMS.Repositories
 
     public class TagRepository : ITagRepository
     {
-        private readonly ApplicationDbContext _context;
+        private readonly IDbContextFactory<ApplicationDbContext> _contextFactory;
         private readonly ILogger<TagRepository> _logger;
 
-        public TagRepository(ApplicationDbContext context, ILogger<TagRepository> logger)
+        public TagRepository(IDbContextFactory<ApplicationDbContext> contextFactory, ILogger<TagRepository> logger)
         {
-            _context = context;
+            _contextFactory = contextFactory;
             _logger = logger;
         }
 
@@ -30,7 +30,8 @@ namespace LMS.Repositories
         {
             try
             {
-                var tags = await _context.Tags
+                using var context = await _contextFactory.CreateDbContextAsync();
+                var tags = await context.Tags
                     .OrderBy(t => t.Name)
                     .ToListAsync();
                 return tags.Select(MapToTagModel).ToList();
@@ -46,7 +47,8 @@ namespace LMS.Repositories
         {
             try
             {
-                var query = _context.Tags
+                using var context = await _contextFactory.CreateDbContextAsync();
+                var query = context.Tags
                     .OrderBy(t => t.Name);
 
                 var totalCount = await query.CountAsync();
@@ -75,7 +77,8 @@ namespace LMS.Repositories
         {
             try
             {
-                var tag = await _context.Tags.FindAsync(id);
+                using var context = await _contextFactory.CreateDbContextAsync();
+                var tag = await context.Tags.FindAsync(id);
                 return tag != null ? MapToTagModel(tag) : null;
             }
             catch (Exception ex)
@@ -89,13 +92,14 @@ namespace LMS.Repositories
         {
             try
             {
+                using var context = await _contextFactory.CreateDbContextAsync();
                 var tag = new Tag
                 {
                     Name = request.Name,
                     Color = request.Color
                 };
-                _context.Tags.Add(tag);
-                await _context.SaveChangesAsync();
+                context.Tags.Add(tag);
+                await context.SaveChangesAsync();
                 return MapToTagModel(tag);
             }
             catch (Exception ex)
@@ -109,14 +113,15 @@ namespace LMS.Repositories
         {
             try
             {
-                var tag = await _context.Tags.FindAsync(id);
+                using var context = await _contextFactory.CreateDbContextAsync();
+                var tag = await context.Tags.FindAsync(id);
                 if (tag == null)
                     throw new ArgumentException($"Tag with ID {id} not found");
 
                 tag.Name = request.Name;
                 tag.Color = request.Color;
 
-                await _context.SaveChangesAsync();
+                await context.SaveChangesAsync();
 
                 return MapToTagModel(tag);
             }
@@ -131,12 +136,13 @@ namespace LMS.Repositories
         {
             try
             {
-                var tag = await _context.Tags.FindAsync(id);
+                using var context = await _contextFactory.CreateDbContextAsync();
+                var tag = await context.Tags.FindAsync(id);
                 if (tag == null)
                     return false;
 
-                _context.Tags.Remove(tag);
-                await _context.SaveChangesAsync();
+                context.Tags.Remove(tag);
+                await context.SaveChangesAsync();
                 return true;
             }
             catch (Exception ex)

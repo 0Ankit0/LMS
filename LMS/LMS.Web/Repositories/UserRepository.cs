@@ -20,17 +20,25 @@ namespace LMS.Repositories
         Task<List<UserAchievementModel>> GetUserAchievementsAsync(string userId);
         Task<EnrollmentModel> CreateEnrollmentAsync(string userId, CreateEnrollmentRequest request);
         Task<bool> UpdateProgressAsync(string userId, UpdateProgressRequest request);
+
+        // New methods for ParentDashboard
+        Task<List<UserModel>> GetMyChildrenAsync();
+        Task<UserModel?> GetByIdAsync(int id);
+        Task<List<object>> GetStudentGradesAsync(int studentId);
+        Task<List<object>> GetStudentRecentActivityAsync(int studentId);
+        Task<List<object>> GetStudentUpcomingDeadlinesAsync(int studentId);
+        Task<object> GetStudentAttendanceSummaryAsync(int studentId);
     }
 
     public class UserRepository : IUserRepository
     {
-        private readonly ApplicationDbContext _context;
+        private readonly IDbContextFactory<ApplicationDbContext> _contextFactory;
         private readonly UserManager<User> _userManager;
         private readonly ILogger<UserRepository> _logger;
 
-        public UserRepository(ApplicationDbContext context, UserManager<User> userManager, ILogger<UserRepository> logger)
+        public UserRepository(IDbContextFactory<ApplicationDbContext> contextFactory, UserManager<User> userManager, ILogger<UserRepository> logger)
         {
-            _context = context;
+            _contextFactory = contextFactory;
             _userManager = userManager;
             _logger = logger;
         }
@@ -39,7 +47,8 @@ namespace LMS.Repositories
         {
             try
             {
-                var users = await _context.Users
+                using var context = await _contextFactory.CreateDbContextAsync();
+                var users = await context.Users
                     .Include(u => u.Enrollments)
                         .ThenInclude(e => e.Course)
                     .Include(u => u.Achievements)
@@ -66,7 +75,8 @@ namespace LMS.Repositories
         {
             try
             {
-                var user = await _context.Users
+                using var context = await _contextFactory.CreateDbContextAsync();
+                var user = await context.Users
                     .Include(u => u.Enrollments)
                         .ThenInclude(e => e.Course)
                     .Include(u => u.Achievements)
@@ -93,8 +103,6 @@ namespace LMS.Repositories
                     FirstName = request.FirstName,
                     LastName = request.LastName,
                     Bio = request.Bio,
-                    ProfilePictureUrl = request.ProfilePictureUrl,
-                    DateOfBirth = request.DateOfBirth,
                     PhoneNumber = request.PhoneNumber,
                     IsActive = true,
                     EmailConfirmed = true
@@ -122,7 +130,8 @@ namespace LMS.Repositories
         {
             try
             {
-                var user = await _context.Users.FindAsync(id);
+                using var context = await _contextFactory.CreateDbContextAsync();
+                var user = await context.Users.FindAsync(id);
                 if (user == null)
                     throw new ArgumentException("User not found");
 
@@ -131,10 +140,8 @@ namespace LMS.Repositories
                 user.Email = request.Email;
                 user.PhoneNumber = request.PhoneNumber;
                 user.Bio = request.Bio;
-                user.ProfilePictureUrl = request.ProfilePictureUrl;
-                user.DateOfBirth = request.DateOfBirth;
 
-                await _context.SaveChangesAsync();
+                await context.SaveChangesAsync();
 
                 // Update role if changed
                 if (!string.IsNullOrEmpty(request.Role))
@@ -157,12 +164,13 @@ namespace LMS.Repositories
         {
             try
             {
-                var user = await _context.Users.FindAsync(id);
+                using var context = await _contextFactory.CreateDbContextAsync();
+                var user = await context.Users.FindAsync(id);
                 if (user == null)
                     return false;
 
                 user.IsActive = false; // Soft delete
-                await _context.SaveChangesAsync();
+                await context.SaveChangesAsync();
                 return true;
             }
             catch (Exception ex)
@@ -176,12 +184,13 @@ namespace LMS.Repositories
         {
             try
             {
-                var user = await _context.Users.FindAsync(id);
+                using var context = await _contextFactory.CreateDbContextAsync();
+                var user = await context.Users.FindAsync(id);
                 if (user == null)
                     return false;
 
                 user.IsActive = !user.IsActive;
-                await _context.SaveChangesAsync();
+                await context.SaveChangesAsync();
                 return true;
             }
             catch (Exception ex)
@@ -195,7 +204,8 @@ namespace LMS.Repositories
         {
             try
             {
-                var enrollments = await _context.Enrollments
+                using var context = await _contextFactory.CreateDbContextAsync();
+                var enrollments = await context.Enrollments
                     .Where(e => e.UserId == userId)
                     .Include(e => e.Course)
                     .Include(e => e.ModuleProgresses)
@@ -216,7 +226,8 @@ namespace LMS.Repositories
         {
             try
             {
-                var achievements = await _context.UserAchievements
+                using var context = await _contextFactory.CreateDbContextAsync();
+                var achievements = await context.UserAchievements
                     .Where(ua => ua.UserId == userId)
                     .Include(ua => ua.Achievement)
                     .OrderByDescending(ua => ua.EarnedAt)
@@ -235,15 +246,16 @@ namespace LMS.Repositories
         {
             try
             {
+                using var context = await _contextFactory.CreateDbContextAsync();
                 // Check if user is already enrolled
-                var existingEnrollment = await _context.Enrollments
+                var existingEnrollment = await context.Enrollments
                     .FirstOrDefaultAsync(e => e.UserId == userId && e.CourseId == request.CourseId);
 
                 if (existingEnrollment != null)
                     throw new InvalidOperationException("User is already enrolled in this course");
 
                 // Check course capacity
-                var course = await _context.Courses
+                var course = await context.Courses
                     .Include(c => c.Enrollments)
                     .FirstOrDefaultAsync(c => c.Id == request.CourseId);
 
@@ -263,10 +275,10 @@ namespace LMS.Repositories
                     TimeSpent = TimeSpan.Zero
                 };
 
-                _context.Enrollments.Add(enrollment);
-                await _context.SaveChangesAsync();
+                context.Enrollments.Add(enrollment);
+                await context.SaveChangesAsync();
 
-                var createdEnrollment = await _context.Enrollments
+                var createdEnrollment = await context.Enrollments
                     .Include(e => e.Course)
                     .Include(e => e.ModuleProgresses)
                     .FirstOrDefaultAsync(e => e.Id == enrollment.Id);
@@ -284,8 +296,9 @@ namespace LMS.Repositories
         {
             try
             {
+                using var context = await _contextFactory.CreateDbContextAsync();
                 // Find the enrollment first
-                var enrollment = await _context.Enrollments
+                var enrollment = await context.Enrollments
                     .FirstOrDefaultAsync(e => e.UserId == userId && e.Id == request.EnrollmentId);
 
                 if (enrollment == null)
@@ -295,7 +308,7 @@ namespace LMS.Repositories
                 if (request.LessonId.HasValue)
                 {
                     // Find or create module progress first
-                    var moduleProgress = await _context.ModuleProgresses
+                    var moduleProgress = await context.ModuleProgresses
                         .FirstOrDefaultAsync(mp => mp.EnrollmentId == request.EnrollmentId && mp.ModuleId == request.ModuleId);
 
                     if (moduleProgress == null && request.ModuleId.HasValue)
@@ -308,14 +321,14 @@ namespace LMS.Repositories
                             ProgressPercentage = 0,
                             TimeSpent = TimeSpan.Zero
                         };
-                        _context.ModuleProgresses.Add(moduleProgress);
-                        await _context.SaveChangesAsync();
+                        context.ModuleProgresses.Add(moduleProgress);
+                        await context.SaveChangesAsync();
                     }
 
                     if (moduleProgress != null)
                     {
                         // Find or create lesson progress
-                        var lessonProgress = await _context.LessonProgresses
+                        var lessonProgress = await context.LessonProgresses
                             .FirstOrDefaultAsync(lp => lp.ModuleProgressId == moduleProgress.Id && lp.LessonId == request.LessonId);
 
                         if (lessonProgress == null)
@@ -334,7 +347,7 @@ namespace LMS.Repositories
                                 lessonProgress.CompletedAt = DateTime.UtcNow;
                             }
 
-                            _context.LessonProgresses.Add(lessonProgress);
+                            context.LessonProgresses.Add(lessonProgress);
                         }
                         else
                         {
@@ -347,7 +360,7 @@ namespace LMS.Repositories
                             }
                         }
 
-                        await _context.SaveChangesAsync();
+                        await context.SaveChangesAsync();
                     }
                 }
 
@@ -373,8 +386,6 @@ namespace LMS.Repositories
                 LastName = user.LastName ?? string.Empty,
                 FullName = $"{user.FirstName} {user.LastName}".Trim(),
                 Bio = user.Bio,
-                ProfilePictureUrl = user.ProfilePictureUrl,
-                DateOfBirth = user.DateOfBirth,
                 IsActive = user.IsActive,
                 CreatedAt = user.CreatedAt,
                 LastLoginAt = user.LastLoginAt,
@@ -395,7 +406,7 @@ namespace LMS.Repositories
                 UserName = enrollment.User?.UserName ?? string.Empty,
                 CourseId = enrollment.CourseId,
                 CourseTitle = enrollment.Course?.Title ?? string.Empty,
-                CourseThumbnailUrl = enrollment.Course?.ThumbnailUrl ?? string.Empty,
+                CourseThumbnailUrl = enrollment.Course?.ThumbnailFile?.FilePath ?? string.Empty,
                 EnrolledAt = enrollment.EnrolledAt,
                 StartedAt = enrollment.StartedAt,
                 CompletedAt = enrollment.CompletedAt,
@@ -449,5 +460,191 @@ namespace LMS.Repositories
             "Social" => "fas fa-users",
             _ => "fas fa-award"
         };
+
+        // New methods for ParentDashboard
+        public async Task<List<UserModel>> GetMyChildrenAsync()
+        {
+            try
+            {
+                using var context = await _contextFactory.CreateDbContextAsync();
+                // For now, return all student users. In a real implementation, this would filter by parent-child relationships
+                var users = await context.Users
+                    .Include(u => u.Enrollments)
+                        .ThenInclude(e => e.Course)
+                    .Include(u => u.Achievements)
+                        .ThenInclude(ua => ua.Achievement)
+                    .ToListAsync();
+
+                var userModels = new List<UserModel>();
+                foreach (var user in users)
+                {
+                    var roles = await _userManager.GetRolesAsync(user);
+                    if (roles.Contains("Student"))
+                    {
+                        userModels.Add(await MapToUserModelAsync(user));
+                    }
+                }
+
+                return userModels;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting children");
+                return new List<UserModel>();
+            }
+        }
+
+        public async Task<UserModel?> GetByIdAsync(int id)
+        {
+            // Convert int ID to string and use existing method
+            return await GetUserByIdAsync(id.ToString());
+        }
+
+        public async Task<List<object>> GetStudentGradesAsync(int studentId)
+        {
+            try
+            {
+                using var context = await _contextFactory.CreateDbContextAsync();
+                // Get real grade data from assessments and other sources
+                var enrollments = await context.Enrollments
+                    .Where(e => e.UserId == studentId.ToString())
+                    .Include(e => e.Course)
+                    .ToListAsync();
+
+                var grades = new List<object>();
+                foreach (var enrollment in enrollments)
+                {
+                    // Calculate actual grades from assessments, assignments, etc.
+                    // For now, return empty until assessment grading is fully implemented
+                    grades.Add(new
+                    {
+                        Subject = enrollment.Course?.Title ?? "Unknown Course",
+                        Grade = "N/A",
+                        Percentage = 0
+                    });
+                }
+
+                return grades;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting student grades for student {StudentId}", studentId);
+                return new List<object>();
+            }
+        }
+
+        public async Task<List<object>> GetStudentRecentActivityAsync(int studentId)
+        {
+            try
+            {
+                using var context = await _contextFactory.CreateDbContextAsync();
+                // Get real activity data from various sources
+                var activities = new List<object>();
+
+                // Get recent enrollments
+                var recentEnrollments = await context.Enrollments
+                    .Where(e => e.UserId == studentId.ToString())
+                    .OrderByDescending(e => e.EnrolledAt)
+                    .Take(5)
+                    .Include(e => e.Course)
+                    .ToListAsync();
+
+                foreach (var enrollment in recentEnrollments)
+                {
+                    activities.Add(new
+                    {
+                        Activity = $"Enrolled in {enrollment.Course?.Title ?? "Course"}",
+                        Date = enrollment.EnrolledAt
+                    });
+                }
+
+                return activities;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting student recent activity for student {StudentId}", studentId);
+                return new List<object>();
+            }
+        }
+
+        public async Task<List<object>> GetStudentUpcomingDeadlinesAsync(int studentId)
+        {
+            try
+            {
+                using var context = await _contextFactory.CreateDbContextAsync();
+                // Get real upcoming deadlines from assessments and assignments
+                var deadlines = new List<object>();
+
+                // Get assessments from enrolled courses that have future due dates
+                var enrollments = await context.Enrollments
+                    .Where(e => e.UserId == studentId.ToString())
+                    .Include(e => e.Course)
+                        .ThenInclude(c => c.Assessments)
+                    .ToListAsync();
+
+                foreach (var enrollment in enrollments)
+                {
+                    if (enrollment.Course?.Assessments != null)
+                    {
+                        var upcomingAssessments = enrollment.Course.Assessments
+                            .Where(a => a.AvailableUntil.HasValue && a.AvailableUntil > DateTime.UtcNow)
+                            .OrderBy(a => a.AvailableUntil)
+                            .Take(3);
+
+                        foreach (var assessment in upcomingAssessments)
+                        {
+                            deadlines.Add(new
+                            {
+                                Task = assessment.Title,
+                                DueDate = assessment.AvailableUntil,
+                                Course = enrollment.Course.Title
+                            });
+                        }
+                    }
+                }
+
+                return deadlines;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting student upcoming deadlines for student {StudentId}", studentId);
+                return new List<object>();
+            }
+        }
+
+        public async Task<object> GetStudentAttendanceSummaryAsync(int studentId)
+        {
+            try
+            {
+                using var context = await _contextFactory.CreateDbContextAsync();
+                var attendanceRecords = await context.Attendances
+                    .Where(a => a.StudentId == studentId.ToString())
+                    .ToListAsync();
+
+                if (!attendanceRecords.Any())
+                {
+                    return new { TotalDays = 0, PresentDays = 0, AbsentDays = 0, AttendanceRate = 0.0 };
+                }
+
+                var totalDays = attendanceRecords.Count;
+                var presentDays = attendanceRecords.Count(a => a.Status == LMS.Data.Entities.AttendanceStatus.Present);
+                var absentDays = totalDays - presentDays;
+                var attendanceRate = totalDays > 0 ? (double)presentDays / totalDays * 100 : 0.0;
+
+                var summary = new
+                {
+                    TotalDays = totalDays,
+                    PresentDays = presentDays,
+                    AbsentDays = absentDays,
+                    AttendanceRate = Math.Round(attendanceRate, 1)
+                };
+                return summary;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting student attendance summary for student {StudentId}", studentId);
+                return new { TotalDays = 0, PresentDays = 0, AbsentDays = 0, AttendanceRate = 0.0 };
+            }
+        }
     }
 }

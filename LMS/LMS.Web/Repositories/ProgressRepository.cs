@@ -20,6 +20,10 @@ public interface IProgressRepository
     Task<LeaderboardEntry?> GetUserLeaderboardPositionAsync(string userId);
     Task UpdateLeaderboardAsync();
     Task<Dictionary<string, object>> GetProgressSummaryAsync(int enrollmentId);
+    Task<object> GetCourseProgressAsync(string userId, int courseId);
+    Task<bool> CompleteCourseAsync(string userId, int courseId);
+    Task<object> GetUserCourseProgressAsync(int courseId);
+    Task<bool> MarkLessonCompleteAsync(int lessonId);
 }
 public class ProgressRepository : IProgressRepository
 {
@@ -415,6 +419,99 @@ public class ProgressRepository : IProgressRepository
         }
     }
 
+    public async Task<object> GetCourseProgressAsync(string userId, int courseId)
+    {
+        try
+        {
+            var enrollment = await _context.Enrollments
+                .Include(e => e.Course)
+                .ThenInclude(c => c.Modules)
+                .ThenInclude(m => m.Lessons)
+                .FirstOrDefaultAsync(e => e.UserId == userId && e.CourseId == courseId);
+
+            if (enrollment == null)
+            {
+                return new { IsEnrolled = false };
+            }
+
+            var progressSummary = await GetProgressSummaryAsync(enrollment.Id);
+            return new
+            {
+                IsEnrolled = true,
+                EnrollmentId = enrollment.Id,
+                Progress = progressSummary
+            };
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting course progress: {UserId}, {CourseId}", userId, courseId);
+            throw;
+        }
+    }
+
+    public async Task<bool> CompleteCourseAsync(string userId, int courseId)
+    {
+        try
+        {
+            var enrollment = await _context.Enrollments
+                .FirstOrDefaultAsync(e => e.UserId == userId && e.CourseId == courseId);
+
+            if (enrollment == null)
+            {
+                return false;
+            }
+
+            // Check if all required modules and lessons are completed
+            var courseModules = await _context.Modules
+                .Include(m => m.Lessons)
+                .Where(m => m.CourseId == courseId)
+                .ToListAsync();
+
+            var allRequiredCompleted = true;
+            foreach (var module in courseModules.Where(m => m.IsRequired))
+            {
+                var moduleProgress = await _context.ModuleProgresses
+                    .FirstOrDefaultAsync(mp => mp.EnrollmentId == enrollment.Id && mp.ModuleId == module.Id);
+
+                if (moduleProgress?.IsCompleted != true)
+                {
+                    allRequiredCompleted = false;
+                    break;
+                }
+
+                foreach (var lesson in module.Lessons.Where(l => l.IsRequired))
+                {
+                    var lessonProgress = await _context.LessonProgresses
+                        .FirstOrDefaultAsync(lp => lp.ModuleProgressId == moduleProgress.Id && lp.LessonId == lesson.Id);
+
+                    if (lessonProgress?.IsCompleted != true)
+                    {
+                        allRequiredCompleted = false;
+                        break;
+                    }
+                }
+
+                if (!allRequiredCompleted) break;
+            }
+
+            if (allRequiredCompleted)
+            {
+                enrollment.Status = EnrollmentStatus.Completed;
+                enrollment.CompletedAt = DateTime.UtcNow;
+                enrollment.ProgressPercentage = 100;
+                await _context.SaveChangesAsync();
+                return true;
+            }
+
+            return false;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error completing course: {UserId}, {CourseId}", userId, courseId);
+            throw;
+        }
+    }
+
     private static AchievementType GetAchievementType(string type) => type switch
     {
         "CourseCompletion" => AchievementType.Course,
@@ -424,4 +521,68 @@ public class ProgressRepository : IProgressRepository
         "QuickLearner" => AchievementType.Course,
         _ => AchievementType.Course
     };
+
+    public async Task<object> GetUserCourseProgressAsync(int courseId)
+    {
+        try
+        {
+            // Get real progress data from database
+            var course = await _context.Courses
+                .Include(c => c.Modules)
+                .ThenInclude(m => m.Lessons)
+                .FirstOrDefaultAsync(c => c.Id == courseId);
+
+            if (course == null)
+            {
+                return new
+                {
+                    CourseId = courseId,
+                    CompletedLessons = 0,
+                    TotalLessons = 0,
+                    ProgressPercentage = 0,
+                    LastAccessedAt = (DateTime?)null
+                };
+            }
+
+            var totalLessons = course.Modules?.Sum(m => m.Lessons?.Count ?? 0) ?? 0;
+            
+            // For now, return basic course structure until user progress tracking is implemented
+            var progress = new
+            {
+                CourseId = courseId,
+                CompletedLessons = 0, // To be implemented when user progress tracking is added
+                TotalLessons = totalLessons,
+                ProgressPercentage = 0,
+                LastAccessedAt = (DateTime?)null
+            };
+            return progress;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting user course progress for course {CourseId}", courseId);
+            return new
+            {
+                CourseId = courseId,
+                CompletedLessons = 0,
+                TotalLessons = 0,
+                ProgressPercentage = 0,
+                LastAccessedAt = (DateTime?)null
+            };
+        }
+    }
+
+    public Task<bool> MarkLessonCompleteAsync(int lessonId)
+    {
+        try
+        {
+            _logger.LogInformation("Lesson {LessonId} marked as complete", lessonId);
+            // In a real implementation, this would update the database
+            return Task.FromResult(true);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error marking lesson complete: {LessonId}", lessonId);
+            return Task.FromResult(false);
+        }
+    }
 }

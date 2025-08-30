@@ -8,10 +8,12 @@ namespace LMS.Repositories
     public interface ICourseRepository
     {
         Task<List<CourseModel>> GetCoursesAsync();
+        Task<PaginatedResult<CourseModel>> GetCoursesAsync(GetCoursesRequest request);
         Task<PaginatedResult<CourseModel>> GetCoursesPaginatedAsync(PaginationRequest request);
         Task<CourseModel?> GetCourseByIdAsync(int id);
+        Task<CourseModel?> GetByIdAsync(int id); // Alias for GetCourseByIdAsync
         Task<CourseModel> CreateCourseAsync(CreateCourseRequest request);
-        Task<CourseModel> UpdateCourseAsync(int id, CreateCourseRequest request);
+        Task<CourseModel> UpdateCourseAsync(int id, UpdateCourseRequest request);
         Task<bool> DeleteCourseAsync(int id);
         Task<List<ModuleModel>> GetCourseModulesAsync(int courseId);
         Task<ModuleModel> CreateModuleAsync(CreateModuleRequest request);
@@ -25,6 +27,10 @@ namespace LMS.Repositories
         Task<bool> DeleteLessonAsync(int id);
         Task<List<CourseModel>> GetAllCoursesAsync();
         Task<PaginatedResult<ModuleModel>> GetModulesPaginatedAsync(PaginationRequest request);
+        Task<List<CourseModel>> GetCoursesByCategoryAsync(int categoryId);
+        Task<List<CourseModel>> GetFeaturedCoursesAsync(int limit = 10);
+        Task<List<CourseModel>> GetStudentCoursesAsync(int studentId);
+        Task<List<CourseModel>> GetPopularCoursesAsync(int limit = 10);
     }
 
     public class CourseRepository : ICourseRepository
@@ -57,6 +63,81 @@ namespace LMS.Repositories
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error getting courses");
+                throw;
+            }
+        }
+
+        public async Task<PaginatedResult<CourseModel>> GetCoursesAsync(GetCoursesRequest request)
+        {
+            try
+            {
+                using var context = _contextFactory.CreateDbContext();
+
+                var query = context.Courses
+                    .Include(c => c.Instructor)
+                    .Include(c => c.CourseCategories)
+                        .ThenInclude(cc => cc.Category)
+                    .Include(c => c.CourseTags)
+                        .ThenInclude(ct => ct.Tag)
+                    .AsQueryable();
+
+                // Apply filters
+                if (!string.IsNullOrEmpty(request.Search))
+                {
+                    query = query.Where(c => c.Title.Contains(request.Search) ||
+                                           c.Description.Contains(request.Search));
+                }
+
+                if (request.CategoryId.HasValue)
+                {
+                    query = query.Where(c => c.CourseCategories.Any(cc => cc.CategoryId == request.CategoryId.Value));
+                }
+
+                if (!string.IsNullOrEmpty(request.Level))
+                {
+                    if (Enum.TryParse<CourseLevel>(request.Level, true, out var level))
+                    {
+                        query = query.Where(c => c.Level == level);
+                    }
+                }
+
+                if (request.IsActive.HasValue)
+                {
+                    query = query.Where(c => c.IsActive == request.IsActive.Value);
+                }
+
+                if (!string.IsNullOrEmpty(request.InstructorId))
+                {
+                    query = query.Where(c => c.InstructorId == request.InstructorId);
+                }
+
+                // Apply sorting
+                query = request.SortBy?.ToLower() switch
+                {
+                    "title" => request.SortDirection?.ToLower() == "desc" ?
+                               query.OrderByDescending(c => c.Title) : query.OrderBy(c => c.Title),
+                    "created" => request.SortDirection?.ToLower() == "desc" ?
+                                query.OrderByDescending(c => c.CreatedAt) : query.OrderBy(c => c.CreatedAt),
+                    _ => query.OrderBy(c => c.Title)
+                };
+
+                var totalCount = await query.CountAsync();
+                var courses = await query
+                    .Skip((request.Page - 1) * request.PageSize)
+                    .Take(request.PageSize)
+                    .ToListAsync();
+
+                return new PaginatedResult<CourseModel>
+                {
+                    Items = courses.Select(MapToCourseModel).ToList(),
+                    TotalCount = totalCount,
+                    PageNumber = request.Page,
+                    PageSize = request.PageSize
+                };
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting courses with filters");
                 throw;
             }
         }
@@ -130,16 +211,15 @@ namespace LMS.Repositories
                 {
                     Title = request.Title,
                     Description = request.Description,
-                    ThumbnailUrl = request.ThumbnailUrl,
                     InstructorId = "current-user-id", // This should come from auth context
-                    Level = (CourseLevel)request.Level,
+                    Level = Enum.TryParse<CourseLevel>(request.Level, true, out var levelEnum) ? levelEnum : CourseLevel.Beginner,
                     Status = CourseStatus.Draft,
-                    MaxEnrollments = request.MaxEnrollments,
-                    StartDate = request.StartDate,
-                    EndDate = request.EndDate,
-                    EstimatedDuration = request.EstimatedDuration,
-                    Prerequisites = request.Prerequisites,
-                    LearningObjectives = request.LearningObjectives,
+                    MaxEnrollments = 0, // Default to unlimited
+                    StartDate = DateTime.UtcNow, // Default to now
+                    EndDate = null,
+                    EstimatedDuration = TimeSpan.Zero, // Default to zero
+                    Prerequisites = request.Prerequisites != null ? string.Join(",", request.Prerequisites) : null,
+                    LearningObjectives = request.LearningObjectives != null ? string.Join(",", request.LearningObjectives) : null,
                     CreatedAt = DateTime.UtcNow,
                     UpdatedAt = DateTime.UtcNow
                 };
@@ -147,22 +227,34 @@ namespace LMS.Repositories
                 context.Courses.Add(course);
                 await context.SaveChangesAsync();
 
-                foreach (var categoryId in request.CategoryIds)
+                // Add course category (single category from request)
+                context.CourseCategories.Add(new CourseCategory
                 {
-                    context.CourseCategories.Add(new CourseCategory
-                    {
-                        CourseId = course.Id,
-                        CategoryId = categoryId
-                    });
-                }
+                    CourseId = course.Id,
+                    CategoryId = request.CategoryId
+                });
 
-                foreach (var tagId in request.TagIds)
+                // Add course tags if provided
+                if (request.Tags != null && request.Tags.Any())
                 {
-                    context.CourseTags.Add(new CourseTags
+                    // For now, we'll create tags on-the-fly if they don't exist
+                    // In a real implementation, you might want to validate against existing tags
+                    foreach (var tagName in request.Tags)
                     {
-                        CourseId = course.Id,
-                        TagId = tagId
-                    });
+                        var existingTag = await context.Tags.FirstOrDefaultAsync(t => t.Name == tagName);
+                        if (existingTag == null)
+                        {
+                            existingTag = new Tag { Name = tagName };
+                            context.Tags.Add(existingTag);
+                            await context.SaveChangesAsync();
+                        }
+
+                        context.CourseTags.Add(new CourseTags
+                        {
+                            CourseId = course.Id,
+                            TagId = existingTag.Id
+                        });
+                    }
                 }
 
                 await context.SaveChangesAsync();
@@ -177,7 +269,7 @@ namespace LMS.Repositories
             }
         }
 
-        public async Task<CourseModel> UpdateCourseAsync(int id, CreateCourseRequest request)
+        public async Task<CourseModel> UpdateCourseAsync(int id, UpdateCourseRequest request)
         {
             try
             {
@@ -186,44 +278,53 @@ namespace LMS.Repositories
                 if (course == null)
                     throw new ArgumentException("Course not found");
 
-                course.Title = request.Title;
-                course.Description = request.Description;
-                course.ThumbnailUrl = request.ThumbnailUrl;
-                course.Level = (CourseLevel)request.Level;
-                course.MaxEnrollments = request.MaxEnrollments;
-                course.StartDate = request.StartDate;
-                course.EndDate = request.EndDate;
-                course.EstimatedDuration = request.EstimatedDuration;
-                course.Prerequisites = request.Prerequisites;
-                course.LearningObjectives = request.LearningObjectives;
+                if (request.Title != null) course.Title = request.Title;
+                if (request.Description != null) course.Description = request.Description;
+                if (request.Level != null) course.Level = Enum.TryParse<CourseLevel>(request.Level, true, out var levelEnum) ? levelEnum : course.Level;
+                // MaxEnrollments, StartDate, EndDate, EstimatedDuration are not in UpdateCourseRequest
+                if (request.Prerequisites != null) course.Prerequisites = string.Join(",", request.Prerequisites);
+                if (request.LearningObjectives != null) course.LearningObjectives = string.Join(",", request.LearningObjectives);
                 course.UpdatedAt = DateTime.UtcNow;
 
-                var existingCategories = await context.CourseCategories
-                    .Where(cc => cc.CourseId == id)
-                    .ToListAsync();
-                context.CourseCategories.RemoveRange(existingCategories);
-
-                foreach (var categoryId in request.CategoryIds)
+                // Update categories if CategoryId is provided
+                if (request.CategoryId.HasValue)
                 {
+                    var existingCategories = await context.CourseCategories
+                        .Where(cc => cc.CourseId == id)
+                        .ToListAsync();
+                    context.CourseCategories.RemoveRange(existingCategories);
+
                     context.CourseCategories.Add(new CourseCategory
                     {
                         CourseId = id,
-                        CategoryId = categoryId
+                        CategoryId = request.CategoryId.Value
                     });
                 }
 
-                var existingTags = await context.CourseTags
-                    .Where(ct => ct.CourseId == id)
-                    .ToListAsync();
-                context.CourseTags.RemoveRange(existingTags);
-
-                foreach (var tagId in request.TagIds)
+                // Update tags if provided
+                if (request.Tags != null)
                 {
-                    context.CourseTags.Add(new CourseTags
+                    var existingTags = await context.CourseTags
+                        .Where(ct => ct.CourseId == id)
+                        .ToListAsync();
+                    context.CourseTags.RemoveRange(existingTags);
+
+                    foreach (var tagName in request.Tags)
                     {
-                        CourseId = id,
-                        TagId = tagId
-                    });
+                        var existingTag = await context.Tags.FirstOrDefaultAsync(t => t.Name == tagName);
+                        if (existingTag == null)
+                        {
+                            existingTag = new Tag { Name = tagName };
+                            context.Tags.Add(existingTag);
+                            await context.SaveChangesAsync();
+                        }
+
+                        context.CourseTags.Add(new CourseTags
+                        {
+                            CourseId = id,
+                            TagId = existingTag.Id
+                        });
+                    }
                 }
 
                 await context.SaveChangesAsync();
@@ -530,6 +631,79 @@ namespace LMS.Repositories
             }
         }
 
+        public async Task<List<CourseModel>> GetCoursesByCategoryAsync(int categoryId)
+        {
+            try
+            {
+                using var context = _contextFactory.CreateDbContext();
+                var courses = await context.Courses
+                    .Include(c => c.CourseCategories)
+                        .ThenInclude(cc => cc.Category)
+                    .Include(c => c.Instructor)
+                    .Include(c => c.ThumbnailFile)
+                    .Where(c => c.CourseCategories.Any(cc => cc.CategoryId == categoryId) && c.IsActive)
+                    .OrderBy(c => c.Title)
+                    .ToListAsync();
+
+                return courses.Select(MapToCourseModel).ToList();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting courses by category: {CategoryId}", categoryId);
+                throw;
+            }
+        }
+
+        public async Task<List<CourseModel>> GetFeaturedCoursesAsync(int limit = 10)
+        {
+            try
+            {
+                using var context = _contextFactory.CreateDbContext();
+                var courses = await context.Courses
+                    .Include(c => c.CourseCategories)
+                        .ThenInclude(cc => cc.Category)
+                    .Include(c => c.Instructor)
+                    .Include(c => c.ThumbnailFile)
+                    .Include(c => c.Enrollments)
+                    .Where(c => c.Status == CourseStatus.Published && c.IsActive)
+                    .OrderByDescending(c => c.Enrollments.Count) // Order by popularity as a proxy for "featured"
+                    .Take(limit)
+                    .ToListAsync();
+
+                return courses.Select(MapToCourseModel).ToList();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting featured courses");
+                throw;
+            }
+        }
+
+        public async Task<List<CourseModel>> GetPopularCoursesAsync(int limit = 10)
+        {
+            try
+            {
+                using var context = _contextFactory.CreateDbContext();
+                var courses = await context.Courses
+                    .Include(c => c.CourseCategories)
+                        .ThenInclude(cc => cc.Category)
+                    .Include(c => c.Instructor)
+                    .Include(c => c.ThumbnailFile)
+                    .Include(c => c.Enrollments)
+                    .Where(c => c.IsActive)
+                    .OrderByDescending(c => c.Enrollments.Count)
+                    .Take(limit)
+                    .ToListAsync();
+
+                return courses.Select(MapToCourseModel).ToList();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting popular courses");
+                throw;
+            }
+        }
+
         private static CourseModel MapToCourseModel(Course course)
         {
             return new CourseModel
@@ -537,7 +711,7 @@ namespace LMS.Repositories
                 Id = course.Id,
                 Title = course.Title,
                 Description = course.Description,
-                ThumbnailUrl = course.ThumbnailUrl,
+                ThumbnailUrl = course.ThumbnailFile?.FilePath ?? string.Empty,
                 InstructorId = course.InstructorId,
                 InstructorName = course.Instructor?.UserName ?? "Unknown",
                 Level = course.Level.ToString(),
@@ -545,11 +719,11 @@ namespace LMS.Repositories
                 MaxEnrollments = course.MaxEnrollments,
                 StartDate = course.StartDate,
                 EndDate = course.EndDate,
-                EstimatedDuration = course.EstimatedDuration,
-                Prerequisites = course.Prerequisites,
-                LearningObjectives = course.LearningObjectives,
+                EstimatedDuration = (int?)course.EstimatedDuration.TotalMinutes,
+                Prerequisites = string.IsNullOrEmpty(course.Prerequisites) ? new List<string>() : course.Prerequisites.Split(',').ToList(),
+                LearningObjectives = string.IsNullOrEmpty(course.LearningObjectives) ? new List<string>() : course.LearningObjectives.Split(',').ToList(),
                 EnrollmentCount = course.Enrollments?.Count ?? 0,
-                AverageRating = 0.0, // This would need to be calculated from reviews
+                AverageRating = 0.0m, // This would need to be calculated from reviews
                 Categories = course.CourseCategories?.Select(cc => cc.Category.Name).ToList() ?? new List<string>(),
                 Tags = course.CourseTags?.Select(ct => ct.Tag.Name).ToList() ?? new List<string>(),
                 Modules = course.Modules?.Select(MapToModuleModel).ToList() ?? new List<ModuleModel>()
@@ -567,8 +741,8 @@ namespace LMS.Repositories
                 OrderIndex = module.OrderIndex,
                 IsRequired = module.IsRequired,
                 IsActive = module.IsActive,
-                Lessons = module.Lessons?.Select(MapToLessonModel).ToList() ?? new List<LessonModel>(),
-                ProgressPercentage = 0.0 // This would need to be calculated based on user progress
+                Duration = module.Lessons?.Sum(l => (int)l.EstimatedDuration.TotalMinutes) ?? 0, // Sum of lesson durations in minutes
+                Lessons = module.Lessons?.Select(MapToLessonModel).ToList() ?? new List<LessonModel>()
             };
         }
 
@@ -580,30 +754,60 @@ namespace LMS.Repositories
                 Title = lesson.Title,
                 Description = lesson.Description,
                 Content = lesson.Content,
-                ModuleId = lesson.ModuleId,
                 Type = lesson.Type.ToString(),
-                VideoUrl = lesson.VideoUrl,
-                DocumentUrl = lesson.DocumentUrl,
-                ExternalUrl = lesson.ExternalUrl,
-                EstimatedDuration = lesson.EstimatedDuration,
+                ContentUrl = lesson.VideoUrl ?? lesson.DocumentUrl ?? lesson.ExternalUrl, // Map to ContentUrl
+                Duration = (int)lesson.EstimatedDuration.TotalMinutes, // Convert TimeSpan to minutes
                 OrderIndex = lesson.OrderIndex,
-                IsRequired = lesson.IsRequired,
                 IsActive = lesson.IsActive,
                 IsCompleted = false, // This would need to be calculated based on user progress
-                ProgressPercentage = 0.0, // This would need to be calculated based on user progress
-                Resources = lesson.Resources?.Select(r => new LessonResourceModel
-                {
-                    Id = r.Id,
-                    Name = r.Name,
-                    Description = r.Description,
-                    Type = r.Type.ToString(),
-                    FilePath = r.FilePath,
-                    ExternalUrl = r.ExternalUrl,
-                    FileSize = r.FileSize,
-                    ContentType = r.ContentType,
-                    IsDownloadable = r.IsDownloadable
-                }).ToList() ?? new List<LessonResourceModel>()
+                CompletedAt = null
             };
+        }
+
+        public async Task<List<CourseModel>> GetStudentCoursesAsync(int studentId)
+        {
+            try
+            {
+                using var context = _contextFactory.CreateDbContext();
+                
+                // Get courses the student is enrolled in
+                var enrollments = await context.Enrollments
+                    .Include(e => e.Course)
+                        .ThenInclude(c => c.Instructor)
+                    .Include(e => e.Course)
+                        .ThenInclude(c => c.ThumbnailFile)
+                    .Include(e => e.Course)
+                        .ThenInclude(c => c.CourseCategories)
+                            .ThenInclude(cc => cc.Category)
+                    .Include(e => e.Course)
+                        .ThenInclude(c => c.CourseTags)
+                            .ThenInclude(ct => ct.Tag)
+                    .Where(e => e.UserId == studentId.ToString())
+                    .ToListAsync();
+
+                var courses = new List<CourseModel>();
+                foreach (var enrollment in enrollments)
+                {
+                    var course = MapToCourseModel(enrollment.Course);
+                    course.IsCompleted = enrollment.Status == EnrollmentStatus.Completed;
+                    course.ProgressPercentage = (int)enrollment.ProgressPercentage;
+                    course.IsEnrolled = true;
+                    courses.Add(course);
+                }
+
+                return courses;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting student courses for student {StudentId}", studentId);
+                return new List<CourseModel>();
+            }
+        }
+
+        public async Task<CourseModel?> GetByIdAsync(int id)
+        {
+            // Alias for GetCourseByIdAsync
+            return await GetCourseByIdAsync(id);
         }
     }
 }

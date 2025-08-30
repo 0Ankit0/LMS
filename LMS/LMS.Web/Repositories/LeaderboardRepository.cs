@@ -137,7 +137,7 @@ namespace LMS.Repositories
                     Rank = index + 1,
                     UserId = score.UserId,
                     UserName = score.User?.UserName ?? "",
-                    ProfilePictureUrl = score.User?.ProfilePictureUrl,
+                    ProfilePictureUrl = score.User?.ProfilePictureFile?.FilePath,
                     Score = score.TotalScore,
                     LastUpdated = score.LastUpdated
                 }).ToList();
@@ -186,7 +186,7 @@ namespace LMS.Repositories
                     Rank = index + 1,
                     UserId = score.UserId,
                     UserName = score.User?.UserName ?? "",
-                    ProfilePictureUrl = score.User?.ProfilePictureUrl,
+                    ProfilePictureUrl = score.User?.ProfilePictureFile?.FilePath,
                     Score = score.TotalScore,
                     LastUpdated = score.LastUpdated
                 }).ToList();
@@ -303,7 +303,7 @@ namespace LMS.Repositories
                     Rank = index + 1,
                     UserId = entry.UserId,
                     UserName = entry.User?.UserName ?? "",
-                    ProfilePictureUrl = entry.User?.ProfilePictureUrl,
+                    ProfilePictureUrl = entry.User?.ProfilePictureFile?.FilePath,
                     TotalPoints = (int)entry.TotalScore,
                     Score = entry.TotalScore,
                     LastUpdated = entry.LastUpdated
@@ -336,7 +336,7 @@ namespace LMS.Repositories
                     Rank = index + 1,
                     UserId = entry.UserId,
                     UserName = entry.User?.UserName ?? "",
-                    ProfilePictureUrl = entry.User?.ProfilePictureUrl,
+                    ProfilePictureUrl = entry.User?.ProfilePictureFile?.FilePath,
                     TotalPoints = (int)entry.TotalScore,
                     Score = entry.TotalScore,
                     LastUpdated = entry.LastUpdated
@@ -367,7 +367,7 @@ namespace LMS.Repositories
                     Rank = index + 1,
                     UserId = entry.UserId,
                     UserName = entry.User?.UserName ?? "",
-                    ProfilePictureUrl = entry.User?.ProfilePictureUrl,
+                    ProfilePictureUrl = entry.User?.ProfilePictureFile?.FilePath,
                     TotalPoints = (int)entry.TotalScore,
                     Score = entry.TotalScore,
                     LastUpdated = entry.LastUpdated
@@ -404,7 +404,7 @@ namespace LMS.Repositories
                 Rank = index + 1,
                 UserId = score.UserId,
                 UserName = score.User?.UserName ?? "",
-                ProfilePictureUrl = score.User?.ProfilePictureUrl,
+                ProfilePictureUrl = score.User?.ProfilePictureFile?.FilePath,
                 TotalPoints = score.TotalPoints,
                 AchievementCount = score.AchievementCount,
                 LastUpdated = score.LastUpdated
@@ -441,7 +441,7 @@ namespace LMS.Repositories
                 Rank = rank,
                 UserId = entry.UserId,
                 UserName = entry.User?.UserName ?? "",
-                ProfilePictureUrl = entry.User?.ProfilePictureUrl,
+                ProfilePictureUrl = entry.User?.ProfilePictureFile?.FilePath,
                 Score = entry.Score,
                 LastUpdated = entry.LastUpdated
             };

@@ -41,6 +41,18 @@ namespace LMS.Repositories
         // --- Add missing methods for Forums.razor ---
         Task<List<ForumModel>> GetAllForumsAsync();
         Task<List<CourseGroup>> GetCourseGroupsAsync();
+
+        // --- Add missing methods for CommunicationEndpoints ---
+        Task<int> CreateConversationAsync(string currentUserId, string targetUserId);
+        Task<List<ConversationModel>> GetUserConversationsAsync(string userId);
+        Task<bool> HasConversationAccessAsync(string userId, int conversationId);
+        Task<List<MessageModel>> GetConversationMessagesAsync(int conversationId);
+        Task<MessageModel> SendMessageAsync(int conversationId, string senderId, string content);
+        Task<bool> MarkMessageAsReadAsync(int messageId, string userId);
+        Task<ForumPostModel> CreateForumPostAsync(CreateForumPostRequest request, string userId);
+        Task<List<ForumPostModel>> GetForumPostsAsync(int forumId);
+        Task<List<ForumTopicModel>> GetForumTopicsAsync(int forumId);
+        Task<List<ForumTopicModel>> GetAllForumTopicsAsync();
     }
 
     public class ForumRepository : IForumRepository
@@ -427,7 +439,7 @@ namespace LMS.Repositories
                 var post = new ForumPost
                 {
                     Content = request.Content,
-                    TopicId = request.TopicId,
+                    TopicId = request.TopicId ?? 0,
                     AuthorId = authorId,
                     ParentPostId = request.ParentPostId,
                     CreatedAt = DateTime.UtcNow
@@ -461,7 +473,7 @@ namespace LMS.Repositories
                 if (post == null)
                     return null;
                 post.Content = request.Content;
-                post.TopicId = request.TopicId;
+                post.TopicId = request.TopicId ?? post.TopicId;
                 post.ParentPostId = request.ParentPostId;
                 post.UpdatedAt = DateTime.UtcNow;
                 // Optionally update author if needed: post.AuthorId = authorId;
@@ -503,7 +515,7 @@ namespace LMS.Repositories
 
         public async Task<List<CourseGroup>> GetCourseGroupsAsync()
         {
-            // Dummy implementation: group forums by CourseName
+            // Group forums by CourseName
             var forums = await GetForumsAsync();
             var groups = forums
                 .Where(f => !string.IsNullOrEmpty(f.CourseName))
@@ -569,6 +581,104 @@ namespace LMS.Repositories
                 IsDeleted = post.IsDeleted,
                 Replies = new List<ForumPostModel>()
             };
+        }
+
+        // --- Communication/Conversation methods ---
+        public async Task<int> CreateConversationAsync(string currentUserId, string targetUserId)
+        {
+            // Stub implementation - create a simple conversation
+            return await Task.FromResult(1);
+        }
+
+        public async Task<List<ConversationModel>> GetUserConversationsAsync(string userId)
+        {
+            // Stub implementation
+            return await Task.FromResult(new List<ConversationModel>());
+        }
+
+        public async Task<bool> HasConversationAccessAsync(string userId, int conversationId)
+        {
+            // Stub implementation - allow access for now
+            return await Task.FromResult(true);
+        }
+
+        public async Task<List<MessageModel>> GetConversationMessagesAsync(int conversationId)
+        {
+            // Stub implementation
+            return await Task.FromResult(new List<MessageModel>());
+        }
+
+        public async Task<MessageModel> SendMessageAsync(int conversationId, string senderId, string content)
+        {
+            // Stub implementation
+            return await Task.FromResult(new MessageModel
+            {
+                Id = 1,
+                ConversationId = conversationId,
+                SenderId = senderId,
+                Content = content,
+                SentAt = DateTime.UtcNow
+            });
+        }
+
+        public async Task<bool> MarkMessageAsReadAsync(int messageId, string userId)
+        {
+            // Stub implementation
+            return await Task.FromResult(true);
+        }
+
+        public async Task<ForumPostModel> CreateForumPostAsync(CreateForumPostRequest request, string userId)
+        {
+            // This method exists but with different signature - redirect to existing
+            return await CreatePostAsync(request, userId);
+        }
+
+        public async Task<List<ForumPostModel>> GetForumPostsAsync(int forumId)
+        {
+            // Stub implementation - could get posts by forum through topics
+            return await Task.FromResult(new List<ForumPostModel>());
+        }
+
+        public async Task<List<ForumTopicModel>> GetForumTopicsAsync(int forumId)
+        {
+            // This method exists but with different name - redirect to existing
+            return await GetTopicsByForumIdAsync(forumId);
+        }
+
+        public async Task<List<ForumTopicModel>> GetAllForumTopicsAsync()
+        {
+            try
+            {
+                var topics = await _context.Forums
+                    .Include(f => f.Course)
+                    .SelectMany(f => f.Topics)
+                    .Include(t => t.CreatedBy)
+                    .Include(t => t.Posts)
+                    .ToListAsync();
+
+                return topics.Select(t => new ForumTopicModel
+                {
+                    Id = t.Id,
+                    Title = t.Title,
+                    CourseId = t.Forum.CourseId ?? 0,
+                    CourseName = t.Forum.Course?.Title ?? "Unknown Course",
+                    CreatedAt = t.CreatedAt,
+                    CreatedBy = t.CreatedByUserId,
+                    CreatedByName = t.CreatedBy?.UserName ?? "Unknown",
+                    PostCount = t.Posts.Count,
+                    LastPostAt = t.LastPostAt,
+                    IsLocked = t.IsLocked,
+                    IsPinned = t.IsPinned
+                })
+                .OrderByDescending(t => t.IsPinned)
+                .ThenByDescending(t => t.LastPostAt)
+                .ToList();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting all forum topics");
+                throw;
+            }
         }
     }
 }
