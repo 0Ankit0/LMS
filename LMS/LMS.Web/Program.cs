@@ -5,6 +5,7 @@ using LMS.Web.Components.Account;
 using LMS.Web.Data;
 using LMS.Web.Infrastructure;
 using LMS.Web.Repositories;
+using LMS.Web.Services;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -40,8 +41,14 @@ builder.Services.AddAuthentication(options =>
     .AddIdentityCookies();
 
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
-builder.Services.AddDbContextFactory<ApplicationDbContext>(options =>
-    options.UseNpgsql(connectionString));
+
+// Register gamification services
+builder.Services.AddScoped<IGamificationService, GamificationService>();
+builder.Services.AddScoped<GamificationInterceptor>();
+
+builder.Services.AddDbContextFactory<ApplicationDbContext>((serviceProvider, options) =>
+    options.UseNpgsql(connectionString)
+           .AddInterceptors(serviceProvider.GetRequiredService<GamificationInterceptor>()));
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
 builder.Services.AddIdentityCore<User>(options => options.SignIn.RequireConfirmedAccount = true)

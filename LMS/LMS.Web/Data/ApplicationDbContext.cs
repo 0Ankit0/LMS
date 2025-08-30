@@ -36,6 +36,18 @@ namespace LMS.Web.Data
         public DbSet<Certificate> Certificates { get; set; }
         public DbSet<Attendance> Attendances { get; set; }
         public DbSet<Note> Notes { get; set; }
+        public DbSet<Notification> Notifications { get; set; }
+        public DbSet<CalendarEvent> CalendarEvents { get; set; }
+
+        // New entities for enhanced user management
+        public DbSet<UserFile> UserFiles { get; set; }
+        public DbSet<Student> Students { get; set; }
+        public DbSet<Instructor> Instructors { get; set; }
+        public DbSet<Parent> Parents { get; set; }
+        public DbSet<ParentStudentLink> ParentStudentLinks { get; set; }
+        public DbSet<UserSettings> UserSettings { get; set; }
+        public DbSet<UserActivity> UserActivities { get; set; }
+        public DbSet<AchievementCriteria> AchievementCriteria { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
@@ -483,6 +495,112 @@ namespace LMS.Web.Data
             builder.Entity<Announcement>()
                 .HasIndex(a => a.IsActive)
                 .HasDatabaseName("IX_Announcement_IsActive");
+
+            // Configure new entity relationships for enhanced user management
+
+            // UserFile relationships
+            builder.Entity<UserFile>()
+                .HasOne(uf => uf.Owner)
+                .WithMany(u => u.UploadedFiles)
+                .HasForeignKey(uf => uf.OwnerUserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            builder.Entity<User>()
+                .HasOne(u => u.ProfilePictureFile)
+                .WithMany(uf => uf.UserProfilePictures)
+                .HasForeignKey(u => u.ProfilePictureFileId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            builder.Entity<Course>()
+                .HasOne(c => c.ThumbnailFile)
+                .WithMany(uf => uf.CourseThumbnails)
+                .HasForeignKey(c => c.ThumbnailFileId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            builder.Entity<Category>()
+                .HasOne(c => c.IconFile)
+                .WithMany(uf => uf.CategoryIcons)
+                .HasForeignKey(c => c.IconFileId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            // Extended user profile relationships
+            builder.Entity<Student>()
+                .HasOne(s => s.User)
+                .WithOne(u => u.StudentProfile)
+                .HasForeignKey<Student>(s => s.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            builder.Entity<Instructor>()
+                .HasOne(i => i.User)
+                .WithOne(u => u.InstructorProfile)
+                .HasForeignKey<Instructor>(i => i.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            builder.Entity<Parent>()
+                .HasOne(p => p.User)
+                .WithOne(u => u.ParentProfile)
+                .HasForeignKey<Parent>(p => p.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // ParentStudentLink composite key and relationships
+            builder.Entity<ParentStudentLink>()
+                .HasKey(psl => new { psl.ParentId, psl.StudentId });
+
+            builder.Entity<ParentStudentLink>()
+                .HasOne(psl => psl.Parent)
+                .WithMany(p => p.StudentLinks)
+                .HasForeignKey(psl => psl.ParentId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            builder.Entity<ParentStudentLink>()
+                .HasOne(psl => psl.Student)
+                .WithMany(s => s.ParentLinks)
+                .HasForeignKey(psl => psl.StudentId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // UserSettings relationship
+            builder.Entity<UserSettings>()
+                .HasOne(us => us.User)
+                .WithOne(u => u.Settings)
+                .HasForeignKey<UserSettings>(us => us.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // UserActivity relationship
+            builder.Entity<UserActivity>()
+                .HasOne(ua => ua.User)
+                .WithMany(u => u.Activities)
+                .HasForeignKey(ua => ua.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // AchievementCriteria relationship
+            builder.Entity<AchievementCriteria>()
+                .HasOne(ac => ac.Achievement)
+                .WithMany(a => a.Criteria)
+                .HasForeignKey(ac => ac.AchievementId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // Indexes for new entities
+            builder.Entity<UserFile>()
+                .HasIndex(uf => uf.OwnerUserId)
+                .HasDatabaseName("IX_UserFile_OwnerUserId");
+
+            builder.Entity<UserFile>()
+                .HasIndex(uf => new { uf.ContentType, uf.IsActive })
+                .HasDatabaseName("IX_UserFile_ContentType_IsActive");
+
+            builder.Entity<Student>()
+                .HasIndex(s => s.StudentIdNumber)
+                .IsUnique()
+                .HasFilter("[StudentIdNumber] IS NOT NULL")
+                .HasDatabaseName("IX_Student_StudentIdNumber");
+
+            builder.Entity<UserActivity>()
+                .HasIndex(ua => new { ua.UserId, ua.Timestamp })
+                .HasDatabaseName("IX_UserActivity_UserId_Timestamp");
+
+            builder.Entity<UserActivity>()
+                .HasIndex(ua => new { ua.Type, ua.Timestamp })
+                .HasDatabaseName("IX_UserActivity_Type_Timestamp");
 
             // Seed default data
             //LMS.Data.DataSeeder.Seed(builder);
