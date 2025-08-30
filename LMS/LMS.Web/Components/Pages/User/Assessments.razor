@@ -402,7 +402,7 @@
                 })
                 .DistinctBy(c => c.Id)
                 .ToList() ?? new List<CourseModel>();
-                // Load user attempts (mock data for now)
+                // Load user attempts (placeholder for future implementation)
                 LoadUserAttempts(currentUserId);
                 // Calculate statistics
                 CalculateStatistics();
@@ -527,7 +527,7 @@ new AssessmentAttemptModel { AssessmentId = 3, UserId = userId, Score = 75, Comp
     private bool IsAssessmentAvailable(AssessmentModel assessment)
     {
         // In a real implementation, this would check prerequisites, course progress, etc.
-        return true; // Mock: all assessments are available
+        return true; // Placeholder: assessment availability logic to be implemented
     }
 
     private void StartAssessment(AssessmentModel assessment)

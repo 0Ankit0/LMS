@@ -239,7 +239,7 @@
             </div>
 
             <!-- Topic Posts - Scrollable -->
-            <MudChat Class="content-area" Style="height: 100%;" id="messagesArea">
+            <MudChat Class="content-area h-full" id="messagesArea">
                 @if (selectedTopicPosts != null)
                 {
                     @foreach (var post in selectedTopicPosts)
@@ -288,7 +288,7 @@
                 <div class="input-area d-flex align-items-center pa-2">
                     @if (!string.IsNullOrEmpty(quotedText))
                     {
-                        <MudPaper Elevation="2" Class="quoted-text" Style="width: 100%; margin-bottom: 8px;">
+                        <MudPaper Elevation="2" Class="quoted-text w-full mb-2">
                             <div class="quote-header d-flex justify-content-between align-items-center">
                                 <MudText Typo="Typo.subtitle2">Replying to @quotedAuthor:</MudText>
                                 <MudIconButton Icon="@Icons.Material.Filled.Close" Size="Size.Small" OnClick="ClearQuote" />
@@ -674,7 +674,10 @@
             {
                 selectedForumId = selectedTopic.ForumId;
                 selectedForum = forums?.FirstOrDefault(f => f.Id == selectedTopic.ForumId);
-                await LoadTopicsForForum(selectedTopic.ForumId);
+                if (selectedTopic.ForumId.HasValue)
+                {
+                    await LoadTopicsForForum(selectedTopic.ForumId.Value);
+                }
             }
 
             await LoadPostsForTopic(topicId);
@@ -841,9 +844,9 @@
             {
                 Snackbar.Add("Post created successfully!", Severity.Success);
                 HideNewPostModal();
-                if (newPost.TopicId > 0)
+                if (newPost.TopicId.HasValue && newPost.TopicId > 0)
                 {
-                    await LoadPostsForTopic(newPost.TopicId);
+                    await LoadPostsForTopic(newPost.TopicId.Value);
                 }
             }
             else

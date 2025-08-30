@@ -12,7 +12,7 @@
 
 <PageTitle>My Notes - LMS</PageTitle>
 
-<div class="notes-container p-6 max-w-7xl mx-auto">
+<div class="min-h-screen p-6 max-w-7xl mx-auto">
     <!-- Header Section -->
     <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 space-y-4 md:space-y-0">
         <div>
@@ -167,7 +167,7 @@
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             @foreach (var note in notes)
             {
-                <MudCard Class="note-card hover:shadow-lg transition-all duration-200 border border-gray-200 hover:border-blue-300 relative overflow-hidden">
+                <MudCard Class="min-h-72 max-h-96 hover:shadow-lg transition-all duration-200 border border-gray-200 hover:border-blue-300 relative overflow-hidden">
                     <!-- Priority indicator -->
                     <div class="absolute top-0 left-0 w-full h-1 @GetPriorityColor(note.Priority)"></div>
                     
@@ -344,36 +344,7 @@
     }
 </div>
 
-<style>
-.notes-container {
-    min-height: calc(100vh - 120px);
-}
 
-.note-card {
-    min-height: 280px;
-    max-height: 400px;
-}
-
-.line-clamp-2 {
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-}
-
-.line-clamp-3 {
-    display: -webkit-box;
-    -webkit-line-clamp: 3;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-}
-
-.truncate {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-</style>
 
 @code {
     private IEnumerable<NoteDTO>? notes;

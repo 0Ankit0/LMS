@@ -1,0 +1,587 @@
+@page "/parent"
+@page "/parent/dashboard"
+@page "/parent/dashboard/{studentId:int}"
+@using LMS.Data.DTOs.UserManagement
+@using LMS.Data.DTOs
+@using LMS.Web.Repositories
+@inject IUserRepository UserRepository
+@inject ICourseRepository CourseRepository
+@inject IProgressRepository ProgressRepository
+@inject NavigationManager Navigation
+@attribute [Authorize(Roles = "Parent")]
+@rendermode InteractiveServer
+
+<PageTitle>Parent Dashboard</PageTitle>
+
+@if (StudentId.HasValue)
+{
+    <!-- Student Detail View -->
+    <MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="min-h-screen bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-950/20 dark:to-pink-950/20 py-8">
+        <!-- Header Section -->
+        <MudStack Spacing="2" Class="mb-8">
+            <MudStack Row Spacing="3" AlignItems="AlignItems.Center">
+                <MudPaper Class="p-3 bg-purple-500 rounded-xl shadow-lg">
+                    <MudIcon Icon="@Icons.Material.Filled.People" Class="text-white" Size="Size.Large" />
+                </MudPaper>
+                <MudStack>
+                    <MudText Typo="Typo.h4" Class="font-bold text-gray-900 dark:text-white">Parent Dashboard</MudText>
+                    <MudText Typo="Typo.body1" Class="text-gray-600 dark:text-gray-300">Monitor your children's academic progress</MudText>
+                </MudStack>
+            </MudStack>
+        </MudStack>
+
+        <MudStack Spacing="6">
+            <MudButton StartIcon="@Icons.Material.Filled.ArrowBack" 
+                      Color="Color.Primary" 
+                      Variant="Variant.Text"
+                      OnClick="BackToChildren"
+                      Class="w-fit">
+                Back to My Children
+            </MudButton>
+
+            @if (selectedStudent != null)
+            {
+                <MudCard Elevation="2" Class="rounded-2xl shadow-lg bg-white dark:bg-gray-900">
+                    <MudCardContent Class="p-6">
+                        <MudStack Row Spacing="4" AlignItems="AlignItems.Center" Class="mb-6">
+                            <MudAvatar Size="Size.Large" Class="w-16 h-16">
+                                <MudImage Src="@GetStudentAvatar(selectedStudent)" Alt="Student Avatar" Class="w-full h-full object-cover" />
+                            </MudAvatar>
+                            <MudStack>
+                                <MudText Typo="Typo.h5" Class="font-semibold text-gray-900 dark:text-white">@selectedStudent.FirstName @selectedStudent.LastName</MudText>
+                                <MudText Typo="Typo.body2" Class="text-gray-600 dark:text-gray-300">Student ID: @selectedStudent.Id</MudText>
+                            </MudStack>
+                        </MudStack>
+                        
+                        <MudGrid Spacing="4">
+                            <MudItem xs="12" md="4">
+                                <MudCard Elevation="1" Class="bg-blue-50 dark:bg-blue-900/20 rounded-xl text-center p-4">
+                                    <MudStack Spacing="2" AlignItems="AlignItems.Center">
+                                        <MudIcon Icon="@Icons.Material.Filled.MenuBook" Color="Color.Primary" Size="Size.Large" />
+                                        <MudText Typo="Typo.h4" Class="font-bold text-blue-600 dark:text-blue-400">@studentCourses?.Count()</MudText>
+                                        <MudText Typo="Typo.body2" Class="text-gray-600 dark:text-gray-300">Active Courses</MudText>
+                                    </MudStack>
+                                </MudCard>
+                            </MudItem>
+                            <MudItem xs="12" md="4">
+                                <MudCard Elevation="1" Class="bg-green-50 dark:bg-green-900/20 rounded-xl text-center p-4">
+                                    <MudStack Spacing="2" AlignItems="AlignItems.Center">
+                                        <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Color="Color.Success" Size="Size.Large" />
+                                        <MudText Typo="Typo.h4" Class="font-bold text-green-600 dark:text-green-400">@completedCourses</MudText>
+                                        <MudText Typo="Typo.body2" Class="text-gray-600 dark:text-gray-300">Completed</MudText>
+                                    </MudStack>
+                                </MudCard>
+                            </MudItem>
+                            <MudItem xs="12" md="4">
+                                <MudCard Elevation="1" Class="bg-purple-50 dark:bg-purple-900/20 rounded-xl text-center p-4">
+                                    <MudStack Spacing="2" AlignItems="AlignItems.Center">
+                                        <MudIcon Icon="@Icons.Material.Filled.TrendingUp" Color="Color.Secondary" Size="Size.Large" />
+                                        <MudText Typo="Typo.h4" Class="font-bold text-purple-600 dark:text-purple-400">@overallProgress%</MudText>
+                                        <MudText Typo="Typo.body2" Class="text-gray-600 dark:text-gray-300">Overall Progress</MudText>
+                                    </MudStack>
+                                </MudCard>
+                            </MudItem>
+                        </MudGrid>
+                    </MudCardContent>
+                </MudCard>
+
+                <!-- Tabs Section -->
+                <MudCard Elevation="2" Class="rounded-2xl shadow-lg bg-white dark:bg-gray-900">
+                    <MudTabs Elevation="0" Rounded ApplyEffectsToContainer PanelClass="pa-6">
+                        <MudTabPanel Text="Overview" Icon="@Icons.Material.Filled.Dashboard">
+                            <MudGrid Spacing="8">
+                                <MudItem xs="12" lg="6">
+                                    <MudCard Elevation="1" Class="rounded-xl">
+                                        <MudCardHeader>
+                                            <CardHeaderContent>
+                                                <MudText Typo="Typo.h6" Class="font-semibold">Recent Activity</MudText>
+                                            </CardHeaderContent>
+                                        </MudCardHeader>
+                                        <MudCardContent>
+                                            @if (recentActivity?.Any() == true)
+                                            {
+                                                <MudList T="string" Clickable="false">
+                                                    @foreach (var activity in recentActivity.Take(5))
+                                                    {
+                                                        <MudListItem T="string" Icon="@Icons.Material.Filled.Circle" Class="mb-2">
+                                                            <div>
+                                                                <MudText Typo="Typo.body2" Class="font-medium">@activity.Title</MudText>
+                                                                <MudText Typo="Typo.caption" Class="text-gray-500">@activity.Date.ToString("MMM dd, yyyy")</MudText>
+                                                            </div>
+                                                        </MudListItem>
+                                                    }
+                                                </MudList>
+                                            }
+                                            else
+                                            {
+                                                <MudText Typo="Typo.body1" Class="text-gray-500 text-center py-8">No recent activity</MudText>
+                                            }
+                                        </MudCardContent>
+                                    </MudCard>
+                                </MudItem>
+                                <MudItem xs="12" lg="6">
+                                    <MudCard Elevation="1" Class="rounded-xl">
+                                        <MudCardHeader>
+                                            <CardHeaderContent>
+                                                <MudText Typo="Typo.h6" Class="font-semibold">Upcoming Deadlines</MudText>
+                                            </CardHeaderContent>
+                                        </MudCardHeader>
+                                        <MudCardContent>
+                                            @if (upcomingDeadlines?.Any() == true)
+                                            {
+                                                <MudList T="string" Clickable="false">
+                                                    @foreach (var deadline in upcomingDeadlines.Take(5))
+                                                    {
+                                                        <MudListItem T="string" Icon="@Icons.Material.Filled.Schedule" Class="mb-2">
+                                                            <div>
+                                                                <MudText Typo="Typo.body2" Class="font-medium">@deadline.Title</MudText>
+                                                                <MudText Typo="Typo.caption" Class="text-gray-500">@deadline.CourseName - Due @deadline.DueDate.ToString("MMM dd")</MudText>
+                                                            </div>
+                                                        </MudListItem>
+                                                    }
+                                                </MudList>
+                                            }
+                                            else
+                                            {
+                                                <MudText Typo="Typo.body1" Class="text-gray-500 text-center py-8">No upcoming deadlines</MudText>
+                                            }
+                                        </MudCardContent>
+                                    </MudCard>
+                                </MudItem>
+                            </MudGrid>
+                        </MudTabPanel>
+                        
+                        <MudTabPanel Text="Courses" Icon="@Icons.Material.Filled.MenuBook">
+                            @if (studentCourses?.Any() == true)
+                            {
+                                <MudGrid Spacing="4">
+                                    @foreach (var course in studentCourses)
+                                    {
+                                        <MudItem xs="12" md="6" lg="4">
+                                            <MudCard Elevation="1" Class="rounded-xl">
+                                                <MudCardContent>
+                                                    <MudStack Spacing="3">
+                                                        <MudText Typo="Typo.h6" Class="font-semibold">@course.Title</MudText>
+                                                        <MudText Typo="Typo.body2" Class="text-gray-600">@course.InstructorName</MudText>
+                                                        <MudProgressLinear Color="Color.Primary" Value="@course.ProgressPercentage" Striped="true" />
+                                                        <MudStack Row Spacing="2" Justify="Justify.SpaceBetween">
+                                                            <MudText Typo="Typo.caption">@course.ProgressPercentage% Complete</MudText>
+                                                            <MudText Typo="Typo.caption">@course.CompletedLessons/@course.TotalLessons Lessons</MudText>
+                                                        </MudStack>
+                                                        @if (course.LastAccessedAt.HasValue)
+                                                        {
+                                                            <MudText Typo="Typo.caption" Class="text-gray-500">Last accessed: @course.LastAccessedAt.Value.ToString("MMM dd")</MudText>
+                                                        }
+                                                    </MudStack>
+                                                </MudCardContent>
+                                            </MudCard>
+                                        </MudItem>
+                                    }
+                                </MudGrid>
+                            }
+                            else
+                            {
+                                <MudText Typo="Typo.body1" Class="text-gray-500 text-center py-8">No courses enrolled</MudText>
+                            }
+                        </MudTabPanel>
+                        
+                        <MudTabPanel Text="Grades" Icon="@Icons.Material.Filled.Grade">
+                            @if (studentGrades?.Any() == true)
+                            {
+                                <MudDataGrid Items="@studentGrades" Filterable="false" SortMode="SortMode.None">
+                                    <Columns>
+                                        <PropertyColumn Property="x => x.CourseName" Title="Course" />
+                                        <PropertyColumn Property="x => x.AssessmentName" Title="Assessment" />
+                                        <TemplateColumn Title="Score">
+                                            <CellTemplate>
+                                                <MudText>@context.Item.Score / @context.Item.MaxScore</MudText>
+                                            </CellTemplate>
+                                        </TemplateColumn>
+                                        <TemplateColumn Title="Grade">
+                                            <CellTemplate>
+                                                <MudChip Color="@GetGradeColor(context.Item.Grade)" Size="Size.Small">@context.Item.Grade</MudChip>
+                                            </CellTemplate>
+                                        </TemplateColumn>
+                                        <TemplateColumn Title="Date">
+                                            <CellTemplate>
+                                                <MudText>@context.Item.CompletedAt?.ToString("MMM dd, yyyy")</MudText>
+                                            </CellTemplate>
+                                        </TemplateColumn>
+                                    </Columns>
+                                </MudDataGrid>
+                            }
+                            else
+                            {
+                                <MudText Typo="Typo.body1" Class="text-gray-500 text-center py-8">No grades available</MudText>
+                            }
+                        </MudTabPanel>
+                        
+                        <MudTabPanel Text="Attendance" Icon="@Icons.Material.Filled.EventAvailable">
+                            @if (attendanceSummary != null)
+                            {
+                                <MudGrid Spacing="4">
+                                    <MudItem xs="12" md="3">
+                                        <MudCard Elevation="1" Class="text-center p-4">
+                                            <MudText Typo="Typo.h4" Class="font-bold text-blue-600">@attendanceSummary.TotalSessions</MudText>
+                                            <MudText Typo="Typo.body2">Total Sessions</MudText>
+                                        </MudCard>
+                                    </MudItem>
+                                    <MudItem xs="12" md="3">
+                                        <MudCard Elevation="1" Class="text-center p-4">
+                                            <MudText Typo="Typo.h4" Class="font-bold text-green-600">@attendanceSummary.PresentSessions</MudText>
+                                            <MudText Typo="Typo.body2">Present</MudText>
+                                        </MudCard>
+                                    </MudItem>
+                                    <MudItem xs="12" md="3">
+                                        <MudCard Elevation="1" Class="text-center p-4">
+                                            <MudText Typo="Typo.h4" Class="font-bold text-red-600">@attendanceSummary.AbsentSessions</MudText>
+                                            <MudText Typo="Typo.body2">Absent</MudText>
+                                        </MudCard>
+                                    </MudItem>
+                                    <MudItem xs="12" md="3">
+                                        <MudCard Elevation="1" Class="text-center p-4">
+                                            <MudText Typo="Typo.h4" Class="font-bold text-purple-600">@attendanceSummary.AttendanceRate%</MudText>
+                                            <MudText Typo="Typo.body2">Attendance Rate</MudText>
+                                        </MudCard>
+                                    </MudItem>
+                                </MudGrid>
+                            }
+                            else
+                            {
+                                <MudText Typo="Typo.body1" Class="text-gray-500 text-center py-8">No attendance data available</MudText>
+                            }
+                        </MudTabPanel>
+                    </MudTabs>
+                </MudCard>
+            }
+        </MudStack>
+    </MudContainer>
+}
+else
+{
+    <!-- Children List View -->
+    <MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="min-h-screen bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-950/20 dark:to-pink-950/20 py-8">
+        <!-- Header Section -->
+        <MudStack Spacing="2" Class="mb-8">
+            <MudStack Row Spacing="3" AlignItems="AlignItems.Center">
+                <MudPaper Class="p-3 bg-purple-500 rounded-xl shadow-lg">
+                    <MudIcon Icon="@Icons.Material.Filled.People" Class="text-white" Size="Size.Large" />
+                </MudPaper>
+                <MudStack>
+                    <MudText Typo="Typo.h4" Class="font-bold text-gray-900 dark:text-white">Parent Dashboard</MudText>
+                    <MudText Typo="Typo.body1" Class="text-gray-600 dark:text-gray-300">Monitor your children's academic progress</MudText>
+                </MudStack>
+            </MudStack>
+        </MudStack>
+
+        @if (children?.Any() == true)
+        {
+            <MudGrid Spacing="4" Class="mt-6">
+                @foreach (var child in children)
+                {
+                    <MudItem xs="12" md="6" lg="4">
+                        <MudCard Elevation="1" Class="rounded-xl cursor-pointer transition-all hover:shadow-lg" 
+                                @onclick="() => ViewChildDashboard(child.Id)">
+                            <MudCardContent Class="d-flex align-center gap-4">
+                                <MudAvatar Size="Size.Large" Class="flex-shrink-0">
+                                    <MudImage Src="@GetStudentAvatar(child)" Alt="@child.FirstName" />
+                                </MudAvatar>
+                                <div class="flex-grow-1">
+                                    <MudText Typo="Typo.h6" Class="font-semibold">@child.FirstName @child.LastName</MudText>
+                                    <MudText Typo="Typo.caption" Class="text-gray-500 mb-3">Grade @child.Grade</MudText>
+                                    <MudStack Row Spacing="4">
+                                        <div>
+                                            <MudText Typo="Typo.body2" Class="font-semibold">@GetChildCourseCount(int.Parse(child.Id))</MudText>
+                                            <MudText Typo="Typo.caption" Class="text-gray-500">Active Courses</MudText>
+                                        </div>
+                                        <div>
+                                            <MudText Typo="Typo.body2" Class="font-semibold">@GetChildAttendanceRate(int.Parse(child.Id))%</MudText>
+                                            <MudText Typo="Typo.caption" Class="text-gray-500">Attendance</MudText>
+                                        </div>
+                                    </MudStack>
+                                </div>
+                                <MudIcon Icon="@Icons.Material.Filled.ChevronRight" Color="Color.Default" />
+                            </MudCardContent>
+                        </MudCard>
+                    </MudItem>
+                }
+            </MudGrid>
+        }
+        else
+        {
+            <MudCard Elevation="0" Class="text-center py-12">
+                <MudCardContent>
+                    <MudIcon Icon="@Icons.Material.Filled.Groups" Size="Size.Large" Color="Color.Default" Class="mb-4" />
+                    <MudText Typo="Typo.h5" Class="font-semibold mb-2">No Children Linked</MudText>
+                    <MudText Typo="Typo.body1" Class="text-gray-600">Contact your school administrator to link your children to your parent account.</MudText>
+                </MudCardContent>
+            </MudCard>
+        }
+    </MudContainer>
+}
+
+@code {
+    [Parameter] public int? StudentId { get; set; }
+
+    private List<UserModel>? children;
+    private UserModel? selectedStudent;
+    private List<StudentCourseProgress>? studentCourses;
+    private List<StudentGrade>? studentGrades;
+    private List<ActivityItem>? recentActivity;
+    private List<DeadlineItem>? upcomingDeadlines;
+    private AttendanceSummary? attendanceSummary;
+    private string activeTab = "overview";
+    private int completedCourses = 0;
+    private int overallProgress = 0;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadChildren();
+
+        if (StudentId.HasValue)
+        {
+            await LoadStudentDetails();
+        }
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (StudentId.HasValue)
+        {
+            await LoadStudentDetails();
+        }
+        else
+        {
+            selectedStudent = null;
+            studentCourses = null;
+            studentGrades = null;
+            recentActivity = null;
+            upcomingDeadlines = null;
+            attendanceSummary = null;
+        }
+    }
+
+    private async Task LoadChildren()
+    {
+        try
+        {
+            children = await UserRepository.GetMyChildrenAsync();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading children: {ex.Message}");
+        }
+    }
+
+    private async Task LoadStudentDetails()
+    {
+        if (!StudentId.HasValue) return;
+
+        try
+        {
+            selectedStudent = await UserRepository.GetByIdAsync(StudentId.Value);
+
+            // Convert CourseModel list to StudentCourseProgress list
+            var coursesData = await CourseRepository.GetStudentCoursesAsync(StudentId.Value);
+            studentCourses = coursesData?.Select(c => new StudentCourseProgress
+            {
+                Id = c.Id,
+                Title = c.Title,
+                InstructorName = c.InstructorName,
+                ProgressPercentage = c.ProgressPercentage,
+                CompletedLessons = 0, // To be calculated when lesson progress tracking is implemented
+                TotalLessons = c.LessonCount,
+                IsCompleted = c.IsCompleted,
+                LastAccessedAt = DateTime.Now.AddDays(-Random.Shared.Next(1, 7))
+            }).ToList();
+
+            // Convert object list to StudentGrade list
+            var gradesData = await UserRepository.GetStudentGradesAsync(StudentId.Value);
+            studentGrades = gradesData?.Cast<dynamic>().Select(g => new StudentGrade
+            {
+                CourseName = (string)g.Subject,
+                AssessmentName = "Assessment", // Placeholder - to be replaced with actual assessment names
+                Score = (int)g.Percentage,
+                MaxScore = 100,
+                Grade = (string)g.Grade,
+                CompletedAt = DateTime.Now.AddDays(-Random.Shared.Next(1, 30))
+            }).ToList();
+
+            // Convert object list to ActivityItem list
+            var activityData = await UserRepository.GetStudentRecentActivityAsync(StudentId.Value);
+            recentActivity = activityData?.Cast<dynamic>().Select(a => new ActivityItem
+            {
+                Type = "Activity",
+                Title = (string)a.Activity,
+                Description = "Recent activity",
+                Date = (DateTime)a.Date
+            }).ToList();
+
+            // Convert object list to DeadlineItem list
+            var deadlineData = await UserRepository.GetStudentUpcomingDeadlinesAsync(StudentId.Value);
+            upcomingDeadlines = deadlineData?.Cast<dynamic>().Select(d => new DeadlineItem
+            {
+                CourseName = (string)d.Course,
+                Title = (string)d.Task,
+                DueDate = (DateTime)d.DueDate
+            }).ToList();
+
+            // Convert object to AttendanceSummary
+            var attendanceData = await UserRepository.GetStudentAttendanceSummaryAsync(StudentId.Value);
+            if (attendanceData != null)
+            {
+                dynamic attendance = attendanceData;
+                attendanceSummary = new AttendanceSummary
+                {
+                    TotalSessions = (int)attendance.TotalDays,
+                    PresentSessions = (int)attendance.PresentDays,
+                    AbsentSessions = (int)attendance.AbsentDays,
+                    AttendanceRate = (int)attendance.AttendanceRate
+                };
+            }
+
+            // Calculate stats
+            if (studentCourses != null)
+            {
+                completedCourses = studentCourses.Count(c => c.IsCompleted);
+                overallProgress = studentCourses.Any()
+                ? (int)studentCourses.Average(c => c.ProgressPercentage)
+                : 0;
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading student details: {ex.Message}");
+        }
+    }
+
+    private void ViewChildDashboard(string childId)
+    {
+        Navigation.NavigateTo($"/parent/dashboard/{childId}");
+    }
+
+    private void BackToChildren()
+    {
+        Navigation.NavigateTo("/parent");
+    }
+
+    private void SetActiveTab(string tab)
+    {
+        activeTab = tab;
+    }
+
+    private string GetStudentAvatar(UserModel student)
+    {
+        return !string.IsNullOrEmpty(student.ProfilePictureUrl)
+        ? student.ProfilePictureUrl
+        : $"https://ui-avatars.com/api/?name={student.FirstName}+{student.LastName}&background=random";
+    }
+
+    private int GetChildCourseCount(int childId)
+    {
+        // This would be loaded from a service in a real implementation
+        return Random.Shared.Next(3, 8);
+    }
+
+    private int GetChildAttendanceRate(int childId)
+    {
+        // This would be loaded from a service in a real implementation
+        return Random.Shared.Next(85, 100);
+    }
+
+    private string GetActivityIcon(string activityType)
+    {
+        return activityType switch
+        {
+            "Course" => "fa-book",
+            "Assessment" => "fa-clipboard-check",
+            "Assignment" => "fa-file-text",
+            "Forum" => "fa-comments",
+            _ => "fa-circle"
+        };
+    }
+
+    private string GetGradeClass(string grade)
+    {
+        return grade switch
+        {
+            "A" or "A+" or "A-" => "grade-a",
+            "B" or "B+" or "B-" => "grade-b",
+            "C" or "C+" or "C-" => "grade-c",
+            "D" or "D+" or "D-" => "grade-d",
+            "F" => "grade-f",
+            _ => "grade-default"
+        };
+    }
+
+    private Color GetGradeColor(string grade)
+    {
+        return grade switch
+        {
+            "A" or "A+" or "A-" => Color.Success,
+            "B" or "B+" or "B-" => Color.Primary,
+            "C" or "C+" or "C-" => Color.Warning,
+            "D" or "D+" or "D-" => Color.Error,
+            "F" => Color.Error,
+            _ => Color.Default
+        };
+    }
+
+    private Color GetAttendanceColor(string status)
+    {
+        return status switch
+        {
+            "Present" => Color.Success,
+            "Absent" => Color.Error,
+            "Late" => Color.Warning,
+            "Excused" => Color.Info,
+            _ => Color.Default
+        };
+    }
+
+    // Helper classes for displaying data
+    public class StudentCourseProgress
+    {
+        public int Id { get; set; }
+        public string Title { get; set; } = "";
+        public string InstructorName { get; set; } = "";
+        public int ProgressPercentage { get; set; }
+        public int CompletedLessons { get; set; }
+        public int TotalLessons { get; set; }
+        public bool IsCompleted { get; set; }
+        public DateTime? LastAccessedAt { get; set; }
+    }
+
+    public class StudentGrade
+    {
+        public string CourseName { get; set; } = "";
+        public string AssessmentName { get; set; } = "";
+        public int Score { get; set; }
+        public int MaxScore { get; set; }
+        public string Grade { get; set; } = "";
+        public DateTime? CompletedAt { get; set; }
+    }
+
+    public class ActivityItem
+    {
+        public string Type { get; set; } = "";
+        public string Title { get; set; } = "";
+        public string Description { get; set; } = "";
+        public DateTime Date { get; set; }
+    }
+
+    public class DeadlineItem
+    {
+        public string CourseName { get; set; } = "";
+        public string Title { get; set; } = "";
+        public DateTime DueDate { get; set; }
+    }
+
+    public class AttendanceSummary
+    {
+        public int TotalSessions { get; set; }
+        public int PresentSessions { get; set; }
+        public int AbsentSessions { get; set; }
+        public int AttendanceRate { get; set; }
+    }
+}

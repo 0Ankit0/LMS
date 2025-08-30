@@ -55,8 +55,7 @@
                             <MudStack AlignItems="AlignItems.Center">
                                 <div class="relative">
                                     <MudAvatar Image="@GetAvatarUrl(currentUserRank.UserId)" Alt="@currentUserRank.UserName"
-                                        Class="border-4 border-white dark:border-gray-900 shadow-lg"
-                                        Style="width: 80px; height: 80px;" />
+                                        Class="border-4 border-white dark:border-gray-900 shadow-lg w-20 h-20" />
                                     <MudChip T="string" Color="Color.Warning" Class="absolute -top-2 -right-2 rounded-full">
                                         #@currentUserRank.Rank
                                     </MudChip>
@@ -114,8 +113,7 @@
                             <MudStack AlignItems="AlignItems.Center" Spacing="3">
                                 <div class="relative">
                                     <MudAvatar Image="@GetAvatarUrl(topRanks[1].UserId)" Alt="@topRanks[1].UserName"
-                                        Class="border-4 border-gray-400 dark:border-gray-700 shadow-lg"
-                                        Style="width: 80px; height: 80px;" />
+                                        Class="border-4 border-gray-400 dark:border-gray-700 shadow-lg w-20 h-20" />
                                     <MudChip T="string" Color="Color.Secondary"
                                         Class="absolute -top-2 -right-2 rounded-full" Icon="@Icons.Material.Filled.EmojiEvents">
                                         2
@@ -131,8 +129,7 @@
                             <MudStack AlignItems="AlignItems.Center" Spacing="3">
                                 <div class="relative">
                                     <MudAvatar Image="@GetAvatarUrl(topRanks[0].UserId)" Alt="@topRanks[0].UserName"
-                                        Class="border-4 border-yellow-400 dark:border-yellow-600 shadow-lg"
-                                        Style="width: 100px; height: 100px;" />
+                                        Class="border-4 border-yellow-400 dark:border-yellow-600 shadow-lg w-24 h-24" />
                                     <MudChip T="string" Color="Color.Warning"
                                         Class="absolute -top-2 -right-2 rounded-full" Icon="@Icons.Material.Filled.EmojiEvents">
                                         1
@@ -152,8 +149,7 @@
                             <MudStack AlignItems="AlignItems.Center" Spacing="3">
                                 <div class="relative">
                                     <MudAvatar Image="@GetAvatarUrl(topRanks[2].UserId)" Alt="@topRanks[2].UserName"
-                                        Class="border-4 border-red-400 dark:border-red-700 shadow-lg"
-                                        Style="width: 80px; height: 80px;" />
+                                        Class="border-4 border-red-400 dark:border-red-700 shadow-lg w-20 h-20" />
                                     <MudChip T="string" Color="Color.Error"
                                         Class="absolute -top-2 -right-2 rounded-full" Icon="@Icons.Material.Filled.EmojiEvents">
                                         3
@@ -221,7 +217,7 @@
                             <MudTd DataLabel="User">
                                 <MudStack Row Spacing="3" AlignItems="AlignItems.Center">
                                     <MudAvatar Image="@GetAvatarUrl(context.UserId)" Alt="@context.UserName"
-                                        Style="width: 40px; height: 40px;" />
+                                        Class="w-10 h-10" />
                                     <MudStack>
                                         <MudText Typo="Typo.body1" Class="font-bold">@context.UserName</MudText>
                                         <MudText Typo="Typo.caption" Class="text-gray-400">@context.UserName</MudText>

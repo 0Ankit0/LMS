@@ -144,7 +144,7 @@
         }
         catch (Exception ex)
         {
-            // Log error and use mock data
+            // Log error and show empty state
             Snackbar.Add($"Error loading announcements: {ex.Message}", Severity.Error);
             ApplyFilters();
         }

@@ -1,0 +1,593 @@
+@page "/apply"
+@page "/admissions"
+@using LMS.Data.DTOs.UserManagement
+@using LMS.Web.Repositories
+@inject IAdmissionsRepository AdmissionsRepository
+@inject IFileRepository FileRepository
+@inject NavigationManager Navigation
+@inject IJSRuntime JS
+@attribute [Authorize]
+@rendermode InteractiveServer
+
+<PageTitle>Apply for Admission</PageTitle>
+
+<div class="max-w-4xl mx-auto p-8">
+    <div class="text-center mb-12">
+        <h1 class="text-4xl font-bold text-gray-900 mb-2">Apply for Admission</h1>
+        <p class="text-gray-600">Join our learning community by completing your application below</p>
+    </div>
+
+    @if (showSuccess)
+    {
+        <div class="bg-green-100 border border-green-400 text-green-700 px-6 py-4 rounded-lg mb-6">
+            <i class="fas fa-check-circle mr-2"></i>
+            <strong>Application Submitted Successfully!</strong>
+            <p class="mt-2">Thank you for your application. We will review it and get back to you within 5-7 business days.</p>
+        </div>
+    }
+    else if (myApplication != null && myApplication.Status != "Draft")
+    {
+        <!-- Existing Application Status -->
+        <div class="mb-8">
+            <div class="bg-white border border-gray-200 rounded-lg p-6 shadow-sm">
+                <h3 class="text-xl font-semibold text-gray-900 mb-4">Your Application Status</h3>
+                <div class="mb-4">
+                    <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium 
+                        @(myApplication.Status == "Accepted" ? "bg-green-100 text-green-800" : 
+                          myApplication.Status == "Rejected" ? "bg-red-100 text-red-800" : 
+                          myApplication.Status == "UnderReview" ? "bg-yellow-100 text-yellow-800" : 
+                          "bg-blue-100 text-blue-800")">
+                        @myApplication.Status
+                    </span>
+                    <p class="text-gray-600 mt-2">Submitted on @myApplication.SubmittedAt?.ToString("MMMM dd, yyyy")</p>
+                </div>
+                
+                @if (!string.IsNullOrEmpty(myApplication.ReviewerNotes))
+                {
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <h5 class="font-medium text-gray-900 mb-2">Notes from Admissions Office:</h5>
+                        <p class="text-gray-700">@myApplication.ReviewerNotes</p>
+                    </div>
+                }
+                
+                <div class="flex flex-wrap gap-3 mt-6">
+                    <button class="px-4 py-2 border border-blue-600 text-blue-600 rounded-lg hover:bg-blue-50 transition-colors" @onclick="EditApplication">
+                        <i class="fas fa-edit mr-2"></i> Edit Application
+                    </button>
+                    <button class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors" @onclick="ViewFullApplication">
+                        <i class="fas fa-eye mr-2"></i> View Full Application
+                    </button>
+                </div>
+            </div>
+        </div>
+    }
+    else
+    {
+        <!-- Application Form -->
+        <div class="bg-white rounded-lg shadow-sm">
+            <EditForm Model="applicationModel" OnValidSubmit="SubmitApplication">
+                <DataAnnotationsValidator />
+
+                <!-- Progress Indicator -->
+                <div class="flex items-center justify-between mb-8 relative">
+                    <!-- Progress Line -->
+                    <div class="absolute top-6 left-0 right-0 h-0.5 bg-gray-200 z-0"></div>
+                    <div class="absolute top-6 left-0 h-0.5 bg-blue-600 z-10 transition-all duration-300" style="width: @((currentStep - 1) * 25)%"></div>
+                    
+                    <div class="flex items-center z-20 @(currentStep >= 1 ? "text-blue-600" : "text-gray-400")">
+                        <div class="w-12 h-12 rounded-full @(currentStep >= 1 ? "bg-blue-600 text-white" : "bg-gray-200 text-gray-500") flex items-center justify-center font-semibold">1</div>
+                        <div class="ml-2 text-sm font-medium">Personal Info</div>
+                    </div>
+                    <div class="flex items-center z-20 @(currentStep >= 2 ? "text-blue-600" : "text-gray-400")">
+                        <div class="w-12 h-12 rounded-full @(currentStep >= 2 ? "bg-blue-600 text-white" : "bg-gray-200 text-gray-500") flex items-center justify-center font-semibold">2</div>
+                        <div class="ml-2 text-sm font-medium">Academic History</div>
+                    </div>
+                    <div class="flex items-center z-20 @(currentStep >= 3 ? "text-blue-600" : "text-gray-400")">
+                        <div class="w-12 h-12 rounded-full @(currentStep >= 3 ? "bg-blue-600 text-white" : "bg-gray-200 text-gray-500") flex items-center justify-center font-semibold">3</div>
+                        <div class="ml-2 text-sm font-medium">Program Selection</div>
+                    </div>
+                    <div class="flex items-center z-20 @(currentStep >= 4 ? "text-blue-600" : "text-gray-400")">
+                        <div class="w-12 h-12 rounded-full @(currentStep >= 4 ? "bg-blue-600 text-white" : "bg-gray-200 text-gray-500") flex items-center justify-center font-semibold">4</div>
+                        <div class="ml-2 text-sm font-medium">Documents</div>
+                    </div>
+                    <div class="flex items-center z-20 @(currentStep >= 5 ? "text-blue-600" : "text-gray-400")">
+                        <div class="w-12 h-12 rounded-full @(currentStep >= 5 ? "bg-blue-600 text-white" : "bg-gray-200 text-gray-500") flex items-center justify-center font-semibold">5</div>
+                        <div class="ml-2 text-sm font-medium">Review & Submit</div>
+                    </div>
+                </div>
+
+                <!-- Step 1: Personal Information -->
+                @if (currentStep == 1)
+                {
+                    <div class="p-6">
+                        <h3 class="text-xl font-semibold text-gray-900 mb-6">Personal Information</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div class="form-group">
+                                <label>First Name *</label>
+                                <InputText @bind-Value="applicationModel.FirstName" class="form-control" />
+                                <ValidationMessage For="() => applicationModel.FirstName" />
+                            </div>
+                            <div class="form-group">
+                                <label>Last Name *</label>
+                                <InputText @bind-Value="applicationModel.LastName" class="form-control" />
+                                <ValidationMessage For="() => applicationModel.LastName" />
+                            </div>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Email Address *</label>
+                                <InputText @bind-Value="applicationModel.Email" class="form-control" type="email" />
+                                <ValidationMessage For="() => applicationModel.Email" />
+                            </div>
+                            <div class="form-group">
+                                <label>Phone Number</label>
+                                <InputText @bind-Value="applicationModel.PhoneNumber" class="form-control" />
+                            </div>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Date of Birth</label>
+                                <InputDate @bind-Value="applicationModel.DateOfBirth" class="form-control" />
+                            </div>
+                            <div class="form-group">
+                                <label>Gender</label>
+                                <InputSelect @bind-Value="applicationModel.Gender" class="form-control">
+                                    <option value="">Select Gender</option>
+                                    <option value="Male">Male</option>
+                                    <option value="Female">Female</option>
+                                    <option value="Other">Other</option>
+                                    <option value="PreferNotToSay">Prefer not to say</option>
+                                </InputSelect>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Address</label>
+                            <InputTextArea @bind-Value="applicationModel.Address" class="form-control" rows="3" />
+                        </div>
+                    </div>
+                }
+
+                <!-- Step 2: Academic History -->
+                @if (currentStep == 2)
+                {
+                    <div class="form-step active">
+                        <h3>Academic History</h3>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Highest Education Level *</label>
+                                <InputSelect @bind-Value="applicationModel.EducationLevel" class="form-control">
+                                    <option value="">Select Education Level</option>
+                                    <option value="HighSchool">High School</option>
+                                    <option value="Associate">Associate Degree</option>
+                                    <option value="Bachelor">Bachelor's Degree</option>
+                                    <option value="Master">Master's Degree</option>
+                                    <option value="Doctorate">Doctorate</option>
+                                </InputSelect>
+                                <ValidationMessage For="() => applicationModel.EducationLevel" />
+                            </div>
+                            <div class="form-group">
+                                <label>GPA (if applicable)</label>
+                                <InputNumber @bind-Value="applicationModel.GPA" class="form-control" step="0.01" min="0" max="4" />
+                            </div>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Previous Institution</label>
+                                <InputText @bind-Value="applicationModel.PreviousInstitution" class="form-control" />
+                            </div>
+                            <div class="form-group">
+                                <label>Field of Study</label>
+                                <InputText @bind-Value="applicationModel.FieldOfStudy" class="form-control" />
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Graduation Year</label>
+                            <InputNumber @bind-Value="applicationModel.GraduationYear" class="form-control" min="1950" max="2030" />
+                        </div>
+                    </div>
+                }
+
+                <!-- Step 3: Program Selection -->
+                @if (currentStep == 3)
+                {
+                    <div class="form-step active">
+                        <h3>Program Selection</h3>
+                        
+                        @if (availablePrograms?.Any() == true)
+                        {
+                            <div class="programs-grid">
+                                @foreach (var program in availablePrograms)
+                                {
+                                    <div class="program-card @(applicationModel.PreferredProgram == program.Id ? "selected" : "")"
+                                         @onclick="() => SelectProgram(program.Id)">
+                                        <h5>@program.Name</h5>
+                                        <p>@program.Description</p>
+                                        <div class="program-details">
+                                            <span class="program-department">@program.Department</span>
+                                            <span class="program-duration">@program.DurationMonths months</span>
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                        }
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Intended Start Date *</label>
+                                <InputSelect @bind-Value="applicationModel.IntendedStartDate" class="form-control">
+                                    <option value="">Select Start Date</option>
+                                    <option value="Fall2024">Fall 2024</option>
+                                    <option value="Spring2025">Spring 2025</option>
+                                    <option value="Summer2025">Summer 2025</option>
+                                    <option value="Fall2025">Fall 2025</option>
+                                </InputSelect>
+                                <ValidationMessage For="() => applicationModel.IntendedStartDate" />
+                            </div>
+                            <div class="form-group">
+                                <label>Study Mode *</label>
+                                <InputSelect @bind-Value="applicationModel.StudyMode" class="form-control">
+                                    <option value="">Select Study Mode</option>
+                                    <option value="FullTime">Full-time</option>
+                                    <option value="PartTime">Part-time</option>
+                                    <option value="Online">Online</option>
+                                    <option value="Hybrid">Hybrid</option>
+                                </InputSelect>
+                                <ValidationMessage For="() => applicationModel.StudyMode" />
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Personal Statement</label>
+                            <small class="form-text text-muted">Tell us about yourself, your goals, and why you want to join our program.</small>
+                            <InputTextArea @bind-Value="applicationModel.PersonalStatement" class="form-control" rows="6" 
+                                           placeholder="Share your story, motivations, and aspirations..." />
+                        </div>
+                    </div>
+                }
+
+                <!-- Step 4: Documents -->
+                @if (currentStep == 4)
+                {
+                    <div class="form-step">
+                        <h3>Required Documents</h3>
+                        <p class="text-muted">Please upload the following documents to complete your application:</p>
+                        
+                        <div class="document-upload-section">
+                            <div class="document-item">
+                                <div class="document-info">
+                                    <h5>Official Transcript *</h5>
+                                    <p>Upload your official academic transcript</p>
+                                </div>
+                                <div class="document-upload">
+                                    <InputFile OnChange="@((e) => OnDocumentFileSelected(e, "Transcript"))" 
+                                               class="form-control" accept=".pdf,.doc,.docx" />
+                                    @if (uploadedDocuments.ContainsKey("Transcript"))
+                                    {
+                                        <div class="uploaded-file">
+                                            <i class="fas fa-check-circle text-success"></i>
+                                            @uploadedDocuments["Transcript"].OriginalFileName
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                            
+                            <div class="document-item">
+                                <div class="document-info">
+                                    <h5>Resume/CV</h5>
+                                    <p>Upload your current resume or curriculum vitae</p>
+                                </div>
+                                <div class="document-upload">
+                                    <InputFile OnChange="@((e) => OnDocumentFileSelected(e, "Resume"))" 
+                                               class="form-control" accept=".pdf,.doc,.docx" />
+                                    @if (uploadedDocuments.ContainsKey("Resume"))
+                                    {
+                                        <div class="uploaded-file">
+                                            <i class="fas fa-check-circle text-success"></i>
+                                            @uploadedDocuments["Resume"].OriginalFileName
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                            
+                            <div class="document-item">
+                                <div class="document-info">
+                                    <h5>Letter of Recommendation</h5>
+                                    <p>Upload at least one letter of recommendation</p>
+                                </div>
+                                <div class="document-upload">
+                                    <InputFile OnChange="@((e) => OnDocumentFileSelected(e, "Recommendation"))" 
+                                               class="form-control" accept=".pdf,.doc,.docx" />
+                                    @if (uploadedDocuments.ContainsKey("Recommendation"))
+                                    {
+                                        <div class="uploaded-file">
+                                            <i class="fas fa-check-circle text-success"></i>
+                                            @uploadedDocuments["Recommendation"].OriginalFileName
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                }
+
+                <!-- Step 5: Review & Submit -->
+                @if (currentStep == 5)
+                {
+                    <div class="form-step active">
+                        <h3>Review Your Application</h3>
+                        <p class="text-muted">Please review all information before submitting your application.</p>
+                        
+                        <div class="review-section">
+                            <div class="review-card">
+                                <h5>Personal Information</h5>
+                                <div class="review-grid">
+                                    <div><strong>Name:</strong> @applicationModel.FirstName @applicationModel.LastName</div>
+                                    <div><strong>Email:</strong> @applicationModel.Email</div>
+                                    <div><strong>Phone:</strong> @applicationModel.PhoneNumber</div>
+                                    <div><strong>Date of Birth:</strong> @applicationModel.DateOfBirth?.ToString("MM/dd/yyyy")</div>
+                                </div>
+                            </div>
+                            
+                            <div class="review-card">
+                                <h5>Academic Background</h5>
+                                <div class="review-grid">
+                                    <div><strong>Education:</strong> @applicationModel.EducationLevel</div>
+                                    <div><strong>GPA:</strong> @applicationModel.GPA</div>
+                                    <div><strong>Institution:</strong> @applicationModel.PreviousInstitution</div>
+                                    <div><strong>Field:</strong> @applicationModel.FieldOfStudy</div>
+                                </div>
+                            </div>
+                            
+                            <div class="review-card">
+                                <h5>Program Selection</h5>
+                                <div class="review-grid">
+                                    <div><strong>Program:</strong> @GetProgramName(applicationModel.PreferredProgram)</div>
+                                    <div><strong>Start Date:</strong> @applicationModel.IntendedStartDate</div>
+                                    <div><strong>Study Mode:</strong> @applicationModel.StudyMode</div>
+                                </div>
+                            </div>
+                            
+                            <div class="review-card">
+                                <h5>Uploaded Documents</h5>
+                                <div class="documents-review">
+                                    @if (uploadedDocuments.Any())
+                                    {
+                                        @foreach (var doc in uploadedDocuments)
+                                        {
+                                            <div class="document-review-item">
+                                                <i class="fas fa-file-alt"></i>
+                                                <span>@doc.Key: @doc.Value.OriginalFileName</span>
+                                            </div>
+                                        }
+                                    }
+                                    else
+                                    {
+                                        <p class="text-muted">No documents uploaded</p>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="terms-section">
+                            <label class="checkbox-container">
+                                <InputCheckbox @bind-Value="agreeToTerms" />
+                                <span class="checkmark"></span>
+                                I agree to the <a href="/terms" target="_blank">Terms and Conditions</a> and 
+                                <a href="/privacy" target="_blank">Privacy Policy</a>
+                            </label>
+                        </div>
+                    </div>
+                }
+
+                <!-- Navigation Buttons -->
+                <div class="form-navigation">
+                    @if (currentStep > 1)
+                    {
+                        <button type="button" class="btn btn-outline-secondary" @onclick="PreviousStep">
+                            <i class="fas fa-arrow-left"></i> Previous
+                        </button>
+                    }
+                    
+                    @if (currentStep < 5)
+                    {
+                        <button type="button" class="btn btn-primary" @onclick="NextStep">
+                            Next <i class="fas fa-arrow-right"></i>
+                        </button>
+                    }
+                    else
+                    {
+                        <button type="submit" class="btn btn-success" disabled="@(!agreeToTerms || isSubmitting)">
+                            @if (isSubmitting)
+                            {
+                                <span class="spinner-border spinner-border-sm" role="status"></span>
+                                <span>Submitting...</span>
+                            }
+                            else
+                            {
+                                <i class="fas fa-paper-plane"></i>
+                                <span>Submit Application</span>
+                            }
+                        </button>
+                    }
+                </div>
+            </EditForm>
+        </div>
+    }
+</div>
+
+@code {
+    private AdmissionApplicationDto applicationModel = new();
+    private AdmissionApplicationDto? myApplication;
+    private List<ProgramDto>? availablePrograms;
+    private Dictionary<string, ApplicationDocumentDto> uploadedDocuments = new();
+    
+    private int currentStep = 1;
+    private bool agreeToTerms = false;
+    private bool isSubmitting = false;
+    private bool showSuccess = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            await LoadPrograms();
+            await LoadExistingApplication();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading data: {ex.Message}");
+        }
+    }
+
+    private async Task LoadPrograms()
+    {
+        try
+        {
+            availablePrograms = await AdmissionsRepository.GetAvailableProgramsAsync();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading programs: {ex.Message}");
+        }
+    }
+
+    private async Task LoadExistingApplication()
+    {
+        try
+        {
+            // This would need to be implemented in the repository
+            // myApplication = await AdmissionsRepository.GetMyApplicationAsync();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading application: {ex.Message}");
+        }
+    }
+
+    private void NextStep()
+    {
+        if (currentStep < 5)
+        {
+            currentStep++;
+        }
+    }
+
+    private void PreviousStep()
+    {
+        if (currentStep > 1)
+        {
+            currentStep--;
+        }
+    }
+
+    private void SelectProgram(string programId)
+    {
+        applicationModel.PreferredProgram = programId;
+    }
+
+    private async Task OnDocumentFileSelected(InputFileChangeEventArgs e, string documentType)
+    {
+        var file = e.File;
+        if (file != null)
+        {
+            try
+            {
+                using var stream = file.OpenReadStream();
+                var result = await FileRepository.UploadFileAsync(stream, file.Name, file.ContentType, "admissions");
+                
+                if (result.Success)
+                {
+                    uploadedDocuments[documentType] = new ApplicationDocumentDto
+                    {
+                        OriginalFileName = file.Name,
+                        FilePath = result.FilePath ?? "",
+                        DocumentType = documentType
+                    };
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error uploading file: {ex.Message}");
+            }
+        }
+    }
+
+    private async Task SubmitApplication()
+    {
+        if (!agreeToTerms) return;
+
+        isSubmitting = true;
+        try
+        {
+            applicationModel.Status = "Submitted";
+            applicationModel.SubmittedAt = DateTime.UtcNow;
+            
+            var applicationId = await AdmissionsRepository.SubmitApplicationAsync(applicationModel);
+            
+            // Upload documents
+            foreach (var doc in uploadedDocuments)
+            {
+                await AdmissionsRepository.UploadDocumentAsync(applicationId, doc.Value.OriginalFileName, 
+                    doc.Value.FilePath, doc.Value.DocumentType);
+            }
+            
+            showSuccess = true;
+            currentStep = 1;
+            applicationModel = new();
+            uploadedDocuments.Clear();
+            agreeToTerms = false;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error submitting application: {ex.Message}");
+            await JS.InvokeVoidAsync("alert", "There was an error submitting your application. Please try again.");
+        }
+        finally
+        {
+            isSubmitting = false;
+        }
+    }
+
+    private void EditApplication()
+    {
+        if (myApplication != null)
+        {
+            applicationModel = myApplication;
+            myApplication = null;
+            currentStep = 1;
+        }
+    }
+
+    private void ViewFullApplication()
+    {
+        // Navigate to a detailed view
+        Navigation.NavigateTo("/application/view");
+    }
+
+    private string GetProgramName(string? programId)
+    {
+        if (string.IsNullOrEmpty(programId) || availablePrograms == null)
+            return "Not selected";
+            
+        var program = availablePrograms.FirstOrDefault(p => p.Id == programId);
+        return program?.Name ?? "Unknown Program";
+    }
+
+    private string GetStatusClass(string status)
+    {
+        return status switch
+        {
+            "Submitted" => "submitted",
+            "UnderReview" => "under-review",
+            "Accepted" => "accepted",
+            "Rejected" => "rejected",
+            "Waitlisted" => "waitlisted",
+            _ => "draft"
+        };
+    }
+}

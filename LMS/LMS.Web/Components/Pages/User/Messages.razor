@@ -106,7 +106,7 @@
             <MudPaper Elevation="2" Class="rounded-2xl shadow-lg bg-white dark:bg-gray-900 p-6 h-full min-h-[400px] flex flex-col">
                     @if (selectedMessage != null)
                     {
-                        <MudChat Style="height: 100%;" Class="flex flex-col gap-4">
+                        <MudChat Class="h-full flex flex-col gap-4">
                             <MudChatBubble Color="@(selectedMessage.FromUserId == currentUserId ? Color.Primary : Color.Secondary)">
                                 <div class="flex items-center mb-2">
                                     <MudAvatar Color="Color.Dark" Variant="Variant.Outlined" Class="mr-2">

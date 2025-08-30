@@ -17,9 +17,9 @@
             <div class="flex flex-wrap gap-2 items-center mt-2">
                 <MudText Typo="Typo.subtitle2" Class="text-xs text-gray-400">@Course.Level</MudText>
                 <MudChip T="string" Color="Color.Primary" Size="Size.Small">@Course.Categories.FirstOrDefault()</MudChip>
-                @if (Course.StartDate != default)
+                @if (Course.StartDate.HasValue)
                 {
-                    <MudChip T="string" Color="Color.Dark" Variant="Variant.Outlined">@Course.StartDate.ToString("MMM dd, yyyy")</MudChip>
+                    <MudChip T="string" Color="Color.Dark" Variant="Variant.Outlined">@Course.StartDate.Value.ToString("MMM dd, yyyy")</MudChip>
                 }
                 <MudText Typo="Typo.caption" Class="text-xs text-gray-400">@FormatDuration(Course.EstimatedDuration)</MudText>
             </div>
@@ -39,10 +39,14 @@
             OnClick.InvokeAsync(Course);
     }
 
-    private string FormatDuration(TimeSpan duration)
+    private string FormatDuration(int? durationMinutes)
     {
-        var hours = (int)duration.TotalHours;
-        var minutes = duration.Minutes;
+        if (!durationMinutes.HasValue)
+            return "Duration not set";
+            
+        var totalMinutes = durationMinutes.Value;
+        var hours = totalMinutes / 60;
+        var minutes = totalMinutes % 60;
 
         if (hours > 0)
         {

@@ -350,20 +350,39 @@
                 }
                 catch
                 {
-                    // If repository call fails, load dummy data
-                    LoadDummyData();
+                    // If repository call fails, show empty states
+                    earnedAchievements = new List<UserAchievementModel>();
+                    availableAchievements = new List<AchievementModel>();
+                    leaderboardEntries = new List<LeaderboardEntryModel>();
+                    totalPoints = 0;
+                    earnedCount = 0;
+                    availableCount = 0;
+                    userRank = 0;
                 }
             }
             else
             {
-                // No user ID found, load dummy data
-                LoadDummyData();
+                // No user ID found, show empty states
+                earnedAchievements = new List<UserAchievementModel>();
+                availableAchievements = new List<AchievementModel>();
+                leaderboardEntries = new List<LeaderboardEntryModel>();
+                totalPoints = 0;
+                earnedCount = 0;
+                availableCount = 0;
+                userRank = 0;
             }
         }
         catch (Exception ex)
         {
             Snackbar.Add($"Error loading achievements: {ex.Message}", Severity.Error);
-            LoadDummyData(); // Fall back to dummy data on exception
+            // Show empty states on exception
+            earnedAchievements = new List<UserAchievementModel>();
+            availableAchievements = new List<AchievementModel>();
+            leaderboardEntries = new List<LeaderboardEntryModel>();
+            totalPoints = 0;
+            earnedCount = 0;
+            availableCount = 0;
+            userRank = 0;
         }
         finally
         {
@@ -376,158 +395,6 @@
     {
         await LoadAchievementData();
         Snackbar.Add("Achievements refreshed successfully", Severity.Success);
-    }
-
-    private void LoadDummyData()
-    {
-        LoadDummyEarnedAchievements();
-        LoadDummyAvailableAchievements();
-        LoadDummyLeaderboardEntries();
-        userRank = 3; // Default dummy rank
-    }
-
-    private void LoadDummyEarnedAchievements()
-    {
-        earnedAchievements = new List<UserAchievementModel>
-        {
-            new UserAchievementModel
-            {
-                Id = 1,
-                UserId = "dummyUser1",
-                UserName = "CurrentUser",
-                AchievementId = 101,
-                AchievementName = "First Course Completed",
-                AchievementDescription = "Successfully completed your first course",
-                AchievementIconUrl = "/images/achievements/course-complete.png",
-                Points = 50,
-                BadgeColor = "#28a745",
-                EarnedAt = DateTime.Now.AddDays(-15)
-            },
-            new UserAchievementModel
-            {
-                Id = 2,
-                UserId = "dummyUser1",
-                UserName = "CurrentUser",
-                AchievementId = 102,
-                AchievementName = "Perfect Score",
-                AchievementDescription = "Achieved 100% on an assessment",
-                AchievementIconUrl = "/images/achievements/perfect-score.png",
-                Points = 100,
-                BadgeColor = "#007bff",
-                EarnedAt = DateTime.Now.AddDays(-7)
-            },
-            new UserAchievementModel
-            {
-                Id = 3,
-                UserId = "dummyUser1",
-                UserName = "CurrentUser",
-                AchievementId = 103,
-                AchievementName = "Streak Master",
-                AchievementDescription = "Logged in for 7 consecutive days",
-                AchievementIconUrl = null,
-                Points = 75,
-                BadgeColor = "#fd7e14",
-                EarnedAt = DateTime.Now.AddDays(-2)
-            }
-        };
-
-        earnedCount = earnedAchievements.Count;
-        totalPoints = earnedAchievements.Sum(a => a.Points);
-    }
-
-    private void LoadDummyAvailableAchievements()
-    {
-        availableAchievements = new List<AchievementModel>
-        {
-            new AchievementModel
-            {
-                Id = 104,
-                Name = "Course Creator",
-                Description = "Create your first course",
-                IconUrl = "/images/achievements/course-creator.png",
-                Points = 150,
-                BadgeColor = "#6f42c1",
-                Type = "Creation",
-                Criteria = new List<LMS.Data.DTOs.AchievementCriteria>
-                {
-                    new LMS.Data.DTOs.AchievementCriteria { Type = LMS.Data.DTOs.CriteriaType.CourseCompletion }
-                },
-                IsActive = true
-            },
-            new AchievementModel
-            {
-                Id = 105,
-                Name = "Community Contributor",
-                Description = "Post 10 helpful comments in discussions",
-                IconUrl = "/images/achievements/contributor.png",
-                Points = 100,
-                BadgeColor = "#20c997",
-                Type = "Community",
-                Criteria = new List<LMS.Data.DTOs.AchievementCriteria>
-                {
-                    new LMS.Data.DTOs.AchievementCriteria { Type = LMS.Data.DTOs.CriteriaType.Participation },
-                    new LMS.Data.DTOs.AchievementCriteria { Type = LMS.Data.DTOs.CriteriaType.Social }
-                },
-                IsActive = true
-            },
-            new AchievementModel
-            {
-                Id = 106,
-                Name = "Advanced Learner",
-                Description = "Complete 5 advanced courses",
-                IconUrl = null,
-                Points = 200,
-                BadgeColor = "#dc3545",
-                Type = "Learning",
-                Criteria = new List<LMS.Data.DTOs.AchievementCriteria>
-                {
-                    new LMS.Data.DTOs.AchievementCriteria { Type = LMS.Data.DTOs.CriteriaType.CourseCompletion }
-                },
-                IsActive = true
-            }
-        };
-
-        availableCount = availableAchievements.Count;
-    }
-
-    private void LoadDummyLeaderboardEntries()
-    {
-        leaderboardEntries = new List<LeaderboardEntryModel>
-        {
-            new LeaderboardEntryModel
-            {
-                Rank = 1,
-                UserId = "user123",
-                UserName = "LearningMaster",
-                UserEmail = "master@example.com",
-                ProfilePictureUrl = "/images/profiles/user1.jpg",
-                TotalPoints = 850,
-                AchievementCount = 12,
-                LastUpdated = DateTime.Now.AddDays(-1)
-            },
-            new LeaderboardEntryModel
-            {
-                Rank = 2,
-                UserId = "user456",
-                UserName = "KnowledgeSeeker",
-                UserEmail = "seeker@example.com",
-                ProfilePictureUrl = "/images/profiles/user2.jpg",
-                TotalPoints = 720,
-                AchievementCount = 9,
-                LastUpdated = DateTime.Now.AddDays(-3)
-            },
-            new LeaderboardEntryModel
-            {
-                Rank = 3,
-                UserId = "dummyUser1", // Current user
-                UserName = "CurrentUser",
-                UserEmail = "current@example.com",
-                ProfilePictureUrl = null,
-                TotalPoints = 225,
-                AchievementCount = 3,
-                LastUpdated = DateTime.Now.AddDays(-2)
-            }
-        };
     }
 
     private MudBlazor.Color GetRankIconColor(int rank) => rank switch

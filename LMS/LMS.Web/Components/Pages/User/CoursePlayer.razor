@@ -1,0 +1,454 @@
+@page "/course-player/{courseId:int}"
+@page "/course-player/{courseId:int}/lesson/{lessonId:int}"
+@using LMS.Data.DTOs
+@using LMS.Data.DTOs.LMS
+@using LMS.Web.Repositories
+@using LMS.Data.DTOs.LMS.Note
+@inject ICourseRepository CourseRepository
+@inject ILessonRepository LessonRepository
+@inject IProgressRepository ProgressRepository
+@inject INoteRepository NoteRepository
+@inject NavigationManager Navigation
+@inject IDialogService DialogService
+@inject ISnackbar Snackbar
+@using Microsoft.AspNetCore.Components.Authorization
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@rendermode InteractiveServer
+
+<PageTitle>Course Player - @courseTitle</PageTitle>
+
+<div class="flex h-screen bg-gray-50">
+    <div class="w-80 bg-white border-r border-gray-200 overflow-y-auto">
+        <MudPaper Elevation="0" Class="p-4 border-b border-gray-200">
+            <MudText Typo="Typo.h6" Class="mb-2 font-semibold">@courseTitle</MudText>
+            <MudProgressLinear Value="@progressPercentage" Color="Color.Success" Class="mb-2" />
+            <MudText Typo="Typo.caption" Class="text-gray-500">@completedLessons / @totalLessons lessons completed</MudText>
+        </MudPaper>
+        
+        <div class="p-4">
+            @if (courseModules != null)
+            {
+                @foreach (var module in courseModules)
+                {
+                    <div class="mb-6">
+                        <MudText Typo="Typo.subtitle2" Class="mb-2 pb-2 border-b border-gray-100 text-gray-700 font-semibold">@module.Title</MudText>
+                        @if (module.Lessons != null)
+                        {
+                            @foreach (var lesson in module.Lessons)
+                            {
+                                <MudButton Variant="Variant.Text" 
+                                          StartIcon="@GetLessonIcon(lesson)"
+                                          EndIcon="@(IsLessonCompleted(lesson.Id) ? Icons.Material.Filled.CheckCircle : "")"
+                                          Class="@($"w-full justify-start mb-1 {(currentLessonId == lesson.Id ? "bg-blue-50 text-blue-600 font-medium" : "")} {(IsLessonCompleted(lesson.Id) ? "text-green-600" : "")}")"
+                                          Color="@(currentLessonId == lesson.Id ? Color.Primary : Color.Default)"
+                                          OnClick="() => NavigateToLesson(lesson.Id)">
+                                    @lesson.Title
+                                </MudButton>
+                            }
+                        }
+                        @if (module.Assessments != null)
+                        {
+                            @foreach (var assessment in module.Assessments)
+                            {
+                                <MudButton Variant="Variant.Text" 
+                                          StartIcon="@Icons.Material.Filled.Quiz"
+                                          Class="w-full justify-start mb-1 text-gray-600">
+                                    @assessment.Title
+                                </MudButton>
+                            }
+                        }
+                    </div>
+                }
+            }
+        </div>
+    </div>
+    
+    <div class="flex-1 overflow-y-auto p-8">
+        @if (currentLesson != null)
+        {
+            <div class="flex justify-between items-start mb-8 pb-4 border-b border-gray-200">
+                <MudText Typo="Typo.h4" Class="font-semibold text-gray-900">@currentLesson.Title</MudText>
+                <div class="flex gap-2">
+                    @if (previousLessonId.HasValue)
+                    {
+                        <MudButton Variant="Variant.Outlined" 
+                                  StartIcon="@Icons.Material.Filled.ChevronLeft"
+                                  OnClick="() => NavigateToLesson(previousLessonId.Value)">
+                            Previous
+                        </MudButton>
+                    }
+                    @if (!IsLessonCompleted(currentLesson.Id))
+                    {
+                        <MudButton Variant="Variant.Filled" 
+                                  Color="Color.Success"
+                                  OnClick="MarkLessonComplete">
+                            Mark as Complete
+                        </MudButton>
+                    }
+                    @if (nextLessonId.HasValue)
+                    {
+                        <MudButton Variant="Variant.Filled" 
+                                  Color="Color.Primary"
+                                  EndIcon="@Icons.Material.Filled.ChevronRight"
+                                  OnClick="() => NavigateToLesson(nextLessonId.Value)">
+                            Next
+                        </MudButton>
+                    }
+                </div>
+            </div>
+            
+            <div class="space-y-8">
+                @if (currentLesson.LessonType == "Video" && !string.IsNullOrEmpty(currentLesson.VideoUrl))
+                {
+                    <div class="relative w-full pb-[56.25%] mb-8 rounded-lg overflow-hidden">
+                        <iframe src="@GetEmbedUrl(currentLesson.VideoUrl)" 
+                               frameborder="0" 
+                               allowfullscreen
+                               class="absolute top-0 left-0 w-full h-full rounded-lg"></iframe>
+                    </div>
+                }
+                
+                @if (!string.IsNullOrEmpty(currentLesson.Content))
+                {
+                    <MudPaper Elevation="1" Class="p-6 leading-relaxed text-gray-700 mb-8">
+                        @((MarkupString)currentLesson.Content)
+                    </MudPaper>
+                }
+                
+                @if (currentLesson.Documents?.Any() == true)
+                {
+                    <MudPaper Elevation="1" Class="p-6 bg-gray-50 mb-8">
+                        <MudText Typo="Typo.h6" Class="mb-4 text-gray-700">Additional Resources</MudText>
+                        <div class="flex flex-wrap gap-2">
+                            @foreach (var document in currentLesson.Documents)
+                            {
+                                <MudButton Variant="Variant.Outlined"
+                                          StartIcon="@Icons.Material.Filled.Download"
+                                          Href="@document.FilePath"
+                                          Target="_blank"
+                                          Class="bg-white">
+                                    @document.OriginalFileName
+                                </MudButton>
+                            }
+                        </div>
+                    </MudPaper>
+                }
+            </div>
+            
+            <MudPaper Elevation="1" Class="p-6 mt-8">
+                <MudText Typo="Typo.h6" Class="mb-4 text-gray-700">My Notes</MudText>
+                @if (lessonNotes?.Any() == true)
+                {
+                    <div class="space-y-4 mb-6">
+                        @foreach (var note in lessonNotes)
+                        {
+                            <MudPaper Elevation="2" Class="p-4 bg-gray-50">
+                                <div class="flex justify-between items-center mb-2">
+                                    <MudText Typo="Typo.subtitle1" Class="font-medium">@note.Title</MudText>
+                                    <div class="flex gap-1">
+                                        <MudIconButton Icon="@Icons.Material.Filled.Edit"
+                                                     Size="Size.Small"
+                                                     Color="Color.Primary"
+                                                     OnClick="() => EditNote(note)" />
+                                        <MudIconButton Icon="@Icons.Material.Filled.Delete"
+                                                     Size="Size.Small"
+                                                     Color="Color.Error"
+                                                     OnClick="() => DeleteNote(note.Id)" />
+                                    </div>
+                                </div>
+                                <MudText Class="mb-2 leading-normal">@note.Content</MudText>
+                                <MudText Typo="Typo.caption" Class="text-gray-500">@note.CreatedAt.ToString("MMM dd, yyyy")</MudText>
+                            </MudPaper>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <MudText Class="text-gray-500 mb-4">No notes for this lesson yet.</MudText>
+                }
+                
+                <MudButton Variant="Variant.Outlined" 
+                          StartIcon="@Icons.Material.Filled.Add"
+                          OnClick="ShowAddNoteDialog">
+                    Add Note
+                </MudButton>
+            </MudPaper>
+        }
+        else
+        {
+            <div class="flex items-center justify-center h-96 text-gray-500">
+                <MudProgressCircular Color="Color.Primary" />
+                <MudText Class="ml-4">Loading lesson...</MudText>
+            </div>
+        }
+    </div>
+</div>
+
+
+
+@code {
+    [Parameter] public int CourseId { get; set; }
+    [Parameter] public int? LessonId { get; set; }
+
+    private string courseTitle = "";
+    private List<ModuleModel>? courseModules;
+    private LessonModel? currentLesson;
+    private int currentLessonId;
+    private List<NoteDTO>? lessonNotes;
+    private HashSet<int> completedLessonIds = new();
+    private int completedLessons = 0;
+    private int totalLessons = 0;
+    private double progressPercentage = 0;
+    private int? previousLessonId;
+    private int? nextLessonId;
+    private string currentUserId = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadCourseData();
+        
+        if (LessonId.HasValue)
+        {
+            currentLessonId = LessonId.Value;
+        }
+        else
+        {
+            // Load first lesson
+            var firstLesson = GetFirstLesson();
+            if (firstLesson != null)
+            {
+                currentLessonId = firstLesson.Id;
+                Navigation.NavigateTo($"/course-player/{CourseId}/lesson/{currentLessonId}", replace: true);
+                return;
+            }
+        }
+        
+        await LoadCurrentLesson();
+        await LoadLessonNotes();
+        CalculateProgress();
+        SetNavigationIds();
+    }
+
+    private async Task GetCurrentUser()
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        currentUserId = authState.User?.FindFirst("sub")?.Value ?? 
+                       authState.User?.FindFirst("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier")?.Value ?? 
+                       "test-user";
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (LessonId.HasValue && currentLessonId != LessonId.Value)
+        {
+            currentLessonId = LessonId.Value;
+            await LoadCurrentLesson();
+            await LoadLessonNotes();
+            SetNavigationIds();
+        }
+    }
+
+    private async Task LoadCourseData()
+    {
+        try
+        {
+            var course = await CourseRepository.GetByIdAsync(CourseId);
+            if (course != null)
+            {
+                courseTitle = course.Title;
+                courseModules = course.Modules?.ToList();
+                
+                // Get user progress
+                var progress = await ProgressRepository.GetUserCourseProgressAsync(CourseId);
+                if (progress != null)
+                {
+                    // Handle dynamic object returned from repository
+                    dynamic progressData = progress;
+                    if (progressData.CompletedLessons != null)
+                    {
+                        // For now, just use the count since we don't have actual lesson IDs
+                        completedLessons = (int)progressData.CompletedLessons;
+                    }
+                }
+                
+                // Calculate totals
+                totalLessons = courseModules?.SelectMany(m => m.Lessons ?? new List<LessonModel>()).Count() ?? 0;
+                completedLessons = completedLessonIds.Count;
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading course data: {ex.Message}");
+        }
+    }
+
+    private async Task LoadCurrentLesson()
+    {
+        try
+        {
+            currentLesson = await LessonRepository.GetByIdAsync(currentLessonId);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading lesson: {ex.Message}");
+        }
+    }
+
+    private async Task LoadLessonNotes()
+    {
+        try
+        {
+            lessonNotes = (await NoteRepository.GetByLessonIdAsync(currentLessonId)).ToList();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading notes: {ex.Message}");
+        }
+    }
+
+    private LessonModel? GetFirstLesson()
+    {
+        return courseModules?.FirstOrDefault()?.Lessons?.FirstOrDefault();
+    }
+
+    private void CalculateProgress()
+    {
+        if (totalLessons > 0)
+        {
+            progressPercentage = (double)completedLessons / totalLessons * 100;
+        }
+    }
+
+    private void SetNavigationIds()
+    {
+        var allLessons = courseModules?.SelectMany(m => m.Lessons ?? new List<LessonModel>()).ToList();
+        if (allLessons != null)
+        {
+            var currentIndex = allLessons.FindIndex(l => l.Id == currentLessonId);
+            if (currentIndex >= 0)
+            {
+                previousLessonId = currentIndex > 0 ? allLessons[currentIndex - 1].Id : null;
+                nextLessonId = currentIndex < allLessons.Count - 1 ? allLessons[currentIndex + 1].Id : null;
+            }
+        }
+    }
+
+    private void NavigateToLesson(int lessonId)
+    {
+        Navigation.NavigateTo($"/course-player/{CourseId}/lesson/{lessonId}");
+    }
+
+    private bool IsLessonCompleted(int lessonId)
+    {
+        return completedLessonIds.Contains(lessonId);
+    }
+
+    private string GetLessonIcon(LessonModel lesson)
+    {
+        return lesson.LessonType switch
+        {
+            "Video" => "fas fa-play-circle",
+            "Text" => "fas fa-file-text",
+            "Quiz" => "fas fa-question-circle",
+            _ => "fas fa-circle"
+        };
+    }
+
+    private string GetEmbedUrl(string videoUrl)
+    {
+        // Convert YouTube URLs to embed format
+        if (videoUrl.Contains("youtube.com/watch?v="))
+        {
+            var videoId = videoUrl.Split("v=")[1].Split("&")[0];
+            return $"https://www.youtube.com/embed/{videoId}";
+        }
+        else if (videoUrl.Contains("youtu.be/"))
+        {
+            var videoId = videoUrl.Split("/").Last();
+            return $"https://www.youtube.com/embed/{videoId}";
+        }
+        
+        return videoUrl; // Return as-is for other video platforms
+    }
+
+    private async Task MarkLessonComplete()
+    {
+        try
+        {
+            await ProgressRepository.MarkLessonCompleteAsync(currentLessonId);
+            completedLessonIds.Add(currentLessonId);
+            completedLessons++;
+            CalculateProgress();
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error marking lesson complete: {ex.Message}");
+        }
+    }
+
+    private async Task ShowAddNoteDialog()
+    {
+        var parameters = new DialogParameters
+        {
+            { "UserId", currentUserId },
+            { "LessonId", currentLessonId }
+        };
+
+        var dialog = await DialogService.ShowAsync<LMS.Web.Components.Pages.User.Shared.CreateNoteDialog>("Add Note", parameters);
+        var result = await dialog.Result;
+
+        if (result != null && !result.Canceled)
+        {
+            await LoadLessonNotes();
+            Snackbar.Add("Note created successfully!", Severity.Success);
+        }
+    }
+
+    private async Task EditNote(NoteDTO note)
+    {
+        var parameters = new DialogParameters
+        {
+            { "Note", note }
+        };
+
+        var dialog = await DialogService.ShowAsync<LMS.Web.Components.Pages.User.Shared.EditNoteDialog>("Edit Note", parameters);
+        var result = await dialog.Result;
+
+        if (result != null && !result.Canceled)
+        {
+            await LoadLessonNotes();
+            Snackbar.Add("Note updated successfully!", Severity.Success);
+        }
+    }
+
+    private async Task DeleteNote(int noteId)
+    {
+        var confirmed = await DialogService.ShowMessageBox(
+            "Delete Note",
+            "Are you sure you want to delete this note? This action cannot be undone.",
+            yesText: "Delete",
+            cancelText: "Cancel");
+
+        if (confirmed == true)
+        {
+            try
+            {
+                var success = await NoteRepository.DeleteNoteAsync(noteId, currentUserId);
+                if (success)
+                {
+                    await LoadLessonNotes();
+                    Snackbar.Add("Note deleted successfully!", Severity.Success);
+                }
+                else
+                {
+                    Snackbar.Add("Failed to delete note.", Severity.Error);
+                }
+            }
+            catch (Exception ex)
+            {
+                Snackbar.Add($"Error deleting note: {ex.Message}", Severity.Error);
+            }
+        }
+    }
+}

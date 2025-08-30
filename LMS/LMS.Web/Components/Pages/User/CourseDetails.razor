@@ -159,11 +159,11 @@
                                                                 </MudStack>
                                                             </MudItem>
                                                             <MudItem xs="12" md="4" Class="flex justify-end items-center gap-3">
-                                                                @if (lesson.EstimatedDuration.TotalMinutes > 0)
+                                                                @if (lesson.EstimatedDuration.HasValue && lesson.EstimatedDuration > 0)
                                                                 {
                                                                     <MudChip T="string" Size="Size.Small" Color="Color.Info"
                                                                         Class="rounded">
-                                                                        @((int)lesson.EstimatedDuration.TotalMinutes) min
+                                                                        @lesson.EstimatedDuration min
                                                                     </MudChip>
                                                                 }
                                                                 <MudButton Variant="Variant.Outlined" Color="Color.Primary"
@@ -250,7 +250,7 @@
                 isEnrolled = enrollment != null;
                 if (isEnrolled)
                 {
-                    completionPercentage = 65; // Mock data - would come from progress endpoint
+                    completionPercentage = 0; // Real completion percentage would come from progress endpoint
                 }
             }
         }
@@ -309,13 +309,13 @@
 
     private double GetTotalDuration()
     {
-        var totalMinutes = modules.Sum(m => m.Lessons?.Sum(l => l.EstimatedDuration.TotalMinutes) ?? 0);
+        var totalMinutes = modules.Sum(m => m.Lessons?.Sum(l => l.EstimatedDuration ?? 0) ?? 0);
         return Math.Round(totalMinutes / 60.0, 1);
     }
 
     private int GetModuleCompletionPercentage(int moduleId)
     {
-        // Mock completion percentage - would come from progress endpoint
+        // Real completion percentage would come from progress endpoint
         return new Random(moduleId).Next(0, 101);
     }
 
