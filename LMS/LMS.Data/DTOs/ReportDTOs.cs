@@ -201,7 +201,6 @@ namespace LMS.Data.DTOs
 
     public record CustomReportParametersDto(
         string ReportType,
-        Dictionary<string, object>? Parameters = null,
         string? Format = "json",
         bool IncludeCharts = true
     );
