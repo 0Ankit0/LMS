@@ -178,7 +178,7 @@
                                     <MudText Typo="Typo.subtitle1">@course.CourseName</MudText>
                                     <MudChip T="double" Color="Color.Success">@($"{course.CompletionRate:F1}%")</MudChip>
                                 </div>
-                                <MudProgressLinear Value="@(course.CompletionRate)" Color="Color.Success" Class="my-2" Style="height: 6px;" />
+                                <MudProgressLinear Value="@(course.CompletionRate)" Color="Color.Success" Class="my-2 h-1.5" />
                                 <MudText Typo="Typo.caption" Class="text-muted">@course.TotalEnrollments students enrolled</MudText>
                             </div>
                         }
@@ -209,7 +209,7 @@
                                     <MudText Typo="Typo.subtitle1">@course.CourseName</MudText>
                                     <MudChip T="double" Color="Color.Warning">@($"{course.CompletionRate:F1}%")</MudChip>
                                 </div>
-                                <MudProgressLinear Value="@(course.CompletionRate)" Color="Color.Warning" Class="my-2" Style="height: 6px;" />
+                                <MudProgressLinear Value="@(course.CompletionRate)" Color="Color.Warning" Class="my-2 h-1.5" />
                                 <MudText Typo="Typo.caption" Class="text-muted">@course.TotalEnrollments students enrolled</MudText>
                             </div>
                         }
@@ -395,6 +395,11 @@
     private IEnumerable<CourseCompletionReportDto>? topCourses;
     private IEnumerable<CourseCompletionReportDto>? lowPerformingCourses;
     private IEnumerable<EnrollmentSummaryReportDto>? enrollmentTrends;
+    
+    // Missing variables
+    private IEnumerable<User>? studentsInfo;
+    private IEnumerable<CourseCompletionReportDto>? coursesData;
+    private IEnumerable<TeacherPerformanceReportDto>? teachersData;
 
     protected override async Task OnInitializedAsync()
     {
@@ -420,15 +425,23 @@
             if (currentUser != null)
             {
                 user = currentUser;
-                // Load real data or fallback to dummy data
+                // Load real data
                 await LoadRealDataWithFallback();
             }
         }
         catch (Exception ex)
         {
             Console.WriteLine($"Error loading dashboard data: {ex.Message}");
-            // Load dummy data on error
-            LoadDummyData();
+            // Initialize with empty data on error
+            totalStudents = 0;
+            totalCourses = 0;
+            certificatesIssued = 0;
+            totalEnrollments = 0;
+            completedCoursesPercent = 0;
+            averageSatisfaction = 0;
+            topCourses = new List<CourseCompletionReportDto>();
+            lowPerformingCourses = new List<CourseCompletionReportDto>();
+            enrollmentTrends = new List<EnrollmentSummaryReportDto>();
         }
     }
 
@@ -442,20 +455,13 @@
             var teachersData = await ReportRepository.GetAllTeachersPerformanceReportAsync(user);
             var enrollmentData = await ReportRepository.GetEnrollmentSummaryReportAsync(user, DateTime.Today.AddMonths(-6), DateTime.Today, "Monthly");
 
-            // If any data is empty, use dummy data
-            if (!studentsInfo.Any() || !coursesData.Any() || !teachersData.Any() || !enrollmentData.Any())
-            {
-                LoadDummyData();
-                return;
-            }
-
-            // Use real data
+            // Use available data, empty collections if no data
             totalStudents = studentsInfo.Count();
             totalCourses = coursesData.Count();
             certificatesIssued = coursesData.Sum(c => c.CertificatesIssued);
             totalEnrollments = coursesData.Sum(c => c.TotalEnrollments);
-            completedCoursesPercent = coursesData.Average(c => c.CompletionRate);
-            averageSatisfaction = teachersData.Average(t => t.StudentSatisfactionRating);
+            completedCoursesPercent = coursesData.Any() ? coursesData.Average(c => c.CompletionRate) : 0;
+            averageSatisfaction = teachersData.Any() ? teachersData.Average(t => t.StudentSatisfactionRating) : 0;
 
             topCourses = coursesData.OrderByDescending(c => c.CompletionRate).Take(10);
             lowPerformingCourses = coursesData.Where(c => c.CompletionRate < 60).OrderBy(c => c.CompletionRate).Take(10);
@@ -464,63 +470,17 @@
         catch (Exception ex)
         {
             Console.WriteLine($"Error loading real data: {ex.Message}");
-            LoadDummyData();
+            // Initialize with empty data instead of dummy data
+            totalStudents = 0;
+            totalCourses = 0;
+            certificatesIssued = 0;
+            totalEnrollments = 0;
+            completedCoursesPercent = 0;
+            averageSatisfaction = 0;
+            topCourses = new List<CourseCompletionReportDto>();
+            lowPerformingCourses = new List<CourseCompletionReportDto>();
+            enrollmentTrends = new List<EnrollmentSummaryReportDto>();
         }
-    }
-
-    private void LoadDummyData()
-    {
-        var random = new Random();
-        
-        // Generate dummy metrics
-        totalStudents = 1250 + random.Next(-50, 100);
-        totalCourses = 45 + random.Next(-5, 10);
-        certificatesIssued = 320 + random.Next(-20, 50);
-        totalEnrollments = 2850 + random.Next(-100, 200);
-        completedCoursesPercent = 72.5 + random.NextDouble() * 15;
-        averageSatisfaction = 4.2 + random.NextDouble() * 0.6;
-
-        // Generate dummy course data
-        var courseNames = new[] { "Mathematics 101", "Physics Fundamentals", "Chemistry Basics", "Computer Science", "Biology Advanced", "History of Art", "Literature Studies", "Economics 101", "Statistics", "Psychology" };
-        var dummyCourses = new List<CourseCompletionReportDto>();
-
-        for (int i = 0; i < courseNames.Length; i++)
-        {
-            dummyCourses.Add(new CourseCompletionReportDto
-            {
-                CourseName = courseNames[i],
-                CourseId = i + 1,
-                TotalEnrollments = random.Next(50, 200),
-                CompletedEnrollments = random.Next(20, 150),
-                CompletionRate = 40 + random.NextDouble() * 50,
-                CertificatesIssued = random.Next(15, 120),
-                AverageCompletionTime = random.Next(30, 120), // days
-                AverageFinalGrade = 65 + random.NextDouble() * 30,
-                InstructorName = "Dr. Smith",
-                CourseStartDate = DateTime.Today.AddDays(-random.Next(30, 365)),
-                CourseStatus = "Active"
-            });
-        }
-
-        topCourses = dummyCourses.OrderByDescending(c => c.CompletionRate).Take(5);
-        lowPerformingCourses = dummyCourses.Where(c => c.CompletionRate < 60).OrderBy(c => c.CompletionRate).Take(5);
-
-        // Generate dummy enrollment trends
-        var dummyEnrollments = new List<EnrollmentSummaryReportDto>();
-        for (int i = 0; i < 6; i++)
-        {
-            var reportDate = DateTime.Today.AddMonths(-5 + i);
-            dummyEnrollments.Add(new EnrollmentSummaryReportDto
-            {
-                ReportDate = reportDate,
-                NewEnrollments = random.Next(50, 150),
-                TotalEnrollments = random.Next(400, 600),
-                CompletedEnrollments = random.Next(20, 80),
-                DroppedEnrollments = random.Next(5, 25),
-                Period = "Monthly"
-            });
-        }
-        enrollmentTrends = dummyEnrollments;
     }
 
     private async Task DrawCharts()

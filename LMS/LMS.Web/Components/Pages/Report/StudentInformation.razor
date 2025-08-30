@@ -200,7 +200,7 @@ else if (reports?.Any() == true)
                     <div class="text-center">
                         <MudText><strong>@context.TotalPoints</strong> pts</MudText>
                         <MudText Typo="Typo.caption" Class="text-muted">Level @context.Level</MudText>
-                        <MudProgressLinear Value="@(Math.Min(100, (context.CompletedCourses / (double)Math.Max(1, context.TotalCoursesEnrolled)) * 100))" Color="Color.Primary" Class="mt-1" Style="height: 4px;" />
+                        <MudProgressLinear Value="@(Math.Min(100, (context.CompletedCourses / (double)Math.Max(1, context.TotalCoursesEnrolled)) * 100))" Color="Color.Primary" Class="mt-1 h-1" />
                     </div>
                 </MudTd>
                 <MudTd DataLabel="Last Login">

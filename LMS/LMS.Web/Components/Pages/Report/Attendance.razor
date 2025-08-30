@@ -277,13 +277,13 @@ else
 
             if (reports == null || !reports.Any())
             {
-                reports = GenerateDummyData();
+                reports = new List<AttendanceReportDto>();
             }
         }
         catch (Exception ex)
         {
             classIdError = $"Error loading attendance data: {ex.Message}";
-            reports = GenerateDummyData(); // Use dummy data on error
+            reports = new List<AttendanceReportDto>(); // Use empty state on error
         }
         finally
         {
@@ -292,42 +292,7 @@ else
         }
     }
 
-    private IEnumerable<AttendanceReportDto> GenerateDummyData()
-    {
-        var random = new Random();
-        var dummyData = new List<AttendanceReportDto>();
-        var studentNames = new[] { "Alice Smith", "Bob Johnson", "Charlie Brown", "Diana Prince", "Eve Adams", "Frank White", "Grace Lee", "Henry King" };
-        var classNames = new[] { "Math 101", "Science 202", "History 303", "Art 404" };
-        var statuses = new[] { "Present", "Absent", "Late", "Excused" };
-
-        for (int i = 0; i < 20; i++)
-        {
-            var date = DateTime.Today.AddDays(-random.Next(1, 30));
-            var studentName = studentNames[random.Next(studentNames.Length)];
-            var studentIdValue = $"STU{random.Next(1000, 9999)}";
-            var status = statuses[random.Next(statuses.Length)];
-            var checkIn = date.AddHours(8).AddMinutes(random.Next(0, 60));
-            var checkOut = checkIn.AddHours(random.Next(1, 4)).AddMinutes(random.Next(0, 60));
-            var duration = checkOut - checkIn;
-            var attendancePercentage = random.Next(50, 100);
-
-            dummyData.Add(new AttendanceReportDto
-            {
-                ClassId = random.Next(1, 10),
-                ClassName = classNames[random.Next(classNames.Length)],
-                Date = date,
-                StudentName = studentName,
-                StudentId = studentIdValue,
-                AttendanceStatus = status,
-                CheckInTime = checkIn.TimeOfDay,
-                CheckOutTime = checkOut.TimeOfDay,
-                Duration = duration,
-                Notes = status == "Late" ? "Arrived 30 minutes late" : "",
-                AttendancePercentage = attendancePercentage
-            });
-        }
-        return dummyData;
-    }
+    // Data generation methods are implemented and connected to ReportRepository for attendance data
 
     private MudBlazor.Color GetStatusColor(string status)
     {

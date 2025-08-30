@@ -313,17 +313,12 @@ else
                     // Load individual student engagement
                     engagementData = await ReportRepository.GetStudentEngagementReportAsync(
                         user, selectedStudentId, startDate, endDate);
-
-                    if (engagementData == null)
-                    {
-                        engagementData = GenerateDummyIndividualData();
-                    }
                 }
                 else
                 {
                     // Load all students engagement summary
-                    // No API for all students engagement, use dummy data
-                    engagementData = GenerateDummyAllData();
+                    engagementData = await ReportRepository.GetAllStudentsEngagementReportAsync(
+                        user, startDate, endDate);
                 }
 
                 await DrawCharts();
@@ -332,58 +327,15 @@ else
         catch (Exception ex)
         {
             Console.WriteLine($"Error loading engagement data: {ex.Message}");
-            if (reportType == "individual")
-            {
-                engagementData = GenerateDummyIndividualData();
-            }
-            else
-            {
-                engagementData = GenerateDummyAllData();
-            }
+            engagementData = reportType == "individual" ? 
+                new StudentEngagementReportDto() : 
+                new object();
             await DrawCharts();
         }
         finally
         {
             loading = false;
         }
-    }
-
-    private StudentEngagementReportDto GenerateDummyIndividualData()
-    {
-        var random = new Random();
-        return new StudentEngagementReportDto
-        {
-            StudentId = selectedStudentId,
-            StudentName = "Dummy Student",
-            TotalForumPosts = random.Next(10, 100),
-            TopicsCreated = random.Next(1, 10),
-            RepliesMade = random.Next(5, 50),
-            TotalCoursesEnrolled = random.Next(1, 5),
-            CompletedCourses = random.Next(0, 3),
-            TimeSpentOnPlatform = TimeSpan.FromHours(random.Next(50, 500)),
-            LastLoginDate = DateTime.Today.AddDays(-random.Next(1, 30)),
-            LastForumActivity = DateTime.Today.AddDays(-random.Next(1, 15)).ToString("MMM dd, yyyy"),
-            AverageAssessmentScore = random.NextDouble() * 40 + 60, // 60-100
-            ProgressPercentage = random.NextDouble() * 100,
-            CourseProgress = new List<StudentEngagementReportDto.CourseProgressDto>
-            {
-                new StudentEngagementReportDto.CourseProgressDto { CourseName = "Dummy Course 1", Progress = random.Next(30, 90) },
-                new StudentEngagementReportDto.CourseProgressDto { CourseName = "Dummy Course 2", Progress = random.Next(20, 80) },
-                new StudentEngagementReportDto.CourseProgressDto { CourseName = "Dummy Course 3", Progress = random.Next(10, 70) }
-            }
-        };
-    }
-
-    private object GenerateDummyAllData()
-    {
-        var random = new Random();
-        return new
-        {
-            TotalStudents = random.Next(100, 500),
-            HighEngagement = random.Next(20, 100),
-            MediumEngagement = random.Next(50, 200),
-            LowEngagement = random.Next(10, 80)
-        };
     }
 
     private async Task DrawCharts()
@@ -421,7 +373,7 @@ else
 
     private double CalculateEngagementScore(StudentEngagementReportDto data)
     {
-        // Mock calculation based on available data
+        // Calculation based on available data
         var forumPosts = data.TotalForumPosts;
         var coursesCompleted = data.CompletedCourses;
         var coursesEnrolled = data.TotalCoursesEnrolled > 0 ? data.TotalCoursesEnrolled : 1;
@@ -486,4 +438,5 @@ else
             Console.WriteLine($"Error exporting to Excel: {ex.Message}");
         }
     }
+}
 }

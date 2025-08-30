@@ -199,10 +199,10 @@ else
                 var allReports = await ReportRepository.GetEnrollmentSummaryReportAsync(
                     user, startDate ?? DateTime.Today.AddMonths(-6), endDate ?? DateTime.Today, selectedPeriod, selectedCourseId);
 
-                // If no data from API, generate dummy data
+                // If no data from API, use empty list
                 if (!allReports.Any())
                 {
-                    allReports = GenerateDummyData();
+                    allReports = new List<EnrollmentSummaryReportDto>();
                 }
 
                 // Apply pagination
@@ -216,10 +216,10 @@ else
         {
             Console.WriteLine($"Error loading enrollment summary data: {ex.Message}");
             
-            // On error, also show dummy data
-            var dummyReports = GenerateDummyData();
-            totalPages = (int)Math.Ceiling((double)dummyReports.Count() / pageSize);
-            reports = dummyReports.Skip((currentPage - 1) * pageSize).Take(pageSize);
+            // On error, show empty data
+            var emptyReports = new List<EnrollmentSummaryReportDto>();
+            totalPages = (int)Math.Ceiling((double)emptyReports.Count() / pageSize);
+            reports = emptyReports.Skip((currentPage - 1) * pageSize).Take(pageSize);
             await DrawChart();
         }
         finally
@@ -291,43 +291,4 @@ else
         }
     }
 
-    private IEnumerable<EnrollmentSummaryReportDto> GenerateDummyData()
-    {
-        var random = new Random();
-        var dummyData = new List<EnrollmentSummaryReportDto>();
-
-        var courseNames = new[] { "Mathematics 101", "Physics Fundamentals", "Chemistry Basics", "Computer Science", "Biology Advanced", "History of Art", "Literature Studies", "Economics 101" };
-        var periods = new[] { "Daily", "Weekly", "Monthly" };
-
-        var startRange = DateTime.Today.AddMonths(-6);
-        var endRange = DateTime.Today;
-
-        for (int i = 0; i < 20; i++)
-        {
-            var reportDate = startRange.AddDays(random.Next(0, (endRange - startRange).Days));
-            var totalEnrollments = random.Next(50, 500);
-            var newEnrollments = random.Next(5, 50);
-            var completedEnrollments = random.Next(2, 25);
-            var droppedEnrollments = random.Next(0, 10);
-            var activeEnrollments = totalEnrollments - completedEnrollments - droppedEnrollments;
-
-            dummyData.Add(new EnrollmentSummaryReportDto
-            {
-                ReportDate = reportDate,
-                TotalEnrollments = totalEnrollments,
-                NewEnrollments = newEnrollments,
-                CompletedEnrollments = completedEnrollments,
-                ActiveEnrollments = activeEnrollments,
-                DroppedEnrollments = droppedEnrollments,
-                SuspendedEnrollments = random.Next(0, 5),
-                CourseName = courseNames[random.Next(courseNames.Length)],
-                CourseId = random.Next(1, 9),
-                Period = selectedPeriod ?? periods[random.Next(periods.Length)],
-                AverageProgressPercentage = 20 + random.NextDouble() * 70, // 20-90%
-                CertificatesIssued = random.Next(0, completedEnrollments)
-            });
-        }
-
-        return dummyData.OrderByDescending(d => d.ReportDate);
-    }
 }

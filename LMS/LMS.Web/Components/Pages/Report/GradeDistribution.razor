@@ -293,34 +293,7 @@ else if (!loading)
     </MudCard>
 }
 
-<style>
-    .grade-bar {
-        position: relative;
-        height: 200px;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: flex-end;
-        margin-bottom: 20px;
-    }
 
-    .grade-bar-fill {
-        width: 60px;
-        transition: height 0.3s ease;
-        border-radius: 4px 4px 0 0;
-        margin-bottom: 10px;
-    }
-
-    .grade-label {
-        font-weight: bold;
-        margin-bottom: 5px;
-    }
-
-    .grade-percentage {
-        font-size: 0.9rem;
-        color: #666;
-    }
-</style>
 
 @code {
     private GradeDistributionReportDto? singleReport;
@@ -377,7 +350,25 @@ else if (!loading)
 
                 if (singleReport == null)
                 {
-                    singleReport = GenerateDummySingleReportData();
+                    singleReport = new GradeDistributionReportDto
+                    {
+                        ClassId = classId!.Value,
+                        ClassName = "No Data Available",
+                        InstructorName = "Unknown",
+                        TotalStudents = 0,
+                        AGrades = 0,
+                        BGrades = 0,
+                        CGrades = 0,
+                        DGrades = 0,
+                        FGrades = 0,
+                        AverageGrade = 0,
+                        MedianGrade = 0,
+                        HighestGrade = 0,
+                        LowestGrade = 0,
+                        StandardDeviation = 0,
+                        GradeRange = "0-0",
+                        ReportGeneratedDate = DateTime.Now
+                    };
                 }
             }
             else
@@ -392,7 +383,7 @@ else if (!loading)
 
                 if (multipleReports == null || !multipleReports.Any())
                 {
-                    multipleReports = GenerateDummyMultipleReportsData();
+                    multipleReports = new List<GradeDistributionReportDto>();
                 }
             }
         }
@@ -404,11 +395,29 @@ else if (!loading)
 
             if (reportType == "single")
             {
-                singleReport = GenerateDummySingleReportData();
+                singleReport = new GradeDistributionReportDto
+                {
+                    ClassId = classId ?? 0,
+                    ClassName = "Error Loading Data",
+                    InstructorName = "Unknown",
+                    TotalStudents = 0,
+                    AGrades = 0,
+                    BGrades = 0,
+                    CGrades = 0,
+                    DGrades = 0,
+                    FGrades = 0,
+                    AverageGrade = 0,
+                    MedianGrade = 0,
+                    HighestGrade = 0,
+                    LowestGrade = 0,
+                    StandardDeviation = 0,
+                    GradeRange = "0-0",
+                    ReportGeneratedDate = DateTime.Now
+                };
             }
             else
             {
-                multipleReports = GenerateDummyMultipleReportsData();
+                multipleReports = new List<GradeDistributionReportDto>();
             }
         }
         finally
@@ -416,102 +425,6 @@ else if (!loading)
             loading = false;
             StateHasChanged();
         }
-    }
-
-    private GradeDistributionReportDto GenerateDummySingleReportData()
-    {
-        var random = new Random();
-        var totalStudents = random.Next(20, 100);
-        var aGrades = random.Next(0, totalStudents / 4);
-        var bGrades = random.Next(0, (totalStudents - aGrades) / 3);
-        var cGrades = random.Next(0, (totalStudents - aGrades - bGrades) / 2);
-        var dGrades = random.Next(0, (totalStudents - aGrades - bGrades - cGrades));
-        var fGrades = totalStudents - aGrades - bGrades - cGrades - dGrades;
-
-        var grades = new List<double>();
-        for (int i = 0; i < aGrades; i++) grades.Add(random.NextDouble() * 10 + 90); // 90-100
-        for (int i = 0; i < bGrades; i++) grades.Add(random.NextDouble() * 10 + 80); // 80-90
-        for (int i = 0; i < cGrades; i++) grades.Add(random.NextDouble() * 10 + 70); // 70-80
-        for (int i = 0; i < dGrades; i++) grades.Add(random.NextDouble() * 10 + 60); // 60-70
-        for (int i = 0; i < fGrades; i++) grades.Add(random.NextDouble() * 60); // 0-60
-
-        var averageGrade = grades.Any() ? grades.Average() : 0;
-        var medianGrade = grades.OrderBy(g => g).Skip(grades.Count / 2).Take(1).FirstOrDefault();
-        var highestGrade = grades.Any() ? grades.Max() : 0;
-        var lowestGrade = grades.Any() ? grades.Min() : 0;
-        var standardDeviation = grades.Any() ? Math.Sqrt(grades.Average(g => Math.Pow(g - averageGrade, 2))) : 0;
-
-        return new GradeDistributionReportDto
-        {
-            ClassId = 1, // Fixed typo here
-            ClassName = "Dummy Class Name",
-            InstructorName = "Dummy Instructor",
-            TotalStudents = totalStudents,
-            AGrades = aGrades,
-            BGrades = bGrades,
-            CGrades = cGrades,
-            DGrades = dGrades,
-            FGrades = fGrades,
-            AverageGrade = averageGrade,
-            MedianGrade = medianGrade,
-            HighestGrade = highestGrade,
-            LowestGrade = lowestGrade,
-            StandardDeviation = standardDeviation,
-            GradeRange = $"{lowestGrade:F0}-{highestGrade:F0}",
-            ReportGeneratedDate = DateTime.Now
-        };
-    }
-
-    private IEnumerable<GradeDistributionReportDto> GenerateDummyMultipleReportsData()
-    {
-        var random = new Random();
-        var dummyData = new List<GradeDistributionReportDto>();
-        var classNames = new[] { "Math 101", "Science 202", "History 303", "Art 404" };
-        var instructorNames = new[] { "Dr. Smith", "Prof. Johnson", "Ms. Davis" };
-
-        for (int i = 0; i < 5; i++)
-        {
-            var totalStudents = random.Next(15, 50);
-            var aGrades = random.Next(0, totalStudents / 4);
-            var bGrades = random.Next(0, (totalStudents - aGrades) / 3);
-            var cGrades = random.Next(0, (totalStudents - aGrades - bGrades) / 2);
-            var dGrades = random.Next(0, (totalStudents - aGrades - bGrades - cGrades));
-            var fGrades = totalStudents - aGrades - bGrades - cGrades - dGrades;
-
-            var grades = new List<double>();
-            for (int j = 0; j < aGrades; j++) grades.Add(random.NextDouble() * 10 + 90);
-            for (int j = 0; j < bGrades; j++) grades.Add(random.NextDouble() * 10 + 80);
-            for (int j = 0; j < cGrades; j++) grades.Add(random.NextDouble() * 10 + 70);
-            for (int j = 0; j < dGrades; j++) grades.Add(random.NextDouble() * 10 + 60);
-            for (int j = 0; j < fGrades; j++) grades.Add(random.NextDouble() * 60);
-
-            var averageGrade = grades.Any() ? grades.Average() : 0;
-            var medianGrade = grades.OrderBy(g => g).Skip(grades.Count / 2).Take(1).FirstOrDefault();
-            var highestGrade = grades.Any() ? grades.Max() : 0;
-            var lowestGrade = grades.Any() ? grades.Min() : 0;
-            var standardDeviation = grades.Any() ? Math.Sqrt(grades.Average(g => Math.Pow(g - averageGrade, 2))) : 0;
-
-            dummyData.Add(new GradeDistributionReportDto
-            {
-                ClassId = i + 1,
-                ClassName = classNames[random.Next(classNames.Length)],
-                InstructorName = instructorNames[random.Next(instructorNames.Length)],
-                TotalStudents = totalStudents,
-                AGrades = aGrades,
-                BGrades = bGrades,
-                CGrades = cGrades,
-                DGrades = dGrades,
-                FGrades = fGrades,
-                AverageGrade = averageGrade,
-                MedianGrade = medianGrade,
-                HighestGrade = highestGrade,
-                LowestGrade = lowestGrade,
-                StandardDeviation = standardDeviation,
-                GradeRange = $"{lowestGrade:F0}-{highestGrade:F0}",
-                ReportGeneratedDate = DateTime.Now
-            });
-        }
-        return dummyData;
     }
 
     private double GetBarHeight(int gradeCount, int totalStudents)

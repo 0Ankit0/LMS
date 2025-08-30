@@ -218,24 +218,26 @@ else
                     selectedCourseId, 
                     null);
 
-                // If no data from API, generate dummy data
-                if (!allReports.Any())
-                {
-                    allReports = GenerateDummyData();
-                }
-
+            if (allReports?.Any() == true)
+            {
                 // Apply pagination
                 totalPages = (int)Math.Ceiling((double)allReports.Count() / pageSize);
                 reports = allReports.Skip((currentPage - 1) * pageSize).Take(pageSize);
+            }
+            else
+            {
+                // No data available
+                reports = Enumerable.Empty<StudentProgressReportDto>();
+                totalPages = 0;
+            }
             }
         }
         catch (Exception ex)
         {
             Console.WriteLine($"Error loading student progress data: {ex.Message}");
-            // On error, also show dummy data
-            var dummyReports = GenerateDummyData();
-            totalPages = (int)Math.Ceiling((double)dummyReports.Count() / pageSize);
-            reports = dummyReports.Skip((currentPage - 1) * pageSize).Take(pageSize);
+            // Show empty data on error
+            reports = Enumerable.Empty<StudentProgressReportDto>();
+            totalPages = 0;
         }
         finally
         {
@@ -311,48 +313,5 @@ else
         {
             Console.WriteLine($"Error exporting to Excel: {ex.Message}");
         }
-    }
-
-    private IEnumerable<StudentProgressReportDto> GenerateDummyData()
-    {
-        var random = new Random();
-        var dummyData = new List<StudentProgressReportDto>();
-
-        var courses = new[] { "Mathematics 101", "Physics Fundamentals", "Chemistry Basics", "Computer Science", "Biology Advanced", "History of Art", "Literature Studies", "Economics 101" };
-        var statuses = new[] { "Active", "Completed", "In Progress", "Paused" };
-        var studentNames = new[] { "John Smith", "Sarah Johnson", "Michael Brown", "Emily Davis", "David Wilson", "Lisa Anderson", "Robert Taylor", "Jennifer Martinez", "Christopher Lee", "Amanda White" };
-
-        for (int i = 0; i < 25; i++)
-        {
-            var enrolledDate = DateTime.Today.AddDays(-random.Next(1, 365));
-            var progress = random.NextDouble() * 100;
-            var timeSpent = TimeSpan.FromHours(random.Next(5, 120));
-            var avgScore = 40 + random.NextDouble() * 60; // Score between 40-100
-            var status = statuses[random.Next(statuses.Length)];
-
-            dummyData.Add(new StudentProgressReportDto
-            {
-                StudentId = $"STU{i + 1:D3}",
-                StudentName = studentNames[random.Next(studentNames.Length)],
-                Email = $"student{i + 1}@university.edu",
-                CourseName = courses[random.Next(courses.Length)],
-                CourseId = random.Next(1, 9),
-                ProgressPercentage = progress,
-                TimeSpent = timeSpent,
-                EnrolledAt = enrolledDate,
-                StartedAt = enrolledDate.AddDays(random.Next(0, 7)),
-                CompletedAt = status == "Completed" ? enrolledDate.AddDays(random.Next(30, 180)) : null,
-                FinalGrade = status == "Completed" ? 70 + random.NextDouble() * 30 : null,
-                Status = status,
-                AverageAssessmentScore = avgScore,
-                IsCertificateIssued = status == "Completed" && avgScore >= 70,
-                CompletedLessons = random.Next(0, 20),
-                TotalLessons = random.Next(15, 25),
-                CompletedAssessments = random.Next(0, 8),
-                TotalAssessments = random.Next(5, 10)
-            });
-        }
-
-        return dummyData;
     }
 }

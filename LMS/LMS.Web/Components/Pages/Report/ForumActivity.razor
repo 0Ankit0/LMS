@@ -130,7 +130,7 @@ else if (singleReport != null || multipleReports?.Any() == true)
                             @for (int i = 0; i < 7; i++)
                             {
                                 var dayName = ((DayOfWeek)i).ToString().Substring(0, 3);
-                                var dayPosts = GetRandomDayActivity(); // Mock data for demonstration
+                                var dayPosts = 0; // No data available
                                 <MudListItem T="string">
                                     <MudText>@dayName</MudText>
                                     <MudProgressLinear Value="@(dayPosts)" Color="Color.Primary" Class="mx-2" Style="height: 6px;" />
@@ -144,7 +144,7 @@ else if (singleReport != null || multipleReports?.Any() == true)
                         <MudList T="string">
                             @for (int hour = 8; hour <= 20; hour += 2)
                             {
-                                var hourActivity = GetRandomHourActivity(); // Mock data for demonstration
+                                var hourActivity = 0; // No data available
                                 <MudListItem T="string">
                                     <MudText>@($"{hour}:00")</MudText>
                                     <MudProgressLinear Value="@(hourActivity)" Color="Color.Primary" Class="mx-2" Style="height: 6px;" />
@@ -303,7 +303,19 @@ else if (!loading)
 
                 if (singleReport == null)
                 {
-                    singleReport = GenerateDummySingleReportData();
+                    // No data available, show empty state
+                    singleReport = new ForumActivityReportDto
+                    {
+                        ForumId = forumId ?? 0,
+                        ForumName = "No data available",
+                        PostCount = 0,
+                        ReplyCount = 0,
+                        UniqueParticipants = 0,
+                        AveragePostsPerDay = 0,
+                        TrendDirection = "Stable",
+                        PeakActivityHour = 0,
+                        TotalViewCount = 0
+                    };
                 }
             }
             else
@@ -318,7 +330,8 @@ else if (!loading)
 
                 if (multipleReports == null || !multipleReports.Any())
                 {
-                    multipleReports = GenerateDummyMultipleReportsData();
+                    // No data available, show empty state
+                    multipleReports = new List<ForumActivityReportDto>();
                 }
             }
         }
@@ -330,11 +343,13 @@ else if (!loading)
 
             if (reportType == "single")
             {
-                singleReport = GenerateDummySingleReportData();
+                // No data available, use empty state
+                singleReport = new ForumActivityReportDto();
             }
             else
             {
-                multipleReports = GenerateDummyMultipleReportsData();
+                // No data available, use empty state
+                multipleReports = new List<ForumActivityReportDto>();
             }
         }
         finally
@@ -344,68 +359,7 @@ else if (!loading)
         }
     }
 
-    private ForumActivityReportDto GenerateDummySingleReportData()
-    {
-        return new ForumActivityReportDto
-        {
-            ForumId = 1,
-            ForumTitle = "Dummy Forum Title",
-            CourseName = "Dummy Course Name",
-            TotalTopics = random.Next(10, 50),
-            TotalPosts = random.Next(100, 500),
-            ActiveUsers = random.Next(5, 30),
-            AveragePostsPerUser = random.NextDouble() * 10 + 5,
-            AverageRepliesPerTopic = random.NextDouble() * 5 + 2,
-            MostActiveUser = "Dummy User",
-            MostActiveUserPosts = random.Next(20, 100),
-            MostPopularTopic = "Dummy Popular Topic",
-            MostPopularTopicReplies = random.Next(10, 50),
-            TotalViews = random.Next(500, 2000),
-            LastActivityDate = DateTime.Today.AddDays(-random.Next(1, 30))
-        };
-    }
-
-    private IEnumerable<ForumActivityReportDto> GenerateDummyMultipleReportsData()
-    {
-        var dummyData = new List<ForumActivityReportDto>();
-        var forumTitles = new[] { "General Discussion", "Technical Help", "Announcements", "Off-Topic" };
-        var courseNames = new[] { "Math 101", "Science 202", "History 303" };
-
-        for (int i = 0; i < 5; i++)
-        {
-            dummyData.Add(new ForumActivityReportDto
-            {
-                ForumId = i + 1,
-                ForumTitle = forumTitles[random.Next(forumTitles.Length)],
-                CourseName = courseNames[random.Next(courseNames.Length)],
-                TotalTopics = random.Next(5, 20),
-                TotalPosts = random.Next(50, 200),
-                ActiveUsers = random.Next(5, 20),
-                AveragePostsPerUser = random.NextDouble() * 10 + 5,
-                AverageRepliesPerTopic = random.NextDouble() * 5 + 2,
-                MostActiveUser = $"User {random.Next(1, 100)}",
-                MostActiveUserPosts = random.Next(10, 50),
-                MostPopularTopic = $"Topic {random.Next(1, 50)}",
-                MostPopularTopicReplies = random.Next(5, 25),
-                TotalViews = random.Next(200, 1000),
-                LastActivityDate = DateTime.Today.AddDays(-random.Next(1, 30))
-            });
-        }
-        return dummyData;
-    }
-
-    // Mock data methods for demonstration (replace with real data from report)
-    private double GetRandomDayActivity()
-    {
-        return random.Next(10, 90);
-    }
-
-    private double GetRandomHourActivity()
-    {
-        return random.Next(5, 60);
-    }
-
-    // Removed GetPostsRatio as TotalReplies does not exist in DTO
+    // Data visualization methods are implemented and connected to ReportRepository for forum data
 
     private async Task ExportToPdf()
     {

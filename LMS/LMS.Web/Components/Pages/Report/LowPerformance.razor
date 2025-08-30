@@ -170,7 +170,7 @@ else if (reports?.Any() == true)
                         <MudTd DataLabel="Email">@report.Email</MudTd>
                         <MudTd DataLabel="Course">@report.CourseName</MudTd>
                         <MudTd DataLabel="Progress">
-                            <MudProgressLinear Value="@(report.ProgressPercentage)" Color="@GetProgressBarColor(report.ProgressPercentage)" Class="my-2" Style="height: 6px;" />
+                            <MudProgressLinear Value="@(report.ProgressPercentage)" Color="@GetProgressBarColor(report.ProgressPercentage)" Class="my-2 h-1.5" />
                             <MudText Typo="Typo.caption">@($"{report.ProgressPercentage:F1}%")</MudText>
                         </MudTd>
                         <MudTd DataLabel="Avg Score">
@@ -307,11 +307,8 @@ else
 
                 if (reports == null || !reports.Any())
                 {
-                    reports = GenerateDummyData();
+                    reports = new List<StudentProgressReportDto>();
                 }
-
-                // Optionally load courses here if needed
-                // courses = await ...;
 
                 await DrawChart();
             }
@@ -319,45 +316,13 @@ else
         catch (Exception ex)
         {
             Console.WriteLine($"Error loading low performance students data: {ex.Message}");
-            reports = GenerateDummyData(); // Use dummy data on error
+            reports = new List<StudentProgressReportDto>(); // Return empty list on error
             await DrawChart();
         }
         finally
         {
             loading = false;
         }
-    }
-
-    private IEnumerable<StudentProgressReportDto> GenerateDummyData()
-    {
-        var random = new Random();
-        var dummyData = new List<StudentProgressReportDto>();
-
-        var studentNames = new[] { "John Doe", "Jane Smith", "Peter Jones", "Alice Brown", "Bob White" };
-        var courseNames = new[] { "Math 101", "Physics 201", "Chemistry 301", "History 101" };
-        var statuses = new[] { "Active", "Paused", "Dropped" };
-
-        for (int i = 0; i < 10; i++)
-        {
-            var avgScore = random.NextDouble() * (threshold - 10) + 10; // Score below threshold
-            var progress = random.NextDouble() * 50; // Low progress
-
-            dummyData.Add(new StudentProgressReportDto
-            {
-                StudentId = $"STU{1000 + i}",
-                StudentName = studentNames[random.Next(studentNames.Length)],
-                Email = $"student{i}@example.com",
-                CourseId = random.Next(1, 5),
-                CourseName = courseNames[random.Next(courseNames.Length)],
-                ProgressPercentage = progress,
-                AverageAssessmentScore = avgScore,
-                TimeSpent = TimeSpan.FromHours(random.Next(5, 50)),
-                Status = statuses[random.Next(statuses.Length)],
-                EnrolledAt = DateTime.Today.AddDays(-random.Next(30, 365))
-                // Removed LastActivity property assignment (not present in StudentProgressReportDto)
-            });
-        }
-        return dummyData;
     }
 
     private async Task DrawChart()
