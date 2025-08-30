@@ -46,9 +46,8 @@ var connectionString = builder.Configuration.GetConnectionString("DefaultConnect
 builder.Services.AddScoped<IGamificationService, GamificationService>();
 builder.Services.AddScoped<GamificationInterceptor>();
 
-builder.Services.AddDbContextFactory<ApplicationDbContext>((serviceProvider, options) =>
-    options.UseNpgsql(connectionString)
-           .AddInterceptors(serviceProvider.GetRequiredService<GamificationInterceptor>()));
+builder.Services.AddDbContextFactory<ApplicationDbContext>(options =>
+    options.UseNpgsql(connectionString));
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
 builder.Services.AddIdentityCore<User>(options => options.SignIn.RequireConfirmedAccount = true)
