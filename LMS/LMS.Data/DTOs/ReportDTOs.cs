@@ -1,6 +1,6 @@
 using System;
 
-namespace LMS.Web.Repositories.DTOs
+namespace LMS.Data.DTOs
 {
     // LMS Report DTOs
     public class StudentProgressReportDto
@@ -84,18 +84,26 @@ namespace LMS.Web.Repositories.DTOs
     {
         public int ForumId { get; set; }
         public string ForumTitle { get; set; } = string.Empty;
+        public string ForumName { get; set; } = string.Empty; // Added for compatibility
         public string CourseName { get; set; } = string.Empty;
         public int TotalTopics { get; set; }
         public int TotalPosts { get; set; }
+        public int PostCount { get; set; } // Added for compatibility
+        public int ReplyCount { get; set; } // Added for compatibility
         public int ActiveUsers { get; set; }
+        public int UniqueParticipants { get; set; } // Added for compatibility
         public int TotalViews { get; set; }
+        public int TotalViewCount { get; set; } // Added for compatibility
         public DateTime LastActivityDate { get; set; }
         public string MostActiveUser { get; set; } = string.Empty;
         public int MostActiveUserPosts { get; set; }
         public string MostPopularTopic { get; set; } = string.Empty;
         public int MostPopularTopicReplies { get; set; }
         public double AveragePostsPerUser { get; set; }
+        public double AveragePostsPerDay { get; set; } // Added for compatibility
         public double AverageRepliesPerTopic { get; set; }
+        public string TrendDirection { get; set; } = string.Empty; // Added for compatibility
+        public int PeakActivityHour { get; set; } // Added for compatibility
     }
 
     // SIS Report DTOs
@@ -180,5 +188,68 @@ namespace LMS.Web.Repositories.DTOs
         public int CoursesCompleted { get; set; }
         public double CourseCompletionRate { get; set; }
         public string PerformanceStatus { get; set; } = string.Empty;
+    }
+
+    // Additional DTOs for endpoint compatibility
+    public record ReportParametersDto(
+        int? CourseId = null,
+        DateTime? StartDate = null,
+        DateTime? EndDate = null,
+        string? UserId = null,
+        string? InstructorId = null
+    );
+
+    public record CustomReportParametersDto(
+        string ReportType,
+        Dictionary<string, object>? Parameters = null,
+        string? Format = "json",
+        bool IncludeCharts = true
+    );
+
+    public class EnrollmentTrendReportDto
+    {
+        public DateTime Date { get; set; }
+        public int NewEnrollments { get; set; }
+        public int TotalEnrollments { get; set; }
+        public int ActiveEnrollments { get; set; }
+        public int CompletedEnrollments { get; set; }
+        public int DroppedEnrollments { get; set; }
+        public double EnrollmentRate { get; set; }
+        public double CompletionRate { get; set; }
+        public double RetentionRate { get; set; }
+    }
+
+    public class ReportDto
+    {
+        public string Title { get; set; } = string.Empty;
+        public string Description { get; set; } = string.Empty;
+        public DateTime GeneratedAt { get; set; }
+        public Dictionary<string, object> Data { get; set; } = new();
+        public List<ChartData> Charts { get; set; } = new();
+        public ReportMetadata Metadata { get; set; } = new();
+    }
+
+    public class ChartData
+    {
+        public string Type { get; set; } = string.Empty; // bar, line, pie, etc.
+        public string Title { get; set; } = string.Empty;
+        public List<string> Labels { get; set; } = new();
+        public List<DataSeries> Series { get; set; } = new();
+    }
+
+    public class DataSeries
+    {
+        public string Name { get; set; } = string.Empty;
+        public List<object> Data { get; set; } = new();
+        public string? Color { get; set; }
+    }
+
+    public class ReportMetadata
+    {
+        public int TotalRecords { get; set; }
+        public DateTime? DateRange_Start { get; set; }
+        public DateTime? DateRange_End { get; set; }
+        public Dictionary<string, object> Filters { get; set; } = new();
+        public string GeneratedBy { get; set; } = string.Empty;
     }
 }

@@ -28,6 +28,8 @@ namespace LMS.Data.DTOs
 
         public DateTime? LastLoginAt { get; set; }
 
+        public string? Grade { get; set; }
+
         public int TotalPoints { get; set; }
 
         public int Level { get; set; }

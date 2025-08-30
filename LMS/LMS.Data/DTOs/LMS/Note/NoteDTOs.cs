@@ -120,4 +120,12 @@ namespace LMS.Data.DTOs.LMS.Note
         public bool IsPinned { get; set; }
         public DateTime CreatedAt { get; set; }
     }
+
+    // Aliases for endpoint compatibility
+    public class CreateNoteRequest : CreateNoteDTO { }
+    public class UpdateNoteRequest : UpdateNoteDTO { }
+    public class GetNotesRequest : NoteFilterDTO
+    {
+        public string? UserId { get; set; }
+    }
 }
