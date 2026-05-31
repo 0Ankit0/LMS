@@ -1,0 +1,594 @@
+@page "/user/notes"
+@using LMS.Data.DTOs.LMS.Note
+@using LMS.Data.Entities
+@using LMS.Web.Repositories
+@using LMS.Web.Components.Pages.User.Shared
+@using Microsoft.AspNetCore.Components.Authorization
+@inject INoteRepository NoteRepository
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject ISnackbar Snackbar
+@inject IDialogService DialogService
+@attribute [Authorize]
+
+<PageTitle>My Notes - LMS</PageTitle>
+
+<div class="notes-container p-6 max-w-7xl mx-auto">
+    <!-- Header Section -->
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 space-y-4 md:space-y-0">
+        <div>
+            <MudText Typo="Typo.h3" Class="font-bold text-gray-800 mb-2">My Notes</MudText>
+            <MudText Typo="Typo.subtitle1" Class="text-gray-600">Organize your learning with personal notes</MudText>
+        </div>
+        <div class="flex space-x-3">
+            <MudButton Variant="Variant.Filled" 
+                      Color="Color.Primary" 
+                      StartIcon="@Icons.Material.Filled.Add"
+                      Class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg shadow-md hover:shadow-lg transition-all duration-200"
+                      OnClick="OpenCreateNoteDialog">
+                New Note
+            </MudButton>
+            <MudButton Variant="Variant.Outlined" 
+                      Color="Color.Primary" 
+                      StartIcon="@Icons.Material.Filled.FilterList"
+                      Class="border-blue-600 text-blue-600 hover:bg-blue-50 px-6 py-2 rounded-lg transition-all duration-200"
+                      OnClick="ToggleFilters">
+                Filters
+            </MudButton>
+        </div>
+    </div>
+
+    <!-- Quick Stats -->
+    @if (notesSummary != null)
+    {
+        <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 mb-8">
+            <MudCard Class="p-4 bg-gradient-to-br from-blue-50 to-blue-100 border-l-4 border-blue-500 hover:shadow-md transition-shadow duration-200">
+                <div class="text-center">
+                    <MudIcon Icon="@Icons.Material.Filled.Note" Class="text-blue-600 text-2xl mb-2" />
+                    <MudText Typo="Typo.h6" Class="font-bold text-blue-800">@notesSummary.TotalNotes</MudText>
+                    <MudText Typo="Typo.caption" Class="text-blue-600">Total Notes</MudText>
+                </div>
+            </MudCard>
+            <MudCard Class="p-4 bg-gradient-to-br from-orange-50 to-orange-100 border-l-4 border-orange-500 hover:shadow-md transition-shadow duration-200">
+                <div class="text-center">
+                    <MudIcon Icon="@Icons.Material.Filled.PushPin" Class="text-orange-600 text-2xl mb-2" />
+                    <MudText Typo="Typo.h6" Class="font-bold text-orange-800">@notesSummary.PinnedNotes</MudText>
+                    <MudText Typo="Typo.caption" Class="text-orange-600">Pinned</MudText>
+                </div>
+            </MudCard>
+            <MudCard Class="p-4 bg-gradient-to-br from-green-50 to-green-100 border-l-4 border-green-500 hover:shadow-md transition-shadow duration-200">
+                <div class="text-center">
+                    <MudIcon Icon="@Icons.Material.Filled.Schedule" Class="text-green-600 text-2xl mb-2" />
+                    <MudText Typo="Typo.h6" Class="font-bold text-green-800">@notesSummary.RecentNotes</MudText>
+                    <MudText Typo="Typo.caption" Class="text-green-600">Recent</MudText>
+                </div>
+            </MudCard>
+            <MudCard Class="p-4 bg-gradient-to-br from-purple-50 to-purple-100 border-l-4 border-purple-500 hover:shadow-md transition-shadow duration-200">
+                <div class="text-center">
+                    <MudIcon Icon="@Icons.Material.Filled.Lock" Class="text-purple-600 text-2xl mb-2" />
+                    <MudText Typo="Typo.h6" Class="font-bold text-purple-800">@notesSummary.PrivateNotes</MudText>
+                    <MudText Typo="Typo.caption" Class="text-purple-600">Private</MudText>
+                </div>
+            </MudCard>
+            <MudCard Class="p-4 bg-gradient-to-br from-teal-50 to-teal-100 border-l-4 border-teal-500 hover:shadow-md transition-shadow duration-200">
+                <div class="text-center">
+                    <MudIcon Icon="@Icons.Material.Filled.Public" Class="text-teal-600 text-2xl mb-2" />
+                    <MudText Typo="Typo.h6" Class="font-bold text-teal-800">@notesSummary.PublicNotes</MudText>
+                    <MudText Typo="Typo.caption" Class="text-teal-600">Public</MudText>
+                </div>
+            </MudCard>
+            <MudCard Class="p-4 bg-gradient-to-br from-pink-50 to-pink-100 border-l-4 border-pink-500 hover:shadow-md transition-shadow duration-200">
+                <div class="text-center">
+                    <MudIcon Icon="@Icons.Material.Filled.Tag" Class="text-pink-600 text-2xl mb-2" />
+                    <MudText Typo="Typo.h6" Class="font-bold text-pink-800">@notesSummary.MostUsedTags.Count</MudText>
+                    <MudText Typo="Typo.caption" Class="text-pink-600">Tags</MudText>
+                </div>
+            </MudCard>
+        </div>
+    }
+
+    <!-- Filters Panel -->
+    @if (showFilters)
+    {
+        <MudCard Class="mb-6 p-6 bg-gray-50 border border-gray-200 rounded-lg shadow-sm">
+            <MudText Typo="Typo.h6" Class="font-semibold text-gray-800 mb-4">Filter Notes</MudText>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <MudTextField @bind-Value="filterModel.SearchTerm" 
+                            Label="Search" 
+                            Placeholder="Search title, content, or tags..."
+                            Adornment="Adornment.Start"
+                            AdornmentIcon="@Icons.Material.Filled.Search"
+                            Class="bg-white rounded-lg" />
+                
+                <MudSelect @bind-Value="filterModel.Type" 
+                         Label="Note Type" 
+                         Clearable="true"
+                         Class="bg-white rounded-lg">
+                    @foreach (NoteType noteType in Enum.GetValues<NoteType>())
+                    {
+                        <MudSelectItem Value="noteType">@noteType.ToString()</MudSelectItem>
+                    }
+                </MudSelect>
+
+                <MudSelect @bind-Value="filterModel.Priority" 
+                         Label="Priority" 
+                         Clearable="true"
+                         Class="bg-white rounded-lg">
+                    @foreach (NotePriority priority in Enum.GetValues<NotePriority>())
+                    {
+                        <MudSelectItem Value="priority">@priority.ToString()</MudSelectItem>
+                    }
+                </MudSelect>
+
+                <div class="flex space-x-2">
+                    <MudButton Variant="Variant.Filled" 
+                              Color="Color.Primary" 
+                              StartIcon="@Icons.Material.Filled.Search"
+                              Class="bg-blue-600 hover:bg-blue-700 text-white rounded-lg flex-1"
+                              OnClick="ApplyFilters">
+                        Apply
+                    </MudButton>
+                    <MudButton Variant="Variant.Outlined" 
+                              StartIcon="@Icons.Material.Filled.Clear"
+                              Class="border-gray-400 text-gray-600 hover:bg-gray-100 rounded-lg"
+                              OnClick="ClearFilters">
+                        Clear
+                    </MudButton>
+                </div>
+            </div>
+
+            <div class="mt-4 flex flex-wrap gap-2">
+                <MudChip Color="Color.Primary" Size="Size.Small" 
+                        Variant="@(filterModel.IsPinned == true ? Variant.Filled : Variant.Outlined)"
+                        OnClick="() => ToggleFilter(nameof(filterModel.IsPinned))"
+                        T="string">
+                    <MudIcon Icon="@Icons.Material.Filled.PushPin" Size="Size.Small" Class="mr-1" />
+                    Pinned Only
+                </MudChip>
+                <MudChip Color="Color.Secondary" Size="Size.Small" 
+                        Variant="@(filterModel.IsPrivate == true ? Variant.Filled : Variant.Outlined)"
+                        OnClick="() => ToggleFilter(nameof(filterModel.IsPrivate))"
+                        T="string">
+                    <MudIcon Icon="@Icons.Material.Filled.Lock" Size="Size.Small" Class="mr-1" />
+                    Private Only
+                </MudChip>
+            </div>
+        </MudCard>
+    }
+
+    <!-- Notes Grid -->
+    @if (isLoading)
+    {
+        <div class="flex justify-center items-center py-12">
+            <MudProgressCircular Color="Color.Primary" Size="Size.Large" Indeterminate="true" />
+        </div>
+    }
+    else if (notes?.Any() == true)
+    {
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            @foreach (var note in notes)
+            {
+                <MudCard Class="note-card hover:shadow-lg transition-all duration-200 border border-gray-200 hover:border-blue-300 relative overflow-hidden">
+                    <!-- Priority indicator -->
+                    <div class="absolute top-0 left-0 w-full h-1 @GetPriorityColor(note.Priority)"></div>
+                    
+                    <!-- Pin indicator -->
+                    @if (note.IsPinned)
+                    {
+                        <div class="absolute top-3 right-3">
+                            <MudIcon Icon="@Icons.Material.Filled.PushPin" Class="text-orange-500" Size="Size.Small" />
+                        </div>
+                    }
+
+                    <MudCardContent Class="p-6">
+                        <!-- Note Header -->
+                        <div class="flex justify-between items-start mb-3">
+                            <div class="flex-1 pr-4">
+                                <MudText Typo="Typo.h6" Class="font-bold text-gray-800 line-clamp-2 mb-1">
+                                    @note.Title
+                                </MudText>
+                                <div class="flex items-center space-x-2 mb-2">
+                                    <MudChip Size="Size.Small" 
+                                            Color="@GetTypeColor(note.Type)" 
+                                            Variant="Variant.Filled"
+                                            T="string"
+                                            Class="text-xs">
+                                        @note.TypeDisplay
+                                    </MudChip>
+                                    @if (note.Priority != NotePriority.Normal)
+                                    {
+                                        <MudChip Size="Size.Small" 
+                                                Color="@GetPriorityChipColor(note.Priority)" 
+                                                Variant="Variant.Outlined"
+                                                T="string"
+                                                Class="text-xs">
+                                            @note.PriorityDisplay
+                                        </MudChip>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Note Content -->
+                        <MudText Typo="Typo.body2" Class="text-gray-600 line-clamp-3 mb-4">
+                            @note.Content
+                        </MudText>
+
+                        <!-- Course/Lesson info -->
+                        @if (!string.IsNullOrEmpty(note.CourseTitle))
+                        {
+                            <div class="flex items-center mb-3 text-sm text-blue-600">
+                                <MudIcon Icon="@Icons.Material.Filled.School" Size="Size.Small" Class="mr-1" />
+                                <span class="truncate">@note.CourseTitle</span>
+                            </div>
+                        }
+
+                        <!-- Tags -->
+                        @if (note.TagList.Any())
+                        {
+                            <div class="flex flex-wrap gap-1 mb-4">
+                                @foreach (var tag in note.TagList.Take(3))
+                                {
+                                    <MudChip Size="Size.Small" 
+                                            Variant="Variant.Text" 
+                                            Color="Color.Info"
+                                            T="string"
+                                            Class="text-xs bg-blue-50 text-blue-700">
+                                        #@tag
+                                    </MudChip>
+                                }
+                                @if (note.TagList.Count > 3)
+                                {
+                                    <MudChip Size="Size.Small" 
+                                            Variant="Variant.Text" 
+                                            Color="Color.Default"
+                                            T="string"
+                                            Class="text-xs">
+                                        +@(note.TagList.Count - 3) more
+                                    </MudChip>
+                                }
+                            </div>
+                        }
+
+                        <!-- Metadata -->
+                        <div class="text-xs text-gray-500 mb-4">
+                            <div class="flex items-center justify-between">
+                                <span class="flex items-center">
+                                    <MudIcon Icon="@Icons.Material.Filled.Schedule" Size="Size.Small" Class="mr-1" />
+                                    @note.CreatedAtDisplay
+                                </span>
+                                <div class="flex items-center space-x-2">
+                                    @if (note.IsPrivate)
+                                    {
+                                        <MudIcon Icon="@Icons.Material.Filled.Lock" Size="Size.Small" Class="text-purple-500" />
+                                    }
+                                    else
+                                    {
+                                        <MudIcon Icon="@Icons.Material.Filled.Public" Size="Size.Small" Class="text-green-500" />
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    </MudCardContent>
+
+                    <MudCardActions Class="px-6 py-4 bg-gray-50 border-t border-gray-100">
+                        <div class="flex justify-between items-center w-full">
+                            <div class="flex space-x-2">
+                                <MudButton Variant="Variant.Text" 
+                                          Color="Color.Primary" 
+                                          Size="Size.Small"
+                                          StartIcon="@Icons.Material.Filled.Edit"
+                                          Class="text-blue-600 hover:bg-blue-50 rounded-lg"
+                                          OnClick="() => OpenEditNoteDialog(note)">
+                                    Edit
+                                </MudButton>
+                                <MudButton Variant="Variant.Text" 
+                                          Color="Color.Default" 
+                                          Size="Size.Small"
+                                          StartIcon="@(note.IsPinned ? Icons.Material.Filled.PushPin : Icons.Material.Outlined.PushPin)"
+                                          Class="@GetPinButtonClass(note.IsPinned)"
+                                          OnClick="() => TogglePin(note.Id)">
+                                    @(note.IsPinned ? "Unpin" : "Pin")
+                                </MudButton>
+                            </div>
+                            <MudButton Variant="Variant.Text" 
+                                      Color="Color.Error" 
+                                      Size="Size.Small"
+                                      StartIcon="@Icons.Material.Filled.Delete"
+                                      Class="text-red-600 hover:bg-red-50 rounded-lg"
+                                      OnClick="() => DeleteNote(note.Id)">
+                                Delete
+                            </MudButton>
+                        </div>
+                    </MudCardActions>
+                </MudCard>
+            }
+        </div>
+
+        <!-- Pagination -->
+        @if (totalPages > 1)
+        {
+            <div class="flex justify-center mt-8">
+                <MudPagination Count="totalPages" 
+                              Selected="currentPage" 
+                              SelectedChanged="OnPageChanged"
+                              Color="Color.Primary"
+                              Size="Size.Medium"
+                              ShowFirstButton="true"
+                              ShowLastButton="true" />
+            </div>
+        }
+    }
+    else
+    {
+        <div class="text-center py-12">
+            <MudIcon Icon="@Icons.Material.Outlined.NoteAdd" Class="text-gray-400 text-6xl mb-4" />
+            <MudText Typo="Typo.h6" Class="text-gray-600 mb-2">No notes found</MudText>
+            <MudText Typo="Typo.body1" Class="text-gray-500 mb-6">
+                @if (hasActiveFilters)
+                {
+                    <span>Try adjusting your filters or</span>
+                }
+                else
+                {
+                    <span>Start by creating your first note to organize your learning</span>
+                }
+            </MudText>
+            <MudButton Variant="Variant.Filled" 
+                      Color="Color.Primary" 
+                      StartIcon="@Icons.Material.Filled.Add"
+                      Class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg shadow-md hover:shadow-lg transition-all duration-200"
+                      OnClick="@(hasActiveFilters ? ClearFilters : OpenCreateNoteDialog)">
+                @(hasActiveFilters ? "Clear Filters" : "Create First Note")
+            </MudButton>
+        </div>
+    }
+</div>
+
+<style>
+.notes-container {
+    min-height: calc(100vh - 120px);
+}
+
+.note-card {
+    min-height: 280px;
+    max-height: 400px;
+}
+
+.line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.line-clamp-3 {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.truncate {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+</style>
+
+@code {
+    private IEnumerable<NoteDTO>? notes;
+    private NotesSummaryDTO? notesSummary;
+    private NoteFilterDTO filterModel = new();
+    private bool showFilters = false;
+    private bool isLoading = true;
+    private bool hasActiveFilters = false;
+    private int currentPage = 1;
+    private int totalPages = 1;
+    private string? currentUserId;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await GetCurrentUser();
+        await LoadData();
+    }
+
+    private async Task GetCurrentUser()
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        currentUserId = authState.User?.FindFirst("sub")?.Value ?? 
+                       authState.User?.FindFirst("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier")?.Value;
+    }
+
+    private async Task LoadData()
+    {
+        if (string.IsNullOrEmpty(currentUserId)) return;
+
+        try
+        {
+            isLoading = true;
+            StateHasChanged();
+
+            // Load notes with filters
+            notes = await NoteRepository.GetUserNotesAsync(currentUserId, filterModel);
+            
+            // Load summary
+            notesSummary = await NoteRepository.GetNotesSummaryAsync(currentUserId);
+
+            // Check if filters are active
+            hasActiveFilters = !string.IsNullOrEmpty(filterModel.SearchTerm) ||
+                              filterModel.Type.HasValue ||
+                              filterModel.Priority.HasValue ||
+                              filterModel.IsPinned.HasValue ||
+                              filterModel.IsPrivate.HasValue ||
+                              !string.IsNullOrEmpty(filterModel.Tags);
+
+            // Calculate pagination (simplified for now)
+            var totalNotes = notes?.Count() ?? 0;
+            totalPages = Math.Max(1, (int)Math.Ceiling(totalNotes / (double)filterModel.PageSize));
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error loading notes: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            isLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task OpenCreateNoteDialog()
+    {
+        var parameters = new DialogParameters
+        {
+            { "UserId", currentUserId! }
+        };
+
+        var dialog = await DialogService.ShowAsync<LMS.Web.Components.Pages.User.Shared.CreateNoteDialog>("Create New Note", parameters);
+        var result = await dialog.Result;
+
+        if (result != null && !result.Canceled)
+        {
+            await LoadData();
+            Snackbar.Add("Note created successfully!", Severity.Success);
+        }
+    }
+
+    private async Task OpenEditNoteDialog(NoteDTO note)
+    {
+        var parameters = new DialogParameters
+        {
+            { "Note", note }
+        };
+
+        var dialog = await DialogService.ShowAsync<LMS.Web.Components.Pages.User.Shared.EditNoteDialog>("Edit Note", parameters);
+        var result = await dialog.Result;
+
+        if (result != null && !result.Canceled)
+        {
+            await LoadData();
+            Snackbar.Add("Note updated successfully!", Severity.Success);
+        }
+    }
+
+    private async Task DeleteNote(int noteId)
+    {
+        var confirmed = await DialogService.ShowMessageBox(
+            "Delete Note",
+            "Are you sure you want to delete this note? This action cannot be undone.",
+            yesText: "Delete",
+            cancelText: "Cancel");
+
+        if (confirmed == true)
+        {
+            try
+            {
+                var success = await NoteRepository.DeleteNoteAsync(noteId, currentUserId!);
+                if (success)
+                {
+                    await LoadData();
+                    Snackbar.Add("Note deleted successfully!", Severity.Success);
+                }
+                else
+                {
+                    Snackbar.Add("Failed to delete note.", Severity.Error);
+                }
+            }
+            catch (Exception ex)
+            {
+                Snackbar.Add($"Error deleting note: {ex.Message}", Severity.Error);
+            }
+        }
+    }
+
+    private async Task TogglePin(int noteId)
+    {
+        try
+        {
+            var success = await NoteRepository.TogglePinNoteAsync(noteId, currentUserId!);
+            if (success)
+            {
+                await LoadData();
+                Snackbar.Add("Note pin status updated!", Severity.Success);
+            }
+            else
+            {
+                Snackbar.Add("Failed to update pin status.", Severity.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error updating pin status: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private void ToggleFilters()
+    {
+        showFilters = !showFilters;
+    }
+
+    private async Task ApplyFilters()
+    {
+        filterModel.Page = 1;
+        currentPage = 1;
+        await LoadData();
+    }
+
+    private async Task ClearFilters()
+    {
+        filterModel = new NoteFilterDTO();
+        currentPage = 1;
+        await LoadData();
+    }
+
+    private void ToggleFilter(string filterName)
+    {
+        switch (filterName)
+        {
+            case nameof(filterModel.IsPinned):
+                filterModel.IsPinned = filterModel.IsPinned == true ? null : true;
+                break;
+            case nameof(filterModel.IsPrivate):
+                filterModel.IsPrivate = filterModel.IsPrivate == true ? null : true;
+                break;
+        }
+    }
+
+    private async Task OnPageChanged(int page)
+    {
+        currentPage = page;
+        filterModel.Page = page;
+        await LoadData();
+    }
+
+    private static string GetPriorityColor(NotePriority priority) => priority switch
+    {
+        NotePriority.Urgent => "bg-red-500",
+        NotePriority.High => "bg-orange-500",
+        NotePriority.Normal => "bg-blue-500",
+        NotePriority.Low => "bg-gray-500",
+        _ => "bg-blue-500"
+    };
+
+    private static Color GetTypeColor(NoteType type) => type switch
+    {
+        NoteType.StudyNote => Color.Primary,
+        NoteType.Reminder => Color.Warning,
+        NoteType.Question => Color.Info,
+        NoteType.Summary => Color.Success,
+        NoteType.Highlight => Color.Secondary,
+        _ => Color.Default
+    };
+
+    private static Color GetPriorityChipColor(NotePriority priority) => priority switch
+    {
+        NotePriority.Urgent => Color.Error,
+        NotePriority.High => Color.Warning,
+        NotePriority.Low => Color.Default,
+        _ => Color.Primary
+    };
+
+    private static string GetPinButtonClass(bool isPinned) => isPinned 
+        ? "text-orange-600 hover:bg-orange-50 rounded-lg" 
+        : "text-gray-600 hover:bg-gray-100 rounded-lg";
+}

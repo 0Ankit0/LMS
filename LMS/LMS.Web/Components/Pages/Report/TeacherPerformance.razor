@@ -1,0 +1,528 @@
+@page "/reports/teacher-performance"
+@layout ReportLayout
+@attribute [OutputCache(Duration = 60)]
+@inject IReportRepository ReportRepository
+@inject IJSRuntime JSRuntime
+
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="mb-1">🎓 Teacher Performance Report</h2>
+        <p class="text-muted mb-0">Evaluate instructor effectiveness and teaching metrics</p>
+    </div>
+    <div class="export-buttons">
+        <MudButton Variant="Variant.Outlined" Color="Color.Primary" OnClick="ExportToPdf">
+            <MudIcon Icon="@Icons.Material.Filled.PictureAsPdf" Class="me-2" /> Export PDF
+        </MudButton>
+        <MudButton Variant="Variant.Outlined" Color="Color.Primary" OnClick="ExportToExcel">
+            <MudIcon Icon="@Icons.Material.Filled.Description" Class="me-2" /> Export Excel
+        </MudButton>
+    </div>
+</div>
+
+<!-- Filters -->
+<MudGrid Class="report-filters">
+    <MudItem xs="12" md="3">
+        <MudSelect T="string" Label="Report Type" @bind-Value="reportType" OnChange="OnReportTypeChanged">
+            <MudSelectItem Value="@("single")">Single Teacher</MudSelectItem>
+            <MudSelectItem Value="@("all")">All Teachers</MudSelectItem>
+        </MudSelect>
+    </MudItem>
+    @if (reportType == "single")
+    {
+        <MudItem xs="12" md="3">
+            <MudTextField Label="Teacher ID" @bind-Value="teacherId" Variant="Variant.Text" Placeholder="Enter Teacher ID" />
+        </MudItem>
+    }
+    <MudItem xs="12" md="2">
+        <MudDatePicker Label="Start Date" @bind-Date="startDate" DateFormat="yyyy-MM-dd" />
+    </MudItem>
+    <MudItem xs="12" md="2">
+        <MudDatePicker Label="End Date" @bind-Date="endDate" DateFormat="yyyy-MM-dd" />
+    </MudItem>
+    <MudItem xs="12" md="2">
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="LoadData" FullWidth="true">
+            <MudIcon Icon="@Icons.Material.Filled.School" Class="me-2" />
+            Generate Report
+        </MudButton>
+    </MudItem>
+</MudGrid>
+
+@if (!string.IsNullOrEmpty(errorMessage))
+{
+    <MudAlert Severity="Severity.Warning" Class="my-3">
+        <MudIcon Icon="@Icons.Material.Filled.Warning" Class="me-2" /> @errorMessage
+    </MudAlert>
+}
+
+@if (loading)
+{
+    <div class="report-loading d-flex flex-column align-items-center justify-content-center py-5">
+        <MudProgressCircular Indeterminate="true" Color="Color.Primary" Size="Size.Large" />
+        <MudText Class="mt-2">Loading teacher performance data...</MudText>
+    </div>
+}
+else if (singleReport != null || multipleReports?.Any() == true)
+{
+    @if (reportType == "single" && singleReport != null)
+    {
+        <!-- Single Teacher Detailed Report -->
+        <MudGrid Class="mb-4">
+            <!-- Teacher Information -->
+            <MudItem xs="12" md="6">
+                <MudCard Elevation="2" Class="h-100">
+                    <MudCardHeader>
+                        <MudText Typo="Typo.h6">👨‍🏫 Teacher Profile</MudText>
+                    </MudCardHeader>
+                    <MudCardContent>
+                        <MudList T="string">
+                            <MudListItem T="string"><strong>Name:</strong> @singleReport.TeacherName</MudListItem>
+                            <MudListItem T="string"><strong>Teacher ID:</strong> @singleReport.TeacherId</MudListItem>
+                            <MudListItem T="string"><strong>Email:</strong> @singleReport.Email</MudListItem>
+                            <MudListItem T="string"><strong>Courses Teaching:</strong> @singleReport.TotalCoursesTeaching</MudListItem>
+                            <MudListItem T="string"><strong>Total Students:</strong> @singleReport.TotalStudentsTeaching</MudListItem>
+                            <MudListItem T="string"><strong>Last Login:</strong> @singleReport.LastLoginDate.ToString("MMM dd, yyyy HH:mm")</MudListItem>
+                        </MudList>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+
+            <!-- Performance Metrics -->
+            <MudItem xs="12" md="6">
+                <MudCard Elevation="2" Class="h-100">
+                    <MudCardHeader>
+                        <MudText Typo="Typo.h6">📊 Performance Metrics</MudText>
+                    </MudCardHeader>
+                    <MudCardContent>
+                        <MudList T="string">
+                            <MudListItem T="string"><strong>Avg Class Grade:</strong> <MudChip T="double" Color="@GetGradeBadgeColor(singleReport.AverageClassGrade)">@($"{singleReport.AverageClassGrade:F2}")</MudChip></MudListItem>
+                            <MudListItem T="string"><strong>Satisfaction Rating:</strong> <MudChip T="double" Color="Color.Warning">@($"{singleReport.StudentSatisfactionRating:F1}/5.0")</MudChip></MudListItem>
+                            <MudListItem T="string"><strong>Course Completion:</strong> @($"{singleReport.CourseCompletionRate:F1}%")</MudListItem>
+                            <MudListItem T="string"><strong>Forum Participation:</strong> @singleReport.ForumParticipation posts</MudListItem>
+                            <MudListItem T="string"><strong>Messages Replied:</strong> @singleReport.MessagesReplied replies</MudListItem>
+                            <MudListItem T="string"><strong>Performance Status:</strong> <MudChip T="string" Color="@GetStatusColor(singleReport.PerformanceStatus)">@singleReport.PerformanceStatus</MudChip></MudListItem>
+                        </MudList>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+        </MudGrid>
+
+        <!-- Detailed Performance Analysis -->
+        <MudGrid Class="mb-4">
+            <MudItem xs="12" md="4">
+                <MudCard Elevation="2" Class="h-100">
+                    <MudCardHeader>
+                        <MudText Typo="Typo.h6">📝 Grading Performance</MudText>
+                    </MudCardHeader>
+                    <MudCardContent>
+                        <MudList T="string">
+                            <MudListItem T="string">
+                                <MudText>Total Assignments:</MudText>
+                                <MudText><strong>@singleReport.TotalAssignments</strong></MudText>
+                            </MudListItem>
+                            <MudListItem T="string">
+                                <MudText>Graded:</MudText>
+                                <MudText><strong>@singleReport.GradedAssignments</strong></MudText>
+                            </MudListItem>
+                            <MudListItem T="string">
+                                <MudText Typo="Typo.subtitle1">Grading Progress</MudText>
+                                <MudProgressLinear Value="@(GetGradingProgress())" Color="Color.Primary" Class="mb-1" />
+                                <MudText Typo="Typo.caption" Class="text-muted">@($"{GetGradingProgress():F1}% completed")</MudText>
+                            </MudListItem>
+                            <MudListItem T="string">
+                                <MudText>Avg Grading Time:</MudText>
+                                <MudText><strong>@($"{singleReport.AverageGradingTime:F1} days")</strong></MudText>
+                            </MudListItem>
+                        </MudList>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+
+            <MudItem xs="12" md="4">
+                <MudCard Elevation="2" Class="h-100">
+                    <MudCardHeader>
+                        <MudText Typo="Typo.h6">⏱️ Time Management</MudText>
+                    </MudCardHeader>
+                    <MudCardContent>
+                        <MudList T="string">
+                            <MudListItem T="string">
+                                <MudText>Total Time Spent:</MudText>
+                                <MudText><strong>@($"{singleReport.TotalTimeSpent.TotalHours:F0}h")</strong></MudText>
+                            </MudListItem>
+                            <MudListItem T="string">
+                                <MudText>Avg per Student:</MudText>
+                                <MudText><strong>@($"{(singleReport.TotalTimeSpent.TotalHours / Math.Max(1, singleReport.TotalStudentsTeaching)):F1}h")</strong></MudText>
+                            </MudListItem>
+                            <MudListItem T="string">
+                                <MudText>Courses Completed:</MudText>
+                                <MudText><strong>@singleReport.CoursesCompleted</strong></MudText>
+                            </MudListItem>
+                            <MudListItem T="string">
+                                <MudText Typo="Typo.subtitle1">Efficiency Rating</MudText>
+                                <MudProgressLinear Value="@(Math.Min(100, singleReport.CourseCompletionRate))" Color="Color.Info" Class="mb-1" />
+                                <MudText Typo="Typo.caption" Class="text-muted">@($"{singleReport.CourseCompletionRate:F1}% completion rate")</MudText>
+                            </MudListItem>
+                        </MudList>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+
+            <MudItem xs="12" md="4">
+                <MudCard Elevation="2" Class="h-100">
+                    <MudCardHeader>
+                        <MudText Typo="Typo.h6">🎯 Student Outcomes</MudText>
+                    </MudCardHeader>
+                    <MudCardContent>
+                        <MudList T="string">
+                            <MudListItem T="string">
+                                <MudText Typo="Typo.subtitle1">Student Satisfaction</MudText>
+                                <MudProgressLinear Value="@(((singleReport.StudentSatisfactionRating / 5.0) * 100))" Color="Color.Warning" Class="mb-1" />
+                                <MudText Typo="Typo.caption" Class="text-muted">@($"{singleReport.StudentSatisfactionRating:F1} out of 5.0")</MudText>
+                            </MudListItem>
+                            <MudListItem T="string">
+                                <MudText Typo="Typo.subtitle1">Class Performance</MudText>
+                                <MudProgressLinear Value="@(singleReport.AverageClassGrade)" Color="@GetGradeBadgeColor(singleReport.AverageClassGrade)" Class="mb-1" />
+                                <MudText Typo="Typo.caption" Class="text-muted">@($"{singleReport.AverageClassGrade:F1}% average grade")</MudText>
+                            </MudListItem>
+                            <MudListItem T="string">
+                                <MudText>Forum Engagement:</MudText>
+                                <MudText><strong>@singleReport.ForumParticipation posts</strong></MudText>
+                            </MudListItem>
+                        </MudList>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+        </MudGrid>
+    }
+    else if (reportType == "all" && multipleReports?.Any() == true)
+    {
+        <!-- Multiple Teachers Summary -->
+        <MudGrid Class="stats-grid mb-4">
+            <MudItem xs="12" sm="6" md="3">
+                <MudCard Elevation="2">
+                    <MudCardContent>
+                        <MudText Typo="Typo.h4">@multipleReports.Count()</MudText>
+                        <MudText Typo="Typo.subtitle2">Total Teachers</MudText>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+            <MudItem xs="12" sm="6" md="3">
+                <MudCard Elevation="2">
+                    <MudCardContent>
+                        <MudText Typo="Typo.h4">@multipleReports.Sum(r => r.TotalStudentsTeaching)</MudText>
+                        <MudText Typo="Typo.subtitle2">Total Students</MudText>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+            <MudItem xs="12" sm="6" md="3">
+                <MudCard Elevation="2">
+                    <MudCardContent>
+                        <MudText Typo="Typo.h4">@($"{multipleReports.Average(r => r.AverageClassGrade):F1}")</MudText>
+                        <MudText Typo="Typo.subtitle2">Avg Class Grade</MudText>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+            <MudItem xs="12" sm="6" md="3">
+                <MudCard Elevation="2">
+                    <MudCardContent>
+                        <MudText Typo="Typo.h4">@($"{multipleReports.Average(r => r.StudentSatisfactionRating):F1}")</MudText>
+                        <MudText Typo="Typo.subtitle2">Avg Satisfaction</MudText>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+        </MudGrid>
+
+        <!-- Teachers Table -->
+        <MudTable T="TeacherPerformanceReportDto" Items="@multipleReports" Hover="true" Breakpoint="Breakpoint.Sm" Class="report-table">
+            <HeaderContent>
+                <MudTh>Teacher</MudTh>
+                <MudTh>Courses/Students</MudTh>
+                <MudTh>Performance</MudTh>
+                <MudTh>Grading</MudTh>
+                <MudTh>Engagement</MudTh>
+                <MudTh>Status</MudTh>
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd DataLabel="Teacher">
+                    <MudText Typo="Typo.body2"><strong>@context.TeacherName</strong></MudText>
+                    <MudText Typo="Typo.caption" Class="text-muted">@context.Email</MudText>
+                </MudTd>
+                <MudTd DataLabel="Courses/Students">
+                    <MudList T="string">
+                        <MudListItem T="string">
+                            <MudChip T="string" Color="Color.Primary">@context.TotalCoursesTeaching courses</MudChip>
+                        </MudListItem>
+                        <MudListItem T="string">
+                            <MudChip T="string" Color="Color.Info">@context.TotalStudentsTeaching students</MudChip>
+                        </MudListItem>
+                    </MudList>
+                </MudTd>
+                <MudTd DataLabel="Performance">
+                    <MudText><strong>Grade:</strong> <MudChip T="string" Color="@GetGradeBadgeColor(context.AverageClassGrade)">@($"{context.AverageClassGrade:F1}")</MudChip></MudText>
+                    <MudText><strong>Satisfaction:</strong> @($"{context.StudentSatisfactionRating:F1}/5.0")</MudText>
+                </MudTd>
+                <MudTd DataLabel="Grading">
+                    <MudText>@context.GradedAssignments/@context.TotalAssignments</MudText>
+                    <MudText Typo="Typo.caption" Class="text-muted">@($"{context.AverageGradingTime:F1} days avg")</MudText>
+                </MudTd>
+                <MudTd DataLabel="Engagement">
+                    <MudText>@context.ForumParticipation posts</MudText>
+                    <MudText>@context.MessagesReplied replies</MudText>
+                </MudTd>
+                <MudTd DataLabel="Status">
+                    <MudChip T="string" Color="@GetStatusColor(context.PerformanceStatus)">
+                        @context.PerformanceStatus
+                    </MudChip>
+                </MudTd>
+            </RowTemplate>
+            <PagerContent>
+                <MudTablePager PageSizeOptions="@(new int[]{10, 20, 50})" />
+            </PagerContent>
+        </MudTable>
+    }
+}
+else if (!loading)
+{
+    <MudCard Elevation="2" Class="report-no-data">
+        <MudCardContent Class="text-center py-5">
+            <MudIcon Icon="@Icons.Material.Filled.Info" Size="Size.Large" Class="text-muted mb-3" />
+            <MudText Typo="Typo.h5">Ready to Generate Report</MudText>
+            <MudText Typo="Typo.body1" Class="text-muted">
+                @if (reportType == "single")
+                {
+                    <span>Please enter a Teacher ID to generate the performance report.</span>
+                }
+                else
+                {
+                    <span>Click "Generate Report" to view performance for all teachers.</span>
+                }
+            </MudText>
+        </MudCardContent>
+    </MudCard>
+}
+
+@code {
+    private TeacherPerformanceReportDto? singleReport;
+    private IEnumerable<TeacherPerformanceReportDto>? multipleReports;
+    private bool loading = false;
+    private string reportType = "single";
+    private string teacherId = string.Empty;
+    private DateTime? startDate;
+    private DateTime? endDate;
+    private string errorMessage = string.Empty;
+    private User user = default!;
+
+    [CascadingParameter]
+    private HttpContext HttpContext { get; set; } = default!;
+
+    protected override async Task OnInitializedAsync()
+    {
+        user = await UserAccessor.GetRequiredUserAsync(HttpContext);
+    }
+
+    private void OnReportTypeChanged()
+    {
+        singleReport = null;
+        multipleReports = null;
+        errorMessage = string.Empty;
+    }
+
+    private async Task LoadData()
+    {
+        errorMessage = string.Empty;
+        
+        if (reportType == "single" && string.IsNullOrEmpty(teacherId))
+        {
+            errorMessage = "Please enter a valid Teacher ID.";
+            return;
+        }
+
+        loading = true;
+        StateHasChanged();
+
+        try
+        {
+            if (reportType == "single")
+            {
+                singleReport = await ReportRepository.GetTeacherPerformanceReportAsync(
+                    user, 
+                    teacherId, 
+                    startDate, 
+                    endDate
+                );
+                multipleReports = null;
+            }
+            else
+            {
+                multipleReports = await ReportRepository.GetAllTeachersPerformanceReportAsync(
+                    user, 
+                    startDate, 
+                    endDate
+                );
+                singleReport = null;
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error loading data: {ex.Message}";
+            singleReport = null;
+            multipleReports = null;
+        }
+        finally
+        {
+            loading = false;
+            StateHasChanged();
+        }
+    }
+
+    private TeacherPerformanceReportDto GenerateDummySingleReportData()
+    {
+        var random = new Random();
+        return new TeacherPerformanceReportDto
+        {
+            TeacherId = teacherId,
+            TeacherName = "Dummy Teacher",
+            Email = "dummy.teacher@example.com",
+            TotalCoursesTeaching = random.Next(1, 5),
+            TotalStudentsTeaching = random.Next(20, 150),
+            LastLoginDate = DateTime.Today.AddDays(-random.Next(1, 30)),
+            AverageClassGrade = random.NextDouble() * 20 + 70, // 70-90
+            StudentSatisfactionRating = random.NextDouble() * 1 + 4.0, // 4.0-5.0
+            CourseCompletionRate = random.NextDouble() * 20 + 70, // 70-90
+            ForumParticipation = random.Next(10, 100),
+            MessagesReplied = random.Next(5, 50),
+            PerformanceStatus = "Good",
+            TotalAssignments = random.Next(50, 200),
+            GradedAssignments = random.Next(40, 180),
+            AverageGradingTime = random.NextDouble() * 3 + 1, // 1-4 days
+            TotalTimeSpent = TimeSpan.FromHours(random.Next(100, 500)),
+            CoursesCompleted = random.Next(1, 5)
+        };
+    }
+
+    private IEnumerable<TeacherPerformanceReportDto> GenerateDummyMultipleReportsData()
+    {
+        var random = new Random();
+        var dummyData = new List<TeacherPerformanceReportDto>();
+        var teacherNames = new[] { "Mr. Smith", "Ms. Johnson", "Dr. Brown", "Prof. Davis" };
+        var performanceStatuses = new[] { "Excellent", "Good", "Satisfactory", "Needs Improvement" };
+
+        for (int i = 0; i < 5; i++)
+        {
+            dummyData.Add(new TeacherPerformanceReportDto
+            {
+                TeacherId = $"TCH{100 + i}",
+                TeacherName = teacherNames[random.Next(teacherNames.Length)],
+                Email = $"teacher{i}@example.com",
+                TotalCoursesTeaching = random.Next(1, 4),
+                TotalStudentsTeaching = random.Next(10, 100),
+                LastLoginDate = DateTime.Today.AddDays(-random.Next(1, 60)),
+                AverageClassGrade = random.NextDouble() * 20 + 65, // 65-85
+                StudentSatisfactionRating = random.NextDouble() * 1 + 3.5, // 3.5-4.5
+                CourseCompletionRate = random.NextDouble() * 20 + 65, // 65-85
+                ForumParticipation = random.Next(5, 50),
+                MessagesReplied = random.Next(2, 30),
+                PerformanceStatus = performanceStatuses[random.Next(performanceStatuses.Length)],
+                TotalAssignments = random.Next(20, 100),
+                GradedAssignments = random.Next(15, 90),
+                AverageGradingTime = random.NextDouble() * 2 + 0.5, // 0.5-2.5 days
+                TotalTimeSpent = TimeSpan.FromHours(random.Next(50, 300)),
+                CoursesCompleted = random.Next(1, 4)
+            });
+        }
+        return dummyData;
+    }
+
+    private MudBlazor.Color GetGradeBadgeColor(double grade)
+    {
+        return grade switch
+        {
+            >= 90 => MudBlazor.Color.Success,
+            >= 80 => MudBlazor.Color.Info,
+            >= 70 => MudBlazor.Color.Warning,
+            >= 60 => MudBlazor.Color.Secondary,
+            _ => MudBlazor.Color.Error
+        };
+    }
+
+    private MudBlazor.Color GetStatusColor(string status)
+    {
+        return status?.ToLower() switch
+        {
+            "excellent" => MudBlazor.Color.Success,
+            "good" => MudBlazor.Color.Primary,
+            "satisfactory" => MudBlazor.Color.Warning,
+            "needs improvement" => MudBlazor.Color.Error,
+            _ => MudBlazor.Color.Secondary
+        };
+    }
+
+    private double GetGradingProgress()
+    {
+        if (singleReport == null || singleReport.TotalAssignments == 0) return 0;
+        return (singleReport.GradedAssignments / (double)singleReport.TotalAssignments) * 100;
+    }
+
+    private async Task ExportToPdf()
+    {
+        try
+        {
+            if (reportType == "single" && singleReport != null)
+            {
+                var data = new {
+                    Teacher = singleReport.TeacherName,
+                    Email = singleReport.Email,
+                    TotalCourses = singleReport.TotalCoursesTeaching,
+                    TotalStudents = singleReport.TotalStudentsTeaching,
+                    AverageGrade = singleReport.AverageClassGrade.ToString("F2"),
+                    SatisfactionRating = singleReport.StudentSatisfactionRating.ToString("F1"),
+                    CompletionRate = $"{singleReport.CourseCompletionRate:F1}%",
+                    PerformanceStatus = singleReport.PerformanceStatus
+                };
+
+                var jsonData = System.Text.Json.JsonSerializer.Serialize(data);
+                await JSRuntime.InvokeVoidAsync("downloadPdf", "Teacher Performance Report", jsonData);
+            }
+            else if (reportType == "all" && multipleReports?.Any() == true)
+            {
+                var data = multipleReports.Select(r => new {
+                    Teacher = r.TeacherName,
+                    Email = r.Email,
+                    TotalCourses = r.TotalCoursesTeaching,
+                    TotalStudents = r.TotalStudentsTeaching,
+                    AverageGrade = r.AverageClassGrade.ToString("F2"),
+                    SatisfactionRating = r.StudentSatisfactionRating.ToString("F1"),
+                    PerformanceStatus = r.PerformanceStatus
+                });
+
+                var jsonData = System.Text.Json.JsonSerializer.Serialize(data);
+                await JSRuntime.InvokeVoidAsync("downloadPdf", "Teacher Performance Report - All Teachers", jsonData);
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Export error: {ex.Message}");
+        }
+    }
+
+    private async Task ExportToExcel()
+    {
+        try
+        {
+            if (reportType == "single" && singleReport != null)
+            {
+                var jsonData = System.Text.Json.JsonSerializer.Serialize(singleReport);
+                await JSRuntime.InvokeVoidAsync("downloadExcel", "Teacher Performance Report", jsonData);
+            }
+            else if (reportType == "all" && multipleReports?.Any() == true)
+            {
+                var jsonData = System.Text.Json.JsonSerializer.Serialize(multipleReports);
+                await JSRuntime.InvokeVoidAsync("downloadExcel", "Teacher Performance Report - All Teachers", jsonData);
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Export error: {ex.Message}");
+        }
+    }
+}

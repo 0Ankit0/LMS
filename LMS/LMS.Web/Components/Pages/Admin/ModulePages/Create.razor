@@ -1,0 +1,175 @@
+@page "/admin/modules/create"
+@page "/admin/modules/edit/{id:int}"
+
+@using LMS.Repositories
+@using LMS.Web.Components.Shared
+@using MudBlazor;
+@using System.Reflection;
+
+@inject ICourseRepository CourseRepository
+@inject IDropdownRepository DropdownRepository
+@inject NavigationManager NavigationManager
+@inject ISnackbar Snackbar
+@inject IImageRepository ImageRepository
+@inject IJSRuntime JSRuntime
+@rendermode @(new InteractiveServerRenderMode())
+
+<PageTitle>@(IsEdit ? "Edit Module" : "Create Module") - Admin</PageTitle>
+
+<MudSkeleton Height="40px" Width="100%" Animation="Animation.Wave" />
+<MudPaper Class="mb-4 p-4">
+    <MudText Typo="Typo.h4">@(IsEdit ? "Edit Module" : "Create New Module")</MudText>
+    <MudButton Variant="Variant.Text" Color="Color.Secondary" Href="/admin/modules">
+        <MudIcon Icon="@Icons.Material.Filled.ArrowBack" Class="me-2" />
+        Back to Modules
+    </MudButton>
+</MudPaper>
+
+<MudCard Elevation="2">
+    <MudCardHeader>
+        <MudText Typo="Typo.h6">Module Information</MudText>
+    </MudCardHeader>
+    <MudCardContent>
+        <EditForm Model="@Module" OnValidSubmit="SaveModule">
+            <AntiforgeryToken />
+            <DataAnnotationsValidator />
+            <ValidationSummary />
+            <MudAlert Severity="Severity.Error" Class="my-3">
+                <MudText>Please correct the errors below.</MudText>
+            </MudAlert>
+            <MudTextField @bind-Value="Module.Title" Label="Title" Variant="Variant.Text" Required="true" RequiredError="Title is required!" />
+            <MudTextField @bind-Value="Module.Description" Label="Description" Variant="Variant.Text" Lines="3" Placeholder="Enter module description" />
+            <MudStack Direction="Row" Spacing="2">
+                <MudItem xs="12" md="6">
+                    <MudAutocomplete T="int?" Value="Module.CourseId" ValueChanged="@(v => Module.CourseId = v ?? 0)" Label="Course" Variant="Variant.Text" Required="true" RequiredError="Course is required!" Placeholder="Search course..."
+                        ToStringFunc="@(id => courses.FirstOrDefault(c => c.Value == id)?.Text ?? string.Empty)"
+                        SearchFunc="SearchCourses" />
+                </MudItem>
+                <MudItem xs="12" md="6">
+                    <MudNumericField @bind-Value="Module.OrderIndex" Label="Order Index" Variant="Variant.Text" Placeholder="1" />
+                </MudItem>
+            </MudStack>
+            <MudCheckBox T="bool" @bind-Checked="Module.IsRequired" Label="Is Required" Color="Color.Primary" />
+
+            <!-- Image Upload Button -->
+            <MudStack Direction="Row" Spacing="2" Class="my-2">
+                <MudText Typo="Typo.subtitle2">Module Image</MudText>
+                <FileUpload ImageUrl="@Module.ImageUrl" ImageUrlChanged="@(url => Module.ImageUrl = url)" ButtonText="Upload Image" />
+            </MudStack>
+
+            <!-- Icon Picker Component -->
+            <MudStack Direction="Row" Spacing="2" Class="my-2">
+                <MudText Typo="Typo.subtitle2">Module Icon</MudText>
+                <MudIconPicker T="string" Value="@Module.IconName" ValueChanged="ValueChangedModuleIcon" Label="Module Icon" />
+                @if (!string.IsNullOrEmpty(Module.IconName))
+                {
+                    <MudIcon Icon="@Module.IconName" Class="ms-2" />
+                }
+            </MudStack>
+
+            <MudStack Direction="Row" Spacing="2">
+                <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Disabled="@isSubmitting">
+                    <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Class="me-2" />
+                    @(IsEdit ? "Update Module" : "Create Module")
+                </MudButton>
+                <MudButton Variant="Variant.Filled" Color="Color.Secondary" Href="/admin/modules">Cancel</MudButton>
+            </MudStack>
+        </EditForm>
+    </MudCardContent>
+</MudCard>
+
+@code {
+    [Parameter]
+    [SupplyParameterFromQuery] public int? id { get; set; }
+    [SupplyParameterFromForm]
+    private CreateModuleRequest Module { get; set; } = new();
+    private bool isSubmitting = false;
+    private List<DropdownOption<int>> courses = new();
+    private bool IsEdit => id.HasValue && id.Value > 0;
+    private ElementReference fileInputRef;
+    private List<string> allMudIcons = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        courses = await DropdownRepository.GetCoursesAsync();
+        allMudIcons = typeof(Icons.Material.Filled).GetFields(BindingFlags.Public | BindingFlags.Static)
+            .Select(f => f.GetValue(null)?.ToString()).Where(x => !string.IsNullOrEmpty(x)).ToList();
+        if (IsEdit)
+        {
+            var module = await CourseRepository.GetModuleByIdAsync(id.Value);
+            if (module != null)
+            {
+                Module = new CreateModuleRequest
+                {
+                    Title = module.Title,
+                    Description = module.Description,
+                    CourseId = module.CourseId,
+                    OrderIndex = module.OrderIndex,
+                    IsRequired = module.IsRequired,
+                    ImageUrl = module.ImageUrl,
+                    IconName = module.IconName
+                };
+            }
+            else
+            {
+                Snackbar.Add("Module not found.", Severity.Error);
+                NavigationManager.NavigateTo("/admin/modules");
+                return;
+            }
+        }
+    }
+
+    private async Task SaveModule()
+    {
+        if (isSubmitting) return;
+        isSubmitting = true;
+        try
+        {
+            if (IsEdit)
+            {
+                var result = await CourseRepository.UpdateModuleAsync(id.Value, Module);
+                if (result != null)
+                {
+                    Snackbar.Add("Module updated successfully!", Severity.Success);
+                    NavigationManager.NavigateTo("/admin/modules");
+                }
+                else
+                {
+                    Snackbar.Add("Failed to update module. Please try again.", Severity.Error);
+                }
+            }
+            else
+            {
+                var result = await CourseRepository.CreateModuleAsync(Module);
+                if (result != null)
+                {
+                    Snackbar.Add("Module created successfully!", Severity.Success);
+                    NavigationManager.NavigateTo("/admin/modules");
+                }
+                else
+                {
+                    Snackbar.Add("Failed to create module. Please try again.", Severity.Error);
+                    return;
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error saving module: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            isSubmitting = false;
+        }
+    }
+
+    private Task<IEnumerable<int?>> SearchCourses(string value, CancellationToken token)
+    {
+        IEnumerable<int?> result = string.IsNullOrWhiteSpace(value)
+            ? courses.Select(c => (int?)c.Value)
+            : courses.Where(c => c.Text.Contains(value, StringComparison.OrdinalIgnoreCase)).Select(c => (int?)c.Value);
+        return Task.FromResult(result);
+    }
+
+    private void ValueChangedModuleIcon(string v) => Module.IconName = v;
+}

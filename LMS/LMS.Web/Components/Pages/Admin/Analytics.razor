@@ -1,0 +1,387 @@
+@page "/admin/analytics"
+@layout AdminLayout
+
+<PageTitle>Analytics - Admin</PageTitle>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="mb-0">Analytics Dashboard</h1>
+        <p class="text-muted">Comprehensive insights into your LMS performance</p>
+    </div>
+    <div class="d-flex gap-2">
+        <MudButton Variant="Variant.Outlined" Color="Color.Secondary" OnClick="RefreshData">
+            <MudIcon Icon="@Icons.Material.Filled.Refresh" Class="me-2" />
+            Refresh Data
+        </MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="ExportReport">
+            <MudIcon Icon="@Icons.Material.Filled.Download" Class="me-2" />
+            Export Report
+        </MudButton>
+    </div>
+</div>
+
+@if (isLoading)
+{
+    <!-- Skeleton Loader for Key Performance Indicators -->
+    <div class="row g-4 mb-4">
+        @for (int i = 0; i < 4; i++)
+        {
+            <div class="col-lg-3 col-md-6">
+                <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="120px" />
+            </div>
+        }
+    </div>
+
+    <!-- Skeleton Loader for Main Analytics Charts -->
+    <div class="row g-4 mb-4">
+        <div class="col-lg-8">
+            <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="450px" />
+        </div>
+        <div class="col-lg-4">
+            <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="450px" />
+        </div>
+    </div>
+
+    <div class="row g-4 mb-4">
+        <div class="col-lg-6">
+            <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="350px" />
+        </div>
+        <div class="col-lg-6">
+            <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="350px" />
+        </div>
+    </div>
+
+    <div class="row g-4 mb-4">
+        <div class="col-12">
+            <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="400px" />
+        </div>
+    </div>
+
+    <!-- Skeleton Loader for Recent Activity Table -->
+    <div class="row g-4">
+        <div class="col-12">
+            <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="400px" />
+        </div>
+    </div>
+}
+else
+{
+    <!-- Key Performance Indicators -->
+    <div class="row g-4 mb-4">
+        <div class="col-lg-3 col-md-6">
+            <MudCard Elevation="2" Class="mud-border-primary">
+                <MudCardContent>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <MudText Typo="Typo.subtitle1" Class="text-primary">Total Revenue</MudText>
+                            <MudText Typo="Typo.h3" Class="mb-0">$@totalRevenue.ToString("N0")</MudText>
+                            <MudText Typo="Typo.caption" Class="text-success">+12.5% from last month</MudText>
+                        </div>
+                        <MudIcon Icon="@Icons.Material.Filled.AttachMoney" Class="fs-1 text-primary opacity-75" />
+                    </div>
+                </MudCardContent>
+            </MudCard>
+        </div>
+        <div class="col-lg-3 col-md-6">
+            <MudCard Elevation="2" Class="mud-border-success">
+                <MudCardContent>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <MudText Typo="Typo.subtitle1" Class="text-success">Active Students</MudText>
+                            <MudText Typo="Typo.h3" Class="mb-0">@activeStudents</MudText>
+                            <MudText Typo="Typo.caption" Class="text-success">+8.2% from last month</MudText>
+                        </div>
+                        <MudIcon Icon="@Icons.Material.Filled.People" Class="fs-1 text-success opacity-75" />
+                    </div>
+                </MudCardContent>
+            </MudCard>
+        </div>
+        <div class="col-lg-3 col-md-6">
+            <MudCard Elevation="2" Class="mud-border-warning">
+                <MudCardContent>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <MudText Typo="Typo.subtitle1" Class="text-warning">Completion Rate</MudText>
+                            <MudText Typo="Typo.h3" Class="mb-0">@completionRate%</MudText>
+                            <MudText Typo="Typo.caption" Class="text-error">-2.1% from last month</MudText>
+                        </div>
+                        <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Class="fs-1 text-warning opacity-75" />
+                    </div>
+                </MudCardContent>
+            </MudCard>
+        </div>
+        <div class="col-lg-3 col-md-6">
+            <MudCard Elevation="2" Class="mud-border-info">
+                <MudCardContent>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <MudText Typo="Typo.subtitle1" Class="text-info">Avg. Session Time</MudText>
+                            <MudText Typo="Typo.h3" Class="mb-0">@avgSessionTime min</MudText>
+                            <MudText Typo="Typo.caption" Class="text-success">+5.7% from last month</MudText>
+                        </div>
+                        <MudIcon Icon="@Icons.Material.Filled.AccessTime" Class="fs-1 text-info opacity-75" />
+                    </div>
+                </MudCardContent>
+            </MudCard>
+        </div>
+    </div>
+
+    <!-- Main Analytics Charts -->
+    <div class="row g-4 mb-4">
+        <div class="col-lg-8">
+            <MudCard Elevation="2">
+                <MudCardHeader>
+                    <MudText Typo="Typo.h6">Revenue & Enrollment Trends</MudText>
+                    <MudSpacer />
+                    <MudButtonGroup Color="Color.Primary" Variant="Variant.Outlined">
+                        <MudButton OnClick="@(() => ChangeTimeRange("week"))" Variant="@(selectedTimeRange == "week" ? Variant.Filled : Variant.Outlined)">7 Days</MudButton>
+                        <MudButton OnClick="@(() => ChangeTimeRange("month"))" Variant="@(selectedTimeRange == "month" ? Variant.Filled : Variant.Outlined)">30 Days</MudButton>
+                        <MudButton OnClick="@(() => ChangeTimeRange("year"))" Variant="@(selectedTimeRange == "year" ? Variant.Filled : Variant.Outlined)">1 Year</MudButton>
+                    </MudButtonGroup>
+                </MudCardHeader>
+                <MudCardContent>
+                    <MudChart ChartType="ChartType.Line" Labels="@revenueLabels" Series="@revenueSeries" Style="height: 400px;" />
+                </MudCardContent>
+            </MudCard>
+        </div>
+        <div class="col-lg-4">
+            <MudCard Elevation="2">
+                <MudCardHeader>
+                    <MudText Typo="Typo.h6">Course Performance</MudText>
+                </MudCardHeader>
+                <MudCardContent>
+                    <MudChart ChartType="ChartType.Bar" Labels="@performanceLabels" Series="@performanceSeries" Style="height: 400px;" />
+                </MudCardContent>
+            </MudCard>
+        </div>
+    </div>
+
+    <div class="row g-4 mb-4">
+        <div class="col-lg-6">
+            <MudCard Elevation="2">
+                <MudCardHeader>
+                    <MudText Typo="Typo.h6">Student Engagement by Device</MudText>
+                </MudCardHeader>
+                <MudCardContent>
+                    <MudChart ChartType="ChartType.Pie" Labels="@deviceLabels" Series="@deviceSeries" Style="height: 300px;" />
+                </MudCardContent>
+            </MudCard>
+        </div>
+        <div class="col-lg-6">
+            <MudCard Elevation="2">
+                <MudCardHeader>
+                    <MudText Typo="Typo.h6">Learning Progress Distribution</MudText>
+                </MudCardHeader>
+                <MudCardContent>
+                    <MudChart ChartType="ChartType.Pie" Labels="@progressLabels" Series="@progressSeries" Style="height: 300px;" />
+                </MudCardContent>
+            </MudCard>
+        </div>
+    </div>
+
+    <div class="row g-4 mb-4">
+        <div class="col-12">
+            <MudCard Elevation="2">
+                <MudCardHeader>
+                    <MudText Typo="Typo.h6">Course Categories Performance Matrix</MudText>
+                </MudCardHeader>
+                <MudCardContent>
+                    <MudChart ChartType="ChartType.Bar" Labels="@categoryLabels" Series="@categorySeries" Style="height: 350px;" />
+                </MudCardContent>
+            </MudCard>
+        </div>
+    </div>
+
+    <!-- Recent Activity Table -->
+    <div class="row g-4">
+        <div class="col-12">
+            <MudCard Elevation="2">
+                <MudCardHeader>
+                    <MudText Typo="Typo.h6">Recent Student Activity</MudText>
+                </MudCardHeader>
+                <MudCardContent>
+                    <MudTable T="StudentActivity" Items="@recentActivities" Hover="true" Breakpoint="Breakpoint.Sm">
+                        <HeaderContent>
+                            <MudTh>Student</MudTh>
+                            <MudTh>Course</MudTh>
+                            <MudTh>Activity</MudTh>
+                            <MudTh>Progress</MudTh>
+                            <MudTh>Last Active</MudTh>
+                            <MudTh>Status</MudTh>
+                        </HeaderContent>
+                        <RowTemplate>
+                            <MudTd DataLabel="Student">
+                                <div class="d-flex align-items-center">
+                                    <MudAvatar Color="Color.Primary" Variant="Variant.Filled" Class="me-2">
+                                        <MudText Typo="Typo.h6">@context.StudentName.Substring(0, 1)</MudText>
+                                    </MudAvatar>
+                                    @context.StudentName
+                                </div>
+                            </MudTd>
+                            <MudTd DataLabel="Course">@context.CourseName</MudTd>
+                            <MudTd DataLabel="Activity">@context.Activity</MudTd>
+                            <MudTd DataLabel="Progress">
+                                <MudProgressLinear Value="@(Convert.ToDouble(context.Progress))" Color="Color.Primary" Class="my-2" Style="height: 6px;" />
+                                <MudText Typo="Typo.caption" Class="text-muted">@context.Progress%</MudText>
+                            </MudTd>
+                            <MudTd DataLabel="Last Active">@context.LastActive.ToString("MMM dd, HH:mm")</MudTd>
+                            <MudTd DataLabel="Status">
+                                <MudChip T="string" Color="@GetStatusBadgeColor(context.Status)">@context.Status</MudChip>
+                            </MudTd>
+                        </RowTemplate>
+                    </MudTable>
+                </MudCardContent>
+            </MudCard>
+        </div>
+    </div>
+}
+
+@code {
+    private string selectedTimeRange = "month";
+    private int totalRevenue = 45000;
+    private int activeStudents = 1248;
+    private int completionRate = 78;
+    private int avgSessionTime = 45;
+
+    private List<StudentActivity> recentActivities = new();
+    private bool isLoading = true;
+
+    // Chart Data
+    private List<string> revenueLabels = new();
+    private List<MudBlazor.ChartSeries> revenueSeries = new();
+    private List<string> performanceLabels = new();
+    private List<MudBlazor.ChartSeries> performanceSeries = new();
+    private List<string> deviceLabels = new();
+    private List<MudBlazor.ChartSeries> deviceSeries = new();
+    private List<string> progressLabels = new();
+    private List<MudBlazor.ChartSeries> progressSeries = new();
+    private List<string> categoryLabels = new();
+    private List<MudBlazor.ChartSeries> categorySeries = new();
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            GenerateDummyData();
+            GenerateChartData();
+            isLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    private void GenerateChartData()
+    {
+        // Revenue & Enrollment Trends
+        revenueLabels = selectedTimeRange switch
+        {
+            "week" => new List<string> { "Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun" },
+            "month" => new List<string> { "Week 1", "Week 2", "Week 3", "Week 4" },
+            "year" => new List<string> { "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec" },
+            _ => new List<string> { "Week 1", "Week 2", "Week 3", "Week 4" }
+        };
+        revenueSeries = new List<MudBlazor.ChartSeries>
+        {
+            new MudBlazor.ChartSeries { Name = "Revenue ($)", Data = selectedTimeRange switch
+                {
+                    "week" => new double[] { 1200, 1500, 1800, 1600, 2200, 2800, 3200 },
+                    "month" => new double[] { 8500, 9200, 10800, 11500 },
+                    "year" => new double[] { 25000, 28000, 32000, 35000, 38000, 42000, 45000, 48000, 52000, 55000, 58000, 62000 },
+                    _ => new double[] { 8500, 9200, 10800, 11500 }
+                }
+            },
+            new MudBlazor.ChartSeries { Name = "New Enrollments", Data = selectedTimeRange switch
+                {
+                    "week" => new double[] { 12, 18, 25, 22, 35, 45, 52 },
+                    "month" => new double[] { 85, 120, 145, 180 },
+                    "year" => new double[] { 320, 380, 420, 480, 520, 580, 620, 680, 720, 780, 840, 920 },
+                    _ => new double[] { 85, 120, 145, 180 }
+                }
+            }
+        };
+
+        // Course Performance
+        performanceLabels = new List<string> { "Excellent", "Good", "Average", "Below Avg", "Poor" };
+        performanceSeries = new List<MudBlazor.ChartSeries>
+        {
+            new MudBlazor.ChartSeries { Name = "Course Performance", Data = new double[] { 45, 65, 80, 35, 15 } }
+        };
+
+        // Device Engagement
+        deviceLabels = new List<string> { "Desktop", "Mobile", "Tablet" };
+        deviceSeries = new List<MudBlazor.ChartSeries>
+        {
+            new MudBlazor.ChartSeries { Name = "Engagement", Data = new double[] { 55, 35, 10 } }
+        };
+
+        // Progress Distribution
+        progressLabels = new List<string> { "0-20%", "21-40%", "41-60%", "61-80%", "81-100%" };
+        progressSeries = new List<MudBlazor.ChartSeries>
+        {
+            new MudBlazor.ChartSeries { Name = "Students", Data = new double[] { 15, 25, 35, 45, 80 } }
+        };
+
+        // Category Matrix
+        categoryLabels = new List<string> { "Programming", "Design", "Business", "Marketing", "Data Science", "Languages" };
+        categorySeries = new List<MudBlazor.ChartSeries>
+        {
+            new MudBlazor.ChartSeries { Name = "Enrollment", Data = new double[] { 450, 320, 280, 180, 150, 120 } },
+            new MudBlazor.ChartSeries { Name = "Completion", Data = new double[] { 380, 280, 240, 150, 120, 100 } },
+            new MudBlazor.ChartSeries { Name = "Revenue", Data = new double[] { 28000, 18000, 15000, 9000, 8500, 6000 } }
+        };
+    }
+
+    private async Task ChangeTimeRange(string range)
+    {
+        selectedTimeRange = range;
+        GenerateChartData();
+        StateHasChanged();
+    }
+
+    private async Task RefreshData()
+    {
+        GenerateDummyData();
+        GenerateChartData();
+        StateHasChanged();
+    }
+
+    private async Task ExportReport()
+    {
+        await Task.Delay(1000);
+    }
+
+    private void GenerateDummyData()
+    {
+        var random = new Random();
+        totalRevenue = random.Next(35000, 65000);
+        activeStudents = random.Next(1000, 1500);
+        completionRate = random.Next(70, 85);
+        avgSessionTime = random.Next(35, 55);
+
+        recentActivities = new List<StudentActivity>
+        {
+            new() { StudentName = "John Doe", CourseName = "Advanced C#", Activity = "Completed Module 3", Progress = 75, LastActive = DateTime.Now.AddMinutes(-15), Status = "Active" },
+            new() { StudentName = "Jane Smith", CourseName = "UI/UX Design", Activity = "Started Assessment", Progress = 60, LastActive = DateTime.Now.AddHours(-2), Status = "Active" },
+            new() { StudentName = "Mike Johnson", CourseName = "Data Science", Activity = "Watched Video", Progress = 45, LastActive = DateTime.Now.AddHours(-5), Status = "Active" },
+            new() { StudentName = "Sarah Wilson", CourseName = "Digital Marketing", Activity = "Submitted Assignment", Progress = 90, LastActive = DateTime.Now.AddMinutes(-30), Status = "Completed" },
+            new() { StudentName = "David Brown", CourseName = "Python Basics", Activity = "Failed Quiz", Progress = 25, LastActive = DateTime.Now.AddDays(-1), Status = "Struggling" }
+        };
+    }
+
+    private MudBlazor.Color GetStatusBadgeColor(string status) => status switch
+    {
+        "Active" => MudBlazor.Color.Success,
+        "Completed" => MudBlazor.Color.Primary,
+        "Struggling" => MudBlazor.Color.Warning,
+        _ => MudBlazor.Color.Secondary
+    };
+
+    public class StudentActivity
+    {
+        public string StudentName { get; set; } = string.Empty;
+        public string CourseName { get; set; } = string.Empty;
+        public string Activity { get; set; } = string.Empty;
+        public int Progress { get; set; }
+        public DateTime LastActive { get; set; }
+        public string Status { get; set; } = string.Empty;
+    }
+}

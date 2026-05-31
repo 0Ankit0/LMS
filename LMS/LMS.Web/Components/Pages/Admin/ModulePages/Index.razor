@@ -1,0 +1,187 @@
+@page "/admin/modules"
+@layout AdminLayout
+@attribute [OutputCache(Duration = 60)]
+@inject ICourseRepository CourseRepository
+@inject ISnackbar Snackbar
+@rendermode @(new InteractiveServerRenderMode())
+
+<PageTitle>Modules - Admin</PageTitle>
+<title>Modules - Admin</title>
+
+<MudCard Elevation="2">
+    <MudCardHeader>
+        <MudText Typo="Typo.h6">Modules</MudText>
+        <MudSpacer />
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" Href="/admin/modules/create">
+            <MudIcon Icon="@Icons.Material.Filled.Add" Class="me-2" />
+            Add New Module
+        </MudButton>
+    </MudCardHeader>
+    <MudCardContent>
+        <MudTable T="ModuleModel" ServerData="@ServerData" Hover="true" Breakpoint="Breakpoint.Sm" Loading="@_loading">
+            <HeaderContent>
+                <MudTh><MudTableSortLabel T="ModuleModel" SortBy="new Func<ModuleModel, object>(x => x.Title)">Title</MudTableSortLabel></MudTh>
+                <MudTh><MudTableSortLabel T="ModuleModel" SortBy="new Func<ModuleModel, object>(x => x.Description)">Description</MudTableSortLabel></MudTh>
+                <MudTh><MudTableSortLabel T="ModuleModel" SortBy="new Func<ModuleModel, object>(x => x.CourseId)">Course</MudTableSortLabel></MudTh>
+                <MudTh><MudTableSortLabel T="ModuleModel" SortBy="new Func<ModuleModel, object>(x => x.OrderIndex)">Order</MudTableSortLabel></MudTh>
+                <MudTh><MudTableSortLabel T="ModuleModel" SortBy="new Func<ModuleModel, object>(x => x.IsRequired)">Required</MudTableSortLabel></MudTh>
+                <MudTh><MudTableSortLabel T="ModuleModel" SortBy="new Func<ModuleModel, object>(x => x.IsActive)">Active</MudTableSortLabel></MudTh>
+                <MudTh><MudTableSortLabel T="ModuleModel" SortBy="new Func<ModuleModel, object>(x => x.Lessons.Count)">Lessons</MudTableSortLabel></MudTh>
+                <MudTh>Actions</MudTh>
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd DataLabel="Title">
+                    <div class="d-flex align-items-center">
+                        @if (!string.IsNullOrEmpty(context.ImageUrl))
+                        {
+                            <img src="@context.ImageUrl" alt="@context.Title" style="width: 32px; height: 32px; object-fit: cover; border-radius: 4px; margin-right: 8px;" />
+                        }
+                        else if (!string.IsNullOrEmpty(context.IconName))
+                        {
+                            <MudIcon Icon="@context.IconName" Class="me-2" />
+                        }
+                        else
+                        {
+                            <MudIcon Icon="@Icons.Material.Filled.Book" Class="me-2" />
+                        }
+                        <div>
+                            <MudText Typo="Typo.body1">@context.Title</MudText>
+                            <MudText Typo="Typo.caption" Class="text-muted">Module @context.OrderIndex</MudText>
+                        </div>
+                    </div>
+                </MudTd>
+                <MudTd DataLabel="Description">
+                    <div style="max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                        @context.Description
+                    </div>
+                </MudTd>
+                <MudTd DataLabel="Course">
+                    <MudText Typo="Typo.body2">Course @context.CourseId</MudText>
+                </MudTd>
+                <MudTd DataLabel="Order">
+                    <MudChip T="int" Color="Color.Default" Size="Size.Small">@context.OrderIndex</MudChip>
+                </MudTd>
+                <MudTd DataLabel="Required">
+                    <MudChip T="bool" Color="@(context.IsRequired ? Color.Error : Color.Secondary)" Size="Size.Small">
+                        @(context.IsRequired ? "Required" : "Optional")
+                    </MudChip>
+                </MudTd>
+                <MudTd DataLabel="Active">
+                    <MudChip T="bool" Color="@(context.IsActive ? Color.Success : Color.Secondary)" Size="Size.Small">
+                        @(context.IsActive ? "Active" : "Inactive")
+                    </MudChip>
+                </MudTd>
+                <MudTd DataLabel="Lessons">
+                    <MudChip T="int" Color="Color.Info" Size="Size.Small">@(context.Lessons?.Count ?? 0) lessons</MudChip>
+                </MudTd>
+                <MudTd DataLabel="Actions">
+                    <MudButtonGroup>
+                        <MudButton Variant="Variant.Outlined" Color="Color.Primary" Href='@($"/admin/modules/edit?id={context.Id}")'>
+                            <MudIcon Icon="@Icons.Material.Filled.Edit" Class="me-1" /> Edit
+                        </MudButton>
+                        <MudButton Variant="Variant.Outlined" Color="Color.Success" Href='@($"/admin/modules/manage?id={context.Id}")'>
+                            <MudIcon Icon="@Icons.Material.Filled.MenuBook" Class="me-1" /> Lessons
+                        </MudButton>
+                        <MudButton Variant="Variant.Outlined" Color="Color.Error" OnClick="() => ConfirmDelete(context)">
+                            <MudIcon Icon="@Icons.Material.Filled.Delete" Class="me-1" /> Delete
+                        </MudButton>
+                    </MudButtonGroup>
+                </MudTd>
+            </RowTemplate>
+            <PagerContent>
+                <MudTablePager PageSizeOptions="@(new int[]{10, 25, 50})" />
+            </PagerContent>
+        </MudTable>
+    </MudCardContent>
+</MudCard>
+
+<!-- Delete Confirmation Modal -->
+<MudDialog @bind-IsVisible="@showDeleteConfirm" Options="@dialogOptions">
+    <TitleContent>
+        <MudText Typo="Typo.h6" Class="text-danger">
+            <MudIcon Icon="@Icons.Material.Filled.Warning" /> Confirm Delete
+        </MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudText>Are you sure you want to delete the module <strong>@moduleToDelete?.Title</strong>? This action cannot be undone.</MudText>
+    </DialogContent>
+    <DialogActions>
+        <MudButton Color="Color.Error" OnClick="DeleteModule">
+            <MudIcon Icon="@Icons.Material.Filled.Delete" Class="me-1" /> Delete
+        </MudButton>
+        <MudButton Color="Color.Secondary" OnClick="CancelDelete">Cancel</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    private bool _loading = false;
+    private bool showDeleteConfirm = false;
+    private DialogOptions dialogOptions = new() { CloseButton = true, MaxWidth = MaxWidth.Small, FullWidth = true };
+    private ModuleModel? moduleToDelete;
+
+    private async Task<TableData<ModuleModel>> ServerData(TableState state, CancellationToken cancellationToken)
+    {
+        _loading = true;
+        StateHasChanged();
+        try
+        {
+            // Use real repository method for paginated modules
+            var request = new PaginationRequest
+            {
+                PageNumber = state.Page + 1,
+                PageSize = state.PageSize > 0 ? state.PageSize : 10
+            };
+            var result = await CourseRepository.GetModulesPaginatedAsync(request);
+            return new TableData<ModuleModel>
+            {
+                Items = result.Items,
+                TotalItems = result.TotalCount
+            };
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error loading modules: {ex.Message}", Severity.Error);
+            return new TableData<ModuleModel>
+            {
+                Items = new List<ModuleModel>(),
+                TotalItems = 0
+            };
+        }
+        finally
+        {
+            _loading = false;
+            StateHasChanged();
+        }
+    }
+
+    private void ConfirmDelete(ModuleModel module)
+    {
+        moduleToDelete = module;
+        showDeleteConfirm = true;
+    }
+
+    private void CancelDelete()
+    {
+        showDeleteConfirm = false;
+        moduleToDelete = null;
+    }
+
+    private async Task DeleteModule()
+    {
+        if (moduleToDelete != null)
+        {
+            try
+            {
+                await CourseRepository.DeleteModuleAsync(moduleToDelete.Id);
+                Snackbar.Add($"Module '{moduleToDelete.Title}' deleted successfully.", Severity.Success);
+                showDeleteConfirm = false;
+                moduleToDelete = null;
+                StateHasChanged();
+            }
+            catch (Exception ex)
+            {
+                Snackbar.Add($"Error deleting module: {ex.Message}", Severity.Error);
+            }
+        }
+    }
+}

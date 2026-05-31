@@ -16,5 +16,9 @@ namespace LMS.Data.DTOs
         public int OrderIndex { get; set; }
 
         public bool IsRequired { get; set; } = true;
+
+        // Add for image and icon support
+        public string? ImageUrl { get; set; }
+        public string? IconName { get; set; }
     }
 }

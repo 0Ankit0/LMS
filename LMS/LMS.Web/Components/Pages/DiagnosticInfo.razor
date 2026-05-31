@@ -1,0 +1,192 @@
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@using LMS.Data.Entities
+
+@using LMS.Repositories
+@using LMS.Web.Data
+@using Microsoft.AspNetCore.Identity
+@using Microsoft.AspNetCore.Components.Authorization
+@inject ILogger<DiagnosticInfo> Logger
+@inject IServiceProvider ServiceProvider
+@inject IConfiguration Configuration
+
+<div class="container mt-4">
+    <h3>🔍 Diagnostic Information</h3>
+    <div class="row">
+        <div class="col-md-6">
+            <MudCard Elevation="2">
+                <MudCardHeader>
+                    <MudText Typo="Typo.h6">Environment</MudText>
+                </MudCardHeader>
+                <MudCardContent>
+                    <p><strong>Environment:</strong> @Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT")</p>
+                    <p><strong>Machine Name:</strong> @Environment.MachineName</p>
+                    <p><strong>OS Version:</strong> @Environment.OSVersion</p>
+                    <p><strong>Current Directory:</strong> @Environment.CurrentDirectory</p>
+                </MudCardContent>
+            </MudCard>
+        </div>
+
+        <div class="col-md-6">
+            <MudCard Elevation="2">
+                <MudCardHeader>
+                    <MudText Typo="Typo.h6">Database Connection</MudText>
+                </MudCardHeader>
+                <MudCardContent>
+                    <p><strong>Connection String:</strong> @(DatabaseStatus?.ConnectionString ?? "Not available")</p>
+                    <p><strong>Status:</strong>
+                        <MudChip T="bool" Color="@(DatabaseStatus?.IsConnected == true ? Color.Success : Color.Error)">
+                            @(DatabaseStatus?.IsConnected == true ? "Connected" : "Disconnected")
+                        </MudChip>
+                    </p>
+                    @if (!string.IsNullOrEmpty(DatabaseStatus?.Error))
+                    {
+                        <p><strong>Error:</strong> <span class="text-danger">@DatabaseStatus.Error</span></p>
+                    }
+                </MudCardContent>
+            </MudCard>
+        </div>
+    </div>
+
+    <div class="row mt-3">
+        <div class="col-12">
+            <MudCard Elevation="2">
+                <MudCardHeader>
+                    <MudText Typo="Typo.h6">Registered Services</MudText>
+                </MudCardHeader>
+                <MudCardContent>
+                    <div class="row">
+                        @foreach (var service in ServiceStatuses)
+                        {
+                            <div class="col-md-4 mb-2">
+                                <MudChip T="bool" Color="@(service.IsRegistered ? Color.Success : Color.Error)">
+                                @(service.IsRegistered ? "✓" : "✗")
+                            </MudChip>
+                                @service.ServiceName
+                            </div>
+                        }
+                    </div>
+                </MudCardContent>
+            </MudCard>
+        </div>
+    </div>
+
+    <div class="mt-3">
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="RefreshDiagnostics">
+            <MudIcon Icon="@Icons.Material.Filled.Refresh" Class="me-2" />
+            Refresh
+        </MudButton>
+    </div>
+</div>
+
+@code {
+    private DatabaseStatusInfo? DatabaseStatus { get; set; }
+    private List<ServiceStatusInfo> ServiceStatuses { get; set; } = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await RefreshDiagnostics();
+    }
+
+    private async Task RefreshDiagnostics()
+    {
+        Logger.LogInformation("Refreshing diagnostic information");
+
+        // Check database status
+        await CheckDatabaseStatus();
+
+        // Check service registrations
+        CheckServiceRegistrations();
+
+        StateHasChanged();
+    }
+
+    private async Task CheckDatabaseStatus()
+    {
+        try
+        {
+            var connectionString = Configuration.GetConnectionString("DefaultConnection");
+            var dbContext = ServiceProvider.GetService<ApplicationDbContext>();
+
+            if (dbContext != null)
+            {
+                var canConnect = await dbContext.Database.CanConnectAsync();
+                DatabaseStatus = new DatabaseStatusInfo
+                {
+                    ConnectionString = connectionString?.Length > 50 ? connectionString.Substring(0, 50) + "..." : connectionString,
+                    IsConnected = canConnect,
+                    Error = canConnect ? null : "Unable to connect to database"
+                };
+            }
+            else
+            {
+                DatabaseStatus = new DatabaseStatusInfo
+                {
+                    ConnectionString = connectionString,
+                    IsConnected = false,
+                    Error = "DbContext not registered"
+                };
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error checking database status");
+            DatabaseStatus = new DatabaseStatusInfo
+            {
+                ConnectionString = "Error retrieving",
+                IsConnected = false,
+                Error = ex.Message
+            };
+        }
+    }
+
+    private void CheckServiceRegistrations()
+    {
+        var servicesToCheck = new[]
+        {
+typeof(ApplicationDbContext),
+typeof(UserManager<LMS.Data.Entities.User>),
+typeof(CourseRepository),
+typeof(UserRepository),
+typeof(AssessmentRepository),
+typeof(ProgressRepository),
+typeof(AuthenticationStateProvider)
+};
+
+        ServiceStatuses.Clear();
+
+        foreach (var serviceType in servicesToCheck)
+        {
+            try
+            {
+                var service = ServiceProvider.GetService(serviceType);
+                ServiceStatuses.Add(new ServiceStatusInfo
+                {
+                    ServiceName = serviceType.Name,
+                    IsRegistered = service != null
+                });
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError(ex, "Error checking service registration for {ServiceType}", serviceType.Name);
+                ServiceStatuses.Add(new ServiceStatusInfo
+                {
+                    ServiceName = serviceType.Name,
+                    IsRegistered = false
+                });
+            }
+        }
+    }
+
+    private class DatabaseStatusInfo
+    {
+        public string? ConnectionString { get; set; }
+        public bool IsConnected { get; set; }
+        public string? Error { get; set; }
+    }
+
+    private class ServiceStatusInfo
+    {
+        public string ServiceName { get; set; } = string.Empty;
+        public bool IsRegistered { get; set; }
+    }
+}

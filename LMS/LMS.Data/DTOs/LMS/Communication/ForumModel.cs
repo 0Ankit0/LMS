@@ -28,5 +28,9 @@ namespace LMS.Data.DTOs
         public DateTime? LastPostAt { get; set; }
 
         public List<ForumTopicModel> Topics { get; set; } = new();
+
+        // Add for image and icon support
+        public string? ImageUrl { get; set; }
+        public string? IconName { get; set; }
     }
 }

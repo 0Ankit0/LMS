@@ -1,0 +1,244 @@
+@page "/admin/assessments/create"
+@page "/admin/assessments/edit/{id:int}"
+@layout AdminLayout
+@inject IDropdownRepository DropdownRepository
+@inject IAssessmentRepository AssessmentRepository
+@inject ISnackbar Snackbar
+@inject NavigationManager NavigationManager
+@rendermode @(new InteractiveServerRenderMode())
+
+<PageTitle>@(IsEdit ? "Edit Assessment" : "Create Assessment") - Admin</PageTitle>
+
+@if (isLoading)
+{
+    <MudStack Direction="Row" Spacing="2" Class="mb-4">
+        <MudSkeleton SkeletonType="SkeletonType.Text" Width="200px" Height="40px" />
+        <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="180px" Height="40px" />
+    </MudStack>
+    <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="700px" />
+}
+else
+{
+    <MudStack Direction="Row" Spacing="2" Class="mb-4">
+        <MudText Typo="Typo.h4">@(IsEdit ? "Edit Assessment" : "Create New Assessment")</MudText>
+        <MudButton Variant="Variant.Text" Color="Color.Secondary" Href="/admin/assessments">
+            <MudIcon Icon="@Icons.Material.Filled.ArrowBack" Class="me-2" />
+            Back to Assessments
+        </MudButton>
+    </MudStack>
+    <MudCard Elevation="2">
+        <MudCardHeader>
+            <MudText Typo="Typo.h6">Assessment Information</MudText>
+        </MudCardHeader>
+        <MudCardContent>
+            <EditForm EditContext="@editContext" OnValidSubmit="SaveAssessment">
+                <MudAlert Severity="Severity.Error" Class="mb-3" >
+                    <MudText>Please correct the errors below.</MudText>
+                </MudAlert>
+                <MudTextField @bind-Value="Assessment.Title" Label="Title" Variant="Variant.Text" Required="true"
+                    RequiredError="Title is required!" />
+                <MudTextField @bind-Value="Assessment.Description" Label="Description" Variant="Variant.Text" Lines="3"
+                    Placeholder="Enter assessment description" />
+                <MudAutocomplete T="int?" Value="Assessment.CourseId" ValueChanged="@(v => Assessment.CourseId = v ?? 0)" Label="Course" Variant="Variant.Text" Required="true" RequiredError="Course is required!" Placeholder="Search course..."
+                    ToStringFunc="@(id => courses.FirstOrDefault(c => c.Value == id)?.Text ?? string.Empty)"
+                    SearchFunc="SearchCourses" />
+                <MudGrid>
+                    <MudItem xs="12" md="6">
+                        <MudAutocomplete T="int?" @bind-Value="Assessment.ModuleId" Label="Module (Optional)" Variant="Variant.Text" Placeholder="Search module (optional)..."
+                            ToStringFunc="@(id => modules.FirstOrDefault(m => m.Value == id)?.Text ?? string.Empty)"
+                            SearchFunc="SearchModules" />
+                    </MudItem>
+                    <MudItem xs="12" md="6">
+                        <MudAutocomplete T="int?" @bind-Value="Assessment.LessonId" Label="Lesson (Optional)" Variant="Variant.Text" Placeholder="Search lesson (optional)..."
+                            ToStringFunc="@(id => lessons.FirstOrDefault(l => l.Value == id)?.Text ?? string.Empty)"
+                            SearchFunc="SearchLessons" />
+                    </MudItem>
+                </MudGrid>
+                <MudGrid>
+                    <MudItem xs="12" md="6">
+                        <MudSelect @bind-Value="Assessment.Type" Label="Assessment Type" Variant="Variant.Text">
+                            <MudSelectItem Value="@AssessmentType.Quiz">Quiz</MudSelectItem>
+                            <MudSelectItem Value="@AssessmentType.Exam">Exam</MudSelectItem>
+                            <MudSelectItem Value="@AssessmentType.Assignment">Assignment</MudSelectItem>
+                            <MudSelectItem Value="@AssessmentType.Survey">Survey</MudSelectItem>
+                            <MudSelectItem Value="@AssessmentType.SelfAssessment">Self Assessment</MudSelectItem>
+                        </MudSelect>
+                    </MudItem>
+                    <MudItem xs="12" md="6">
+                        <MudNumericField  @bind-Value="Assessment.MaxAttempts" Label="Max Attempts"
+                            Variant="Variant.Text" />
+                    </MudItem>
+                </MudGrid>
+                <MudGrid>
+                    <MudItem xs="12" md="6">
+                        <MudNumericField  @bind-Value="TimeLimitMinutes" Label="Time Limit (minutes)"
+                            Variant="Variant.Text" />
+                    </MudItem>
+                    <MudItem xs="12" md="6">
+                        <MudNumericField  @bind-Value="Assessment.PassingScore" Label="Passing Score (%)"
+                            Variant="Variant.Text" Step="0.01" />
+                    </MudItem>
+                </MudGrid>
+                <MudGrid>
+                    <MudItem xs="12" md="6">
+                        <MudCheckBox T="bool" @bind-Checked="Assessment.IsRandomized" Label="Randomize Questions"
+                            Color="Color.Primary" />
+                    </MudItem>
+                    <MudItem xs="12" md="6">
+                        <MudCheckBox T="bool" @bind-Checked="Assessment.ShowCorrectAnswers" Label="Show Correct Answers"
+                            Color="Color.Primary" />
+                    </MudItem>
+                </MudGrid>
+                <MudGrid>
+                    <MudItem xs="12" md="6">
+                        <MudCheckBox T="bool" @bind-Checked="Assessment.ShowScoreImmediately" Label="Show Score Immediately"
+                            Color="Color.Primary" />
+                    </MudItem>
+                </MudGrid>
+                <MudGrid>
+                    <MudItem xs="12" md="6">
+                        <MudDatePicker @bind-Date="Assessment.AvailableFrom" Label="Available From"
+                            Variant="Variant.Text" />
+                    </MudItem>
+                    <MudItem xs="12" md="6">
+                        <MudDatePicker @bind-Date="Assessment.AvailableUntil" Label="Available Until"
+                            Variant="Variant.Text" />
+                    </MudItem>
+                </MudGrid>
+                <div class="d-flex gap-2">
+                    <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary"
+                        Disabled="@isSubmitting">
+                        <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Class="me-2" />
+                        @(IsEdit ? "Update Assessment" : "Create Assessment")
+                    </MudButton>
+                    <MudButton Variant="Variant.Filled" Color="Color.Secondary" Href="/admin/assessments">Cancel</MudButton>
+                </div>
+            </EditForm>
+        </MudCardContent>
+    </MudCard>
+}
+
+@code {
+    [Parameter]
+    [SupplyParameterFromQuery] public int? id { get; set; }
+    [SupplyParameterFromForm]
+    private CreateAssessmentRequest Assessment { get; set; } = new();
+    private bool isSubmitting = false;
+    private bool isLoading = true;
+    private bool IsEdit => ( id) > 0;
+    private List<DropdownOption<int>> courses = new();
+    private List<DropdownOption> modules = new();
+    private List<DropdownOption> lessons = new();
+    private EditContext editContext;
+
+    protected override async Task OnInitializedAsync()
+    {
+        courses = await DropdownRepository.GetCoursesAsync();
+        modules = await DropdownRepository.GetModulesAsync();
+        lessons = await DropdownRepository.GetLessonsAsync();
+        editContext = new EditContext(Assessment);
+        if (IsEdit)
+        {
+            var assessmentId =  id ?? 0;
+            try
+            {
+                var existingAssessment = await AssessmentRepository.GetAssessmentByIdAsync(assessmentId);
+                if (existingAssessment != null)
+                {
+                    Assessment = new CreateAssessmentRequest
+                    {
+                        Title = existingAssessment.Title,
+                        Description = existingAssessment.Description,
+                        CourseId = existingAssessment.CourseId,
+                        ModuleId = existingAssessment.ModuleId,
+                        LessonId = existingAssessment.LessonId,
+                        Type = Enum.TryParse<AssessmentType>(existingAssessment.Type, out var parsedType) ? parsedType : AssessmentType.Quiz,
+                        MaxAttempts = existingAssessment.MaxAttempts,
+                        TimeLimit = existingAssessment.TimeLimit,
+                        PassingScore = existingAssessment.PassingScore,
+                        IsRandomized = existingAssessment.IsRandomized,
+                        ShowCorrectAnswers = existingAssessment.ShowCorrectAnswers,
+                        ShowScoreImmediately = existingAssessment.ShowScoreImmediately,
+                        AvailableFrom = existingAssessment.AvailableFrom,
+                        AvailableUntil = existingAssessment.AvailableUntil
+                    };
+                    editContext = new EditContext(Assessment);
+                }
+            }
+            catch (Exception ex)
+            {
+                Snackbar.Add($"Error loading assessment: {ex.Message}", Severity.Error);
+                NavigationManager.NavigateTo("/admin/assessments");
+                return;
+            }
+        }
+        await Task.Delay(500); // Simulate data loading
+        isLoading = false;
+    }
+
+    private int? TimeLimitMinutes
+    {
+        get => Assessment.TimeLimit.TotalMinutes > 0 ? (int)Assessment.TimeLimit.TotalMinutes : null;
+        set => Assessment.TimeLimit = value.HasValue ? TimeSpan.FromMinutes(value.Value) : TimeSpan.Zero;
+    }
+
+    private async Task SaveAssessment()
+    {
+        if (isSubmitting) return;
+
+        isSubmitting = true;
+        try
+        {
+            if (IsEdit)
+            {
+                var assessmentId =  id ?? 0;
+                await AssessmentRepository.UpdateAssessmentAsync(assessmentId, Assessment);
+                Snackbar.Add("Assessment updated successfully!", Severity.Success);
+            }
+            else
+            {
+                var result = await AssessmentRepository.CreateAssessmentAsync(Assessment);
+                if (result != null)
+                {
+                    Snackbar.Add("Assessment created successfully!", Severity.Success);
+                }
+                else
+                {
+                    Snackbar.Add("Failed to create assessment. Please try again.", Severity.Error);
+                    return;
+                }
+            }
+            NavigationManager.NavigateTo("/admin/assessments");
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error saving assessment: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            isSubmitting = false;
+        }
+    }
+
+    private Task<IEnumerable<int?>> SearchCourses(string value, CancellationToken token)
+    {
+        IEnumerable<int?> result = string.IsNullOrWhiteSpace(value)
+            ? courses.Select(c => (int?)c.Value)
+            : courses.Where(c => c.Text.Contains(value, StringComparison.OrdinalIgnoreCase)).Select(c => (int?)c.Value);
+        return Task.FromResult(result);
+    }
+    private Task<IEnumerable<int?>> SearchModules(string value, CancellationToken token)
+    {
+        IEnumerable<int?> result = string.IsNullOrWhiteSpace(value)
+            ? modules.Select(m => (int?)m.Value)
+            : modules.Where(m => m.Text.Contains(value, StringComparison.OrdinalIgnoreCase)).Select(m => (int?)m.Value);
+        return Task.FromResult(result);
+    }
+    private Task<IEnumerable<int?>> SearchLessons(string value, CancellationToken token)
+    {
+        IEnumerable<int?> result = string.IsNullOrWhiteSpace(value)
+            ? lessons.Select(l => (int?)l.Value)
+            : lessons.Where(l => l.Text.Contains(value, StringComparison.OrdinalIgnoreCase)).Select(l => (int?)l.Value);
+        return Task.FromResult(result);
+    }
+}

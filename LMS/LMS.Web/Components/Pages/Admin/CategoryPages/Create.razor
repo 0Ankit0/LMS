@@ -1,0 +1,195 @@
+﻿@page "/admin/categories/create"
+@page "/admin/categories/edit/{id:int}"
+@using LMS.Repositories
+@using LMS.Web.Components.Shared
+@using MudBlazor;
+@using System.Reflection;
+@rendermode @(new InteractiveServerRenderMode())
+@inject ICategoryRepository CategoryRepository
+@inject IDropdownRepository DropdownRepository
+@inject NavigationManager NavigationManager
+@inject ISnackbar Snackbar
+@inject IImageRepository ImageRepository
+@inject IJSRuntime JSRuntime
+
+<PageTitle>@(IsEdit ? "Edit Category" : "Create Category") - Admin</PageTitle>
+
+@if (isLoading)
+{
+    <MudStack Direction="Row" Spacing="2" Class="mb-4">
+        <MudSkeleton SkeletonType="SkeletonType.Text" Width="200px" Height="40px" />
+        <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="180px" Height="40px" />
+    </MudStack>
+    <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="500px" />
+}
+else
+{
+    <MudStack Direction="Row" Spacing="2" Class="mb-4">
+        <MudText Typo="Typo.h4">@(IsEdit ? "Edit Category" : "Create New Category")</MudText>
+        <MudButton Variant="Variant.Text" Color="Color.Secondary" Href="/admin/categories">
+            <MudIcon Icon="@Icons.Material.Filled.ArrowBack" Class="me-2" />
+            Back to Categories
+        </MudButton>
+    </MudStack>
+    <MudCard Elevation="2">
+        <MudCardHeader>
+            <MudText Typo="Typo.h6">Category Information</MudText>
+        </MudCardHeader>
+        <MudCardContent>
+            <EditForm EditContext="@editContext" OnValidSubmit="SaveCategory">
+                <MudAlert Severity="Severity.Error" Class="mb-3" >
+                    <MudText>Please correct the errors below.</MudText>
+                </MudAlert>
+                <MudGrid>
+                    <MudItem xs="12" md="6">
+                        <MudTextField @bind-Value="Category.Name" Label="Name" Variant="Variant.Text" Required="true" RequiredError="Name is required!" />
+                    </MudItem>
+                    <MudItem xs="12" md="6">
+                        <MudTextField @bind-Value="Category.Color" Label="Color" Variant="Variant.Text" InputType="InputType.Color" />
+                    </MudItem>
+                </MudGrid>
+                <MudTextField @bind-Value="Category.Description" Label="Description" Variant="Variant.Text" Lines="3" Placeholder="Enter category description" />
+                <MudStack Direction="Row" Spacing="2" Class="my-2">
+                    <MudText Typo="Typo.subtitle2">Category Icon Image</MudText>
+                    <FileUpload ImageUrl="@Category.IconUrl" ImageUrlChanged="@(url => Category.IconUrl = url)" ButtonText="Upload Icon Image" />
+                </MudStack>
+                <MudGrid>
+                    <MudItem xs="12" md="6">
+                        <MudAutocomplete T="int?" Value="Category.ParentCategoryId" ValueChanged="@(v => Category.ParentCategoryId = v)" Label="Parent Category" Variant="Variant.Text" Placeholder="Search parent category..."
+                                        ToStringFunc="@(id => parentCategories.FirstOrDefault(c => c.Value == id)?.Text ?? string.Empty)"
+                                        SearchFunc="SearchParentCategories" />
+                    </MudItem>
+                </MudGrid>
+                <MudStack Direction="Row" Spacing="2" Class="my-2">
+                    <MudText Typo="Typo.subtitle2">Category Icon (MudBlazor)</MudText>
+                    <MudIconPicker T="string" @bind-Value="Category.IconName" Label="Category Icon" />
+                    @if (!string.IsNullOrEmpty(Category.IconName))
+                    {
+                        <MudIcon Icon="@Category.IconName" Class="ms-2" />
+                    }
+                </MudStack>
+                <MudCheckBox T="bool" @bind-Checked="Category.IsActive" Label="Is Active" Color="Color.Primary" />
+                <div class="d-flex gap-2">
+                    <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Disabled="@isSubmitting">
+                        <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Class="me-2" />
+                        @(IsEdit ? "Update Category" : "Create Category")
+                    </MudButton>
+                    <MudButton Variant="Variant.Filled" Color="Color.Secondary" Href="/admin/categories">Cancel</MudButton>
+                </div>
+            </EditForm>
+        </MudCardContent>
+    </MudCard>
+}
+
+@code {
+    [Parameter] 
+    [SupplyParameterFromQuery] public int? id { get; set; }
+    private CreateCategoryRequest Category { get; set; } = new();
+    private bool isSubmitting = false;
+    private bool isLoading = true;
+    private bool IsEdit => ( id) > 0;
+    private List<DropdownOption<int>> parentCategories = new();
+    private EditContext editContext;
+    private ElementReference fileInputRef;
+    private List<string> allMudIcons = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        editContext = new EditContext(Category);
+        allMudIcons = typeof(Icons.Material.Filled).GetFields(BindingFlags.Public | BindingFlags.Static)
+            .Select(f => f.GetValue(null)?.ToString()).Where(x => !string.IsNullOrEmpty(x)).ToList();
+        if (IsEdit)
+        {
+            var categoryId =  id ?? 0;
+            // Load existing category for edit
+            try
+            {
+                var existingCategory = await CategoryRepository.GetCategoryByIdAsync(categoryId);
+                if (existingCategory != null)
+                {
+                    Category = new CreateCategoryRequest
+                    {
+                        Name = existingCategory.Name,
+                        Description = existingCategory.Description,
+                        Color = existingCategory.Color,
+                        IconUrl = existingCategory.IconUrl,
+                        IconName = existingCategory.IconName,
+                        ParentCategoryId = existingCategory.ParentCategoryId,
+                        IsActive = existingCategory.IsActive
+                    };
+                    editContext = new EditContext(Category);
+                }
+            }
+            catch (Exception ex)
+            {
+                Snackbar.Add($"Error loading category: {ex.Message}", Severity.Error);
+                NavigationManager.NavigateTo("/admin/categories");
+                return;
+            }
+        }
+
+        // Load parent categories
+        parentCategories = (await DropdownRepository.GetCategoriesAsync()).Select(c => new DropdownOption<int>
+        {
+            Value = c.Value,
+            Text = c.Text,
+            Description = c.Description,
+            IsDisabled = c.IsDisabled
+        }).ToList();
+        
+        isLoading = false;
+    }
+
+    private Task<IEnumerable<string>> SearchIcons(string value, CancellationToken token)
+    {
+        IEnumerable<string> result = string.IsNullOrWhiteSpace(value)
+            ? allMudIcons
+            : allMudIcons.Where(i => i.Contains(value, StringComparison.OrdinalIgnoreCase));
+        return Task.FromResult(result);
+    }
+
+    private async Task SaveCategory()
+    {
+        if (isSubmitting) return;
+        isSubmitting = true;
+        try
+        {
+            if (IsEdit)
+            {
+                var categoryId =  id ?? 0;
+                await CategoryRepository.UpdateCategoryAsync(categoryId, Category);
+                Snackbar.Add("Category updated successfully!", Severity.Success);
+            }
+            else
+            {
+                var result = await CategoryRepository.CreateCategoryAsync(Category);
+                if (result != null)
+                {
+                    Snackbar.Add("Category created successfully!", Severity.Success);
+                }
+                else
+                {
+                    Snackbar.Add("Failed to create category. Please try again.", Severity.Error);
+                    return;
+                }
+            }
+            NavigationManager.NavigateTo("/admin/categories");
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error saving category: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            isSubmitting = false;
+        }
+    }
+
+    private Task<IEnumerable<int?>> SearchParentCategories(string value, CancellationToken token)
+    {
+        IEnumerable<int?> result = string.IsNullOrWhiteSpace(value)
+            ? parentCategories.Select(c => (int?)c.Value)
+            : parentCategories.Where(c => c.Text.Contains(value, StringComparison.OrdinalIgnoreCase)).Select(c => (int?)c.Value);
+        return Task.FromResult(result);
+    }
+}

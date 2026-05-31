@@ -14,5 +14,9 @@ namespace LMS.Data.DTOs
         public int? CourseId { get; set; }
 
         public bool IsGeneral { get; set; } = false;
+
+        // Add for image and icon support
+        public string? ImageUrl { get; set; }
+        public string? IconName { get; set; }
     }
 }

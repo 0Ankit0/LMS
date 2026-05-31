@@ -5,7 +5,8 @@ namespace LMS.Data.Entities
 {
     public class Assessment
     {
-        [Key]
+        [Key]  [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+
         public int Id { get; set; }
 
         [Required]

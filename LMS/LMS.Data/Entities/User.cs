@@ -40,6 +40,7 @@ namespace LMS.Data.Entities
         public virtual ICollection<ForumPost> ForumPosts { get; set; } = new List<ForumPost>();
         public virtual ICollection<Message> SentMessages { get; set; } = new List<Message>();
         public virtual ICollection<Message> ReceivedMessages { get; set; } = new List<Message>();
+        public virtual ICollection<Note> Notes { get; set; } = new List<Note>();
     }
 
 }

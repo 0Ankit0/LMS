@@ -1,0 +1,161 @@
+@page "/admin/forumposts/create"
+@page "/admin/forumposts/edit/{id:int}"
+@layout AdminLayout
+@inject IForumRepository ForumRepository
+@inject IDropdownRepository DropdownRepository
+@inject NavigationManager NavigationManager
+@inject ISnackbar Snackbar
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject UserManager<User> UserManager
+@using System.Security.Claims
+@using Microsoft.AspNetCore.Identity
+@using MudBlazor
+
+<PageTitle>@(IsEdit ? "Edit Forum Post - Admin" : "Create Forum Post - Admin")</PageTitle>
+
+<MudSkeleton Height="40px" Width="100%" Animation="Animation.Wave" />
+<MudPaper Class="mb-4 p-4">
+    <MudText Typo="Typo.h4">@(IsEdit ? "Edit Forum Post" : "Create New Forum Post")</MudText>
+    <MudButton Variant="Variant.Text" Color="Color.Secondary" Href="/admin/forumposts">
+        <MudIcon Icon="@Icons.Material.Filled.ArrowBack" Class="me-2" />
+        Back to Forum Posts
+    </MudButton>
+</MudPaper>
+
+<MudCard Elevation="2">
+    <MudCardHeader>
+        <MudText Typo="Typo.h6">Forum Post Information</MudText>
+    </MudCardHeader>
+    <MudCardContent>
+        <EditForm EditContext="@editContext" OnValidSubmit="SaveForumPost">
+            <MudAlert Severity="Severity.Error" Class="mb-3" >
+                <MudText>Please correct the errors below.</MudText>
+            </MudAlert>
+            <MudTextField @bind-Value="ForumPost.Content" Label="Content" Variant="Variant.Text" Lines="6" Required="true" RequiredError="Content is required!" Placeholder="Enter post content" />
+            <MudAutocomplete T="int?" Value="ForumPost.TopicId" ValueChanged="@(v => ForumPost.TopicId = v ?? 0)" Label="Topic" Variant="Variant.Text" Required="true" RequiredError="Topic is required!" Placeholder="Search topic..."
+    ToStringFunc="@(id => Forums.FirstOrDefault(f => f.Value == id)?.Text ?? string.Empty)"
+    SearchFunc="SearchTopics" />
+            <MudPaper Class="mb-3 p-2">
+                <MudText Typo="Typo.subtitle2">Parent Post ID (Optional)</MudText>
+                <MudNumericField @bind-Value="ForumPost.ParentPostId" Label="Parent Post ID" Variant="Variant.Text" Placeholder="Enter parent post ID for replies" />
+                <ValidationMessage For="() => ForumPost.ParentPostId" />
+                <MudText Typo="Typo.caption">Leave empty for new topics, or enter a post ID to reply to an existing post.</MudText>
+            </MudPaper>
+            <MudStack Direction="Row" Spacing="2">
+                <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Disabled="@isSubmitting">
+                    <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Class="me-2" />
+                    @(IsEdit ? "Update Forum Post" : "Create Forum Post")
+                </MudButton>
+                <MudButton Variant="Variant.Text" Color="Color.Secondary" Href="/admin/forumposts">Cancel</MudButton>
+            </MudStack>
+        </EditForm>
+    </MudCardContent>
+</MudCard>
+
+@code {
+    [Parameter]
+    public int? id { get; set; }
+    private CreateForumPostRequest ForumPost { get; set; } = new();
+    private bool isSubmitting = false;
+    private bool isLoading = true;
+    private List<DropdownOption<int>> Forums = new();
+    private bool IsEdit => id.HasValue && id.Value > 0;
+    private EditContext editContext;
+
+    protected override async Task OnInitializedAsync()
+    {
+        Forums = (await DropdownRepository.GetForumsAsync()).Select(f => new DropdownOption<int>
+        {
+            Value = f.Value,
+            Text = f.Text,
+            Description = f.Description,
+            IsDisabled = f.IsDisabled
+        }).ToList();
+        editContext = new EditContext(ForumPost);
+        if (IsEdit)
+        {
+            var post = await ForumRepository.GetPostByIdAsync(id.Value);
+            if (post != null)
+            {
+                ForumPost = new CreateForumPostRequest
+                {
+                    Content = post.Content,
+                    TopicId = post.TopicId,
+                    ParentPostId = post.ParentPostId
+                };
+                editContext = new EditContext(ForumPost);
+            }
+            else
+            {
+                Snackbar.Add("Forum post not found.", Severity.Error);
+                NavigationManager.NavigateTo("/admin/forumposts");
+                return;
+            }
+        }
+        isLoading = false;
+    }
+
+    private async Task<string?> GetCurrentUserIdAsync()
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = await UserManager.GetUserAsync(authState.User);
+        return user?.Id;
+    }
+
+    private async Task SaveForumPost()
+    {
+        if (isSubmitting) return;
+        isSubmitting = true;
+        try
+        {
+            var adminUserId = await GetCurrentUserIdAsync();
+            if (string.IsNullOrEmpty(adminUserId))
+            {
+                Snackbar.Add("Unable to determine current user. Please log in again.", Severity.Error);
+                return;
+            }
+            if (IsEdit)
+            {
+                var updated = await ForumRepository.UpdatePostAsync(id.Value, ForumPost, adminUserId);
+                if (updated != null)
+                {
+                    Snackbar.Add("Forum post updated successfully!", Severity.Success);
+                    NavigationManager.NavigateTo("/admin/forumposts");
+                }
+                else
+                {
+                    Snackbar.Add("Failed to update forum post. Please try again.", Severity.Error);
+                }
+            }
+            else
+            {
+                var result = await ForumRepository.CreatePostAsync(ForumPost, adminUserId);
+                if (result != null)
+                {
+                    Snackbar.Add("Forum post created successfully!", Severity.Success);
+                    NavigationManager.NavigateTo("/admin/forumposts");
+                }
+                else
+                {
+                    Snackbar.Add("Failed to create forum post. Please try again.", Severity.Error);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error saving forum post: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            isSubmitting = false;
+        }
+    }
+
+    private Task<IEnumerable<int?>> SearchTopics(string value, CancellationToken token)
+    {
+        IEnumerable<int?> result = string.IsNullOrWhiteSpace(value)
+            ? Forums.Select(f => (int?)f.Value)
+            : Forums.Where(f => f.Text.Contains(value, StringComparison.OrdinalIgnoreCase)).Select(f => (int?)f.Value);
+        return Task.FromResult(result);
+    }
+}

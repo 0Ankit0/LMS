@@ -24,5 +24,9 @@ namespace LMS.Data.DTOs
         public List<LessonModel> Lessons { get; set; } = new();
 
         public double ProgressPercentage { get; set; }
+
+        // Add for image and icon support
+        public string? ImageUrl { get; set; }
+        public string? IconName { get; set; }
     }
 }

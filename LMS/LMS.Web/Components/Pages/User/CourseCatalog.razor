@@ -1,0 +1,248 @@
+@using LMS.Web.Components.Pages.User.Shared
+@using MudBlazor
+@page "/user/lms/courses/catalog"
+@inject ICourseRepository CourseRepository
+@inject NavigationManager NavigationManager
+
+<PageTitle>Course Catalog - LMS</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-950/20 dark:to-indigo-950/20 py-8">
+    <MudGrid Spacing="6">
+        <!-- Sidebar -->
+        <MudItem xs="12" md="3">
+            <MudPaper Elevation="2" Class="rounded-2xl shadow-lg p-6 sticky top-8">
+                <MudText Typo="Typo.h5" Class="font-bold text-gray-900 dark:text-white mb-4">Categories</MudText>
+                
+                <MudStack Spacing="2" Class="mb-6">
+                    <MudButton Variant="@(selectedCategory == "all" ? Variant.Filled : Variant.Text)" 
+                        Color="Color.Primary" OnClick='@(() => SelectCategory("all"))'
+                        StartIcon="@Icons.Material.Filled.AllInclusive" FullWidth="true" Class="justify-start rounded">
+                        All Courses
+                    </MudButton>
+                    <MudButton Variant="@(selectedCategory == "development" ? Variant.Filled : Variant.Text)" 
+                        Color="Color.Primary" OnClick='@(() => SelectCategory("development"))'
+                        StartIcon="@Icons.Material.Filled.Code" FullWidth="true" Class="justify-start rounded">
+                        Development
+                    </MudButton>
+                    <MudButton Variant="@(selectedCategory == "business" ? Variant.Filled : Variant.Text)" 
+                        Color="Color.Primary" OnClick='@(() => SelectCategory("business"))'
+                        StartIcon="@Icons.Material.Filled.BusinessCenter" FullWidth="true" Class="justify-start rounded">
+                        Business
+                    </MudButton>
+                    <MudButton Variant="@(selectedCategory == "design" ? Variant.Filled : Variant.Text)" 
+                        Color="Color.Primary" OnClick='@(() => SelectCategory("design"))'
+                        StartIcon="@Icons.Material.Filled.Palette" FullWidth="true" Class="justify-start rounded">
+                        Design
+                    </MudButton>
+                    <MudButton Variant="@(selectedCategory == "security" ? Variant.Filled : Variant.Text)" 
+                        Color="Color.Primary" OnClick='@(() => SelectCategory("security"))'
+                        StartIcon="@Icons.Material.Filled.Security" FullWidth="true" Class="justify-start rounded">
+                        Security
+                    </MudButton>
+                </MudStack>
+
+                <MudText Typo="Typo.h6" Class="font-semibold text-gray-900 dark:text-white mb-3">Filters</MudText>
+                <MudStack Spacing="2">
+                    <MudText Typo="Typo.body2" Class="font-medium text-gray-500 mb-1">Level</MudText>
+                    <MudCheckBox T="bool" Value="filters.Beginner" ValueChanged="@((bool value) => { filters.Beginner = value; ApplyFilters(); })" 
+                        Label="Beginner" Color="Color.Primary" />
+                    <MudCheckBox T="bool" Value="filters.Intermediate" ValueChanged="@((bool value) => { filters.Intermediate = value; ApplyFilters(); })" 
+                        Label="Intermediate" Color="Color.Primary" />
+                    <MudCheckBox T="bool" Value="filters.Advanced" ValueChanged="@((bool value) => { filters.Advanced = value; ApplyFilters(); })" 
+                        Label="Advanced" Color="Color.Primary" />
+                </MudStack>
+            </MudPaper>
+        </MudItem>
+
+        <!-- Main Content -->
+        <MudItem xs="12" md="9">
+            <MudPaper Elevation="2" Class="rounded-2xl shadow-lg p-8">
+                <!-- Header Section -->
+                <MudGrid AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Class="mb-8">
+                    <MudItem xs="12" md="6">
+                        <MudStack>
+                            <MudText Typo="Typo.h4" Class="font-bold text-gray-900 dark:text-white">Course Catalog</MudText>
+                            <MudText Typo="Typo.body1" Class="text-gray-500 dark:text-gray-300">Discover and learn new skills</MudText>
+                        </MudStack>
+                    </MudItem>
+                    <MudItem xs="12" md="6">
+                        <MudStack Row Spacing="4" AlignItems="AlignItems.Center">
+                            <MudTextField Value="searchQuery" ValueChanged="@((string value) => { searchQuery = value; ApplyFilters(); })"
+                                Placeholder="Search courses, instructors, topics..."
+                                Variant="Variant.Outlined" Clearable="true" Adornment="Adornment.Start"
+                                AdornmentIcon="@Icons.Material.Filled.Search" Class="flex-1 rounded" />
+                            <MudSelect T="string" Label="Sort By" Variant="Variant.Outlined" Value="sortBy"
+                                ValueChanged="SetSort" Class="min-w-40 rounded">
+                                <MudSelectItem Value='@("popular")'>Most Popular</MudSelectItem>
+                                <MudSelectItem Value='@("newest")'>Newest</MudSelectItem>
+                                <MudSelectItem Value='@("alphabetical")'>A-Z</MudSelectItem>
+                                <MudSelectItem Value='@("level")'>By Level</MudSelectItem>
+                            </MudSelect>
+                        </MudStack>
+                    </MudItem>
+                </MudGrid>
+
+                <!-- Course Grid -->
+                <MudGrid Spacing="4">
+                    @if (isLoading)
+                    {
+                        @for (int i = 0; i < 6; i++)
+                        {
+                            <MudItem xs="12" sm="6" lg="4">
+                                <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="300px" Class="rounded-2xl w-full" />
+                            </MudItem>
+                        }
+                    }
+                    else if (filteredCourses.Any())
+                    {
+                        @foreach (var course in filteredCourses)
+                        {
+                            <MudItem xs="12" sm="6" lg="4">
+                                <CourseCard Course="course"
+                                    OnClick="@(c => NavigationManager.NavigateTo($"/user/lms/course/{c.Id}"))" />
+                            </MudItem>
+                        }
+                    }
+                    else
+                    {
+                        <MudItem xs="12">
+                            <MudStack Spacing="3" AlignItems="AlignItems.Center" Class="py-12">
+                                <MudIcon Icon="@Icons.Material.Filled.SearchOff" Size="Size.Large" Class="text-gray-400" />
+                                <MudText Typo="Typo.h5" Class="text-gray-500">No courses found</MudText>
+                                <MudText Typo="Typo.body1" Class="text-gray-400">Try adjusting your search criteria or filters.</MudText>
+                                <MudButton Color="Color.Primary" OnClick="@(() => { searchQuery = ""; selectedCategory = "all"; filters = new(); ApplyFilters(); })"
+                                    Class="rounded mt-2">Clear All Filters</MudButton>
+                            </MudStack>
+                        </MudItem>
+                    }
+                </MudGrid>
+            </MudPaper>
+        </MudItem>
+    </MudGrid>
+</MudContainer>
+
+
+@code {
+    // State variables
+    private string selectedCategory = "all";
+    private string searchQuery = "";
+    private string sortBy = "popular";
+    private FilterModel filters = new();
+    private HashSet<int> bookmarkedCourses = new();
+    private List<CourseModel> filteredCourses = new();
+    private List<CourseModel> allCourses = new();
+    private bool isLoading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadCourses();
+    }
+
+    private async Task LoadCourses()
+    {
+        try
+        {
+            isLoading = true;
+            allCourses = await CourseRepository.GetAllCoursesAsync() ?? new();
+            ApplyFilters();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading courses: {ex.Message}");
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private void SelectCategory(string category)
+    {
+        selectedCategory = category;
+        ApplyFilters();
+    }
+
+    private void SetSort(string sortType)
+    {
+        sortBy = sortType;
+        ApplyFilters();
+    }
+
+    private void ApplyFilters()
+    {
+        var courses = allCourses.AsQueryable();
+
+        // Apply category filter
+        if (selectedCategory != "all")
+        {
+            courses = courses.Where(c => c.Categories != null && c.Categories.Contains(selectedCategory));
+        }
+
+        // Apply search filter
+        if (!string.IsNullOrWhiteSpace(searchQuery))
+        {
+            courses = courses.Where(c =>
+            c.Title.Contains(searchQuery, StringComparison.OrdinalIgnoreCase) ||
+            c.Description.Contains(searchQuery, StringComparison.OrdinalIgnoreCase) ||
+            c.InstructorName.Contains(searchQuery, StringComparison.OrdinalIgnoreCase));
+        }
+
+        // Apply level filters
+        if (filters.HasAnyLevelFilter())
+        {
+            courses = courses.Where(c =>
+            (filters.Beginner && c.Level == "Beginner") ||
+            (filters.Intermediate && c.Level == "Intermediate") ||
+            (filters.Advanced && c.Level == "Advanced"));
+        }
+
+        // Apply sorting
+        courses = sortBy switch
+        {
+            "popular" => courses.OrderByDescending(c => c.EnrollmentCount),
+            "newest" => courses.OrderByDescending(c => c.StartDate),
+            "alphabetical" => courses.OrderBy(c => c.Title),
+            "level" => courses.OrderBy(c => c.Level == "Beginner" ? 1 : c.Level == "Intermediate" ? 2 : 3),
+            _ => courses.OrderByDescending(c => c.EnrollmentCount)
+        };
+
+        filteredCourses = courses.ToList();
+        StateHasChanged();
+    }
+
+    private void ToggleBookmark(int courseId)
+    {
+        if (bookmarkedCourses.Contains(courseId))
+        {
+            bookmarkedCourses.Remove(courseId);
+        }
+        else
+        {
+            bookmarkedCourses.Add(courseId);
+        }
+    }
+
+    private string FormatDuration(TimeSpan duration)
+    {
+        var hours = (int)duration.TotalHours;
+        var minutes = duration.Minutes;
+
+        if (hours > 0)
+        {
+            return minutes > 0 ? $"{hours}h {minutes}m" : $"{hours}h";
+        }
+        return $"{minutes}m";
+    }
+
+
+
+    // Helper classes
+    public class FilterModel
+    {
+        public bool Beginner { get; set; }
+        public bool Intermediate { get; set; }
+        public bool Advanced { get; set; }
+
+        public bool HasAnyLevelFilter() => Beginner || Intermediate || Advanced;
+    }
+}
