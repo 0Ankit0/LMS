@@ -1,0 +1,168 @@
+x-backend-build: &backend-build
+  context: ./backend
+
+x-backend-env: &backend-env
+  PROJECT_NAME: "${PROJECT_NAME:-FastAPI Template}"
+  DEBUG: "${BACKEND_DEBUG:-False}"
+  TESTING: "False"
+  APP_ENV: "${BACKEND_APP_ENV:-production}"
+  SECRET_KEY: "${BACKEND_SECRET_KEY:-change-me}"
+  PASSWORD_PEPPER: "${BACKEND_PASSWORD_PEPPER:-change-me}"
+  FEATURE_AUTH: "${FEATURE_AUTH:-True}"
+  FEATURE_MULTITENANCY: "${FEATURE_MULTITENANCY:-True}"
+  FEATURE_NOTIFICATIONS: "${FEATURE_NOTIFICATIONS:-True}"
+  FEATURE_WEBSOCKETS: "${FEATURE_WEBSOCKETS:-True}"
+  FEATURE_FINANCE: "${FEATURE_FINANCE:-True}"
+  FEATURE_ANALYTICS: "${FEATURE_ANALYTICS:-False}"
+  FEATURE_SOCIAL_AUTH: "${FEATURE_SOCIAL_AUTH:-False}"
+  FEATURE_MAPS: "${FEATURE_MAPS:-False}"
+  POSTGRES_SERVER: db
+  POSTGRES_USER: "${POSTGRES_USER:-postgres}"
+  POSTGRES_PASSWORD: "${POSTGRES_PASSWORD:-postgres}"
+  POSTGRES_DB: "${POSTGRES_DB:-template}"
+  DATABASE_URL: "postgresql+psycopg://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@db/${POSTGRES_DB:-template}"
+  REDIS_HOST: redis
+  REDIS_PORT: "6379"
+  REDIS_URL: "redis://redis:6379/0"
+  CELERY_BROKER_URL: "redis://redis:6379/0"
+  CELERY_RESULT_BACKEND: "redis://redis:6379/0"
+  CELERY_TASK_ALWAYS_EAGER: "${CELERY_TASK_ALWAYS_EAGER:-False}"
+  BACKEND_CORS_ORIGINS: "${BACKEND_CORS_ORIGINS:-http://localhost:3000}"
+  TRUSTED_HOSTS: "${TRUSTED_HOSTS:-localhost,127.0.0.1}"
+  SERVER_HOST: "${SERVER_HOST:-http://localhost:8000}"
+  FRONTEND_URL: "${FRONTEND_URL:-http://localhost:3000}"
+  WS_ALLOWED_ORIGINS: "${WS_ALLOWED_ORIGINS:-http://localhost:3000}"
+  SECURE_COOKIES: "${BACKEND_SECURE_COOKIES:-False}"
+  COOKIE_SAMESITE: "${BACKEND_COOKIE_SAMESITE:-lax}"
+  SOCIAL_AUTH_REDIRECT_URL: "${SOCIAL_AUTH_REDIRECT_URL:-http://localhost:3000/auth/callback}"
+
+x-frontend-build-args: &frontend-build-args
+  NEXT_PUBLIC_APP_NAME: "${NEXT_PUBLIC_APP_NAME:-FastAPI Template}"
+  NEXT_PUBLIC_API_URL: "${NEXT_PUBLIC_API_URL:-http://localhost:8000/api/v1}"
+  NEXT_PUBLIC_WS_URL: "${NEXT_PUBLIC_WS_URL:-ws://localhost:8000}"
+  NEXT_PUBLIC_ANALYTICS_ENABLED: "${NEXT_PUBLIC_ANALYTICS_ENABLED:-false}"
+  NEXT_PUBLIC_ANALYTICS_PROVIDER: "${NEXT_PUBLIC_ANALYTICS_PROVIDER:-posthog}"
+  NEXT_PUBLIC_POSTHOG_KEY: "${NEXT_PUBLIC_POSTHOG_KEY:-}"
+  NEXT_PUBLIC_POSTHOG_HOST: "${NEXT_PUBLIC_POSTHOG_HOST:-https://us.i.posthog.com}"
+  INTERNAL_API_BASE_URL: "${INTERNAL_API_BASE_URL:-http://backend:8000}"
+
+x-frontend-env: &frontend-env
+  NODE_ENV: "${FRONTEND_NODE_ENV:-production}"
+  PORT: "3000"
+  HOSTNAME: 0.0.0.0
+  NEXT_PUBLIC_APP_NAME: "${NEXT_PUBLIC_APP_NAME:-FastAPI Template}"
+  NEXT_PUBLIC_API_URL: "${NEXT_PUBLIC_API_URL:-http://localhost:8000/api/v1}"
+  NEXT_PUBLIC_WS_URL: "${NEXT_PUBLIC_WS_URL:-ws://localhost:8000}"
+  NEXT_PUBLIC_ANALYTICS_ENABLED: "${NEXT_PUBLIC_ANALYTICS_ENABLED:-false}"
+  NEXT_PUBLIC_ANALYTICS_PROVIDER: "${NEXT_PUBLIC_ANALYTICS_PROVIDER:-posthog}"
+  NEXT_PUBLIC_POSTHOG_KEY: "${NEXT_PUBLIC_POSTHOG_KEY:-}"
+  NEXT_PUBLIC_POSTHOG_HOST: "${NEXT_PUBLIC_POSTHOG_HOST:-https://us.i.posthog.com}"
+  INTERNAL_API_BASE_URL: "${INTERNAL_API_BASE_URL:-http://backend:8000}"
+
+services:
+  db:
+    image: docker.io/library/postgres:16-alpine
+    environment:
+      POSTGRES_DB: "${POSTGRES_DB:-template}"
+      POSTGRES_USER: "${POSTGRES_USER:-postgres}"
+      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD:-postgres}"
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-template}",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    restart: unless-stopped
+
+  redis:
+    image: docker.io/library/redis:7-alpine
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+    restart: unless-stopped
+
+  backend:
+    image: "fastapi-template-backend:${DOCKER_IMAGE_TAG:-local}"
+    build: *backend-build
+    environment: *backend-env
+    command:
+      - /bin/sh
+      - -c
+      - alembic upgrade head && uvicorn src.main:app --host 0.0.0.0 --port 8000
+    ports:
+      - "${BACKEND_PORT:-8000}:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "/app/docker/healthcheck_backend.sh"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    restart: unless-stopped
+
+  worker:
+    image: "fastapi-template-backend:${DOCKER_IMAGE_TAG:-local}"
+    build: *backend-build
+    environment: *backend-env
+    command:
+      - celery
+      - -A
+      - src.apps.core.celery_app
+      - worker
+      - --loglevel=info
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "/app/docker/healthcheck_worker.sh"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    restart: unless-stopped
+
+  frontend:
+    image: "fastapi-template-frontend:${DOCKER_IMAGE_TAG:-local}"
+    build:
+      context: ./frontend
+      args: *frontend-build-args
+    environment: *frontend-env
+    ports:
+      - "${FRONTEND_PORT:-3000}:3000"
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "/app/docker/healthcheck.sh"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  redis_data:
