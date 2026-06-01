@@ -11,7 +11,11 @@ wheels/
 .env
 /.env.docker.dev
 /.env.docker.prod
-!mobile/.env
+
+# Local backend/frontend QA artifacts
+backend/.vscode/
+backend/app.db
+frontend/test-results/
 
 # Logs and temporary files along with test artifacts
 logs/
